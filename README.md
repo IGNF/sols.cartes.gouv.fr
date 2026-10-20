@@ -26,7 +26,7 @@ Exemple d'arborescence de projet :
 * `tests/`: scripts et explications pour lancer les tests ;
 * `README.md` : ce fichier
 
-## Contacts du projets
+## Contacts du projet
 
 Personnes à contacter en cas d'urgence ou de demande ne pouvant passer par un ticket sur le [projet](https://github.com/orgs/IGNF/projects/104)
 
