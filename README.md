@@ -1,31 +1,20 @@
-# Modèle de ReadMe
+# Portail de l'Observatoire des Sols
 
-Ci-dessous une proposition de readme pour tout projet
+Le portail vise à présenter une certaine partie des données de l'INRAE, via un catalogue et une entrée carto. 
 
+## Brique Techno
 
-## Description/Résumé du projet
-
-Dans cette section, on décrit la vision générale du projet ainsi que ses objectifs à destination des futurs utilisateurs et des développeurs.
-
-Pour ce dépôt : 
-
-Ce dépôt permet de répertorier les différents éléments essentiels dans un dépôt SIDC :
-* ce ReadMe
-* des modèles de tickets type pour des ajouts de fonctionnalité, réparation de bug, ajout de documentation, maintenance/montée de version...
-* des milestones témoins (ex: backlog, sprint1...)
-* des exemples de github Actions CI/CD (lancement de test, build d'images...)
-* des exemples de label pour les futurs tickets
+On présentera à priori une technologie React avec TS, en s'appuyant principalement sur [React DSFR](https://github.com/codegouvfr/react-dsfr) & [geopf-ext](https://github.com/IGNF/geopf-extensions-openlayers)
 
 
 ## Installation
 
-La procédure d'installation du projet doit être décrite dans cette section ou dans un fichier complémentaire dont le lien est présent ici.
+TODO mais à priori:
 
+```bun i```
+```bun run dev```
 
-## Documentation développeurs
-
-Lien vers la documentation pour les développeurs, à la fois pour maintenir le projet, le déployer et ajouter de nouvelles fonctionnalités. Schémas UML...
-
+Puis accéder via son navigateur préféré à http://localhost:5173/sols.cartes.gouv.fr/
 
 ## L'arborescence du projet
 
@@ -39,11 +28,7 @@ Exemple d'arborescence de projet :
 
 ## Contacts du projets
 
-Ici on met la liste des personnes qui travaillent sur ce projet et le maintiennent à jour.
+Personnes à contacter en cas d'urgence ou de demande ne pouvant passer par un ticket sur le [projet](https://github.com/orgs/IGNF/projects/104)
 
-
-|Nom|Prénom|mail|fonction|
-|---|---|---|---|
-|   |   |   |   |
-|   |   |   |   |
-|   |   |   |   |
+|Victor|Dizier|victor.dizier@ign.fr|MOA/SPP|
+|Ibrahim|Sall|ibrahim.sall@ign.fr|DEV/RDS|
