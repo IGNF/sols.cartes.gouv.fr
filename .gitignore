@@ -12,3 +12,7 @@ config.ini
 config_*.ini
 config-*.ini
 test.ini
+
+
+/node_modules
+.env
