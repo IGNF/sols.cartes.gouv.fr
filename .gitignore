@@ -16,3 +16,6 @@ test.ini
 
 /node_modules
 .env
+
+/retex
+/docs
