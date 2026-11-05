@@ -173,3 +173,61 @@ sha256sum dist/apps/datahub/main.*.js
 ```
 
 La vérification navigateur (§1) a servi `dist/apps/datahub` sous `/rechercher-une-donnee/` avec un petit serveur statique à repli SPA. Playwright (Chromium sans interface) a ouvert `search?organization=INRAE%20-%20Info%26Sols` et intercepté les `POST .../_search`.
+
+## 8. La brique `apps/rechercher-une-donnee` (C2)
+
+Construite selon l'option A du §5 : rien du dépôt amont n'est copié dans notre dépôt, tout est rejoué depuis la ref épinglée.
+
+| Fichier | Rôle |
+| --- | --- |
+| `upstream.json` | **Seul endroit** de la ref : dépôt, `ref` (`v1.6.2`), `commit` (SHA complet vérifié après clonage), `app`, `baseHref`, `devPort`. |
+| `config/default.toml` | Notre configuration, copiée sur `.upstream/conf/default.toml` (que le build publie en `assets/configuration/default.toml`). |
+| `patches/*.patch` | Patchs rejoués dans l'ordre lexical, listés dans `doc/catalogue-patches.md` (le lint échoue sinon). |
+| `scripts/prepare.mjs` | Clone superficiel (`git clone --depth 1 --branch <ref>`) dans `.upstream/`, contrôle du SHA, remise à zéro (`git checkout -- .` puis `git clean -fd`, sans toucher `node_modules`), `npm ci` seulement si `package-lock.json` amont a changé (empreinte dans `node_modules/.sols-install-stamp`), patchs (`git apply --check` puis `git apply`), copie de la config. Idempotent. |
+| `scripts/build.mjs`, `scripts/dev.mjs` | `nx build datahub --configuration=production --base-href=/rechercher-une-donnee/` puis copie vers `dist/` ; `nx serve datahub --port=4200`. |
+| `scripts/lint.mjs`, `scripts/checks.mjs`, `test/` | Vérifications hors ligne de ce que la brique possède : syntaxe des scripts, `upstream.json`, config (clés obligatoires, `datahub_url`, `config_filters`, guillemets), patchs documentés, `baseHref` du patch 0002 égal à `upstream.json`. Le code amont n'est ni linté ni testé ici. |
+| `.gitignore` | `.upstream/` (~2 Go avec `node_modules`) et `dist/`. |
+| `package-lock.json` | Lockfile vide (aucune dépendance propre), commité pour activer le job `ci-catalogue.yml`. |
+
+Commandes (dans `apps/rechercher-une-donnee`, avec **npm**, hors workspace bun) :
+
+```bash
+npm run dev               # prépare .upstream puis http://localhost:4200/rechercher-une-donnee/
+npm run build             # prépare puis build de production dans dist/ (base href /rechercher-une-donnee/)
+npm run lint              # hors ligne, < 1 s
+npm test                  # node --test, hors ligne
+npm run prepare-upstream  # clone + install + patchs + config seulement ; --no-install pour sauter npm ci
+```
+
+Depuis la racine : `bun run dev:catalogue`, `bun run lint`, `bun run test`, `bun run build:all` (registre `scripts/apps.ts`).
+
+Mesures (Node 26.5.0, npm 12.0.2, 22 cœurs, 30 Go) : premier `npm run build` (clone + `npm ci` + build) 80 s, pic mémoire
+4,9 Go ; builds suivants 39 s (pas de nouvel `npm ci`) ; `dev` répond sur le port 4200 après une compilation d'environ une minute.
+
+Versions et options npm :
+
+- Node >= 24 (`engines`, contrôlé par `prepare.mjs`), npm >= 10.
+- `npm ci --allow-remote=all` est passé par `prepare.mjs` : npm 12 refuse par défaut le tarball distant `xlsx` du lockfile
+  amont (`EALLOWREMOTE`). npm 10 et 11 autorisent déjà ces tarballs et signalent seulement l'option inconnue.
+- npm 12 bloque aussi les scripts d'installation (`allow-scripts`) : on ne les autorise pas, le build n'en a pas besoin.
+
+Configuration retenue (`config/default.toml`) :
+
+- `[global]` : `geonetwork4_api_url = "https://data.geopf.fr/catalog"`, `datahub_url = "/rechercher-une-donnee"`. `sso_url`
+  et `client_id` sont retirés, mais le code IGN initialise Keycloak avec ses valeurs par défaut (§2.3) : C3 retire ce bloc.
+- `[search]` : `config_filters.groupPublished = ['gissol-osf_g']` (patch 0001, décision C-1), `advanced_filters` sans
+  `organization` (§2.2).
+- `[map]` : pas encore de `external_viewer_url_template` (C4, décision C-3) ; fond `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2`.
+- `[translations.fr]` : libellés IGN repris. La langue de l'interface suit encore le navigateur (repli `en`,
+  `libs/util/i18n/src/lib/i18n.providers.ts:35`) : le forçage du français est traité en C3.
+- DSFR : 1.15.3 embarqué par le fork, conservé dans le catalogue seulement (décision C-2).
+
+Vérification navigateur du build (Playwright, `doc/screenshots/C2/`) : `/rechercher-une-donnee/` sans paramètre affiche
+« 7 résultats. », la requête de résultats porte `query_string` `groupPublished:("gissol-osf_g")` ; `search?q=route`
+(9 fiches sans le filtre, même requête `query_string` sur l'API) affiche « Aucun résultat. ». Les requêtes d'agrégation (`size: 0`) ne
+portent pas le filtre, conformément à la limite du patch 0001. Deux erreurs console viennent du code IGN (iframe Keycloak
+bloquée par la CSP de `sso.geopf.fr`, une 400) et seront traitées en C3 avec l'en-tête.
+
+Contenu d'en-tête et pied de page prévu pour C3 (orchestrateur) : titre de service « sols.cartes.gouv.fr », slogan
+« Observatoire des sols de France », navigation Accueil `/`, Rechercher une donnée `/rechercher-une-donnee/`, Explorer les
+cartes `/explorer-les-cartes/`, lien rapide « Site du GIS Sol » ; balisage de référence dans `doc/agents/edito.md`.
