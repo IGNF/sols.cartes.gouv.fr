@@ -438,22 +438,24 @@ index 91f4cc6..f9d789c 100644
  
        <gn-ui-fuzzy-search
          class="text-[18px] pointer-events-auto"
-diff --git a/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts b/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
-index 19bbab1..bc92d70 100644
---- a/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
-+++ b/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
-@@ -204,9 +204,8 @@ export class RecordMetadataComponent {
-   displayOtherLinks$ = this.metadataViewFacade.otherLinks$.pipe(
-     map((links) => links?.length > 0)
-   )
--  displayRelated$ = this.metadataViewFacade.related$.pipe(
--    map((records) => records?.length > 0)
--  )
-+  // Sols scope: similar records come from an unscoped query, never shown
-+  displayRelated$ = this.metadataViewFacade.related$.pipe(map(() => false))
- 
-   displayLinked$ = this.metadataViewFacade.linkedRecords$.pipe(
-     map((linkedRecords) => linkedRecords?.length > 0)
+diff --git a/apps/datahub/src/app/home/home-page/home-page.component.html b/apps/datahub/src/app/home/home-page/home-page.component.html
+index 8e4d26c..35e32ae 100644
+--- a/apps/datahub/src/app/home/home-page/home-page.component.html
++++ b/apps/datahub/src/app/home/home-page/home-page.component.html
+@@ -1,10 +1,10 @@
+ <div id="home-page">
+-  <gn-ui-sticky-header [fullHeightPx]="260" [minHeightPx]="150">
++  <gn-ui-sticky-header [fullHeightPx]="160" [minHeightPx]="150">
+     <ng-template let-expandRatio>
+       <datahub-home-header [expandRatio]="expandRatio"></datahub-home-header>
+     </ng-template>
+   </gn-ui-sticky-header>
+-  <main class="px-5">
++  <div class="px-5">
+     <router-outlet></router-outlet>
+-  </main>
++  </div>
+ </div>
 diff --git a/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts b/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts
 index 407e084..4954ad5 100644
 --- a/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts
@@ -547,3 +549,19 @@ index d5adeee..7bf0627 100644
      <!--
        Add more preload links here to reduce the time to initial page render!
        Example:
+diff --git a/apps/datahub/src/styles.css b/apps/datahub/src/styles.css
+index fcdc8b9..0bc2c7c 100644
+--- a/apps/datahub/src/styles.css
++++ b/apps/datahub/src/styles.css
+@@ -106,8 +106,9 @@ a > ng-icon[name='iconoirOpenNewWindow'] {
+   padding: 0 0.375rem 0 0 !important;
+ }
+ 
+-.fr-modal > .fr-container,
+-.fr-modal > .fr-container-md {
++/* Sols: scoped to the removed cartes.gouv.fr welcome modal, it narrowed the DSFR header menu */
++#welcomeModal > .fr-container,
++#welcomeModal > .fr-container-md {
+   max-width: 1000px !important;
+ }
+ 

@@ -1,5 +1,9 @@
 // Pure checks shared by lint and tests.
 
+/** URL read by the carto brick (decision C-3, doc/agents/QUESTIONS.md). */
+export const EXTERNAL_VIEWER_TEMPLATE =
+  '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+
 /** Minimal sanity checks of config/default.toml (no TOML parser dependency). */
 export function checkConfig(toml, upstream) {
   const problems = []
@@ -11,6 +15,11 @@ export function checkConfig(toml, upstream) {
   const datahubUrl = upstream.baseHref.replace(/\/$/, '')
   expectLine(new RegExp(`^datahub_url = "${datahubUrl}"$`, 'm'), `datahub_url must be "${datahubUrl}"`)
   expectLine(/^config_filters\.\w+ = \[.+\]$/m, '[search] config_filters (sols scope) is missing')
+  expectLine(
+    new RegExp(`^external_viewer_url_template = '${EXTERNAL_VIEWER_TEMPLATE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'$`, 'm'),
+    `external_viewer_url_template must be '${EXTERNAL_VIEWER_TEMPLATE}' (question C-3)`
+  )
+  expectLine(/^external_viewer_open_new_tab = false$/m, 'external_viewer_open_new_tab must be false (same tab)')
   if (/\t/.test(toml)) problems.push('config/default.toml: tabs are not allowed')
   for (const [index, line] of toml.split('\n').entries()) {
     if (!quotesBalanced(line)) problems.push(`config/default.toml:${index + 1}: unbalanced quotes`)

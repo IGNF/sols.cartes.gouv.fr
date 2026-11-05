@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { APP_DIR, CONFIG_FILE, PATCHES_DIR, listPatches, nodeMajor, patchedFiles, readUpstream } from '../scripts/lib.mjs'
 import {
+  EXTERNAL_VIEWER_TEMPLATE,
   checkBaseHrefPatch,
   checkConfig,
   checkNodeMajor,
@@ -43,7 +44,7 @@ test('the config keeps the sols scope on the gissol-osf_g group', () => {
 
 test('checkConfig reports a missing scope and a wrong datahub_url', () => {
   const problems = checkConfig('[global]\ngeonetwork4_api_url = "https://x"\ndatahub_url = "/other"\n', valid)
-  assert.equal(problems.length, 2)
+  assert.equal(problems.length, 4)
   assert.match(problems.join('\n'), /datahub_url/)
   assert.match(problems.join('\n'), /config_filters/)
 })
@@ -87,4 +88,19 @@ test('checkNodeMajor compares the running major with .nvmrc', () => {
   assert.deepEqual(checkNodeMajor('24\n', '24.18.0'), [])
   assert.deepEqual(checkNodeMajor('v24', '24.1.0'), [])
   assert.match(checkNodeMajor('24', '26.5.0')[0], /differs from .nvmrc \(24\)/)
+})
+
+test('the "Voir sur la carte" template is the C-3 format, same tab', () => {
+  const toml = readFileSync(CONFIG_FILE, 'utf8')
+  assert.equal(
+    toml.match(/^external_viewer_url_template = '(.*)'$/m)?.[1],
+    '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+  )
+  assert.equal(EXTERNAL_VIEWER_TEMPLATE, toml.match(/^external_viewer_url_template = '(.*)'$/m)?.[1])
+  assert.match(toml, /^external_viewer_open_new_tab = false$/m)
+})
+
+test('checkConfig reports a wrong viewer template', () => {
+  const toml = readFileSync(CONFIG_FILE, 'utf8').replace('&url=${service_url}', '')
+  assert.match(checkConfig(toml, valid).join('\n'), /external_viewer_url_template/)
 })
