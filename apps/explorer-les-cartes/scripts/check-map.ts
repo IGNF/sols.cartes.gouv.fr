@@ -884,9 +884,14 @@ const TOOL_BUTTONS = [
           e.name.startsWith('Ajouter à la carte : ') &&
           e.thumbnail.startsWith('https://data.geopf.fr/annexes/gissol-osf/thumbnail/') &&
           e.record.startsWith('/rechercher-une-donnee/dataset/') &&
-          e.producer.startsWith('/rechercher-une-donnee/search?organization='),
+          e.producer === '/rechercher-une-donnee/search?organization=INRAE%20-%20Info%26Sols',
       ),
-    `catalogue : 7 données nommées, avec vignette, lien de la fiche et étiquette producteur vers notre catalogue (${entries.length})`,
+    `catalogue : 7 données nommées, avec vignette, lien de la fiche et étiquette producteur « organization=INRAE%20-%20Info%26Sols » (${entries.length}, ${entries[0]?.producer})`,
+  );
+  const producerText = (await page.locator('.catalog-layer-producer').first().innerText()).trim();
+  check(
+    producerText === 'INRAE - Info&Sols',
+    `catalogue : producteur affiché « INRAE - Info&Sols » (${producerText})`,
   );
   const axe = await new AxeBuilder({ page }).analyze();
   check(
@@ -901,11 +906,21 @@ const TOOL_BUTTONS = [
         : ''
     }`,
   );
+  const visibleEntries = () =>
+    page
+      .locator('[data-layeritem]')
+      .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  // The search reads the raw texts (not the escaped display strings): « Info&Sols » matches all.
+  await page.locator('#catalog-input-search-global').fill('Info&Sols');
+  await page.waitForTimeout(700);
+  const byProducer = await visibleEntries();
+  check(
+    byProducer === 7,
+    `catalogue : la recherche « Info&Sols » garde les 7 données (${byProducer})`,
+  );
   await page.locator('#catalog-input-search-global').fill('carbone');
   await page.waitForTimeout(700);
-  const visible = await page
-    .locator('[data-layeritem]')
-    .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  const visible = await visibleEntries();
   check(visible === 1, `catalogue : la recherche « carbone » ne laisse qu’une donnée (${visible})`);
   await page.locator(CARBONE_ENTRY).focus();
   await page.keyboard.press('Space');

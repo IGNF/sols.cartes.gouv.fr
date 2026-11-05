@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml } from './escapeHtml';
+import { escapeHtml, unescapeHtml } from './escapeHtml';
 
 describe('escapeHtml', () => {
   it('neutralise le balisage et les guillemets', () => {
@@ -8,5 +8,17 @@ describe('escapeHtml', () => {
     );
     expect(escapeHtml("l'humus")).toBe('l&#39;humus');
     expect(escapeHtml('INRAE - Info&Sols')).toBe('INRAE - Info&amp;Sols');
+  });
+
+  it('se renverse exactement (unescapeHtml), y compris pour un « &amp; » littéral', () => {
+    for (const text of [
+      'INRAE - Info&Sols',
+      'l\'humus < 2 % & "argile"',
+      'un &amp; litteral',
+      '',
+    ]) {
+      expect(unescapeHtml(escapeHtml(text))).toBe(text);
+    }
+    expect(unescapeHtml('INRAE - Info&amp;Sols')).toBe('INRAE - Info&Sols');
   });
 });

@@ -353,7 +353,8 @@ export const CATALOG_OPTIONS = {
   search: {
     display: true,
     label: 'Rechercher une donnée',
-    criteria: ['title', 'description', 'producer', 'name'],
+    // Raw title, abstract and producer (`search` in catalogConfig.ts), then the layer name.
+    criteria: ['search', 'name'],
   },
   categories: CATALOG_CATEGORIES,
 } satisfies CatalogOptions & ControlPlacement;

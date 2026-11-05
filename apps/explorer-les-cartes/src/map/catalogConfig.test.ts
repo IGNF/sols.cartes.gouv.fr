@@ -49,6 +49,7 @@ describe('buildCatalogData', () => {
       title: 'Titre a',
       description: 'Résumé a',
       producer: ['INRAE - Info&amp;Sols'],
+      search: ['Titre a', 'Résumé a', 'INRAE - Info&Sols'],
       thumbnail: 'https://data.geopf.fr/annexes/gissol-osf/thumbnail/a.png',
       serviceParams: { id: 'OGC:WMTS' },
       metadata_urls: ['/rechercher-une-donnee/dataset/a'],
@@ -69,6 +70,12 @@ describe('buildCatalogData', () => {
     expect(entry?.description).toBe('Argile &amp; &quot;limon&quot;');
     expect(entry?.producer).toEqual(['l&#39;INRAE']);
     expect(entry?.name).toBe('X');
+    // The search criteria read the raw texts (CATALOG_OPTIONS.search.criteria).
+    expect(entry?.search).toEqual([
+      'Teneurs < 2 % <script>alert(1)</script>',
+      'Argile & "limon"',
+      "l'INRAE",
+    ]);
   });
 
   it('couvre les sept fiches réelles, toutes affichables, avec leur vignette', () => {
@@ -79,6 +86,12 @@ describe('buildCatalogData', () => {
     ).toBe(true);
     expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.title).toMatch(
       /stocks de carbone/,
+    );
+    expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.producer).toEqual([
+      'INRAE - Info&amp;Sols',
+    ]);
+    expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.search[2]).toBe(
+      'INRAE - Info&Sols',
     );
   });
 });

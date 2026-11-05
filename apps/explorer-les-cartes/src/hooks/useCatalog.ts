@@ -11,6 +11,7 @@ import {
   syncCatalogTicks,
 } from '../map/catalogConfig';
 import { loadCatalog, type CatalogControl } from '../map/geopf';
+import { unescapeHtml } from '../text/escapeHtml';
 import { controlElement, labelToggleButton } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 import { watchToolButtons } from '../map/labelToolButtons';
@@ -45,12 +46,17 @@ const patchedPrototypes = new WeakSet<object>();
 /**
  * Points the producer tags to our catalogue rather than to cartes.gouv.fr. The tags are built while the
  * control loads its configuration, in the constructor: the method is replaced on the prototype, once.
+ * The names come HTML-escaped from the configuration (they go into the template as is); the URL is
+ * built from the raw name.
  */
 export function patchProducerLinks(Catalog: CatalogClass): void {
   const prototype = Catalog.prototype as unknown as ProducerLinksPrototype;
   if (patchedPrototypes.has(prototype)) return;
   prototype.createCatalogProducerLinks = (producers) =>
-    producers?.map((name) => ({ name, url: catalogueSearchByOrganisationPath(name) })) ?? null;
+    producers?.map((name) => ({
+      name,
+      url: catalogueSearchByOrganisationPath(unescapeHtml(name)),
+    })) ?? null;
   patchedPrototypes.add(prototype);
 }
 

@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LIST_VIEW_PATH } from '../../config/urls';
 import type { OverlayRef } from '../../map/overlays';
@@ -48,6 +49,20 @@ describe('MapNotices', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
     act(() => useMapStore.getState().removeOverlay('wms-vector:rrp'));
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('peut être masqué, et revient si la couche est retirée puis remise', async () => {
+    const user = userEvent.setup();
+    const rrp = overlay('wms-vector:rrp', 'RRP du Loiret');
+    useMapStore.setState({ overlays: [rrp], unavailableOverlays: ['wms-vector:rrp'] });
+    const { container } = render(<MapNotices />);
+    await user.click(screen.getByRole('button', { name: /Masquer le message/ }));
+    expect(container).toBeEmptyDOMElement();
+    act(() => useMapStore.getState().removeOverlay('wms-vector:rrp'));
+    // Added again: the store gets a new overlay object (toOverlayRef), as from the catalogue or a link.
+    act(() => useMapStore.getState().addOverlay(overlay('wms-vector:rrp', 'RRP du Loiret')));
+    act(() => useMapStore.getState().markOverlayUnavailable('wms-vector:rrp'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Couche indisponible');
   });
 
   it('renvoie vers la version accessible de la liste quand le catalogue n’a pas pu être chargé', () => {

@@ -21,6 +21,8 @@ export function catalogServiceType(service: SolsService): 'WMS' | 'WMTS' | null 
 
 /** One layer of the configuration object the Catalog control reads (`configuration.data.layers[key]`). */
 export interface CatalogLayerConfig {
+  /** Raw title, abstract and producer: what the control's search matches (the display fields are escaped). */
+  search: string[];
   name: string;
   title: string;
   description: string;
@@ -44,7 +46,8 @@ export function catalogLayerKey(name: string, serviceType: 'WMS' | 'WMTS'): stri
  * Builds the Catalog configuration from the GIS Sol datasets: one entry per dataset, for its preferred
  * displayable layer (same choice as the deep links), with the record's title, abstract, producer,
  * thumbnail and the link to its page in our catalogue. Datasets without a drawable layer are left out
- * (they stay in the list view). Texts are HTML-escaped: the control builds its entries with `innerHTML`.
+ * (they stay in the list view). Display texts are HTML-escaped (the control builds its entries with
+ * `innerHTML`); the search reads the raw texts from `search` (CATALOG_OPTIONS.search.criteria).
  */
 export function buildCatalogData(datasets: readonly SolsDataset[]): CatalogData {
   const layers: Record<string, CatalogLayerConfig> = {};
@@ -57,6 +60,7 @@ export function buildCatalogData(datasets: readonly SolsDataset[]): CatalogData 
       title: escapeHtml(dataset.title),
       description: escapeHtml(dataset.abstract),
       producer: [escapeHtml(dataset.organisation)],
+      search: [dataset.title, dataset.abstract, dataset.organisation],
       ...(dataset.thumbnail ? { thumbnail: dataset.thumbnail } : {}),
       serviceParams: { id: `OGC:${serviceType}` },
       metadata_urls: [catalogueRecordPath(dataset.id)],

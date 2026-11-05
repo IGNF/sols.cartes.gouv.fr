@@ -82,21 +82,26 @@ describe('createCatalog', () => {
     expect(catalog?.element).toHaveClass(CATALOG_CLASS);
   });
 
-  it('relie les étiquettes de producteur à notre catalogue', () => {
+  it('relie les étiquettes de producteur à notre catalogue, URL construite sur le nom brut', () => {
     const control = createCatalog(geopf.FakeCatalog as unknown as CatalogClass, vi.fn(), vi.fn());
-    const links = (
+    const producerLinks = (
       control as unknown as {
         createCatalogProducerLinks: (
           p: string[] | null,
         ) => Array<{ name: string; url: string }> | null;
       }
-    ).createCatalogProducerLinks(['INRAE - Info&Sols']);
-    expect(links).toEqual([
+    ).createCatalogProducerLinks;
+    // The control hands over the escaped producer of the configuration (it goes into innerHTML).
+    expect(producerLinks(['INRAE - Info&amp;Sols'])).toEqual([
       {
-        name: 'INRAE - Info&Sols',
+        name: 'INRAE - Info&amp;Sols',
         url: '/rechercher-une-donnee/search?organization=INRAE%20-%20Info%26Sols',
       },
     ]);
+    expect(producerLinks(['INRAE - Info&Sols'])?.[0]?.url).toBe(
+      '/rechercher-une-donnee/search?organization=INRAE%20-%20Info%26Sols',
+    );
+    expect(producerLinks(null)).toBeNull();
   });
 
   it('ne patche le prototype qu’une fois', () => {
