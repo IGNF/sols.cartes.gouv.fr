@@ -9,8 +9,10 @@ import {
   buildLayout,
   duplicateToolLinks,
   extractBlock,
+  extractHeaderScript,
   extractSharedCss,
   innerOfDiv,
+  readHeaderScript,
   readLayout,
   readSharedCss,
   rewriteAssetPaths,
@@ -180,4 +182,20 @@ test('patch 0007 turns keyword presets into toggle chips (C11)', () => {
   assert.match(patch, /aria-label="Mots-clés suggérés"/)
   const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
   assert.match(css, /\.badge-btn\[aria-pressed='true'\]/)
+})
+
+test('extractHeaderScript reads the E9 js block and fails loudly without it (C12)', () => {
+  const md = "**Échap dans le menu mobile (E9)** : texte\n\n```js\ndocument.addEventListener('keydown', () => {});\n```\n"
+  assert.equal(extractHeaderScript(md), "document.addEventListener('keydown', () => {});")
+  assert.throws(() => extractHeaderScript('nothing'), /no js block/)
+  assert.throws(() => extractHeaderScript('**Échap dans le menu mobile**\n```js\nfoo()\n```'), /looks wrong/)
+})
+
+test('the generated header script matches apps/accueil/src/js/header.js (C12)', () => {
+  const generated = readHeaderScript()
+  const edito = readFileSync(join(APP_DIR, '..', 'accueil', 'src', 'js', 'header.js'), 'utf8')
+  const code = edito.slice(edito.indexOf('document.addEventListener')).trim()
+  assert.ok(generated.includes(code))
+  const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(patch, /\+\s*<script type="module" src="assets\/sols\/header.js"><\/script>/)
 })
