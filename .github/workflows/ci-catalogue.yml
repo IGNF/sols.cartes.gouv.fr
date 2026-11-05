@@ -5,11 +5,13 @@ on:
     branches: [main]
     paths:
       - 'apps/rechercher-une-donnee/**'
+      - 'doc/agents/edito.md'
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
   pull_request:
     paths:
       - 'apps/rechercher-une-donnee/**'
+      - 'doc/agents/edito.md'
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
 
