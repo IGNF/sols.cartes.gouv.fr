@@ -8,6 +8,7 @@ import { DOMParser } from '@xmldom/xmldom';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
+  exceptionReportText,
   indexTmsTileMaps,
   indexWfsFeatureTypes,
   indexWmsLayers,
@@ -19,6 +20,7 @@ import type { SolsService } from '../src/data/solsLayersSchema';
 import { buildCapabilitiesUrl, GPF_ENDPOINTS, SOLS_CSW_GETRECORDS_URL } from '../src/config/urls';
 import { parseCswRecords } from './sols-layers/csw';
 import {
+  assertCompleteInputs,
   buildSolsLayersFile,
   summarise,
   type CapabilitiesByService,
@@ -56,26 +58,37 @@ const CAPABILITIES: Record<
   tms: { url: GPF_ENDPOINTS.tms, index: indexTmsTileMaps },
 };
 
+/** Per-request timeout: the WMTS capabilities weigh about 3 MB. */
+const FETCH_TIMEOUT_MS = 60_000;
+
 async function fetchText(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`HTTP ${response.status} pour ${url}`);
   return response.text();
 }
 
-const parse = (xml: string) =>
-  new DOMParser().parseFromString(xml, 'text/xml') as unknown as XmlDocument;
+/** Parses a capabilities document; an OGC exception body (sent with HTTP 200) is an error. */
+function parseCapabilities(xml: string, url: string): XmlDocument {
+  const doc = new DOMParser().parseFromString(xml, 'text/xml') as unknown as XmlDocument;
+  const exception = exceptionReportText(doc);
+  if (exception) throw new Error(`Exception OGC pour ${url} : ${exception}`);
+  return doc;
+}
 
 const records = parseCswRecords(await fetchText(SOLS_CSW_GETRECORDS_URL));
 const entries = await Promise.all(
   Object.entries(CAPABILITIES).map(async ([service, { url, index }]) => {
-    const capabilities = index(parse(await fetchText(url)));
+    const capabilities = index(parseCapabilities(await fetchText(url), url));
     process.stdout.write(`${service} : ${capabilities.size} noms publiés (${url})\n`);
     return [service, capabilities] as const;
   }),
 );
+const capabilitiesByService = Object.fromEntries(entries) as CapabilitiesByService;
+// Nothing is written unless every input is complete: never a partial sols-layers.json.
+assertCompleteInputs(records, capabilitiesByService);
 const file = buildSolsLayersFile(
   records,
-  Object.fromEntries(entries) as CapabilitiesByService,
+  capabilitiesByService,
   ENDPOINTS,
   SOLS_CSW_GETRECORDS_URL,
 );

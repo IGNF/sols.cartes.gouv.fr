@@ -3,6 +3,7 @@ import type { CapabilitiesIndex } from '../../src/data/capabilitiesIndex';
 import { isSolsLayersFile } from '../../src/data/solsLayersSchema';
 import type { CswRecord } from './csw';
 import {
+  assertCompleteInputs,
   buildSolsLayersFile,
   serviceForLink,
   summarise,
@@ -132,5 +133,32 @@ describe('buildSolsLayersFile', () => {
     const text = summarise(file);
     expect(text).toContain('2 fiches');
     expect(text).toContain('✗ OGC:WMTS COUCHE_WMTS_INEXISTANTE (absent des capacités WMTS)');
+  });
+});
+
+describe('assertCompleteInputs (jamais de fichier partiel)', () => {
+  const complete = [record('a', 'Abeille', [])];
+
+  it('accepte des fiches complètes et des capacités non vides', () => {
+    expect(() => assertCompleteInputs(complete, capabilities)).not.toThrow();
+  });
+
+  it('refuse un CSW sans fiche', () => {
+    expect(() => assertCompleteInputs([], capabilities)).toThrow(/aucune fiche/);
+  });
+
+  it('refuse une fiche sans identifiant ou sans titre', () => {
+    expect(() => assertCompleteInputs([record('', 'Sans identifiant', [])], capabilities)).toThrow(
+      /n° 1 n’a pas d’identifiant/,
+    );
+    expect(() => assertCompleteInputs([record('id-1', '', [])], capabilities)).toThrow(
+      /la fiche id-1 n’a pas de titre/,
+    );
+  });
+
+  it('refuse des capacités vides (exception ou réponse tronquée)', () => {
+    expect(() =>
+      assertCompleteInputs(complete, { ...capabilities, 'wms-vector': new Map() }),
+    ).toThrow(/les capacités wms-vector ne listent aucune couche/);
   });
 });
