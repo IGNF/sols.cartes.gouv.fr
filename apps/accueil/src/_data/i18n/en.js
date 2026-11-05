@@ -131,51 +131,156 @@ export default {
   },
   accueil: {
     hero: {
-      overline: 'Access portal to soil data',
-      title: 'Soil observatory',
+      overline: 'The access portal to soil data for territories',
+      title: 'All the knowledge on French soils gathered in one place',
       intro:
-        'The soil observatory gathers in a single entry point the GIS Sol soil data served by the Géoplateforme (placeholder text).',
+        'Sixty years of soil data collected across France. The Soil observatory of France lets you find them and use them in your studies and territorial decisions (placeholder text).',
       actions: {
         rechercherUneDonnee: 'Find data (in French)',
         explorerLesCartes: 'Explore maps (in French)',
+      },
+      figuresLabel: 'Key figures',
+      figures: {
+        annees: { value: '60 years', label: 'of collected data' },
+        referentiels: { value: '12+', label: 'National reference datasets' },
+        publiques: { value: '100%', label: 'Public data' },
       },
     },
     service: {
       overline: 'The service',
       title: 'Find, understand and use soil data',
-      intro: 'Short presentation of the service (placeholder text).',
-      items: {
-        trouver: { title: 'Find data', desc: 'Short description (placeholder text).' },
-        comprendre: { title: 'Understand data', desc: 'Short description (placeholder text).' },
-        utiliser: { title: 'Use data', desc: 'Short description (placeholder text).' },
+      intro:
+        'Soil data is scattered among many organisations and hard to use. The Observatory helps you find, understand and use it (placeholder text).',
+      frieze: {
+        without: {
+          title: 'Without the Soil observatory of France',
+          items: [
+            'Data scattered between BRGM, INRAE, IGN, ADEME…',
+            'Heterogeneous formats, incomplete metadata',
+            'No way to know which data to use',
+            'Long collection time before each study',
+          ],
+        },
+        with: {
+          title: 'With the Soil observatory of France',
+          items: [
+            'A single access point, all sources in one place',
+            'Quality, source and scale documented for each dataset',
+            'Data exportable to your GIS tools',
+            'Immediate time savings on data collection',
+          ],
+        },
       },
+      items: {
+        trouver: {
+          title: 'Find relevant data',
+          desc: 'Immediately locate the relevant data available for your study area without multiplying sources, contacts or platforms (placeholder text).',
+        },
+        comprendre: {
+          title: 'Understand data reliability',
+          desc: 'See the source, scale and quality of each reference dataset and assess its reliability before using it (placeholder text).',
+        },
+        utiliser: {
+          title: 'Use data in your tools',
+          desc: 'Export data to your GIS and business software, in formats compatible with your work environment (placeholder text).',
+        },
+      },
+    },
+    usages: {
+      overline: 'Use cases',
+      title: 'A portal designed for your professional uses',
+      intro:
+        'These use cases show how the Soil observatory of France can fit into your practice. If you work with soil data, the portal is for you (placeholder text).',
+      profile: 'Profile',
+      items: {
+        chambres: {
+          title: 'Chambers of agriculture',
+          lead: 'Use soil data to strengthen agricultural advice and objectify field diagnoses (placeholder text).',
+          points: [
+            'An advisor analyses a field, identifies soil characteristics and makes a documented recommendation.',
+            'A technician prepares a diagnosis with all the data from a single point, saving collection time.',
+            'Field support relies on sourced data to make exchanges with farmers more credible.',
+          ],
+        },
+        bureaux: {
+          title: 'Consultancies',
+          lead: 'Quickly access soil data to make environmental, planning, regulatory and wetland studies more reliable (placeholder text).',
+          points: [
+            'A consultancy carries out an impact study, identifies soil constraints and secures its analysis.',
+            'A project officer prepares a file with the right data from a single point, saving collection time.',
+            'A development project relies on reliable data to improve the preliminary diagnosis.',
+          ],
+        },
+        collectivites: {
+          title: 'Local authorities',
+          lead: 'Include soil issues in planning policies and strategic territorial decisions (placeholder text).',
+          points: [
+            'Identify areas with environmental, agronomic and biodiversity stakes to guide decisions',
+            'Support public policies with reliable, sourced soil data',
+            'Include soil constraints in planning documents (PLU, SCOT, SRADDET)',
+          ],
+        },
+      },
+      note: 'These examples are deliberately targeted. If you use soil data for other purposes, the portal can be useful to you too (placeholder text).',
     },
     donnees: {
       overline: 'Available data',
-      title: 'Soil datasets',
-      intro: 'Short presentation of the available data (placeholder text).',
+      title: 'Access structured and documented reference datasets',
+      intro:
+        'Access a set of national reference datasets organised by use. Some can be viewed on the map portal, all are referenced and documented (placeholder text).',
+      tagsLabel: 'Reference datasets',
+      usageLabel: 'Use:',
       items: {
         referentiels: {
           title: 'Territorial reference data',
-          desc: 'Short description (placeholder text).',
+          usage: 'territorial diagnosis, impact study, analysis of soil constraints.',
         },
-        agricoles: { title: 'Agricultural data', desc: 'Short description (placeholder text).' },
+        agricoles: {
+          title: 'Agricultural data',
+          usage: 'agronomic recommendations, fertility management, adapted farming practices.',
+        },
         environnement: {
-          title: 'Environment and research',
-          desc: 'Short description (placeholder text).',
+          title: 'Environment & research',
+          usage: 'carbon assessment, pollution, environmental studies, scientific research.',
         },
       },
-      allLabel: 'See all data (in French)',
+      banner: {
+        title: 'All these datasets are referenced on the Soil observatory of France portal',
+        text: 'Some can be viewed directly on the map interface, others are referenced with a link to their original source (placeholder text).',
+        button: 'Go to the portal (in French)',
+      },
+    },
+    agenda: {
+      overline: 'Agenda',
+      title: 'Upcoming Observatory events',
+      intro:
+        'Webinars, workshops, events… Let’s talk about soil data and its uses (placeholder text).',
+      listLabel: 'Upcoming events',
+      previous: 'Previous events',
+      next: 'Next events',
+      empty: 'No event is scheduled at the moment. Come back soon.',
+      types: { webinaire: 'Webinar', evenement: 'Event', salon: 'Trade fair' },
+      actions: { inscrire: 'Register', participer: 'Take part' },
+      placeLabel: 'Place:',
     },
     articles: {
       overline: 'Articles',
       title: 'Latest articles',
       allLabel: 'See all articles',
     },
-    gissol: {
-      title: 'The GIS Sol',
-      text: 'Short presentation of the GIS Sol scientific interest group (placeholder text).',
-      label: 'GIS Sol website',
+    partners: {
+      overline: 'Partners & sponsors',
+      title: 'A service led by INRAE with the public ecosystem',
+      intro:
+        'The Soil observatory of France relies on a network of public and scientific organisations to make French soil data easier to access, understand and use (placeholder text).',
+      networkOverline: 'Scientific, technical and environmental partners',
+      networkTitle: 'Network members',
+      gissolLink: 'GIS Sol website',
+      callout: {
+        title: 'Do you produce soil data and want it referenced?',
+        text: 'The Soil observatory of France aims to bring together soil data from public and scientific organisations. Contact us to submit your data to the catalogue (placeholder text).',
+        button: 'Submit data',
+      },
     },
   },
 };

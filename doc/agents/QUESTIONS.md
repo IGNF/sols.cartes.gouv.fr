@@ -161,3 +161,8 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Options : (a) masquer le bouton dans le catalogue, catalogue toujours clair ; (b) feuille de surcharge des couleurs amont pour le sombre (travail important, à maintenir à chaque montée de version) ; (c) laisser le bouton sans effet.
 - Défaut appliqué : (a). Détails : `doc/agents/geonetwork-ui.md` §15.
 
+## E-4. Accueil v1 : agenda, étiquettes de données, illustrations (edito, E8)
+
+- Agenda : les six événements de la maquette sont repris en 2026 avec des liens d'inscription provisoires vers `/fr/aide/#contact` ; les événements passés sont masqués au build (reconstruction nécessaire pour les retirer). Question : où publier les vrais liens d'inscription, et qui tient `apps/accueil/src/_data/agenda.json` à jour ?
+- Étiquettes « Données disponibles » (RPG, BDAT…) : non cliquables. Options : (a) en rester là ; (b) les lier à une recherche du catalogue (`/rechercher-une-donnee/search?q=…`) une fois les mots-clés du périmètre sols stabilisés (C9). Défaut : (a).
+- Illustrations : `cas-usage-2.jpg` représente une mairie (collectivités) et `cas-usage-3.jpg` un bureau (bureaux d'études), l'inverse de `packages/brand/README.md`. L'accueil utilise la correspondance visuelle ; corriger le README (ou renommer les fichiers) côté racine.

@@ -86,15 +86,38 @@ apps/accueil/
 
 Une nouvelle langue : l'ajouter à `site.languages`, créer `src/_data/i18n/<code>.js` et `src/<code>/`.
 
-## Accueil
+## Accueil (v1)
 
-Ordre des sections repris de la maquette Figma (frame « 1440w light », nœud 8:4414), en composants DSFR :
-héros (surtitre, `h1`, introduction, boutons « Rechercher une donnée » et « Explorer les cartes »), « Le service »
-(trois tuiles non cliquables avec pictogramme), « Données disponibles » (trois cartes vers le catalogue et un lien
-« Voir toutes les données », titres à valider : QUESTIONS E-1), « Derniers articles », encadré `fr-callout` vers le
-site du GIS Sol. Écarts volontaires : pas de chiffres ni d'affirmations de la maquette, pas d'agenda, de partenaires,
-de « Se connecter », « Aide », « Services », ni de capture d'application ; pied de page DSFR au lieu du bloc sombre
-(QUESTIONS Q7).
+Contenu repris de la maquette Figma (frame « 1440w light », nœud 8:4414 ; textes extraits par l'orchestrateur), en
+composants DSFR, dans `layouts/accueil.njk`. Textes français dans `src/_data/i18n/fr.js` (`accueil`), anglais
+provisoire dans `en.js` ; structure (clés, liens, icônes, pictogrammes, illustrations, étiquettes) dans
+`src/_data/accueil.js` ; événements dans `src/_data/agenda.json`.
+
+1. Héros : surtitre, `h1`, introduction, boutons réels « Rechercher une donnée » / « Explorer les cartes » (au lieu des
+   boutons de lancement, G-3), trois chiffres clés (liste). Pas de capture d'application.
+2. « Le service » : frise « Sans / Avec » (deux `h3` + listes, icônes DSFR décoratives `fr-icon-close-line` /
+   `fr-icon-check-line`), trois tuiles à pictogramme. Pas de vidéo.
+3. « Cas d'usage » : trois cartes avec illustration de `@sols/brand` (`alt=""`, décoratives : le titre porte
+   l'information), badge « Profil », phrase d'accroche, trois puces, note de bas de section. Correspondance vérifiée
+   à l'œil : `cas-usage-1` = chambres d'agriculture, `cas-usage-2` = collectivités (mairie),
+   `cas-usage-3` = bureaux d'études (bureau) ; le README de `@sols/brand` inverse 2 et 3 (QUESTIONS E-4).
+4. « Données disponibles » : trois cartes non cliquables (icône, titre, étiquettes DSFR `fr-tag` non cliquables,
+   ligne « Usage : »), bandeau bleu (jetons `--background-action-high-blue-france` / `--text-inverted-blue-france`)
+   avec « Accéder au portail » vers le catalogue.
+5. « Agenda » : cartes d'événements dans un carrousel. La liste défile horizontalement (`overflow-x`, scroll-snap) dans
+   une `section` nommée et focusable : sans JS, elle défile à la souris, au doigt et au clavier. `src/js/carousel.js`
+   (module, ~30 lignes) affiche les boutons « précédent / suivant » (cachés par défaut, `hidden`), les désactive aux
+   extrémités et fait défiler d'environ une largeur. Événements passés masqués **au build** (filtre `upcoming`, date du
+   build en UTC) : le site doit être reconstruit pour retirer un événement passé ; phrase de repli si aucun.
+   Un événement sans `href` dans `agenda.json` renvoie vers `accueil.agenda.defaultHref` (provisoire :
+   `/<langue>/aide/#contact`, E-4).
+6. « Derniers articles » (articles du site, conservés).
+7. « Partenaires & sponsors » : titre et introduction, « Acteurs du réseau » avec les logos disponibles (IGN, INRAE,
+   GIS Sol), lien « Site du GIS Sol », encadré vert « Vous produisez des données… » avec « Soumettre des données »
+   vers `#contact`. La rangée « Sponsors » de la maquette (vide) n'est pas reprise.
+
+Bandes de couleur : jetons DSFR `--background-alt-blue-france` (héros), `--background-alt-beige-gris-galet` (cas
+d'usage, partenaires), `--background-alt-green-emeraude` (agenda). Non repris : CTA de lancement (G-3), vidéo.
 
 Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Centre d'aide `/<langue>/aide/`
 (`layouts/aide.njk`, `i18n.pages.aide`) : introduction, trois accordéons DSFR (FAQ provisoire), section « Nous
@@ -148,7 +171,8 @@ par catégorie (~40 ko chacune), le build extrait la règle de chaque icône lis
 `DSFR_ICONS`. Les classes utilitaires de couleur de fond (`fr-background-*`) ne sont pas dans `dsfr.min.css` :
 utiliser les jetons (`var(--background-alt-blue-france)`) dans `site.css`.
 
-JS : le bundle DSFR est chargé pour les composants interactifs (menu mobile de l'en-tête en modale, menus « Aide » /
+JS : en plus du carrousel de l'agenda (`/js/carousel.js`, accueil seulement), le bundle DSFR est chargé pour les
+composants interactifs (menu mobile de l'en-tête en modale, menus « Aide » /
 « Services », sélecteur de langue, fil d'Ariane repliable, accordéons de l'aide, paramètres d'affichage et schéma
 clair / sombre `data-fr-scheme="system"`). Aucun autre JS client ; les pages
 de renvoi n'en chargent aucun.

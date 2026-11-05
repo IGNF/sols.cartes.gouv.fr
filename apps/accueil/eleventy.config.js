@@ -14,8 +14,16 @@ const BRAND_DIR = dirname(require.resolve('@sols/brand/brand.json'));
 const CACHE_DIR = join(import.meta.dirname, 'node_modules', '.cache', 'sols-accueil');
 
 /** DSFR utility icons used by the site; only their rules and SVGs are published (/dsfr/icons.css). */
+/** DSFR utility icons of the home page (frieze, data cards, agenda). */
+const HOME_ICONS = [
+  accueil.frieze.without.icon,
+  accueil.frieze.with.icon,
+  accueil.frieze.arrow,
+  ...accueil.donnees.items.map((item) => item.icon),
+  ...Object.values(accueil.agenda.icons),
+];
 const DSFR_ICONS = [
-  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill']),
+  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill', ...HOME_ICONS]),
 ];
 
 /** DSFR stylesheets served by the site; every file they reference through url() is copied too. */
@@ -93,11 +101,14 @@ const DATE_FORMATS = Object.fromEntries(
     new Intl.DateTimeFormat(dateLocale, { dateStyle: 'long', timeZone: 'UTC' }),
   ]),
 );
+/** Build day (UTC, YYYY-MM-DD): agenda events before it are not published. */
+const BUILD_DAY = new Date().toISOString().slice(0, 10);
 const REFRESH = /<meta http-equiv="refresh" content="0; url=([^"]+)">/;
 
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
+  eleventyConfig.addPassthroughCopy({ 'src/js': 'js' });
   eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
   // Brand images are published unchanged from packages/brand/assets/.
   eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });
@@ -138,8 +149,28 @@ export default function (eleventyConfig) {
   eleventyConfig.addCollection(site.defaultLanguage, (collectionApi) =>
     collectionApi.getFilteredByGlob(`src/${site.defaultLanguage}/**/*.{njk,md}`),
   );
+  // Agenda: events of the build day and later, sorted by date and time.
+  eleventyConfig.addFilter('upcoming', (events) =>
+    events
+      .filter((event) => event.date >= BUILD_DAY)
+      .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),
+  );
+  eleventyConfig.addFilter('eventDay', (date) => date.slice(8, 10));
+  eleventyConfig.addFilter('eventMonth', (date, locale) =>
+    new Intl.DateTimeFormat(site.languages.find((l) => l.code === locale).dateLocale, {
+      month: 'short',
+      timeZone: 'UTC',
+    })
+      .format(new Date(`${date}T00:00:00Z`))
+      .replace('.', ''),
+  );
+  eleventyConfig.addFilter('eventTime', (time, locale) =>
+    locale === 'fr' ? time.replace(':', 'h') : time,
+  );
   eleventyConfig.addFilter('dateIso', (date) => date.toISOString().slice(0, 10));
-  eleventyConfig.addFilter('dateLong', (date, locale) => DATE_FORMATS[locale].format(date));
+  eleventyConfig.addFilter('dateLong', (date, locale) =>
+    DATE_FORMATS[locale].format(typeof date === 'string' ? new Date(`${date}T00:00:00Z`) : date),
+  );
 
   eleventyConfig.addLinter('seo-head', function (content) {
     if (!this.page.outputPath?.endsWith('.html')) return;
