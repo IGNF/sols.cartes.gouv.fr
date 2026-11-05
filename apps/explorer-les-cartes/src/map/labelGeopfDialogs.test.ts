@@ -27,6 +27,16 @@ describe('labelGeopfDialogs', () => {
     expect(list).toHaveAttribute('aria-label', GEOPF_DIALOG_LABELS['GPautoCompleteList']);
   });
 
+  it('nomme les fenêtres numérotées des formulaires de lieu (Route, Isocurve)', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div id="GPlocationAutoCompleteList_1-7" class="fr-modal"></div>';
+    labelGeopfDialogs(root);
+    expect(root.firstElementChild).toHaveAttribute(
+      'aria-label',
+      GEOPF_DIALOG_LABELS['GPlocationAutoCompleteList'],
+    );
+  });
+
   it('conserve un nom existant et ignore les fenêtres inconnues', () => {
     const root = document.createElement('div');
     root.innerHTML =

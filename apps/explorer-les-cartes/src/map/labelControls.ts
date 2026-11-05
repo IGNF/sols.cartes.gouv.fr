@@ -13,6 +13,14 @@ export function labelControlButtons(control: Control, label: string): void {
     .forEach((button) => button.setAttribute('aria-label', label));
 }
 
+/**
+ * Names the toggle button of a geopf widget (its first button, `GPshow…Picto`), e.g. the ControlList's
+ * "Afficher plus". The panel's own buttons ("Fermer le panneau") keep their names.
+ */
+export function labelToggleButton(root: HTMLElement, label: string): void {
+  root.querySelector('button')?.setAttribute('aria-label', label);
+}
+
 /** Gives the geopf search input an accessible name (it has no label). */
 export function labelSearchInput(root: HTMLElement): void {
   root
