@@ -1,0 +1,65 @@
+{
+  "comment": "Événements de la maquette Figma (8:4710), année 2026. Liens d'inscription provisoires vers la page de contact.",
+  "events": [
+    {
+      "date": "2026-11-03",
+      "time": "13:00",
+      "type": "webinaire",
+      "title": "Webinaire de présentation - Bureaux d'études - Débutants",
+      "summary": "« Données des sols dans votre workflow : ce que l'Observatoire change pour vos missions »",
+      "place": "En ligne",
+      "action": "inscrire",
+      "href": "/aide/#contact"
+    },
+    {
+      "date": "2026-11-06",
+      "time": "13:00",
+      "type": "webinaire",
+      "title": "Webinaire de présentation - Bureaux d'études - Experts en géomatique",
+      "summary": "« Utilisation experte des données sur les sols, à travers un cas d'usage d'étude d'impact »",
+      "place": "En ligne",
+      "action": "inscrire",
+      "href": "/aide/#contact"
+    },
+    {
+      "date": "2026-11-26",
+      "time": "13:00",
+      "type": "webinaire",
+      "title": "Webinaire de présentation - Chambres d'Agriculture - Débutants",
+      "summary": "« Données des sols dans votre workflow : ce que l'Observatoire change pour vos missions »",
+      "place": "En ligne",
+      "action": "inscrire",
+      "href": "/aide/#contact"
+    },
+    {
+      "date": "2026-11-30",
+      "time": "17:30",
+      "type": "evenement",
+      "title": "Hackathon Geodatalab",
+      "summary": "L'équipe de l'OSF participera au hackathon geodatalab à Orléans ! Cette année, environ 150 à 200 étudiants en géomatique et autres filières participantes travailleront sur des enjeux liés aux sols. Pendant 48h, en équipe ils travailleront sur la conception d'outils, de visualisations ou de services à partir des géodonnées sur les sols.",
+      "place": "Orléans",
+      "action": "participer",
+      "href": "/aide/#contact"
+    },
+    {
+      "date": "2026-12-03",
+      "time": "09:00",
+      "type": "salon",
+      "title": "Colloque International de la Chaire",
+      "summary": "L'équipe de l'OSF sera présente au Colloque international de la Chaire : « Penser et mettre en œuvre la transition foncière : vers un urbanisme des \"sols vivants\" ? »",
+      "place": "Cité de l'Architecture et du Patrimoine, Paris",
+      "action": "participer",
+      "href": "/aide/#contact"
+    },
+    {
+      "date": "2026-12-08",
+      "time": "13:00",
+      "type": "webinaire",
+      "title": "Webinaire de présentation - Chambres d'Agriculture - Experts en géomatique",
+      "summary": "« Utilisation experte des données des sols à travers un cas d'usage de diagnostic agronomique »",
+      "place": "En ligne",
+      "action": "inscrire",
+      "href": "/aide/#contact"
+    }
+  ]
+}

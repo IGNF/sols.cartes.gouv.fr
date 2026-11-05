@@ -37,7 +37,7 @@ export default {
     { code: 'en', label: 'English', dateLocale: 'en-GB' },
   ],
   themeColor: '#000091',
-  assets: { dsfr: '/dsfr', css: '/css', brand: BRAND_ASSETS },
+  assets: { dsfr: '/dsfr', css: '/css', js: '/js', brand: BRAND_ASSETS },
   sections,
   /** Paths served by the other bricks: never localized, never checked against the edito dist. */
   crossBrick: [sections.rechercherUneDonnee, sections.explorerLesCartes],
