@@ -1,0 +1,38 @@
+[
+  {
+    "id": "aria-tab-name",
+    "impact": "serious",
+    "nodes": 1,
+    "help": "ARIA tab nodes must have an accessible name",
+    "sample": [
+      "#mat-tab-group-0-label-0"
+    ]
+  },
+  {
+    "id": "button-name",
+    "impact": "critical",
+    "nodes": 7,
+    "help": "Buttons must have discernible text",
+    "sample": [
+      ".nav-hub-top > .bg-nav-bar-blured.z-\\[1002\\].text-slate-700 > .divide-slate-200.divide-x-2.mx-auto > .min-w-\\[60px\\].lg\\:pr-4.lg\\:justify-end > .z-50[data-cy=\"backButton\"][type=\"outline\"] > .gn-ui-btn-outline[type=\"button\"]"
+    ]
+  },
+  {
+    "id": "color-contrast",
+    "impact": "serious",
+    "nodes": 11,
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "sample": [
+      "textarea"
+    ]
+  },
+  {
+    "id": "label",
+    "impact": "critical",
+    "nodes": 5,
+    "help": "Form elements must have labels",
+    "sample": [
+      "textarea"
+    ]
+  }
+]

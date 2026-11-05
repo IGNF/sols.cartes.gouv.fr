@@ -6,8 +6,8 @@ export default defineConfig({
   testDir: './tests',
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  retries: 0,
-  workers: 2,
+  retries: 1,
+  workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: `http://localhost:${PORT}`,
