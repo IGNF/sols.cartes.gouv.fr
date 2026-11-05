@@ -29,6 +29,13 @@ describe('DeepLinkNotice', () => {
     status.current = { state: 'unsupported', name: 'style', type: 'TMS' };
     render(<DeepLinkNotice />);
     expect(screen.getByRole('status')).toHaveTextContent('Format non pris en charge');
+    expect(screen.getByRole('status')).toHaveTextContent('tuiles vectorielles');
+  });
+
+  it('nomme le service non affichable quand ce n’est pas du TMS', () => {
+    status.current = { state: 'unsupported', name: 'x', type: 'WFS' };
+    render(<DeepLinkNotice />);
+    expect(screen.getByRole('status')).toHaveTextContent('Le service WFS de la couche « x »');
   });
 
   it('annonce la couche ajoutée et la recherche en cours', () => {
@@ -61,5 +68,20 @@ describe('DeepLinkNotice', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Couche indisponible');
     expect(screen.getByRole('alert')).toHaveTextContent('ne renvoie pas d’image');
     useMapStore.setState(initialMapState);
+  });
+
+  it('nomme le style TMS reçu et donne le lien vers son fichier', () => {
+    status.current = {
+      state: 'unsupported',
+      name: 'style',
+      type: 'TMS',
+      style: 'abc_sols_gironde',
+    };
+    render(<DeepLinkNotice />);
+    expect(screen.getByRole('status')).toHaveTextContent('abc_sols_gironde');
+    expect(screen.getByRole('link', { name: 'fichier de style' })).toHaveAttribute(
+      'href',
+      'https://data.geopf.fr/annexes/gissol-osf/style/abc_sols_gironde.json',
+    );
   });
 });

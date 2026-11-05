@@ -6,8 +6,9 @@
  * the search engine never overlaps the zoom column, the attribution/rotate buttons and the search input
  * have accessible names, and no console error or warning is logged.
  * Sols layers (M4): a layer added from the "Données sols" tab with the keyboard is drawn (GetMap answered
- * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links add their layer
- * (WMS, and the Lambert-93 WMTS reprojected), or show "Couche introuvable" / "Format non pris en charge".
+ * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links (`l=` cartes.gouv.fr
+ * permalink, and the `layer/type/url` alias) add their layer or show the matching notice.
+ * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
  * Exits 1 on failure.
  */
 import { chromium } from 'playwright';
@@ -15,9 +16,13 @@ import { CONTROL_LABELS } from '../src/config/map';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
 
+/** Share of GPF tile (GetTile/GetMap) requests allowed to fail: intermittent GPF errors under load (M-2). */
+const TILE_ERROR_TOLERANCE = 0.1;
+
 /**
- * Console messages of a page, minus the "Failed to load resource" lines caused by GPF tiles that
- * failed once and loaded on the single retry (intermittent GPF errors, doc/agents/QUESTIONS.md M-2).
+ * Console messages of a page, minus the "Failed to load resource" lines caused by GPF tiles, as long as
+ * failed tiles stay within TILE_ERROR_TOLERANCE of the tile requests (doc/agents/QUESTIONS.md M-2, same
+ * tolerance as the e2e suite). Other messages always count.
  */
 function watchConsole(page: import('playwright').Page) {
   const messages: string[] = [];
@@ -32,21 +37,21 @@ function watchConsole(page: import('playwright').Page) {
   });
   return () => {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
-    const recovered = failed.filter(([, codes]) => codes.at(-1) === 200);
+    const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
     const unexplained = messages.filter((m) => !m.startsWith('Failed to load resource'));
     const loadErrors = messages.length - unexplained.length;
-    const notes = recovered.length
-      ? ` (${recovered.length} tuile(s) GPF en erreur puis rechargée(s))`
-      : '';
-    if (loadErrors > recovered.length) {
-      unexplained.push(
-        ...failed.filter(([, c]) => c.at(-1) !== 200).map(([u, c]) => `${c.join('→')} ${u}`),
-      );
-      if (unexplained.length === 0) unexplained.push(`${loadErrors} ressource(s) en erreur`);
+    const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
+    if (loadErrors > 0 && (!withinTolerance || failed.length === 0)) {
+      unexplained.push(...lost.map(([u, c]) => `${c.join('→')} ${u}`));
+      if (failed.length === 0) unexplained.push(`${loadErrors} ressource(s) en erreur hors tuiles`);
     }
+    const notes = failed.length
+      ? ` (${failed.length} tuile(s) GPF en erreur sur ${tiles.size}, dont ${lost.length} perdue(s), tolérance ${TILE_ERROR_TOLERANCE * 100} %)`
+      : '';
     return { messages: unexplained, notes };
   };
 }
+
 const browser = await chromium.launch();
 let failed = false;
 const check = (ok: boolean, message: string) => {
@@ -57,7 +62,7 @@ const check = (ok: boolean, message: string) => {
 for (const width of [375, 768, 1280]) {
   const page = await browser.newPage({ viewport: { width, height: 900 } });
   const consoleReport = watchConsole(page);
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'load' });
   await page.locator('[id^="GPsearchEngine-"]').waitFor();
 
   const zoomIn = page.locator('#GPzoomIn');
@@ -78,8 +83,13 @@ for (const width of [375, 768, 1280]) {
     overlap === 0,
     `${width}px : la recherche ne recouvre pas la colonne de zoom (${overlap} px)`,
   );
+  // The attribution control is hidden until a source has attributions (first tiles): check the name only.
   check(
-    (await page.getByRole('button', { name: CONTROL_LABELS.attribution }).count()) === 1,
+    await page
+      .getByRole('button', { name: CONTROL_LABELS.attribution, includeHidden: true })
+      .waitFor({ state: 'attached', timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false),
     `${width}px : bouton « ${CONTROL_LABELS.attribution} » nommé`,
   );
   check(
@@ -110,15 +120,18 @@ const switcherTitles = (page: import('playwright').Page) =>
     if (/REQUEST=GetMap/i.test(r.url()))
       images.push(`${r.status()} ${r.headers()['content-type']}`);
   });
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'load' });
   await page.getByRole('tab', { name: 'Données sols' }).click();
   const title =
     'Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO';
   const add = page.getByRole('button', { name: new RegExp(`^Ajouter à la carte\\s*: ${title}$`) });
   await add.focus();
+  const firstGetMap = page.waitForResponse((r) => /REQUEST=GetMap/i.test(r.url()), {
+    timeout: 30_000,
+  });
   await page.keyboard.press('Enter');
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1500);
+  await firstGetMap;
+  await page.waitForTimeout(3000);
   check(
     images.length > 0 && images.every((i) => i === '200 image/png'),
     `couche sols ajoutée au clavier : ${images.length} GetMap, toutes « 200 image/png »`,
@@ -130,36 +143,74 @@ const switcherTitles = (page: import('playwright').Page) =>
   await page.close();
 }
 
+// Deep-link outcomes may need a live capabilities request: poll instead of reading once.
+/** Waits until the element exists; `attached`, since the layer switcher list is collapsed (hidden). */
+const visible = (locator: import('playwright').Locator) =>
+  locator
+    .first()
+    .waitFor({ state: 'attached', timeout: 20_000 })
+    .then(() => true)
+    .catch(() => false);
+/** The deep-linked layer is listed in the layer switcher (independent of the base layer, which needs the WMTS capabilities). */
+const listed = (pattern: RegExp) => (page: import('playwright').Page) =>
+  visible(page.locator('[id^="GPtitle_ID_"]').filter({ hasText: pattern }));
+const alertWith = (text: string) => (page: import('playwright').Page) =>
+  visible(page.getByRole('alert').filter({ hasText: text }));
 const deepLinks: Array<[string, string, (page: import('playwright').Page) => Promise<boolean>]> = [
+  // Primary format: cartes.gouv.fr permalink, values emitted by the catalogue (C6).
   [
-    'lien WMS (couche du fichier généré)',
+    'lien l= WMS (stock_carbone_fao_fr_wmsv)',
+    '?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    listed(/stocks de carbone/i),
+  ],
+  [
+    'lien l= WMTS Lambert-93 (INRAE_CARTE-SOLS, reprojeté)',
+    '?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no',
+    listed(/sols dominants/i),
+  ],
+  [
+    'lien l= WMS INRAE_CARTE-SOLS (absent du fichier, trouvé sur wms-r)',
+    '?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    listed(/sol/i),
+  ],
+  [
+    'lien l= vers un nom absent des capacités',
+    '?l=INRAE_CARTE-SOLS_WMTS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no',
+    alertWith('Couche introuvable'),
+  ],
+  [
+    'lien l= TMS (style nommé, non pris en charge)',
+    '?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no',
+    (page) =>
+      visible(
+        page
+          .getByRole('status')
+          .filter({ hasText: 'c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde' }),
+      ),
+  ],
+  [
+    'lien l= WMS du RRP du Loiret (erreur serveur M-4)',
+    '?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    alertWith('Couche indisponible'),
+  ],
+  // Secondary alias: layer/type/url.
+  [
+    'alias layer/type/url WMS',
     '?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v',
-    async (page) => (await switcherTitles(page)).length === 2,
+    listed(/stocks de carbone/i),
   ],
   [
-    'lien WMTS Lambert-93 (INRAE_CARTE-SOLS, reprojeté)',
-    '?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts',
-    async (page) => (await switcherTitles(page)).length === 2,
-  ],
-  [
-    'lien vers un nom absent des capacités',
-    '?layer=INRAE_CARTE-SOLS_WMTS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts',
-    async (page) =>
-      (await page.getByRole('alert').filter({ hasText: 'Couche introuvable' }).count()) === 1,
-  ],
-  [
-    'lien TMS (style MapLibre)',
-    '?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json',
-    async (page) =>
-      (await page.getByRole('status').filter({ hasText: 'Format non pris en charge' }).count()) ===
-      1,
+    'alias vers un hôte refusé',
+    '?layer=x&type=WMS&url=https%3A%2F%2Fexemple.fr%2Fwms-v',
+    alertWith('Lien invalide'),
   ],
 ];
 for (const [label, query, assertion] of deepLinks) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleReport = watchConsole(page);
-  await page.goto(`${url}${query}`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  // `load` + a fixed wait: a slow GPF request must not block the check (no reliance on network idle).
+  await page.goto(`${url}${query}`, { waitUntil: 'load' });
+  await page.waitForTimeout(4000);
   check(await assertion(page), label);
   check(
     (await page.getByRole('tab', { name: 'Données sols' }).getAttribute('aria-selected')) ===
@@ -168,6 +219,84 @@ for (const [label, query, assertion] of deepLinks) {
   );
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `${label} : console vide${notes} ${messages.join(' | ')}`);
+  await page.close();
+}
+
+// Keyboard: tabs with arrows, add/remove with Enter/Space keeps focus, Escape closes the layer list.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  const focused = () =>
+    page.evaluate(() => {
+      const element = document.activeElement;
+      return `${element?.getAttribute('role') ?? element?.tagName}:${(element?.textContent ?? '').trim()}`;
+    });
+  await page.getByRole('tab', { name: 'Fonds de carte' }).focus();
+  await page.keyboard.press('ArrowRight');
+  check(
+    (await focused()) === 'tab:Données sols' &&
+      (await page.getByRole('heading', { level: 2, name: 'Données sols' }).count()) === 1,
+    'clavier : flèche droite sélectionne l’onglet « Données sols »',
+  );
+  const add = page.getByRole('button', {
+    name: /^Ajouter à la carte\s*: Carte nationale des stocks/,
+  });
+  await add.focus();
+  await page.keyboard.press('Enter');
+  check(
+    (await focused()).startsWith('BUTTON:Retirer de la carte'),
+    'clavier : Entrée ajoute la couche, le focus reste sur le bouton (« Retirer de la carte »)',
+  );
+  await page.keyboard.press(' ');
+  check(
+    (await focused()).startsWith('BUTTON:Ajouter à la carte'),
+    'clavier : Espace retire la couche, le focus reste sur le bouton (« Ajouter à la carte »)',
+  );
+  const toggle = page.getByRole('button', { name: 'Ma sélection de cartes' });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  check(
+    (await toggle.getAttribute('aria-pressed')) === 'false' &&
+      (await page.evaluate(() => document.activeElement?.id ?? '')).startsWith(
+        'GPshowLayersListPicto-',
+      ),
+    'clavier : Échap ferme la liste des couches et rend le focus à « Ma sélection de cartes »',
+  );
+  await page.close();
+}
+
+// Non-map alternative (?vue=liste): no map, every dataset, links to services and catalogue records.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  await page
+    .getByRole('link', { name: 'Version accessible de la liste des données' })
+    .first()
+    .click();
+  await page.waitForURL(/vue=liste/);
+  await page.waitForLoadState('load');
+  check(
+    new URL(page.url()).search === '?vue=liste',
+    'liste : lien « Version accessible » depuis la carte',
+  );
+  check(
+    (await page.getByRole('heading', { level: 1, name: 'Liste des données sols' }).count()) === 1,
+    'liste : titre de niveau 1',
+  );
+  check((await page.locator('canvas').count()) === 0, 'liste : aucune carte chargée');
+  check((await page.getByRole('article').count()) === 7, 'liste : 7 données');
+  check(
+    (await page.getByRole('link', { name: /^Fiche de la donnée dans le catalogue/ }).count()) === 7,
+    'liste : un lien vers la fiche du catalogue par donnée',
+  );
+  check(
+    (await page.getByRole('link', { name: /^point d’accès/ }).count()) >= 12,
+    'liste : un lien vers le point d’accès de chaque service validé',
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `liste : console vide${notes} ${messages.join(' | ')}`);
   await page.close();
 }
 

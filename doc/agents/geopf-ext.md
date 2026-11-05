@@ -244,24 +244,40 @@ bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --wri
   son ajout : le gestionnaire trie alors par zIndex (liste et dessin). Pas 0 (traité comme « sans zIndex ») ni négatif
   (`_updateLayersOrder` parcourt ses zIndex avec `for...in` : une clé négative passe après les positives, donc au-dessus).
 
-### 6.3 Lien profond « Voir sur la carte » (contrat C4, `geonetwork-ui.md` §10)
+### 6.3 Lien profond « Voir sur la carte »
 
-`/explorer-les-cartes/?layer=<nom>&type=<WMS|WMTS|TMS>&url=<point d'accès>` (`src/map/deepLink.ts`, `src/hooks/useDeepLink.ts`) :
+Lecture : `src/map/deepLink.ts` (`readDeepLink`), `src/hooks/useDeepLink.ts`. Deux formats, lus une fois au chargement.
 
-- `type` comparé en majuscules ; `layer` et `url` décodés avec tolérance (double encodage accepté) ; seuls les points d'accès
-  `https://data.geopf.fr` sont acceptés ; WMS sous ses deux formes (`/wms-v` sans chemin, `/wms-r/wms`).
-- Couche connue de `sols-layers.json` (service + nom) : ajoutée directement. Inconnue : vérifiée contre les capacités en direct
-  (WMTS déjà en cache, WMS wms-v ou wms-r par TanStack Query) et ajoutée si publiée. Sinon alerte DSFR « Couche introuvable »
-  nommant la couche (`role="alert"`, titre `h2`). Lien mal formé ou point d'accès hors `data.geopf.fr` : alerte distincte
-  « Lien invalide ». Couche ajoutée par lien mais dont le service ne renvoie pas d'image : alerte « Couche indisponible » dans
-  l'avis du lien (même détection que le panneau). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée
-  indisponible plutôt que laissée en attente.
-- `type=TMS` (le catalogue envoie `layer=style` et l'URL d'un style MapLibre JSON) : avis DSFR « Format non pris en charge »
-  (`role="status"`). Charger ce style demanderait `ol-mapbox-style` en dépendance directe (13.9, déjà présent via geopf-ext) et
+**Format principal (M5, décision C-3, tâche catalogue C6)** : le permalien de cartes.gouv.fr,
+`/explorer-les-cartes/?l=<nom>$GEOPORTAIL:<OGC|GPP>:<WMS|WMTS|TMS>(<position>;<opacité>;<visible>;<gris>[;<style>])&permalink=no`.
+Grammaire de `IGNF/cartes.gouv.fr-entree-carto` (`src/stores/mapStore.js`) ; plusieurs couches séparées par `,` ; rien n'est
+encodé, aucune URL de service n'est transmise. Valeurs émises par le catalogue (`geonetwork-ui.md` §10, C6) :
+
+- WMS : `?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`
+- WMTS : `?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no`
+- TMS : `?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no`
+
+Règles : type de service sans tenir compte de la casse ; décodage tolérant ; forme courte `(opacité;visible;gris)` des anciens
+permaliens acceptée ; opacité (bornée à 0..1) et visibilité appliquées à la couche ; position et niveaux de gris ignorés ;
+`permalink` ignoré ; **seule la première couche de `l` est suivie** (le catalogue n'en envoie qu'une). Résolution par nom et
+type : `sols-layers.json` d'abord, puis capacités en direct dans l'ordre **wms-r puis wms-v** pour WMS (`INRAE_CARTE-SOLS` est
+publié sur wms-r alors que le CSW indique wms-v) et `wmts` pour WMTS. TMS : `layer` vaut `style` et le cinquième champ est le
+nom du fichier `https://data.geopf.fr/annexes/gissol-osf/style/<champ>.json` (`solsStyleUrl`) ; avis « Format non pris en
+charge » qui nomme le style et lie le fichier.
+
+**Alias secondaire (C4)** : `?layer=<nom>&type=<WMS|WMTS|TMS>&url=<point d'accès>`, utilisé quand `l` est absent ou illisible.
+`type` en majuscules ; `layer` et `url` décodés avec tolérance ; seuls les points d'accès `https://data.geopf.fr` sont acceptés ;
+WMS sous ses deux formes (`/wms-v` sans chemin, `/wms-r/wms`) ; `type=TMS` (URL de style MapLibre) non pris en charge.
+
+Issue commune :
+
+- Couche ajoutée : onglet « Données sols » sélectionné dès le premier rendu (`initialTab` du store ; le script DSFR des onglets
+  lit l'onglet sélectionné à son initialisation et en gardait deux sélectionnés si on changeait d'onglet après coup).
+- « Couche introuvable » (`role="alert"`, titre `h2`) : nom absent de tous les services candidats. « Lien invalide » : lien mal
+  formé ou point d'accès hors `data.geopf.fr`. « Couche indisponible » : couche ajoutée dont le service ne renvoie pas d'image
+  (même détection que le panneau). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée indisponible.
+- Charger un style TMS demanderait `ol-mapbox-style` en dépendance directe (13.9, déjà présent via geopf-ext) et
   `MapboxVectorLayer({ styleUrl })` : styles de 217 couches sans `glyphs`, à valider ; reporté.
-- Un lien profond ouvre l'onglet « Données sols » dès le premier rendu (`initialTab` du store) : le script DSFR des onglets lit
-  l'onglet sélectionné à son initialisation et en gardait deux sélectionnés si on changeait d'onglet après coup.
-- `type=WFS` n'est jamais émis par le catalogue ; s'il arrive, il est traité comme non pris en charge.
 
 ### 6.4 Pièges
 
@@ -272,4 +288,63 @@ bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --wri
 - Une fois (sur une vingtaine de chargements), les capacités WMTS ont semblé ne contenir aucun fond candidat (alerte « Aucun fond de
   carte prévu »), non reproduit ensuite (6 chargements : 3 Mo, 745 couches). Probablement une réponse partielle de la GPF.
 - `bun run check:map` couvre aussi M4 (onglet « Données sols », ajout d'une couche au clavier avec GetMap `image/png`, liens profonds).
+
+## 7. Tests, clavier, alternative sans carte (M5, 2026-11-05)
+
+### 7.1 Tests et couverture
+
+- `bun run test` : Vitest + Testing Library (jsdom), OpenLayers et `../map/geopf` simulés là où il faut un rendu ou un réseau.
+- `bun run test:coverage` (`@vitest/coverage-v8` 5.1.0, configuration dans `vite.config.ts`, dossier `coverage/` ignoré par git).
+  Mesure du 2026-11-05 : instructions 97,0 %, branches 87,8 %, fonctions 99,0 %, lignes 98,6 % (`src/**` et `scripts/sols-layers/**`,
+  hors `main.tsx` et tests).
+- `bun run check:map` (Playwright, aperçu `PORT=8101 bun run preview:all`) : disposition et noms à 375/768/1280 px, couche sols au
+  clavier, liens `l=` et alias, clavier, vue liste (55 vérifications). Robustesse face à la GPF : attente de `load` puis
+  d'éléments précis (jamais `networkidle`), assertions des liens profonds par attente (jusqu'à 20 s, la vérification en direct des
+  capacités peut être lente), erreurs de tuiles GPF tolérées jusqu'à 10 % des requêtes de tuiles (comme la suite e2e, M-2) et
+  signalées en note ; toute autre erreur console fait échouer.
+- axe (`@axe-core/playwright` du dossier `e2e/`, balises wcag2a/aa, wcag21a/aa, wcag22aa, best-practice) : 0 violation sur la carte,
+  `?vue=liste`, les liens `l=` (WMS, WMTS introuvable, TMS, Loiret) et l'état « onglet Données sols, couche ajoutée, liste des
+  couches ouverte ».
+
+### 7.2 Accessibilité corrigée en M5
+
+- `label-content-name-mismatch` sur « Ma sélection de cartes » : le compteur du `LayerSwitcher` affichait « 1 » dans un bouton nommé
+  « Ma sélection de cartes ». Option `counter: false` (le nombre reste visible dans la liste ouverte).
+- `aria-prohibited-attr` sur les flèches clavier « Déplacer la couche vers le haut/bas » de la liste des couches (`<span>` focusables
+  avec `aria-label`, Entrée/Espace gérés par geopf) : `role="button"` posé par `watchLayerMoveArrows` (observateur de mutations).
+- Échap ferme la liste des couches (un `<dialog>` que geopf ne ferme pas au clavier) et rend le focus à « Ma sélection de cartes »
+  (`closeOnEscape` dans `useLayerSwitcher`). Le panneau latéral n'est pas une fenêtre modale : pas d'Échap.
+- Onglets : flèches gauche/droite (script DSFR, synchronisé avec le store). Ajout/retrait : Entrée ou Espace ; le focus reste sur le
+  même bouton dont le libellé s'inverse, l'action est annoncée (`role="status"`).
+- Noms accessibles : l'espace qui précède une partie `fr-sr-only` est hors du `<span>` (sinon « point d'accèsWMS… »).
+
+### 7.3 Alternative sans carte : `?vue=liste`
+
+- `/explorer-les-cartes/?vue=liste` (`LIST_VIEW_PATH`, `isListView`) : paramètre plutôt que chemin, pour fonctionner sur tout
+  hébergement statique sans réécriture d'URL ; la page ne charge pas le code de la carte (morceau `MapExplorer` non importé ;
+  `src/map/serviceLinks.ts` ne doit importer ni OpenLayers ni geopf).
+- Contenu : `h1` « Liste des données sols », titre du document mis à jour, lien « Retour à la carte », un `article` par donnée
+  (`h2` titre, extrait du résumé, producteur, `h3` « Services » : type, nom, lien direct vers le point d'accès — GetCapabilities
+  du service ou ressource TileMap TMS — et « voir sur la carte » pour les couches affichables), lien « Fiche de la donnée dans le
+  catalogue » (`/rechercher-une-donnee/dataset/<identifiant>`).
+- Liée depuis la page carte (sous le chapeau) et depuis l'onglet « Données sols » : « Version accessible de la liste des données ».
+
+### 7.4 Sélecteurs stables pour la suite e2e
+
+| Élément | Sélecteur conseillé |
+|---|---|
+| Carte | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas` |
+| Bouton du panneau latéral | `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`) |
+| Onglets | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })` |
+| Fond orthophotos | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut |
+| Ajouter une couche sols | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre ») |
+| Gestionnaire de couches | `getByRole('button', { name: 'Ma sélection de cartes' })` ; titres des couches `[id^="GPtitle_ID_"]` |
+| Lien profond qui fonctionne | `?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` (alias : `?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`) ; éviter `rrp_loiret_*` (M-4) |
+| Avis du lien | `getByRole('alert')` « Couche introuvable », « Lien invalide », « Couche indisponible » ; `getByRole('status')` « Format non pris en charge » |
+| Vue liste | `?vue=liste`, `getByRole('heading', { level: 1, name: 'Liste des données sols' })`, `getByRole('article')` (7) |
+| Lien vers la vue liste | `getByRole('link', { name: 'Version accessible de la liste des données' })` |
+| Recherche | `getByRole('textbox', { name: 'Rechercher un lieu ou une adresse' })` |
+| Contrôles | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée) |
+
+Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lente peut retarder l'inactivité réseau de plus de 30 s.
 

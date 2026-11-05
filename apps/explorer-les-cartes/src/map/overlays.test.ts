@@ -51,6 +51,13 @@ describe('createOverlayLayer', () => {
     expect(olLayer?.get('overlayKey')).toBe('wms-vector:rrp_loiret');
   });
 
+  it('applique l’opacité et la visibilité demandées', async () => {
+    const ref = { ...toOverlayRef(layer('wms-vector', 'x'), 'X'), opacity: 0.4, visible: false };
+    const olLayer = await createOverlayLayer(ref, undefined);
+    expect(olLayer?.getOpacity()).toBe(0.4);
+    expect(olLayer?.getVisible()).toBe(false);
+  });
+
   it('crée une couche WMTS en Web Mercator sans charger de projection', async () => {
     loadCrs.mockClear();
     const ref = toOverlayRef(layer('wmts', 'ORTHOIMAGERY.ORTHOPHOTOS'), 'Orthophotos');

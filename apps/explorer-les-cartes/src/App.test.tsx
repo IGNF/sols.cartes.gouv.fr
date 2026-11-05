@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
-import { SECTION_PATHS } from './config/urls';
+import { LIST_VIEW_PATH, SECTION_PATHS } from './config/urls';
 import App from './App';
 
 vi.mock('./components/map/MapExplorer', () => ({
@@ -65,5 +65,22 @@ describe('App', () => {
       'href',
       `#${FOOTER_ID}`,
     );
+  });
+
+  it('propose la version accessible de la liste des données depuis la page carte', async () => {
+    render(<App search="" />);
+    expect(
+      screen.getByRole('link', { name: 'Version accessible de la liste des données' }),
+    ).toHaveAttribute('href', LIST_VIEW_PATH);
+    expect(await screen.findByTestId('map-view')).toBeInTheDocument();
+  });
+
+  it('affiche la liste sans carte avec ?vue=liste', () => {
+    render(<App search="?vue=liste" />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Liste des données sols' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('map-view')).not.toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveAttribute('id', MAIN_CONTENT_ID);
   });
 });

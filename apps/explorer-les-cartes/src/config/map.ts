@@ -71,7 +71,9 @@ export const LAYER_SWITCHER_OPTIONS: LayerSwitcherOptions = {
   position: 'top-right',
   collapsed: true,
   panel: true,
-  counter: true,
+  // No counter: its visible number is not part of the button name "Ma sélection de cartes"
+  // (axe label-content-name-mismatch, RGAA 6.1/WCAG 2.5.3).
+  counter: false,
   allowDelete: false,
   allowEdit: false,
 };

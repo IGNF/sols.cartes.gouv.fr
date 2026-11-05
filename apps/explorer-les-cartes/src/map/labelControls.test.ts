@@ -3,7 +3,13 @@ import Attribution from 'ol/control/Attribution';
 import Rotate from 'ol/control/Rotate';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
-import { controlElement, labelControlButtons, labelSearchInput } from './labelControls';
+import {
+  controlElement,
+  fixLayerMoveArrows,
+  labelControlButtons,
+  labelSearchInput,
+  watchLayerMoveArrows,
+} from './labelControls';
 
 describe('labelControls', () => {
   afterEach(() => {
@@ -30,5 +36,25 @@ describe('labelControls', () => {
     labelSearchInput(root);
     document.body.append(root);
     expect(screen.getByRole('textbox', { name: CONTROL_LABELS.searchInput })).toBeInTheDocument();
+  });
+
+  it('donne le rôle bouton aux flèches de déplacement des couches, y compris celles ajoutées ensuite', async () => {
+    const arrows = (direction: string) =>
+      `<div class="keyboard-navigation"><span tabindex="0" data-direction="${direction}" aria-label="Déplacer la couche vers le ${direction === 'up' ? 'haut' : 'bas'}"></span></div>`;
+    const root = document.createElement('div');
+    root.innerHTML = arrows('up');
+    document.body.append(root);
+    expect(fixLayerMoveArrows(root)).toBe(1);
+    expect(fixLayerMoveArrows(root)).toBe(0);
+    const stop = watchLayerMoveArrows(root);
+    root.insertAdjacentHTML('beforeend', arrows('down'));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(
+      screen.getByRole('button', { name: 'Déplacer la couche vers le bas' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Déplacer la couche vers le haut' }),
+    ).toBeInTheDocument();
+    stop();
   });
 });

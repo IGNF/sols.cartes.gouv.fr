@@ -1,6 +1,7 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useDeepLink from '../../hooks/useDeepLink';
+import { solsStyleUrl } from '../../config/urls';
 import { useMapStore } from '../../store/useMapStore';
 
 /** Outcome of the "Voir sur la carte" deep link coming from the catalogue. */
@@ -62,7 +63,20 @@ export default function DeepLinkNotice() {
           as="h2"
           small
           title="Format non pris en charge"
-          description={`Le lien « Voir sur la carte » reçu (${status.type}) désigne un style de tuiles vectorielles, qui ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`}
+          description={
+            status.type === 'TMS' && status.style ? (
+              <>
+                Le lien désigne le style de tuiles vectorielles (TMS) «&nbsp;{status.style}&nbsp;»,
+                qui ne peut pas encore être affiché sur cette carte (
+                <a href={solsStyleUrl(status.style)}>fichier de style</a>). Les données sols
+                disponibles sont listées dans l’onglet « Données sols ».
+              </>
+            ) : status.type === 'TMS' ? (
+              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+            ) : (
+              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+            )
+          }
         />
       );
     default:

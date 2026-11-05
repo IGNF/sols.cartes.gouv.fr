@@ -18,6 +18,9 @@ export interface OverlayRef {
   name: string;
   title: string;
   endpoint: string;
+  /** Initial opacity (0 to 1) and visibility, e.g. from a cartes.gouv.fr permalink. */
+  opacity?: number;
+  visible?: boolean;
 }
 
 export function toOverlayRef(
@@ -31,10 +34,6 @@ export function toOverlayRef(
     title,
     endpoint: layer.endpoint,
   };
-}
-
-export function isDisplayable(service: SolsService): boolean {
-  return (DISPLAYABLE_SOLS_SERVICES as readonly SolsService[]).includes(service);
 }
 
 /** The layer "Ajouter à la carte" draws for a dataset, by service preference. */
@@ -74,6 +73,10 @@ export async function createOverlayLayer(
   capabilities: WmtsCapabilities | undefined,
 ): Promise<TileLayer<TileWMS | WMTS> | null> {
   const properties = { name: overlay.name, title: overlay.title, overlayKey: overlay.key };
+  const display = {
+    ...(overlay.opacity !== undefined ? { opacity: overlay.opacity } : {}),
+    ...(overlay.visible !== undefined ? { visible: overlay.visible } : {}),
+  };
   if (overlay.service === 'wms-raster' || overlay.service === 'wms-vector') {
     return new TileLayer({
       source: new TileWMS({
@@ -83,6 +86,7 @@ export async function createOverlayLayer(
         attributions: SOLS_ATTRIBUTION,
       }),
       properties,
+      ...display,
     });
   }
   if (overlay.service !== 'wmts' || !capabilities || !findWmtsLayer(capabilities, overlay.name))
@@ -94,5 +98,6 @@ export async function createOverlayLayer(
   return new TileLayer({
     source: new WMTS({ ...options, crossOrigin: 'anonymous', attributions: SOLS_ATTRIBUTION }),
     properties,
+    ...display,
   });
 }
