@@ -4,11 +4,11 @@ Source unique du contenu de l'en-tête et du pied de page des trois briques, et 
 
 ## Consommation
 
-| Brique                | Mécanisme                                                                                                                                                                     |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| edito (bun workspace) | dépendance `"@sols/brand": "workspace:*"`, lecture de `brand.json` dans `src/_data/`, copie des `assets/` nécessaires par passthrough Eleventy vers `/assets/brand/`          |
-| carto (bun workspace) | dépendance `workspace:*`, `import brand from '@sols/brand/brand.json'`, images importées par Vite                                                                             |
-| catalogue (npm)       | `scripts/prepare.mjs` copie `brand.json` et les `assets/` depuis `../../packages/brand/` dans l'overlay ; l'en-tête/pied de page restent générés depuis `doc/agents/edito.md` |
+| Brique                | Mécanisme                                                                                                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| edito (bun workspace) | dépendance `"@sols/brand": "workspace:*"`, lecture de `brand.json` dans `src/_data/`, copie des `assets/` nécessaires par passthrough Eleventy vers `/assets/brand/`                                     |
+| carto (bun workspace) | dépendance `workspace:*`, `import brand from '@sols/brand/brand.json'`, images importées par Vite                                                                                                        |
+| catalogue (npm)       | `scripts/prepare.mjs` lit `brand.json` et copie les `assets/` depuis `../../packages/brand/` directement dans le clone `.upstream` ; l'en-tête/pied de page restent générés depuis `doc/agents/edito.md` |
 
 Les chemins d'images sont relatifs à ce paquet ; chaque brique les republie sous son propre chemin public. `index.js` (ré-export ESM avec attribut d'import JSON) est facultatif : Vite, Eleventy et les scripts peuvent lire `brand.json` directement. Les `href` des menus doivent être pris dans `sections` (les entrées `items` les répètent pour la lisibilité ; en cas d'écart, `sections` fait foi).
 
@@ -29,12 +29,12 @@ Variante compacte (carto, `footer.compactOnCarto`) : uniquement `fr-footer__bott
 
 ## Images
 
-| Fichier                                                | Usage                                                                                                                              | Origine                    |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `assets/logo-gissol.png` (500×156)                     | opérateur en-tête, partenaire pied de page                                                                                         | maquette Figma / gissol.fr |
-| `assets/osf-carotte.png` (240×240)                     | marque Observatoire dans l'en-tête                                                                                                 | maquette Figma (export)    |
-| `assets/logo-ign.png`                                  | partenaire pied de page                                                                                                            | ign.fr                     |
-| `assets/logo-inrae.svg`                                | partenaire pied de page                                                                                                            | inrae.fr                   |
+| Fichier                                                | Usage                                                                                                                                                 | Origine                    |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `assets/logo-gissol.png` (500×156)                     | opérateur en-tête, partenaire pied de page                                                                                                            | maquette Figma / gissol.fr |
+| `assets/osf-carotte.png` (240×240)                     | marque Observatoire dans l'en-tête                                                                                                                    | maquette Figma (export)    |
+| `assets/logo-ign.png`                                  | partenaire pied de page                                                                                                                               | ign.fr                     |
+| `assets/logo-inrae.svg`                                | partenaire pied de page                                                                                                                               | inrae.fr                   |
 | `assets/illustrations/cas-usage-{1,2,3}.jpg` (1200 px) | section « Cas d'usage » de l'accueil (1 : chambres d'agriculture, 2 : collectivités territoriales, 3 : bureaux d'études ; vérifié visuellement en E8) | maquette Figma (export)    |
 
 Les logos IGN et INRAE sont des marques de leurs titulaires, utilisés comme logos partenaires.
