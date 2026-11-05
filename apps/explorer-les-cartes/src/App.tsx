@@ -6,7 +6,7 @@ import SiteHeader from './components/layout/SiteHeader';
 import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
 
 /** OpenLayers and geopf-extensions are loaded in their own chunk. */
-const MapView = lazy(() => import('./components/map/MapView'));
+const MapExplorer = lazy(() => import('./components/map/MapExplorer'));
 
 export default function App() {
   return (
@@ -24,7 +24,7 @@ export default function App() {
           Consultez les cartes de référence de la Géoplateforme et les données sols du GIS Sol.
         </p>
         <Suspense fallback={<p role="status">Chargement de la carte…</p>}>
-          <MapView />
+          <MapExplorer />
         </Suspense>
       </main>
       <SiteFooter />

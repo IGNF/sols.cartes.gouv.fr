@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BASE_LAYERS } from '../config/map';
+import { BASE_LAYER_CANDIDATES } from '../config/map';
 import { findWmtsLayer, WMTS_CAPABILITIES_URL } from '../map/wmtsCapabilities';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import { createQueryWrapper } from '../test/queryWrapper';
@@ -22,7 +22,7 @@ describe('useWmtsCapabilities', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(WMTS_CAPABILITIES_URL);
     const data = result.current.b.data;
-    expect(data && findWmtsLayer(data, BASE_LAYERS[0].layerName)).not.toBeNull();
+    expect(data && findWmtsLayer(data, BASE_LAYER_CANDIDATES[0].layerName)).not.toBeNull();
   });
 
   it('expose l’erreur quand la Géoplateforme ne répond pas', async () => {
