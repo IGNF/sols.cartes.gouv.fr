@@ -1,3 +1,5 @@
+{#- `shared` (partage.njk): language-independent links and no language switcher, for the other bricks. -#}
+{%- set homeHref = site.sections.accueil if shared else (site.sections.accueil | locale_url) -%}
 <header role="banner" class="fr-header">
   <div class="fr-header__body">
     <div class="fr-container">
@@ -8,14 +10,14 @@
               <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
             </div>
             <div class="fr-header__navbar">
-              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" id="bouton-menu-principal" title="Menu">Menu</button>
+              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" id="bouton-menu-principal" title="{{ t.header.menu }}">{{ t.header.menu }}</button>
             </div>
           </div>
           <div class="fr-header__service">
-            <a href="{{ site.sections.accueil }}" title="Accueil - {{ site.header.serviceTitle }} - {{ site.header.tagline }}">
+            <a href="{{ homeHref }}" title="{{ t.header.homeTitle }} - {{ site.header.serviceTitle }} - {{ t.tagline }}">
               <p class="fr-header__service-title">{{ site.header.serviceTitle }}</p>
             </a>
-            <p class="fr-header__service-tagline">{{ site.header.tagline }}</p>
+            <p class="fr-header__service-tagline">{{ t.tagline }}</p>
           </div>
         </div>
         <div class="fr-header__tools">
@@ -23,10 +25,30 @@
             <ul class="fr-btns-group">
               {%- for link in site.header.tools %}
               <li>
-                <a class="fr-btn" href="{{ link.href }}"{% if link.external %} target="_blank" rel="noopener external" title="{{ link.label }} - nouvelle fenêtre"{% endif %}>{{ link.label }}</a>
+                <a class="fr-btn" href="{{ link.href }}"{% if link.external %} target="_blank" rel="noopener external" title="{{ t.header.tools[link.key] }} - {{ t.newWindow }}"{% endif %}>{{ t.header.tools[link.key] }}</a>
               </li>
               {%- endfor %}
             </ul>
+            {%- if not shared %}
+            {%- set currentLanguage = locale | language %}
+            <div class="fr-translate fr-nav" id="selecteur-langue">
+              <div class="fr-nav__item">
+                <button aria-controls="menu-langues" aria-expanded="false" type="button" class="fr-translate__btn fr-btn">{{ locale | upper }}<span class="fr-hidden-lg">&nbsp;- {{ currentLanguage.label }}</span>
+                </button>
+                <div class="fr-collapse fr-translate__menu fr-menu" id="menu-langues">
+                  <ul class="fr-menu__list">
+                    {%- for language in site.languages %}
+                    {%- set languageHref = page.url | locale_url(language.code) %}
+                    {%- if language.code != locale and languageHref == page.url %}{% set languageHref = "/" + language.code + "/" %}{% endif %}
+                    <li>
+                      <a class="fr-translate__language fr-nav__link" hreflang="{{ language.code }}" lang="{{ language.code }}" href="{{ languageHref }}"{% if language.code == locale %} aria-current="true"{% endif %}>{{ language.code | upper }} - {{ language.label }}</a>
+                    </li>
+                    {%- endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {%- endif %}
           </div>
         </div>
       </div>
@@ -34,14 +56,16 @@
   </div>
   <div class="fr-header__menu fr-modal" id="menu-principal" aria-labelledby="bouton-menu-principal">
     <div class="fr-container">
-      <button type="button" class="fr-btn--close fr-btn" aria-controls="menu-principal" title="Fermer">Fermer</button>
+      <button type="button" class="fr-btn--close fr-btn" aria-controls="menu-principal" title="{{ t.header.close }}">{{ t.header.close }}</button>
       <div class="fr-header__menu-links"></div>
-      <nav class="fr-nav" id="navigation-principale" role="navigation" aria-label="Menu principal">
+      <nav class="fr-nav" id="navigation-principale" role="navigation" aria-label="{{ t.header.navLabel }}">
         <ul class="fr-nav__list">
           {%- for item in site.header.nav %}
-          {%- set current = (page.url == item.href) if item.href == site.sections.accueil else (page.url and page.url.startsWith(item.href)) %}
+          {%- set href = item.href if shared else (item.href | locale_url) %}
+          {%- set crossBrick = item.href in site.crossBrick %}
+          {%- set current = (page.url == href) if item.href == site.sections.accueil else (page.url.startsWith(href)) %}
           <li class="fr-nav__item">
-            <a class="fr-nav__link" href="{{ item.href }}" target="_self"{% if current %} aria-current="page"{% endif %}>{{ item.label }}</a>
+            <a class="fr-nav__link" href="{{ href }}" target="_self"{% if crossBrick and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}{% if current and not shared %} aria-current="page"{% endif %}>{{ t.header.nav[item.key] }}</a>
           </li>
           {%- endfor %}
         </ul>
