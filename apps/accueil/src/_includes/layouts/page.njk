@@ -3,6 +3,9 @@ layout: layouts/base.njk
 ---
 <div class="fr-container fr-pb-8w">
   {% include "partials/breadcrumb.njk" %}
-  <h1>{{ title }}</h1>
-  {{ content | safe }}
+  <h1>{{ heading }}</h1>
+  {%- if pageKey and t.pages[pageKey].body %}
+  <p>{{ t.pages[pageKey].body }}</p>
+  {%- endif %}
+  {{- content | safe }}
 </div>

@@ -1,0 +1,34 @@
+---
+pagination:
+  data: collections.fr
+  size: 1
+  alias: target
+permalink: "{{ target.url | stripLocale }}"
+eleventyExcludeFromCollections: true
+---
+{#- One language-independent rerouting page per French page: /mentions-legales/ -> /fr/mentions-legales/. No JS. -#}
+{%- set fr = i18n[site.defaultLanguage] -%}
+<!DOCTYPE html>
+<html lang="{{ site.defaultLanguage }}">
+  <head>
+{% include "partials/head-common.njk" %}
+    <meta http-equiv="refresh" content="0; url={{ target.url }}">
+    <title>{{ fr.reroute.title }}</title>
+    <meta name="description" content="{{ fr.reroute.description }}">
+    <link rel="canonical" href="{{ site.url }}{{ target.url }}">
+    {%- set alternatesUrl = target.url %}
+{% include "partials/alternates.njk" %}
+  </head>
+  <body>
+    <main id="contenu" class="fr-container fr-py-6w">
+      <h1>{{ fr.reroute.heading }}</h1>
+      <p>{{ fr.reroute.intro }}</p>
+      <ul>
+        <li><a href="{{ target.url }}" hreflang="{{ site.defaultLanguage }}" lang="{{ site.defaultLanguage }}">{{ fr.reroute.link }}</a></li>
+        {%- for alternate in target.url | locale_links %}
+        <li><a href="{{ alternate.url }}" hreflang="{{ alternate.lang }}" lang="{{ alternate.lang }}">{{ i18n[alternate.lang].reroute.link }}</a></li>
+        {%- endfor %}
+      </ul>
+    </main>
+  </body>
+</html>

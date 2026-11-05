@@ -1,0 +1,13 @@
+---
+layout: layouts/page.njk
+---
+<ul>
+  {%- for link in site.header.nav %}
+  <li><a href="{{ link.href | locale_url }}">{{ t.header.nav[link.key] }}</a></li>
+  {%- endfor %}
+  <li><a href="{{ site.sections.articles | locale_url }}">{{ t.pages.articles.title }}</a></li>
+  {%- for link in site.footer.bottomLinks %}
+  {%- set href = link.href | locale_url %}
+  <li><a href="{{ href }}"{% if page.url == href %} aria-current="page"{% endif %}>{{ t.footer.bottomLinks[link.key] }}</a></li>
+  {%- endfor %}
+</ul>

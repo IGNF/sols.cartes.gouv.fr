@@ -1,53 +1,49 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { checkLinks } from '../scripts/check-links.js';
 import site from '../src/_data/site.js';
+import { DIST, LOCALES, allPages, build, localizedPages, read } from './helpers.js';
 
-const APP_DIR = join(import.meta.dir, '..');
-const DIST = join(APP_DIR, 'dist');
-let pages = [];
+const stripLocale = (path) => path.replace(/^\/[a-z]{2}\//, '/');
 
-/** Site path of every generated HTML page, e.g. "/" or "/articles/". */
-function sitePaths() {
-  return readdirSync(DIST, { recursive: true })
-    .filter((file) => file.endsWith('index.html'))
-    .map((file) => `/${file.replace(/index\.html$/, '')}`);
-}
-
-beforeAll(() => {
-  const build = Bun.spawnSync(['bun', 'run', 'build'], {
-    cwd: APP_DIR,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-  if (build.exitCode !== 0) throw new Error(build.stderr.toString());
-  pages = sitePaths();
-});
+beforeAll(build);
 
 describe('sitemap.xml et robots.txt', () => {
-  test('le sitemap liste chaque page et les racines des autres briques', () => {
-    const sitemap = readFileSync(join(DIST, 'sitemap.xml'), 'utf8');
-    const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => loc);
-    const expected = [
-      ...pages,
-      site.sections.rechercherUneDonnee,
-      site.sections.explorerLesCartes,
-    ].map((path) => `${site.url}${path}`);
+  const sitemap = () => readFileSync(join(DIST, 'sitemap.xml'), 'utf8');
+
+  test('le sitemap liste les pages des deux langues et les racines des autres briques', () => {
+    const locs = [...sitemap().matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, loc]) => loc);
+    const expected = [...localizedPages(), ...site.crossBrick].map((path) => `${site.url}${path}`);
     expect(locs.sort()).toEqual(expected.sort());
+    for (const code of LOCALES) expect(locs).toContain(`${site.url}/${code}/`);
+  });
+
+  test('chaque page du sitemap a ses alternates fr, en et x-default', () => {
+    for (const path of localizedPages()) {
+      const entry = sitemap().match(
+        new RegExp(`<url>\\s*<loc>${site.url}${path}</loc>([\\s\\S]*?)</url>`),
+      )[1];
+      for (const code of LOCALES) {
+        expect(entry).toContain(
+          `<xhtml:link rel="alternate" hreflang="${code}" href="${site.url}/${code}${stripLocale(path)}"/>`,
+        );
+      }
+      expect(entry).toContain(
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${site.url}${stripLocale(path)}"/>`,
+      );
+    }
   });
 
   test('les articles ont un lastmod égal à leur date', () => {
-    const sitemap = readFileSync(join(DIST, 'sitemap.xml'), 'utf8');
-    const articles = pages.filter(
-      (path) => path.startsWith(site.sections.articles) && path !== site.sections.articles,
+    const articles = localizedPages().filter((path) =>
+      /^\/[a-z]{2}\/articles\/[^/]+\/$/.test(path),
     );
     expect(articles.length).toBeGreaterThan(0);
     for (const path of articles) {
-      const html = readFileSync(join(DIST, path, 'index.html'), 'utf8');
-      const [, date] = html.match(/<time datetime="(\d{4}-\d{2}-\d{2})">/);
-      expect(sitemap).toContain(`<loc>${site.url}${path}</loc>\n    <lastmod>${date}</lastmod>`);
+      const [, date] = read(path).match(/<time datetime="(\d{4}-\d{2}-\d{2})">/);
+      expect(sitemap()).toContain(`<loc>${site.url}${path}</loc>\n    <lastmod>${date}</lastmod>`);
     }
   });
 
@@ -59,12 +55,27 @@ describe('sitemap.xml et robots.txt', () => {
 });
 
 describe('en-tête de chaque page', () => {
-  test('chaque page a une canonique et une meta description non vide', () => {
-    expect(pages.length).toBeGreaterThan(0);
-    for (const path of pages) {
-      const html = readFileSync(join(DIST, path, 'index.html'), 'utf8');
-      expect(html).toContain(`<link rel="canonical" href="${site.url}${path}">`);
+  test('chaque page a une meta description non vide et une canonique', () => {
+    for (const path of allPages()) {
+      const html = read(path);
+      const target =
+        html.match(/<meta http-equiv="refresh" content="0; url=([^"]+)">/)?.[1] ?? path;
+      expect(html).toContain(`<link rel="canonical" href="${site.url}${target}">`);
       expect(html).toMatch(/<meta name="description" content="[^"\s][^"]*">/);
+    }
+  });
+
+  test('chaque page localisée a ses alternates hreflang fr, en et x-default', () => {
+    for (const path of localizedPages()) {
+      const html = read(path);
+      for (const code of LOCALES) {
+        expect(html).toContain(
+          `<link rel="alternate" hreflang="${code}" href="${site.url}/${code}${stripLocale(path)}">`,
+        );
+      }
+      expect(html).toContain(
+        `<link rel="alternate" hreflang="x-default" href="${site.url}${stripLocale(path)}">`,
+      );
     }
   });
 });
