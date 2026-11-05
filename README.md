@@ -28,7 +28,7 @@ bun run build:all       # construit les trois briques et assemble ./dist
 bun run preview:all     # sert ./dist sur http://localhost:8080
 ```
 
-La brique catalogue s'installe avec `npm install` dans `apps/rechercher-une-donnee` (voir `doc/agents/geonetwork-ui.md`).
+La brique catalogue s'installe avec `npm install` dans `apps/rechercher-une-donnee` (voir `doc/agents/geonetwork-ui.md`, à venir avec la tâche C1).
 
 ## Conventions
 

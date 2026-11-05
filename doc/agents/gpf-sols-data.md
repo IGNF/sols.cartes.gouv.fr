@@ -9,7 +9,7 @@ https://data.geopf.fr/csw/gissol-osf_c?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.
 ```
 
 - Réponse : HTTP 200, ~158 kB, `numberOfRecordsMatched="7"`, `numberOfRecordsReturned="7"`, `nextRecord="0"` (tout tient en une page).
-- En-tête `access-control-allow-origin: *` : un navigateur **peut** appeler le CSW directement. Choix v0 : la brique carto génère quand même son JSON **au build** (script rejouable) pour éviter une dépendance réseau au chargement et pour valider les noms de couches ; voir `doc/agents/geopf-ext.md`.
+- En-tête `access-control-allow-origin: *` : un navigateur **peut** appeler le CSW directement. Choix v0 : la brique carto génère quand même son JSON **au build** (script rejouable) pour éviter une dépendance réseau au chargement et pour valider les noms de couches ; voir `doc/agents/geopf-ext.md` (à venir avec la tâche M4).
 - Une copie figée de la réponse est dans `doc/agents/gissol-osf_c.xml` (référence, pas une source pour le code).
 - Format : ISO 19115-3 (`mdb:MD_Metadata`), namespaces `mdb`, `mri`, `cit`, `mrd`, `mcc`, `gco`.
 

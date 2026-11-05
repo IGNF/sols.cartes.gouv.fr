@@ -7,3 +7,7 @@ package-lock.json
 doc/agents/gissol-osf_c.xml
 doc/e2e
 apps/rechercher-une-donnee
+# Markdown/YAML keep their hand-written layout
+*.md
+*.yml
+*.yaml

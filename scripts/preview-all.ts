@@ -11,8 +11,18 @@ if (!existsSync(DIST_ROOT)) {
   process.exit(1);
 }
 
+function decodePath(pathname: string): string | null {
+  try {
+    return decodeURIComponent(pathname);
+  } catch {
+    return null;
+  }
+}
+
 function resolveFile(pathname: string): string | null {
-  const safe = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, '');
+  const decoded = decodePath(pathname);
+  if (decoded === null) return null;
+  const safe = normalize(decoded).replace(/^(\.\.[/\\])+/, '');
   const candidates = [join(DIST_ROOT, safe), join(DIST_ROOT, safe, 'index.html')];
   if (!safe.endsWith('/') && !/\.[a-z0-9]+$/i.test(safe)) {
     candidates.push(join(DIST_ROOT, `${safe}.html`));
@@ -25,7 +35,10 @@ function resolveFile(pathname: string): string | null {
 
 function spaFallback(pathname: string): string | null {
   for (const app of APPS) {
-    if (app.publicPath !== '/' && pathname.startsWith(app.publicPath)) {
+    if (
+      app.publicPath !== '/' &&
+      (pathname === app.publicPath || pathname.startsWith(`${app.publicPath}/`))
+    ) {
       const index = join(DIST_ROOT, app.publicPath, 'index.html');
       return existsSync(index) ? index : null;
     }
