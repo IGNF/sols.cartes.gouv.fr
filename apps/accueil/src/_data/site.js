@@ -17,6 +17,8 @@ const sections = {
 
 const external = {
   gissol: 'https://www.gissol.fr/',
+  /** Footer content links are domains (label = domain, target = https://<domain>), as react-dsfr renders them. */
+  gissolDomain: 'https://gissol.fr',
   cartesGouv: 'https://cartes.gouv.fr',
   geoplateformeData: 'https://data.geopf.fr',
   infoGouv: 'https://info.gouv.fr',
@@ -52,7 +54,7 @@ export default {
   footer: {
     contentLinks: [
       { key: 'cartesGouv', href: external.cartesGouv },
-      { key: 'gissol', href: external.gissol },
+      { key: 'gissol', href: external.gissolDomain },
       { key: 'infoGouv', href: external.infoGouv },
       { key: 'servicePublic', href: external.servicePublic },
       { key: 'legifrance', href: external.legifrance },

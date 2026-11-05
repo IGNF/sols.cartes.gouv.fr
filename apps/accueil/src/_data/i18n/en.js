@@ -25,7 +25,7 @@ export default {
     homeTitle: 'Back to the home page',
     contentLinks: {
       cartesGouv: 'cartes.gouv.fr',
-      gissol: 'GIS Sol website',
+      gissol: 'gissol.fr',
       infoGouv: 'info.gouv.fr',
       servicePublic: 'service-public.gouv.fr',
       legifrance: 'legifrance.gouv.fr',

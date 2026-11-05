@@ -30,7 +30,7 @@ export default {
     homeTitle: 'Retour à l’accueil du site',
     contentLinks: {
       cartesGouv: 'cartes.gouv.fr',
-      gissol: 'Site du GIS Sol',
+      gissol: 'gissol.fr',
       infoGouv: 'info.gouv.fr',
       servicePublic: 'service-public.gouv.fr',
       legifrance: 'legifrance.gouv.fr',
