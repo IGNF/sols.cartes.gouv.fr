@@ -5,8 +5,9 @@ import { DIST_DIR, UPSTREAM_DIR, log, run } from './lib.mjs'
 import { prepare } from './prepare.mjs'
 
 const upstream = prepare()
-run('npx', ['nx', 'build', upstream.app, '--configuration=production',
-  `--base-href=${upstream.baseHref}`, '--skip-nx-cache'], {
+// No --base-href flag: the base href comes from project.json (patch 0002, value
+// checked against upstream.json by lint), shared with the dev server.
+run('npx', ['nx', 'build', upstream.app, '--configuration=production', '--skip-nx-cache'], {
   cwd: UPSTREAM_DIR,
   env: { ...process.env, NX_DAEMON: 'false', NX_NO_CLOUD: 'true' },
 })

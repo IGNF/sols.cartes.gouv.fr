@@ -1,5 +1,5 @@
 diff --git a/apps/datahub/src/app/app.component.ts b/apps/datahub/src/app/app.component.ts
-index 88c4d91..0f3a523 100644
+index 88c4d91..d9e31d8 100644
 --- a/apps/datahub/src/app/app.component.ts
 +++ b/apps/datahub/src/app/app.component.ts
 @@ -7,12 +7,21 @@ import {
@@ -26,7 +26,7 @@ index 88c4d91..0f3a523 100644
  import { Router, RouterOutlet } from '@angular/router'
  import { CommonModule, ViewportScroller } from '@angular/common'
  import Keycloak from 'keycloak-js'
-@@ -54,10 +63,28 @@ export class AppComponent implements OnInit, AfterViewInit {
+@@ -54,10 +63,30 @@ export class AppComponent implements OnInit, AfterViewInit {
    readonly renderer = inject(Renderer2)
    private readonly document = inject(DOCUMENT)
    private readonly dsfrAnalytics = inject(DsfrAnalyticsService)
@@ -37,20 +37,22 @@ index 88c4d91..0f3a523 100644
  
    ngOnInit(): void {
 +    // Permanent search scope read from [search] config_filters, e.g.
-+    // config_filters.groupPublished = ['my_group'] restricts every search
++    // config_filters.groupPublished = ['my_group'] restricts the main search
++    // and the organization page search (aggregations are not scoped)
 +    const configFilters = getOptionalSearchConfig()?.CONFIG_FILTERS
 +    if (configFilters) {
-+      this.store.dispatch(
-+        new SetConfigFilters(
-+          Object.fromEntries(
-+            Object.entries(configFilters).map(([field, values]) => [
-+              field,
-+              Object.fromEntries(values.map((value) => [value, true])),
-+            ])
-+          ),
-+          this.routerConfig.searchStateId
-+        )
++      const filters = Object.fromEntries(
++        Object.entries(configFilters).map(([field, values]) => [
++          field,
++          Object.fromEntries([].concat(values).map((value) => [value, true])),
++        ])
 +      )
++      for (const searchId of [
++        this.routerConfig.searchStateId,
++        'organization-page',
++      ]) {
++        this.store.dispatch(new SetConfigFilters(filters, searchId))
++      }
 +    }
      // Disable automatic scroll restoration to avoid race conditions
      this.viewportScroller.setHistoryScrollRestoration('manual')
