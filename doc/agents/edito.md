@@ -198,11 +198,37 @@ dans `brand.json`, qui indique `/aide/#contact`). Elles n'affichent pas le séle
   `fr-display` (`dialog#fr-theme-modal`, pictogrammes DSFR `environment/sun`, `environment/moon`, `system/system`)
   : bascule clair / sombre / système (le JS DSFR mémorise le choix ; `data-fr-scheme="system"` sur `<html>`).
   Variante compacte carto : seulement `fr-footer__bottom` (liens bas + paramètres d'affichage) et la modale.
+  Limite DSFR 1.14.2 connue : quand le focus est sur un bouton radio de la modale, Échap ne la ferme pas (le JS DSFR
+  ignore la touche dans ce cas) ; « Fermer » ou Échap depuis un autre élément la ferment.
 - **Liens d'évitement** : « Contenu » et « Pied de page » seulement (plus de lien « Menu »).
 
 Identifiants d'ancrage communs : `#contenu` (main), `#pied-de-page` (footer), `#menu-principal` /
 `#bouton-menu-principal` (modale du menu mobile), `#menu-help`, `#menu-services` (menus d'outils),
 `#fr-theme-modal` (paramètres d'affichage).
+
+### Blocs à extraire (catalogue, `apps/rechercher-une-donnee/scripts/layout.mjs`)
+
+Les blocs v0 (en-tête avec `fr-nav` et lien « Site du GIS Sol », pied de page sans partenaires) **n'existent plus**
+dans ce document. Trois blocs v1, dans cet ordre, chacun introduit par une ligne de libellé terminée par « : », suivie
+d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. Les libellés commencent par :
+
+1. « Liens d'évitement » : `div.fr-skiplinks`, liens `#contenu` et `#pied-de-page` (plus de `#navigation-principale`).
+   À placer en premier enfant de `body`.
+2. « En-tête » : `header.fr-header` complet, de `<header role="banner" class="fr-header">` à `</header>`. Il ne
+   contient plus de lien `fr-nav__link` de section : la brique ne pose plus `aria-current` dans l'en-tête ; elle
+   ajoute son badge (`badges.catalogue` = « Rechercher ») dans `p.fr-header__service-title`, après le texte
+   `sols.cartes.gouv.fr`. `div.fr-header__menu-links` est vide : en mode Angular, la brique y recopie elle-même le
+   contenu de `div.fr-header__tools-links` (deux `div.fr-nav.sols-tool-menu`, plus de `ul.fr-btns-group`) en
+   suffixant `-mobile` aux `id` et aux `aria-controls` correspondants (`menu-help`, `menu-services`), comme le JS DSFR
+   le fait en mode statique.
+3. « Pied de page et modale « Paramètres d'affichage » » : de `<footer class="fr-footer" ...>` jusqu'à `</dialog>`
+   inclus, c'est-à-dire `footer#pied-de-page` puis `dialog#fr-theme-modal`, frères, à insérer tels quels à la fin du
+   `body` (avant les scripts).
+
+Ressources requises par ces blocs : `/assets/brand/*` (images de `@sols/brand`, à republier sous le chemin public de
+la brique), pictogrammes DSFR `artwork/pictograms/environment/{sun,moon}.svg` et `system/system.svg`, icônes
+utilitaires `fr-icon-question-fill`, `fr-icon-grid-fill`, `fr-icon-theme-fill`, et les règles `.sols-operator*`,
+`.sols-tool-menu*`, `.sols-partner-logo` de `apps/accueil/src/css/site.css`.
 
 Balisage de référence : page `/partage/en-tete-pied-de-page/` (`src/partage.njk`, `noindex`, hors sitemap), rendue
 avec les mêmes partiels que le site en mode `shared` (chemins sans langue, sans sélecteur de langue). Les blocs
@@ -387,7 +413,7 @@ Pied de page et modale « Paramètres d'affichage » (juste après le pied de pa
             <button aria-controls="fr-theme-modal" title="Fermer" type="button" class="fr-btn--close fr-btn">Fermer</button>
           </div>
           <div class="fr-modal__content">
-            <h2 id="fr-theme-modal-title" class="fr-modal__title">Paramètres d’affichage</h2>
+            <h2 id="fr-theme-modal-title" class="fr-modal__title">Paramètres d&#39;affichage</h2>
             <div id="fr-display" class="fr-display">
               <fieldset class="fr-fieldset" id="display-fieldset">
                 <legend class="fr-fieldset__legend--regular fr-fieldset__legend" id="display-fieldset-legend">Choisissez un thème pour personnaliser l’apparence du site.</legend>
