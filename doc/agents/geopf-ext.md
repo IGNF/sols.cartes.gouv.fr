@@ -535,3 +535,66 @@ des panneaux, import WMS de `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` (`[id^="GPimport
 | « Mes outils »      | `getByRole('button', { name: 'Mes outils', exact: true })`, entrées `[id^="GPcontrolListPanel-"] li`                                                                  |
 | Partager / Imprimer | boutons `Partager`, `Imprimer` de la barre d'outils ; champ `getByRole('textbox', { name: /^Lien permanent/ })` ; boutons `Télécharger en PNG`, `Lancer l’impression` |
 | Panneaux            | `[id^="GProutePanel-"]`, `[id^="GPisochronPanel-"]`, `[id^="GPgetFeatureInfoPanel-"]`, `[id^="GPlegendsPanel-"]`…                                                     |
+
+## 11. Catalogue des données sols (M9, 2026-11-05)
+
+Référence : `IGNF/cartes.gouv.fr-entree-carto` (`src/components/carte/control/CatalogManager.vue`, options `useControlsOptions().catalog`
+dans `src/composables/controls.js`) ; plan `doc/plans/M9.md`.
+
+### 11.1 Choix
+
+- **Contrôle geopf `Catalog`** (et non un panneau DSFR maison) : même widget que l'entrée carto, `addToMap: false` comme elle (c'est
+  l'application qui ajoute les couches à partir des évènements `catalog:layer:add` / `catalog:layer:remove`, payload `{ name, service }`),
+  `auto: true` (le contrôle coche les entrées des couches déjà sur la carte en lisant les propriétés **propres** `name` et `service` des
+  couches OL : `attachLayerInfo` les pose, `service` = `WMS` ou `WMTS`).
+- **Configuration construite à l'exécution** (`src/map/catalogConfig.ts`, `buildCatalogData`) : `configuration.type: 'json'`,
+  `configuration.data.layers[<nom>$GEOPORTAIL:OGC:<WMS|WMTS>] = { name, title, description, producer: [organisation], thumbnail,
+  serviceParams: { id: 'OGC:WMS' }, metadata_urls: ['/rechercher-une-donnee/dataset/<id>'] }` ; une entrée par fiche (couche préférée
+  WMTS > wms-r > wms-v, comme `preferredLayer`), les fiches sans couche dessinable resteraient en vue liste (aucune aujourd'hui : 7/7).
+  Champs lus par le contrôle (`initConfigData`, `CatalogDOM.tmplElement`) : `serviceParams.id` (obligatoire), `name`, `title`,
+  `description`, `producer`/`thematic` (tableaux), `thumbnail` (URL http ou data), `metadata_urls` (le lien « Voir la fiche détaillée »
+  n'apparaît que si l'URL contient `catalogue/dataset` ou `rechercher-une-donnee/dataset`). Pas de `Gp.Config`, pas de réseau.
+- **Vignettes** : `thumbnail` ajouté au fichier généré (`scripts/sols-layers/csw.ts`, `mri:graphicOverview/mcc:MD_BrowseGraphic/mcc:fileName`),
+  7 fiches sur 7 (`https://data.geopf.fr/annexes/gissol-osf/thumbnail/<uuid>.png`). Le dépôt GeoNetwork (`POST
+  https://data.geopf.fr/geonetwork/srv/api/search/records/_search?bucket=bucket`, filtre `groupPublished:"gissol-osf_g"`, CORS `*`,
+  champs `overview`, `resourceAbstractObject`, `OrgForResourceObject`) donne les mêmes informations en direct ; non utilisé : la validation
+  des noms de couches reste `sols-layers.json`, une fiche nouvelle demande de toute façon de régénérer le fichier, et le catalogue fonctionne
+  hors ligne/sans dégradation. À reconsidérer si les fiches changent plus souvent que le fichier.
+- **Un seul point d'entrée** : l'onglet « Données sols » du panneau latéral est retiré (`MapExplorer` ne garde que « Fonds de carte »,
+  plus d'onglets, plus d'état `activeTab`) ; la vue `?vue=liste` reste l'alternative accessible complète ; les avis des liens profonds
+  renvoient au « catalogue de la carte ».
+
+### 11.2 Options (`CATALOG_OPTIONS`, `src/config/map.ts`, vérifiées dans `Catalog.d.ts`)
+
+`position: 'top-right'` (élément **préposé** dans la colonne après `addControl`, le gestionnaire ayant été ajouté avant), `gutter: true`,
+`collapsed: true`, `titlePrimary: 'Catalogue des données sols'`, `layerLabel: 'title'`, `layerThumbnail: true`, `size: 'lg'`,
+`tabHeightAuto: false`, `addToMap: false`, `auto: true`, `optimisation: 'none'`, `search: { display, label, criteria: ['title',
+'description', 'producer', 'name'] }` (sous-chaîne normalisée, sans accents), `categories: [{ title: 'Données sols', id: 'sols',
+producer: true, order: true, filter: null }]` (le type `Categories` déclare `field`, `value`, `clusterOptions` obligatoires : cast).
+Bouton « Catalogue de cartes » renommé « Catalogue des données sols » (`labelToggleButton`), bouton primaire (`.map-catalog`, comme
+l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogStyles.ts`).
+
+### 11.3 Contournements amont (à ajouter au ticket du §5.7)
+
+10. `createCatalogProducerLinks` construit les étiquettes de producteur vers `https://cartes.gouv.fr/catalogue/search?organization=…`
+    pendant le chargement de la configuration (constructeur) et la méthode est déclarée **privée** dans le `.d.ts` : patchée sur le
+    prototype avant construction (`useCatalog.createCatalog`) pour pointer vers `/rechercher-une-donnee/search?organization=…`.
+11. Balisage du panneau (`CatalogDOM`) : l'attribut `role` sert de crochet JavaScript (`tabbutton`, `label-collapse-more-<cat>`,
+    `button-collapse-more-<cat>`, `section-…`), rôles ARIA invalides (axe `aria-roles`, `aria-required-children` sur la liste d'onglets,
+    `aria-allowed-attr` pour `aria-selected`) ; liste d'onglets nommée « presentation » ; `<h5>` vide quand `titleSecondary` est vide ;
+    case à cocher sans nom (`<label for>` vide, le titre est un autre `<label>` avec `aria-controls`). `fixCatalogMarkup` et
+    `fixToolButtons` (`src/map/labelToolButtons.ts`, observateur de mutations sur le widget) : `role="tab"`, crochets retirés (ils ne sont lus
+    qu'à la construction du panneau), `aria-label` « Catégories du catalogue », `<h5>` vide retiré, `aria-label` « Ajouter à la carte :
+    <titre> » sur chaque case. axe : 0 violation catalogue ouvert (`check:map`).
+12. Le `<label for>` vide recouvre la case : au clic souris c'est le label qui reçoit l'évènement (il coche la case) ; au clavier, Espace.
+13. Sous 576px geopf garde `min-width: 450px` sur le panneau (`DSFRcatalogStyle.css`) : `MapView.css` force `100vw` (le panneau est ancré
+    à droite de l'écran, `right: -4px`).
+
+### 11.4 Sélecteurs e2e
+
+| Élément | Sélecteur |
+|---|---|
+| Bouton du catalogue | `getByRole('button', { name: 'Catalogue des données sols', exact: true })` (`aria-pressed`) |
+| Panneau | `[id^="GPcatalogPanel-"]` (nommé « Catalogue des données sols ») ; recherche `#catalog-input-search-global` |
+| Entrée | `[data-layeritem]` ; case `input[data-layer="<nom>:<WMS|WMTS>"]` nommée « Ajouter à la carte : <titre> » (Espace au clavier) ; vignette `img` ; « Voir la fiche détaillée » `a.fr-link` ; producteur `a.fr-tag` |
+| Données sols | plus d'onglet : les couches s'ajoutent depuis le catalogue ; la liste complète reste en `?vue=liste` |
