@@ -18,6 +18,7 @@ export default {
   },
   header: {
     homeLinkTitle: 'Back to the home page of the Soil observatory of France - République Française',
+    operatorLogoAlt: 'GIS Sol, scientific interest group on soils',
     menu: 'Menu',
     close: 'Close',
     translateTitle: 'Select a language',

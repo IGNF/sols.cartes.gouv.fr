@@ -57,7 +57,6 @@ export default {
     badge: brand.badges.edito,
     operator: {
       logo: brandAsset(brand.header.operator.logo),
-      logoAlt: brand.header.operator.logoAlt,
       mark: brandAsset(brand.header.operator.mark),
       markAlt: brand.header.operator.markAlt,
     },
@@ -70,7 +69,10 @@ export default {
     })),
   },
   footer: {
-    partners: brand.footer.partners.map((partner) => ({ ...partner, logo: brandAsset(partner.logo) })),
+    partners: brand.footer.partners.map((partner) => ({
+      ...partner,
+      logo: brandAsset(partner.logo),
+    })),
     contentLinks: brand.footer.contentLinks,
     bottomLinks: [
       { key: 'accessibilite', href: sections.accessibilite },

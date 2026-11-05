@@ -29,6 +29,7 @@ export default {
   },
   header: {
     homeLinkTitle: brand.service.homeLinkTitle,
+    operatorLogoAlt: brand.header.operator.logoAlt,
     menu: 'Menu',
     close: 'Fermer',
     translateTitle: 'Sélectionner une langue',
