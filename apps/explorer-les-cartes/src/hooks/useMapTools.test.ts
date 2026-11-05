@@ -10,6 +10,7 @@ import {
 import useMapTools, {
   createMapTools,
   LISTABLE_TOOL_CLASS,
+  menuKeyboard,
   returnFocusOnCollapse,
   TOOL_CLASS,
 } from './useMapTools';
@@ -165,23 +166,107 @@ describe('createMapTools', () => {
 });
 
 describe('returnFocusOnCollapse', () => {
-  it('rend le focus au bouton « Mes outils » quand la liste se replie après un choix', () => {
+  function setup(pressed: string) {
     const element = document.createElement('div');
-    element.innerHTML = '<button type="button" aria-pressed="false">Mes outils</button>';
+    element.innerHTML = `<button type="button" aria-pressed="${pressed}">Mes outils</button>`;
     document.body.append(element);
     const listeners = new Map<string, (event: unknown) => void>();
     returnFocusOnCollapse(
       { on: (type: string, l: (e: unknown) => void) => listeners.set(type, l) },
       element,
     );
+    return { element, listeners, toggle: element.querySelector('button') as HTMLButtonElement };
+  }
+
+  it('rend le focus au bouton « Mes outils » après l’évènement, quand la liste se replie après un choix', () => {
+    vi.useFakeTimers();
+    const { element, listeners, toggle } = setup('false');
     (document.activeElement as HTMLElement | null)?.blur();
     listeners.get('change:collapsed')?.({});
-    expect(document.activeElement).toBe(element.querySelector('button'));
-    // Open list (aria-pressed true): nothing to do.
-    element.querySelector('button')?.setAttribute('aria-pressed', 'true');
-    (document.activeElement as HTMLElement | null)?.blur();
-    listeners.get('change:collapsed')?.({});
+    // Not yet: an Enter keydown activating the entry must not land on the button (it would reopen the list).
     expect(document.activeElement).toBe(document.body);
+    vi.runAllTimers();
+    expect(document.activeElement).toBe(toggle);
+    vi.useRealTimers();
+    element.remove();
+  });
+
+  it('ne touche pas au focus quand la liste s’ouvre ou quand le focus est ailleurs', () => {
+    vi.useFakeTimers();
+    const { element, listeners } = setup('true');
+    (document.activeElement as HTMLElement | null)?.blur();
+    listeners.get('change:collapsed')?.({});
+    vi.runAllTimers();
+    expect(document.activeElement).toBe(document.body);
+    const other = document.createElement('button');
+    document.body.append(other);
+    element.querySelector('button')?.setAttribute('aria-pressed', 'false');
+    other.focus();
+    listeners.get('change:collapsed')?.({});
+    vi.runAllTimers();
+    expect(document.activeElement).toBe(other);
+    vi.useRealTimers();
+    other.remove();
+    element.remove();
+  });
+});
+
+describe('menuKeyboard', () => {
+  function setup() {
+    const element = document.createElement('div');
+    element.innerHTML = `<button type="button" aria-pressed="true">Mes outils</button>
+      <dialog id="GPcontrolListPanel-1" open><ul role="menu">
+        <li role="menuitem" tabindex="0">Distance</li><li role="menuitem" tabindex="0">Surface</li>
+        <li role="menuitem" tabindex="0">Angle</li></ul></dialog>`;
+    document.body.append(element);
+    const listeners = new Map<string, (event: unknown) => void>();
+    menuKeyboard(
+      { on: (type: string, l: (e: unknown) => void) => listeners.set(type, l) },
+      element,
+    );
+    const items = Array.from(element.querySelectorAll<HTMLElement>('li'));
+    const key = (target: HTMLElement, key: string) => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      target.dispatchEvent(event);
+      return event.defaultPrevented;
+    };
+    return {
+      element,
+      listeners,
+      items,
+      key,
+      toggle: element.querySelector('button') as HTMLButtonElement,
+    };
+  }
+
+  it('à l’ouverture, une seule entrée tabulable (la première), qui reçoit le focus', () => {
+    const { element, listeners, items } = setup();
+    listeners.get('change:collapsed')?.({});
+    expect(items.map((i) => i.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
+    expect(document.activeElement).toBe(items[0]);
+    element.remove();
+  });
+
+  it('flèches (en boucle), Début et Fin déplacent le focus ; Échap ferme la liste', () => {
+    const { element, listeners, items, key, toggle } = setup();
+    const clicks = vi.fn();
+    toggle.addEventListener('click', clicks);
+    listeners.get('change:collapsed')?.({});
+    expect(key(items[0] as HTMLElement, 'ArrowDown')).toBe(true);
+    expect(document.activeElement).toBe(items[1]);
+    key(items[1] as HTMLElement, 'ArrowUp');
+    key(items[0] as HTMLElement, 'ArrowUp');
+    expect(document.activeElement).toBe(items[2]);
+    expect(items.map((i) => i.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+    key(items[2] as HTMLElement, 'Home');
+    expect(document.activeElement).toBe(items[0]);
+    key(items[0] as HTMLElement, 'End');
+    expect(document.activeElement).toBe(items[2]);
+    expect(key(items[2] as HTMLElement, 'Escape')).toBe(true);
+    expect(clicks).toHaveBeenCalledTimes(1);
+    // Enter/Space: left to the control, default action prevented; other keys untouched.
+    expect(key(items[2] as HTMLElement, 'Enter')).toBe(true);
+    expect(key(items[2] as HTMLElement, 'a')).toBe(false);
     element.remove();
   });
 });
