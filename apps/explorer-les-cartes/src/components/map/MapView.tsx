@@ -8,6 +8,7 @@ import useBaseLayerCatalogue from '../../hooks/useBaseLayerCatalogue';
 import useLayerSwitcher from '../../hooks/useLayerSwitcher';
 import useMap from '../../hooks/useMap';
 import useMapControls from '../../hooks/useMapControls';
+import useOverlays from '../../hooks/useOverlays';
 import useWmtsCapabilities from '../../hooks/useWmtsCapabilities';
 import './MapView.css';
 
@@ -19,6 +20,7 @@ export default function MapView() {
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
   useMapControls(map);
   useLayerSwitcher(map);
+  useOverlays(map);
 
   const isEmpty = capabilities.isSuccess && layers.length === 0;
 

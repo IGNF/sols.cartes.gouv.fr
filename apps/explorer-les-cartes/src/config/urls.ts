@@ -45,6 +45,15 @@ export const GPF_ENDPOINTS = {
   csw: 'https://data.geopf.fr/csw/gissol-osf_c',
 } as const;
 
+/** Host of every GPF service: deep links to other hosts are refused. */
+export const GPF_HOST = 'data.geopf.fr';
+
+/**
+ * CSW GetRecords request returning the 7 "sols" records (ISO 19115-3), see doc/agents/gpf-sols-data.md §1.
+ * Read by scripts/build-sols-layers.ts only.
+ */
+export const SOLS_CSW_GETRECORDS_URL = `${GPF_ENDPOINTS.csw}?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0`;
+
 /** Builds an OGC GetCapabilities URL for a GPF endpoint. */
 export function buildCapabilitiesUrl(endpoint: string, service: string, version: string): string {
   const url = new URL(endpoint);

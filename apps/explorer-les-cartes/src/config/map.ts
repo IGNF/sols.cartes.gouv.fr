@@ -40,6 +40,15 @@ export type BaseLayerId = (typeof BASE_LAYER_CANDIDATES)[number]['id'];
 
 export const DEFAULT_BASE_LAYER_ID: BaseLayerId = 'plan-ign';
 
+/**
+ * zIndex given to the base layer before it is added, so the geopf LayerSwitcher sorts the layers by
+ * zIndex (list and drawing order) instead of putting the newest layer, possibly the base, on top.
+ * It must be the smallest positive integer: the switcher treats 0 as "no zIndex" and iterates its
+ * zIndex buckets with for...in, where a negative key comes after the positive ones (on top).
+ * Ties keep the map collection order, where the base layer is first.
+ */
+export const BASE_LAYER_Z_INDEX = 1;
+
 /** Attribution shown for every GPF base layer (the WMTS capabilities carry no attribution). */
 export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_blank" rel="noopener noreferrer">IGN – Géoplateforme</a>`;
 
@@ -130,4 +139,28 @@ export const CONTROL_LABELS = {
   searchInput: 'Rechercher un lieu ou une adresse',
 } as const;
 
-export const BASE_LAYER_PANEL_ID = 'panneau-fonds-de-carte';
+/** Id of the side panel (target of the toggle button). */
+export const SIDE_PANEL_ID = 'panneau-lateral';
+
+/** Tabs of the side panel. */
+export const SIDE_PANEL_TABS = [
+  { tabId: 'fonds', label: 'Fonds de carte', iconId: 'ri-stack-line' },
+  { tabId: 'sols', label: 'Données sols', iconId: 'ri-plant-line' },
+] as const;
+
+export type SidePanelTab = (typeof SIDE_PANEL_TABS)[number]['tabId'];
+
+/**
+ * Display preference for "Ajouter à la carte": WMTS first (EPSG:2154 layers are reprojected after
+ * loading the geopf CRS module), then WMS raster, then WMS vector. TMS (MapLibre styles) and WFS are not drawn in v0.
+ */
+export const DISPLAYABLE_SOLS_SERVICES = ['wmts', 'wms-raster', 'wms-vector'] as const;
+
+/** Attribution of the sols layers. */
+export const SOLS_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.gisSol}" target="_blank" rel="noopener noreferrer">GIS Sol – INRAE</a>`;
+
+/** An overlay is reported unavailable after this many tile errors without any loaded tile. */
+export const OVERLAY_UNAVAILABLE_AFTER_ERRORS = 3;
+
+/** Length of the abstract excerpt shown in the "Données sols" panel. */
+export const ABSTRACT_EXCERPT_LENGTH = 180;

@@ -195,3 +195,81 @@ Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/
 - Panneau DSFR : le `<label>` d'un `RadioButtons` recouvre l'`<input>` ; dans Playwright, cliquer le libellé (pas `check()` sur l'input).
 - Tests : `ol/Map` et `../map/geopf` sont simulés (`vi.mock`) ; le catalogue, `createWmtsLayer` et le parseur utilisent un extrait réel
   des capacités (`src/test/fixtures/wmts-capabilities.xml` : Plan IGN, orthophotos, relief et leurs TileMatrixSet, importé avec `?raw`).
+
+## 6. Couches sols (M4, 2026-11-05)
+
+### 6.1 Générer `src/data/sols-layers.json`
+
+```bash
+cd apps/explorer-les-cartes
+bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --write src/data/sols-layers.json
+```
+
+- Le script lit le CSW (`SOLS_CSW_GETRECORDS_URL` dans `src/config/urls.ts`, requête de `gpf-sols-data.md` §1), analyse les fiches
+  ISO 19115-3 avec `@xmldom/xmldom` (`scripts/sols-layers/csw.ts` : identifiant, titre, résumé, organisation, liens
+  `mrd:onLine/cit:CI_OnlineResource` avec protocole, adresse, nom, description).
+- Liens gardés : protocoles `OGC:WMS`, `OGC:WMTS`, `OGC:WFS`, `TMS`. Service déduit du protocole et du chemin du lien
+  (`/wms-r` → WMS raster, `/wms-v` → WMS vecteur, `/wmts`, `/wfs`, `/tms`), sinon rejet « point d'accès non reconnu ».
+- Chaque nom est cherché dans les capacités de son service (`src/data/capabilitiesIndex.ts`, partagé avec l'application) :
+  wms-v et wms-r (WMS 1.3.0), WMTS (avec le CRS des grilles liées), WFS 2.0.0 (types publiés), TMS : la racine
+  `https://data.geopf.fr/tms/1.0.0` (`TileMapService`) et non l'annexe ROK4 (question M-3). Jamais de correction du CSW :
+  un nom absent part dans `rejected` avec son motif ; quand il existe sur l'autre WMS, le motif le dit
+  (« publié sur WMS raster (wms-r) »).
+- Sortie déterministe (`normaliseSolsLayersFile` : fiches par titre, couches par service puis nom, sans horodatage), point d'accès
+  canonique de `GPF_ENDPOINTS`, puis résumé en console. Résultat du 2026-11-05 : 7 fiches, 12 couches validées, 14 rejets
+  (les 4 de `gpf-sols-data.md` §5 et les 10 noms WFS courts).
+- **Jamais de fichier partiel** (revue M4) : la GPF répond parfois par un document d'exception OGC (`ows:ExceptionReport`,
+  `ServiceExceptionReport`) avec un HTTP 200. Le script échoue (code de sortie non nul, fichier inchangé) si le CSW ou des capacités
+  sont une exception (`exceptionReportText`), si le CSW ne renvoie aucune fiche, si une fiche n'a pas d'identifiant ou de titre,
+  ou si les capacités d'un service ne listent aucune couche (`assertCompleteInputs`). Chaque requête a un délai de 60 s
+  (`AbortSignal.timeout`).
+- Contrôle sans réseau : `src/data/solsLayers.test.ts` (schéma partagé `src/data/solsLayersSchema.ts`, source = requête configurée,
+  ordre identique à celui du script, pas de doublon) ; l'analyseur et le validateur sont testés sur un extrait du CSW
+  (`scripts/sols-layers/fixtures/csw-extract.xml`) et des capacités simulées.
+
+### 6.2 Affichage
+
+- Onglet « Données sols » du panneau latéral (`Tabs` DSFR contrôlés, onglet dans le store) : titre, extrait du résumé,
+  producteur, services en badges, bouton « Ajouter à la carte / Retirer de la carte » (nom accessible complété du titre de la fiche,
+  annonce dans une zone `role="status"`).
+- Couche ajoutée : WMTS d'abord, puis WMS raster, puis WMS vecteur (`DISPLAYABLE_SOLS_SERVICES`) ; TMS et WFS ne sont pas dessinés en v0.
+  WMS : `TileWMS` (GetMap 256 px, PNG transparent) sur le point d'accès canonique. WMTS publié seulement en EPSG:2154
+  (`INRAE_CARTE-SOLS`, grille `2154_10m_0_14`) : `loadCrs('EPSG:2154')` charge à la demande le module CRS de geopf-ext
+  (`CRS.loadByName`, proj4 + étendue), puis OpenLayers reprojette les tuiles en EPSG:3857 (morceau `CRS-*.js`, 169 kB).
+- État client : `overlays` (références de couches) et `unavailableOverlays` dans le store ; `useOverlays` crée et retire les couches
+  OpenLayers, avec le nouvel essai des tuiles et `watchTileHealth` (3 tuiles en erreur sans aucune tuile chargée → message
+  « La Géoplateforme ne renvoie pas d'image pour cette couche »).
+- **Ordre des couches** : le `LayerSwitcher` donne à toute couche ajoutée sans zIndex un zIndex supérieur aux autres, donc un fond
+  ajouté après une couche sols (lien profond, changement de fond) la recouvrait. Le fond reçoit `BASE_LAYER_Z_INDEX = 1` **avant**
+  son ajout : le gestionnaire trie alors par zIndex (liste et dessin). Pas 0 (traité comme « sans zIndex ») ni négatif
+  (`_updateLayersOrder` parcourt ses zIndex avec `for...in` : une clé négative passe après les positives, donc au-dessus).
+
+### 6.3 Lien profond « Voir sur la carte » (contrat C4, `geonetwork-ui.md` §10)
+
+`/explorer-les-cartes/?layer=<nom>&type=<WMS|WMTS|TMS>&url=<point d'accès>` (`src/map/deepLink.ts`, `src/hooks/useDeepLink.ts`) :
+
+- `type` comparé en majuscules ; `layer` et `url` décodés avec tolérance (double encodage accepté) ; seuls les points d'accès
+  `https://data.geopf.fr` sont acceptés ; WMS sous ses deux formes (`/wms-v` sans chemin, `/wms-r/wms`).
+- Couche connue de `sols-layers.json` (service + nom) : ajoutée directement. Inconnue : vérifiée contre les capacités en direct
+  (WMTS déjà en cache, WMS wms-v ou wms-r par TanStack Query) et ajoutée si publiée. Sinon alerte DSFR « Couche introuvable »
+  nommant la couche (`role="alert"`, titre `h2`). Lien mal formé ou point d'accès hors `data.geopf.fr` : alerte distincte
+  « Lien invalide ». Couche ajoutée par lien mais dont le service ne renvoie pas d'image : alerte « Couche indisponible » dans
+  l'avis du lien (même détection que le panneau). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée
+  indisponible plutôt que laissée en attente.
+- `type=TMS` (le catalogue envoie `layer=style` et l'URL d'un style MapLibre JSON) : avis DSFR « Format non pris en charge »
+  (`role="status"`). Charger ce style demanderait `ol-mapbox-style` en dépendance directe (13.9, déjà présent via geopf-ext) et
+  `MapboxVectorLayer({ styleUrl })` : styles de 217 couches sans `glyphs`, à valider ; reporté.
+- Un lien profond ouvre l'onglet « Données sols » dès le premier rendu (`initialTab` du store) : le script DSFR des onglets lit
+  l'onglet sélectionné à son initialisation et en gardait deux sélectionnés si on changeait d'onglet après coup.
+- `type=WFS` n'est jamais émis par le catalogue ; s'il arrive, il est traité comme non pris en charge.
+
+### 6.4 Pièges
+
+- GeoServer (wms-v) répond **HTTP 200 avec un `ServiceExceptionReport` XML** quand une couche est cassée : vérifier le
+  `Content-Type` (`image/png`), pas seulement le code. Le 2026-11-05, `rrp_loiret_gpkg_11-09-2026_wmsv` et
+  `rrp_dept_loiret_gpkg_11-09-2026_wmsv` renvoient une `NullPointerException` à tout GetMap (question M-4) ; les autres couches wms-v
+  répondent en PNG.
+- Une fois (sur une vingtaine de chargements), les capacités WMTS ont semblé ne contenir aucun fond candidat (alerte « Aucun fond de
+  carte prévu »), non reproduit ensuite (6 chargements : 3 Mo, 745 couches). Probablement une réponse partielle de la GPF.
+- `bun run check:map` couvre aussi M4 (onglet « Données sols », ajout d'une couche au clavier avec GetMap `image/png`, liens profonds).
+

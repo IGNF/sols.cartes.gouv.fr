@@ -1,6 +1,6 @@
 import type OlMap from 'ol/Map';
 import { useEffect, useMemo } from 'react';
-import { TILE_RETRY_DELAY_MS } from '../config/map';
+import { BASE_LAYER_Z_INDEX, TILE_RETRY_DELAY_MS } from '../config/map';
 import createWmtsLayer from '../map/createWmtsLayer';
 import attachTileRetry from '../map/tileRetry';
 import type { WmtsCapabilities } from '../map/wmtsCapabilities';
@@ -24,6 +24,9 @@ export default function useBaseLayer(
     if (!map || !layer) return undefined;
     const source = layer.getSource();
     const detachRetry = source ? attachTileRetry(source, TILE_RETRY_DELAY_MS) : undefined;
+    // An explicit zIndex makes the LayerSwitcher sort its list by zIndex instead of putting the
+    // new layer on top (and drawing it over the overlays).
+    layer.setZIndex(BASE_LAYER_Z_INDEX);
     map.getLayers().insertAt(0, layer);
     return () => {
       map.removeLayer(layer);

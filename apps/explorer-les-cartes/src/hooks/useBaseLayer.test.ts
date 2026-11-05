@@ -3,7 +3,7 @@ import type OlMap from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import BaseEvent from 'ol/events/Event';
 import { describe, expect, it, vi } from 'vitest';
-import { TILE_RETRY_DELAY_MS } from '../config/map';
+import { BASE_LAYER_Z_INDEX, TILE_RETRY_DELAY_MS } from '../config/map';
 import { parseWmtsCapabilities } from '../map/wmtsCapabilities';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import useBaseLayer from './useBaseLayer';
@@ -33,6 +33,7 @@ describe('useBaseLayer', () => {
     const [index, layer] = insertAt.mock.calls[0] ?? [];
     expect(index).toBe(0);
     expect(layer?.get('name')).toBe(PLAN_IGN);
+    expect(layer?.getZIndex()).toBe(BASE_LAYER_Z_INDEX);
     unmount();
     expect(removeLayer).toHaveBeenCalledWith(layer);
   });

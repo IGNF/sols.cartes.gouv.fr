@@ -103,3 +103,15 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Mise à jour M3 (décision de l'orchestrateur : nouvel essai borné si l'erreur se reproduit) : 0 échec sur 150 tuiles puis 1 `404` sur une tuile orthophoto valide (environ 13 chargements de page) ; nouvel essai unique après 500 ms ajouté (`src/map/tileRetry.ts`, vérifié en forçant un 400 dans Playwright). La question reste ouverte pour l'équipe Géoplateforme.
   -> b est raisonnable si c'est bien un unique nouvel essai. Le problème et remonté à l'équipe gpf.
 - Suite (orchestrateur) : un seul nouvel essai par URL de tuile (`src/map/tileRetry.ts`, PR #29) ; signalement GPF fait par l'humain.
+
+## M-3. Source de validation des noms TMS (carto-dev, M4)
+
+- Constat : la consigne M4 valide un nom TMS s'il figure dans l'annexe `https://data.geopf.fr/annexes/gissol-osf/gpf-rok4-server-wmts-tms/capabilities.xml`. Ce fichier est un GetCapabilities **WMTS** (raster ROK4) : il ne contient aucune couche vecteur TMS ; les trois noms TMS du CSW (`cartogrammes_gpkg_11-09-2026_tms`, `rrp_landes_gpkg_11-09-2026_tms`, `rrp_gironde_gpkg_03-09-2026_tms`) y sont absents et seraient tous rejetés. La racine du service, `https://data.geopf.fr/tms/1.0.0` (document `TileMapService`, 849 `TileMap`), les liste tous les trois (`metadata.json` de chacun en 200).
+- Options : (a) appliquer la consigne : tous les TMS rejetés ; (b) valider contre la racine `TileMapService`, qui est la liste de capacités du service TMS.
+- Défaut appliqué : (b) dans `scripts/build-sols-layers.ts` ; les TMS validés ne sont de toute façon pas affichés en v0 (styles MapLibre, voir `doc/agents/geopf-ext.md` §6).
+
+## M-4. Couches WMS du RRP du Loiret en erreur côté serveur (carto-dev, M4)
+
+- Constat : `https://data.geopf.fr/wms-v/ows` répond HTTP 200 avec un `ServiceExceptionReport` (`java.lang.NullPointerException: Cannot invoke "String.length()" because "expression" is null`) à tout GetMap sur `rrp_loiret_gpkg_11-09-2026_wmsv` et `rrp_dept_loiret_gpkg_11-09-2026_wmsv` (style vide ou nommé, EPSG:3857 ou 4326, toute emprise), alors que les deux noms sont dans les capacités. Les autres couches wms-v (`stock_carbone_fao_fr_wmsv`, `vibrisses_...`, `etude_30110_...`) répondent en PNG. Le lien d'exemple WMS du contrat C4 porte sur cette couche : la carte l'ajoute, mais rien ne s'affiche.
+- Options : (a) signaler à l'équipe Géoplateforme / INRAE (style ou données de la couche) ; (b) masquer ces couches dans le panneau ; (c) détecter l'erreur et l'indiquer.
+- Défaut appliqué : (a) à faire par un humain et (c) : après 3 tuiles en erreur sans aucune tuile chargée, le panneau affiche « La Géoplateforme ne renvoie pas d'image pour cette couche pour le moment. ». Pas de masquage : la couche est publiée et pourra être réparée côté serveur.
