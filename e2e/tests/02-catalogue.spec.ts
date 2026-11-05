@@ -48,12 +48,10 @@ test.describe('Catalogue', () => {
 
     // C5 a fermé la limite connue : les agrégations (size 0) portent aussi le filtre.
     const unscoped = searchBodies.filter((b) => !b.includes(SOLS_GROUP));
-    test
-      .info()
-      .annotations.push({
-        type: 'requêtes _search',
-        description: `${searchBodies.length} au total, ${unscoped.length} sans ${SOLS_GROUP}`,
-      });
+    test.info().annotations.push({
+      type: 'requêtes _search',
+      description: `${searchBodies.length} au total, ${unscoped.length} sans ${SOLS_GROUP}`,
+    });
     expect(unscoped, 'requêtes _search sans filtre sols (résultats ou agrégations)').toEqual([]);
 
     expect(untolerated(c.errors, TOLERATED), 'erreurs console hors liste documentée').toEqual([]);

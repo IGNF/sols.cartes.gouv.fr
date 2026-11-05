@@ -28,12 +28,10 @@ test.describe('Accessibilité (axe-core)', () => {
       const blocking = summary.filter((v) => v.impact === 'critical' || v.impact === 'serious');
       // Les fiches gardent des violations amont documentées (doc/catalogue-patches.md) : rapportées, non bloquantes.
       if (!(AXE_STRICT as readonly string[]).includes(nom)) {
-        test
-          .info()
-          .annotations.push({
-            type: 'axe amont',
-            description: `${blocking.length} règles critical/serious (voir axe-${nom}.json)`,
-          });
+        test.info().annotations.push({
+          type: 'axe amont',
+          description: `${blocking.length} règles critical/serious (voir axe-${nom}.json)`,
+        });
         return;
       }
       expect(blocking).toEqual([]);
