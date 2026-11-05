@@ -142,6 +142,7 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Questions : (1) sur quel build ou quelle URL l'observation a-t-elle été faite (version antérieure à C5, `.upstream` non reconstruit, cartes.gouv.fr) ? (2) faut-il le patch « puce sélectionnée et retrait au second clic » (environ 15 lignes dans `home-header`) ?
 - Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
 - Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.
+- Décision (orchestrateur) : (2) oui, patch fait en C11 (`0007-keyword-chips-toggle.patch`, `doc/agents/geonetwork-ui.md` §16) ; (1) reste ouverte, en attente du lieu d'observation.
 
 ## C-5. Boucle de l'aperçu sur un lien WFS introuvable (catalogue-dev, C10)
 
@@ -160,4 +161,4 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : la modale DSFR « Paramètres d'affichage » fonctionne dans le datahub, mais le mode sombre ne s'applique qu'aux éléments DSFR ; les gabarits amont (couleurs Tailwind fixes) restent clairs et deviennent illisibles sur fond sombre.
 - Options : (a) masquer le bouton dans le catalogue, catalogue toujours clair ; (b) feuille de surcharge des couleurs amont pour le sombre (travail important, à maintenir à chaque montée de version) ; (c) laisser le bouton sans effet.
 - Défaut appliqué : (a). Détails : `doc/agents/geonetwork-ui.md` §15.
-
+- Décision (orchestrateur, propriétaire) : (a) confirmée pour la v1, faute de solution simple ; défaut appliqué.

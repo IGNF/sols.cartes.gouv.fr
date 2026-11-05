@@ -545,3 +545,17 @@ fait sur l'edito n'a pas d'effet ici. Question C-6.
 
 Captures : `doc/screenshots/C8/`.
 
+## 16. Puces de mots-clés à bascule (C11)
+
+Décision sur C-4 : les puces de C9 deviennent des boutons à bascule (patch 0007, `home-header`). État `aria-pressed`
+calculé depuis le paramètre d'URL `keyword` ; clic ou Entrée/Espace : ajoute le mot-clé au filtre « Mot-clé » s'il n'y
+est pas, le retire sinon, sans toucher à la recherche ni aux autres filtres ; plusieurs puces se cumulent (OU). Rangée
+`role="group"` nommée « Mots-clés suggérés ». Aspect sélectionné : fond `--background-active-blue-france`, texte
+`--text-inverted-blue-france`, coche (`sols-overrides.css`).
+
+Vérification (Playwright, bureau) : RRP → 4 résultats, `aria-pressed="true"`, `?keyword=RRP` ; second clic → 7
+résultats, `false`. Clavier : RMQS (Entrée) → 2 ; pédologie (Espace) → `keyword=RMQS,pédologie`, 6 résultats, les deux
+`true` ; RMQS (Espace) → 4, pédologie seule ; pédologie (Entrée) → 7. Aucune erreur console.
+
+Captures : `doc/screenshots/C11/`.
+
