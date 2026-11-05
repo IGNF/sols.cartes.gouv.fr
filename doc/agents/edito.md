@@ -25,7 +25,10 @@ apps/accueil/
   src/_includes/partials/{skiplinks,header,footer,breadcrumb,pictogram}.njk
   src/css/site.css            styles propres au site (jetons DSFR uniquement : fond du héros, surtitre)
   src/index.njk               accueil
-  src/pages/*.njk             accessibilité, mentions légales, données personnelles, plan du site
+  src/_includes/layouts/article.njk  article : fil d'Ariane Accueil > Articles > titre, h1, date <time>
+  src/_includes/partials/article-card.njk  carte d'article (headingLevel à fixer avant l'include)
+  src/articles/*.md           articles (collection « articles »), articles.11tydata.js : gabarit et permalink
+  src/pages/*.njk             accessibilité, mentions légales, données personnelles, plan du site, liste des articles
   test/smoke.test.js
 ```
 
@@ -40,6 +43,26 @@ capture d'application ; pied de page DSFR au lieu du bloc sombre (QUESTIONS Q7).
 
 Pages du pied de page : `layouts/page.njk`, `permalink` tiré de `site.sections`. Le plan du site liste la
 navigation principale et les liens bas de pied de page.
+
+## Articles
+
+Ajouter un fichier `apps/accueil/src/articles/<slug>.md` ; il est publié sous `/articles/<slug>/` :
+
+```markdown
+---
+title: Titre de l'article
+description: Une phrase pour la carte et la meta description.
+date: 2026-11-05
+---
+
+Texte en Markdown. Intertitres à partir de `##` (le `h1` est le titre du front matter).
+```
+
+La collection `articles` (`eleventy.config.js`) est triée par date décroissante. La liste `/articles/`
+(`src/pages/articles.njk`) affiche une carte par article, l'accueil les trois plus récents
+(`accueil.articles.max`). Filtres de date : `dateIso` (`2026-11-05`, pour `datetime`) et `dateFr`
+(« 5 novembre 2026 »), en UTC. Le fil d'Ariane accepte des niveaux intermédiaires via la variable `breadcrumb`
+(`[{ label, href }]`).
 
 ## Ressources DSFR
 
