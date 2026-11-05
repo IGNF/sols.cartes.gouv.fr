@@ -29,7 +29,8 @@ describe('useWmtsCapabilities', () => {
   it('expose l’erreur quand la Géoplateforme ne répond pas', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })));
     const { result } = renderHook(() => useWmtsCapabilities(), { wrapper: createQueryWrapper() });
-    await waitFor(() => expect(result.current.isError).toBe(true));
+    // Retries (GPF_REQUEST_RETRIES) delay the error by a little over 1 s.
+    await waitFor(() => expect(result.current.isError).toBe(true), { timeout: 5000 });
     expect(result.current.error?.message).toMatch(/HTTP 500/);
   });
 

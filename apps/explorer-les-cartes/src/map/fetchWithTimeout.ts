@@ -1,6 +1,7 @@
 /**
- * `fetch` that gives up after `timeoutMs`: the GPF sometimes accepts a capabilities request and never
- * answers (no response, no error), which would leave the map without its base layer forever.
+ * `fetch` that gives up when no response headers arrived after `timeoutMs`: the GPF sometimes accepts a
+ * capabilities request and never answers (no response, no error), which would leave the map without its
+ * base layer forever. Reading the body afterwards is not limited.
  * The returned error is a `TimeoutError` so the caller (TanStack Query) can retry.
  */
 export class TimeoutError extends Error {

@@ -60,11 +60,12 @@ export const TILE_RETRY_DELAY_MS = 500;
 
 /**
  * GPF capabilities requests: per-attempt timeout, then retries. The GPF intermittently accepts a request
- * and never answers (D-carto-1: about 1 in 5 GetCapabilities in curl, 2026-11-05); a normal answer
- * takes under 1 s.
+ * and never answers (D-carto-1: about 1 in 5 GetCapabilities in curl, 2026-11-05). The timeout only covers
+ * the wait for the response headers (normally under 0.5 s), not the body download, so a slow network is
+ * not penalised. Worst case: 5 attempts × 3 s + 4 × 0.3 s ≈ 16 s.
  */
-export const GPF_REQUEST_TIMEOUT_MS = 5_000;
-export const GPF_REQUEST_RETRIES = 3;
+export const GPF_REQUEST_TIMEOUT_MS = 3_000;
+export const GPF_REQUEST_RETRIES = 4;
 export const GPF_REQUEST_RETRY_DELAY_MS = 300;
 
 /** DSFR `md` breakpoint: below it the side panel starts closed so the map stays above the fold. */
