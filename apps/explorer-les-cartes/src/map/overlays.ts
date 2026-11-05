@@ -2,6 +2,7 @@ import TileLayer from 'ol/layer/Tile';
 import TileWMS from 'ol/source/TileWMS';
 import WMTS, { optionsFromCapabilities } from 'ol/source/WMTS';
 import { DISPLAYABLE_SOLS_SERVICES, SOLS_ATTRIBUTION } from '../config/map';
+import { legendGraphicUrl } from '../config/urls';
 import {
   solsLayerKey,
   type SolsDataset,
@@ -9,7 +10,9 @@ import {
   type SolsService,
 } from '../data/solsLayersSchema';
 import { loadCrs } from './geopf';
+import { attachLayerInfo } from './layerInfo';
 import { findWmtsLayer, type WmtsCapabilities } from './wmtsCapabilities';
+import { attachWmtsFeatureInfo } from './wmtsFeatureInfo';
 
 /** A layer the user put on the map (client state, kept in the store). */
 export interface OverlayRef {
@@ -18,13 +21,15 @@ export interface OverlayRef {
   name: string;
   title: string;
   endpoint: string;
+  /** Legend image published in the capabilities, when there is one. */
+  legendUrl?: string;
   /** Initial opacity (0 to 1) and visibility, e.g. from a cartes.gouv.fr permalink. */
   opacity?: number;
   visible?: boolean;
 }
 
 export function toOverlayRef(
-  layer: Pick<SolsLayer, 'service' | 'name' | 'endpoint'>,
+  layer: Pick<SolsLayer, 'service' | 'name' | 'endpoint' | 'legendUrl'>,
   title: string,
 ): OverlayRef {
   return {
@@ -33,7 +38,22 @@ export function toOverlayRef(
     name: layer.name,
     title,
     endpoint: layer.endpoint,
+    ...(layer.legendUrl ? { legendUrl: layer.legendUrl } : {}),
   };
+}
+
+/**
+ * Legend shown by the Legends control: the published `LegendURL`, else a GetLegendGraphic request on the
+ * vector WMS (GeoServer answers it; the raster WMS answers 400 without a published legend).
+ */
+export function overlayLegendUrl(
+  overlay: Pick<OverlayRef, 'service' | 'name' | 'endpoint' | 'legendUrl'>,
+  wmtsLegendUrl?: string,
+): string | undefined {
+  if (overlay.legendUrl) return overlay.legendUrl;
+  if (overlay.service === 'wmts') return wmtsLegendUrl;
+  if (overlay.service === 'wms-vector') return legendGraphicUrl(overlay.endpoint, overlay.name);
+  return undefined;
 }
 
 /** The layer "Ajouter à la carte" draws for a dataset, by service preference. */
@@ -72,32 +92,48 @@ export async function createOverlayLayer(
   overlay: OverlayRef,
   capabilities: WmtsCapabilities | undefined,
 ): Promise<TileLayer<TileWMS | WMTS> | null> {
-  const properties = { name: overlay.name, title: overlay.title, overlayKey: overlay.key };
+  const properties = { overlayKey: overlay.key };
   const display = {
     ...(overlay.opacity !== undefined ? { opacity: overlay.opacity } : {}),
     ...(overlay.visible !== undefined ? { visible: overlay.visible } : {}),
   };
-  if (overlay.service === 'wms-raster' || overlay.service === 'wms-vector') {
-    return new TileLayer({
-      source: new TileWMS({
-        url: overlay.endpoint,
-        params: { LAYERS: overlay.name, FORMAT: 'image/png', TRANSPARENT: true, VERSION: '1.3.0' },
-        crossOrigin: 'anonymous',
-        attributions: SOLS_ATTRIBUTION,
-      }),
-      properties,
-      ...display,
+  const describe = <T extends TileLayer<TileWMS | WMTS>>(layer: T, wmtsLegendUrl?: string): T => {
+    const legendUrl = overlayLegendUrl(overlay, wmtsLegendUrl);
+    return attachLayerInfo(layer, {
+      name: overlay.name,
+      title: overlay.title,
+      ...(legendUrl ? { legendUrl } : {}),
     });
+  };
+  if (overlay.service === 'wms-raster' || overlay.service === 'wms-vector') {
+    return describe(
+      new TileLayer({
+        source: new TileWMS({
+          url: overlay.endpoint,
+          params: {
+            LAYERS: overlay.name,
+            FORMAT: 'image/png',
+            TRANSPARENT: true,
+            VERSION: '1.3.0',
+          },
+          crossOrigin: 'anonymous',
+          attributions: SOLS_ATTRIBUTION,
+        }),
+        properties,
+        ...display,
+      }),
+    );
   }
-  if (overlay.service !== 'wmts' || !capabilities || !findWmtsLayer(capabilities, overlay.name))
-    return null;
+  if (overlay.service !== 'wmts' || !capabilities) return null;
+  const info = findWmtsLayer(capabilities, overlay.name);
+  if (!info) return null;
   const crs = wmtsLayerCrs(capabilities, overlay.name);
   if (crs && !WEB_MERCATOR.includes(crs)) await loadCrs(crs);
   const options = optionsFromCapabilities(capabilities, { layer: overlay.name });
   if (!options) return null;
-  return new TileLayer({
-    source: new WMTS({ ...options, crossOrigin: 'anonymous', attributions: SOLS_ATTRIBUTION }),
-    properties,
-    ...display,
-  });
+  const source = attachWmtsFeatureInfo(
+    new WMTS({ ...options, crossOrigin: 'anonymous', attributions: SOLS_ATTRIBUTION }),
+    info.queryable,
+  );
+  return describe(new TileLayer({ source, properties, ...display }), info.legendUrl);
 }

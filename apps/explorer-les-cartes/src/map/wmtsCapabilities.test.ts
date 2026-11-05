@@ -11,6 +11,15 @@ import {
 
 const planIgn = BASE_LAYER_CANDIDATES[0].layerName;
 
+describe('parseWmtsCapabilities (couches interrogeables)', () => {
+  it('liste les couches qui publient un InfoFormat, et le reporte dans findWmtsLayer', () => {
+    const parsed = parseWmtsCapabilities(capabilitiesXml);
+    expect(parsed.QueryableLayers).toEqual(['ORTHOIMAGERY.ORTHOPHOTOS']);
+    expect(findWmtsLayer(parsed, 'ORTHOIMAGERY.ORTHOPHOTOS')?.queryable).toBe(true);
+    expect(findWmtsLayer(parsed, 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2')?.queryable).toBe(false);
+  });
+});
+
 describe('wmtsCapabilities', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

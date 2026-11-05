@@ -7,6 +7,8 @@ export interface CapabilitiesEntry {
   title: string;
   /** WMTS only: CRS of the linked tile matrix sets. */
   crs?: string[];
+  /** First legend image published for the layer (WMS and WMTS `LegendURL`), shown by the Legends control. */
+  legendUrl?: string;
 }
 
 /** Published name → entry. */
@@ -60,12 +62,36 @@ function all(doc: XmlDocument | XmlElement, localName: string): XmlElement[] {
   return Array.from(doc.getElementsByTagName('*')).filter((el) => el.localName === localName);
 }
 
+/** `xlink:href` of an element (qualified name, as both DOM implementations expose it). */
+function href(element: XmlElement): string {
+  return (element.getAttribute('xlink:href') ?? element.getAttribute('href') ?? '').trim();
+}
+
+/**
+ * First legend image of a layer: WMS `Style/LegendURL/OnlineResource@xlink:href`,
+ * WMTS `Style/LegendURL@xlink:href`. Only the layer's own styles are read (not a nested layer's).
+ */
+function legendUrl(layer: XmlElement): string | undefined {
+  for (const style of children(layer, 'Style')) {
+    for (const legend of children(style, 'LegendURL')) {
+      const url = href(legend) || children(legend, 'OnlineResource').map(href).find(Boolean) || '';
+      if (url) return url;
+    }
+  }
+  return undefined;
+}
+
 /** WMS 1.3.0: every named <Layer>. */
 export function indexWmsLayers(doc: XmlDocument): CapabilitiesIndex {
   const index: CapabilitiesIndex = new Map();
   for (const layer of all(doc, 'Layer')) {
     const name = childText(layer, 'Name');
-    if (name) index.set(name, { title: childText(layer, 'Title') || name });
+    if (!name) continue;
+    const legend = legendUrl(layer);
+    index.set(name, {
+      title: childText(layer, 'Title') || name,
+      ...(legend ? { legendUrl: legend } : {}),
+    });
   }
   return index;
 }
@@ -85,7 +111,12 @@ export function indexWmtsLayers(doc: XmlDocument): CapabilitiesIndex {
     const crs = children(layer, 'TileMatrixSetLink')
       .map((link) => setCrs.get(childText(link, 'TileMatrixSet')) ?? '')
       .filter(Boolean);
-    index.set(name, { title: childText(layer, 'Title') || name, crs: [...new Set(crs)].sort() });
+    const legend = legendUrl(layer);
+    index.set(name, {
+      title: childText(layer, 'Title') || name,
+      crs: [...new Set(crs)].sort(),
+      ...(legend ? { legendUrl: legend } : {}),
+    });
   }
   return index;
 }

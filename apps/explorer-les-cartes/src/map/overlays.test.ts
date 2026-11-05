@@ -3,7 +3,13 @@ import WMTS from 'ol/source/WMTS';
 import { describe, expect, it, vi } from 'vitest';
 import type { SolsLayer } from '../data/solsLayersSchema';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
-import { createOverlayLayer, preferredLayer, toOverlayRef, wmtsLayerCrs } from './overlays';
+import {
+  createOverlayLayer,
+  overlayLegendUrl,
+  preferredLayer,
+  toOverlayRef,
+  wmtsLayerCrs,
+} from './overlays';
 import { parseWmtsCapabilities } from './wmtsCapabilities';
 
 const loadCrs = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
@@ -36,6 +42,21 @@ describe('preferredLayer', () => {
   });
 });
 
+describe('overlayLegendUrl', () => {
+  it('préfère la légende publiée, sinon GetLegendGraphic sur le WMS vecteur, rien sur le WMS raster', () => {
+    expect(
+      overlayLegendUrl({ ...layer('wms-raster', 'a'), legendUrl: 'https://data.geopf.fr/l.png' }),
+    ).toBe('https://data.geopf.fr/l.png');
+    expect(overlayLegendUrl(layer('wms-vector', 'stock'))).toBe(
+      'https://data.geopf.fr/wms-vector?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetLegendGraphic&FORMAT=image%2Fpng&LAYER=stock',
+    );
+    expect(overlayLegendUrl(layer('wms-raster', 'a'))).toBeUndefined();
+    expect(overlayLegendUrl(layer('wmts', 'a'), 'https://data.geopf.fr/w.png')).toBe(
+      'https://data.geopf.fr/w.png',
+    );
+  });
+});
+
 describe('createOverlayLayer', () => {
   it('crée une couche WMS tuilée sur le point d’accès canonique, titrée pour le gestionnaire', async () => {
     const ref = toOverlayRef(layer('wms-vector', 'rrp_loiret'), 'RRP du Loiret');
@@ -48,7 +69,25 @@ describe('createOverlayLayer', () => {
     });
     expect((source as TileWMS).getUrls()).toEqual(['https://data.geopf.fr/wms-vector']);
     expect(olLayer?.get('title')).toBe('RRP du Loiret');
+    expect(olLayer?.get('name')).toBe('rrp_loiret');
     expect(olLayer?.get('overlayKey')).toBe('wms-vector:rrp_loiret');
+    // Legends control interface: own `name`, legend from GetLegendGraphic on the vector WMS.
+    expect(olLayer).toHaveProperty('name', 'rrp_loiret');
+    expect(
+      (olLayer as unknown as { getLegends: () => Array<{ url: string }> }).getLegends()[0]?.url,
+    ).toContain('REQUEST=GetLegendGraphic');
+  });
+
+  it('garde la légende publiée transmise par le fichier généré', async () => {
+    const ref = toOverlayRef(
+      { ...layer('wms-raster', 'INRAE_CARTE-SOLS'), legendUrl: 'https://data.geopf.fr/l.png' },
+      'Carte des sols',
+    );
+    expect(ref.legendUrl).toBe('https://data.geopf.fr/l.png');
+    const olLayer = await createOverlayLayer(ref, undefined);
+    expect(
+      (olLayer as unknown as { getLegends: () => Array<{ url: string }> }).getLegends()[0]?.url,
+    ).toBe('https://data.geopf.fr/l.png');
   });
 
   it('applique l’opacité et la visibilité demandées', async () => {

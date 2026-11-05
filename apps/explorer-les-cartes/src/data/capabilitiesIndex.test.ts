@@ -16,8 +16,25 @@ describe('capabilitiesIndex', () => {
     expect(index.get('ORTHOIMAGERY.ORTHOPHOTOS')).toEqual({
       title: 'Photographies aériennes',
       crs: ['EPSG:3857'],
+      legendUrl:
+        'https://data.geopf.fr/annexes/ressources/legendes/ORTHOIMAGERY-ORTHOPHOTOS-legend.png',
     });
     expect(index.has('INEXISTANTE')).toBe(false);
+  });
+
+  it('lit la première légende publiée d’une couche WMS (LegendURL/OnlineResource) et rien sans légende', () => {
+    const xml = `<WMS_Capabilities xmlns="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink"><Capability><Layer>
+      <Layer><Name>avec_legende</Name><Title>Avec</Title>
+        <Style><Name>default</Name>
+          <LegendURL width="20" height="20"><Format>image/png</Format><OnlineResource xlink:type="simple" xlink:href="https://data.geopf.fr/annexes/legende.png"/></LegendURL>
+          <LegendURL><Format>image/png</Format><OnlineResource xlink:href="https://data.geopf.fr/annexes/seconde.png"/></LegendURL>
+        </Style>
+      </Layer>
+      <Layer><Name>sans_legende</Name><Title>Sans</Title><Style><Name>default</Name></Style></Layer>
+    </Layer></Capability></WMS_Capabilities>`;
+    const index = indexWmsLayers(parse(xml));
+    expect(index.get('avec_legende')?.legendUrl).toBe('https://data.geopf.fr/annexes/legende.png');
+    expect(index.get('sans_legende')).toEqual({ title: 'Sans' });
   });
 
   it('liste les couches nommées d’un WMS 1.3.0', () => {

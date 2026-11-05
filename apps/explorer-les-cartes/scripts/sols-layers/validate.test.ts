@@ -10,12 +10,17 @@ import {
   type CapabilitiesByService,
 } from './validate';
 
-const index = (entries: Array<[string, string, string[]?]>): CapabilitiesIndex =>
-  new Map(entries.map(([name, title, crs]) => [name, { title, ...(crs ? { crs } : {}) }]));
+const index = (entries: Array<[string, string, string[]?, string?]>): CapabilitiesIndex =>
+  new Map(
+    entries.map(([name, title, crs, legendUrl]) => [
+      name,
+      { title, ...(crs ? { crs } : {}), ...(legendUrl ? { legendUrl } : {}) },
+    ]),
+  );
 
 const capabilities: CapabilitiesByService = {
   wmts: index([['COUCHE_WMTS', 'Couche WMTS', ['EPSG:2154']]]),
-  'wms-raster': index([['COUCHE_R', 'Couche raster']]),
+  'wms-raster': index([['COUCHE_R', 'Couche raster', undefined, 'https://data.geopf.fr/l.png']]),
   'wms-vector': index([['couche_v', 'Couche vecteur']]),
   wfs: index([['espace:type_publie', 'Type publié']]),
   tms: index([['couche_tms', 'Couche TMS']]),
@@ -87,7 +92,7 @@ describe('buildSolsLayersFile', () => {
     expect(file.datasets.map((d) => d.title)).toEqual(['Abeille', 'Zèbre']);
   });
 
-  it('garde les couches publiées avec titre, point d’accès canonique et CRS WMTS, sans doublon', () => {
+  it('garde les couches publiées avec titre, point d’accès canonique, CRS WMTS et légende, sans doublon', () => {
     expect(abeille?.layers).toEqual([
       {
         service: 'wmts',
@@ -101,6 +106,7 @@ describe('buildSolsLayersFile', () => {
         name: 'COUCHE_R',
         title: 'Couche raster',
         endpoint: endpoints['wms-raster'],
+        legendUrl: 'https://data.geopf.fr/l.png',
       },
       { service: 'tms', name: 'couche_tms', title: 'Couche TMS', endpoint: endpoints.tms },
     ]);
