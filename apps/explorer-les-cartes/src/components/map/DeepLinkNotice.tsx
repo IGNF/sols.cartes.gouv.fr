@@ -1,10 +1,12 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import useDeepLink from '../../hooks/useDeepLink';
+import { useMapStore } from '../../store/useMapStore';
 
 /** Outcome of the "Voir sur la carte" deep link coming from the catalogue. */
 export default function DeepLinkNotice() {
   const status = useDeepLink();
+  const unavailable = useMapStore((state) => state.unavailableOverlays);
   switch (status.state) {
     case 'checking':
       return (
@@ -13,6 +15,18 @@ export default function DeepLinkNotice() {
         </p>
       );
     case 'added':
+      if (unavailable.includes(status.key)) {
+        return (
+          <Alert
+            className={fr.cx('fr-mb-2w')}
+            severity="warning"
+            small
+            as="h2"
+            title="Couche indisponible"
+            description={`La couche « ${status.title} » a été ajoutée à la carte, mais la Géoplateforme ne renvoie pas d’image pour cette couche pour le moment.`}
+          />
+        );
+      }
       return (
         <p role="status" className={fr.cx('fr-sr-only')}>
           Couche « {status.title} » ajoutée à la carte.
@@ -27,6 +41,17 @@ export default function DeepLinkNotice() {
           small
           title="Couche introuvable"
           description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans l’onglet « Données sols ».`}
+        />
+      );
+    case 'invalid':
+      return (
+        <Alert
+          className={fr.cx('fr-mb-2w')}
+          severity="error"
+          small
+          as="h2"
+          title="Lien invalide"
+          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans l’onglet « Données sols ».`}
         />
       );
     case 'unsupported':

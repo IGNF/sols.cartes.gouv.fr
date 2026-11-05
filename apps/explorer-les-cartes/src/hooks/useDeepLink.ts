@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GPF_ENDPOINTS } from '../config/urls';
 import { findSolsLayer } from '../data/solsLayers';
-import type { SolsService } from '../data/solsLayersSchema';
+import { solsLayerKey, type SolsService } from '../data/solsLayersSchema';
 import { parseDeepLink, resolveDeepLink, type DeepLinkTarget } from '../map/deepLink';
 import { toOverlayRef } from '../map/overlays';
 import { findWmtsLayer } from '../map/wmtsCapabilities';
@@ -12,8 +12,9 @@ import useWmtsCapabilities from './useWmtsCapabilities';
 export type DeepLinkStatus =
   | { state: 'none' }
   | { state: 'checking'; name: string }
-  | { state: 'added'; name: string; title: string }
+  | { state: 'added'; name: string; title: string; key: string }
   | { state: 'not-found'; name: string }
+  | { state: 'invalid'; name: string }
   | { state: 'unsupported'; name: string; type: string };
 
 const ENDPOINTS: Record<SolsService, string> = {
@@ -51,7 +52,7 @@ export default function useDeepLink(search: string = window.location.search): De
     const name = link.name;
     if (link.target.kind === 'unsupported')
       status = { state: 'unsupported', name, type: link.target.type };
-    else if (link.target.kind === 'invalid' || !target) status = { state: 'not-found', name };
+    else if (link.target.kind === 'invalid' || !target) status = { state: 'invalid', name };
     else if (known) toAdd = { title: known.layer.title };
     else if (target.service === 'wmts') {
       if (wmts.isPending) status = { state: 'checking', name };
@@ -68,7 +69,9 @@ export default function useDeepLink(search: string = window.location.search): De
         else status = { state: 'not-found', name };
       }
     } else status = { state: 'not-found', name };
-    if (toAdd) status = { state: 'added', name, title: toAdd.title };
+    if (toAdd && target) {
+      status = { state: 'added', name, title: toAdd.title, key: solsLayerKey(target) };
+    }
   }
 
   const addKey = status.state === 'added' ? status.name : null;

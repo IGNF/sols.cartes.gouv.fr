@@ -59,6 +59,7 @@ describe('useDeepLink', () => {
         state: 'added',
         name: 'couche_publiee',
         title: 'Couche publiée',
+        key: 'wms-raster:couche_publiee',
       }),
     );
     expect(useMapStore.getState().overlays[0]).toMatchObject({
@@ -90,6 +91,6 @@ describe('useDeepLink', () => {
   it('refuse un point d’accès hors Géoplateforme', () => {
     mockFetch();
     const { result } = render('?layer=x&type=WMS&url=https%3A%2F%2Fexemple.fr%2Fwms-v');
-    expect(result.current).toEqual({ state: 'not-found', name: 'x' });
+    expect(result.current).toEqual({ state: 'invalid', name: 'x' });
   });
 });
