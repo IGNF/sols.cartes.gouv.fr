@@ -232,3 +232,63 @@ bloquée par la CSP de `sso.geopf.fr`, une 400) et seront traitées en C3 avec l
 Contenu d'en-tête et pied de page prévu pour C3 (orchestrateur) : titre de service « sols.cartes.gouv.fr », slogan
 « Observatoire des sols de France », navigation Accueil `/`, Rechercher une donnée `/rechercher-une-donnee/`, Explorer les
 cartes `/explorer-les-cartes/`, lien rapide « Site du GIS Sol » ; balisage de référence dans `doc/agents/edito.md`.
+
+## 9. Interface française, en-tête et pied de page, périmètre (C3)
+
+Référence d'en-tête et de pied de page : `doc/agents/edito.md` tel que sur `origin/main` au début de C3 (merge `94fb97f`,
+dernier commit du fichier `96723edc`), section « En-tête et pied de page partagés ».
+
+Langue :
+
+- Aucune option de config ne fixe la langue par défaut à v1.6.2. `[global] languages` n'affiche qu'un sélecteur
+  (`showLanguageSwitcher = getGlobalConfig().LANGUAGES?.length > 0`, `home-header.component.ts:91`). L'initialiseur i18n
+  choisit `localStorage['geonetwork-ui-language']`, puis la langue du navigateur, puis `en`
+  (`libs/util/i18n/src/lib/i18n.providers.ts:26-36`, clé dans `i18n.constants.ts:17`).
+- Mécanisme retenu (patch 0003, `index.html`) : un script en ligne écrit `geonetwork-ui-language = fr` avant le démarrage.
+  Sans `localStorage` (navigation privée stricte), la langue du navigateur s'applique. `languages` reste absent : pas de
+  sélecteur. `<html lang="fr">`.
+
+En-tête et pied de page :
+
+- `scripts/layout.mjs` extrait les trois blocs HTML (liens d'évitement, en-tête, pied de page) de `doc/agents/edito.md`,
+  déplace `aria-current="page"` sur « Rechercher une donnée » (`upstream.json` `baseHref`) et recopie le lien « Site du GIS
+  Sol » dans `fr-header__menu-links`. En mode `angular`, le JS DSFR ne fait pas cette copie et l'annonce en console. Les
+  gabarits sont écrits dans `.upstream/apps/datahub/src/app/sols-layout/` à chaque `prepare`, à côté des trois composants
+  autonomes de `overlay/` (sélecteurs `sols-skiplinks`, `sols-header`, `sols-footer`, `:host { display: contents }`).
+  Seule source : un changement des partiels edito (E5 : sélecteur de langue, pages sous `/fr/`) est repris au build
+  suivant. Le job `ci-catalogue.yml` ne se déclenche pas sur `doc/agents/edito.md` : relancer `npm test` dans la brique
+  après une modification des partiels.
+- Le patch 0003 branche ces composants dans `app.component.html` (`<main id="contenu" tabindex="-1">` autour du routeur) et
+  retire l'habillage cartes.gouv.fr, Keycloak, Matomo et DSFR analytics (détail dans `doc/catalogue-patches.md`).
+- Configuration seule : polices Marianne (`[theme] main_font`, `title_font`), favicon DSFR
+  (`/rechercher-une-donnee/assets/dsfr/favicon/favicon.ico`, copié par le patch 0003), `record_kind_quick_filter = false`
+  (toutes les fiches sont des jeux de données), `[metadata-quality] enabled = false` (indicateur absent des fiches GPF,
+  avertissement console sinon), titres d'onglet et `h1` unique de la page de recherche (`[translations.fr]`
+  `datahub.pageTitle.*`, `datahub.header.title.html`).
+- DSFR : 1.15.3 du fork (décision C-2) ; les classes de l'en-tête et du pied de page edito sont identiques en 1.14.2 et
+  1.15.3.
+
+Périmètre (voir aussi `doc/catalogue-patches.md`, « Limites connues ») :
+
+| Route ou bloc | État |
+| --- | --- |
+| Recherche (`search`) | Filtrée (patch 0001, `mainSearch`) |
+| `organization/<nom>` | Filtrée (patch 0001, `organization-page`) : 0 fiche pour l'IGN (87 fiches hors filtre) |
+| `organisations` | Redirigée vers la recherche (patch 0003) |
+| Fiche : « Explorez le catalogue » (fiches similaires) | Masquée (patch 0003) ; avant : 1 fiche hors périmètre sur `osf63e6c177-…` |
+| Fiche hors périmètre saisie à la main (`dataset/<uuid>`) | Non filtrée (le sous-portail C-1 le réglerait) |
+| Fiches associées déclarées dans la métadonnée | Non filtrées (liens explicites du producteur) |
+| Listes de valeurs des filtres avancés | Non filtrées (agrégations) |
+
+Vérification (Playwright, aperçu complet `PORT=8091 bun run preview:all`, contexte navigateur `en-US` sans stockage) :
+titre « Rechercher une donnée - Observatoire des sols », `lang="fr"`, aucune chaîne anglaise repérée, en-tête
+« sols.cartes.gouv.fr » / « Observatoire des sols de France », `aria-current` sur `/rechercher-une-donnee/`, 4 liens bas de
+pied de page, « 7 résultats. », **aucune erreur ni avertissement console** sur la recherche (bureau 1280×900 et mobile
+393×851). Messages restants, hors périmètre de C3 :
+
+- Fiche `osf63e6c177-…` : `error: Invalid layer for legend creation` (légende de l'aperçu carte, geospatial-sdk).
+- Fiche `osfd95caa37-…` : `Error creating legend for layer INRAE_CARTE-SOLS_WMTS: ... was not found in the endpoint
+  capabilities`. Le nom WMTS publié dans le CSW n'existe pas (cf. `doc/agents/gpf-sols-data.md` §5), c'est une donnée à
+  corriger côté producteur.
+
+Captures : `doc/screenshots/C3/` (recherche bureau et mobile, menu mobile, pied de page, fiche).
