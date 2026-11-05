@@ -65,6 +65,9 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 - Le paquet n'a pas de champ `exports` : les **imports profonds** fonctionnent et ont des types (`.d.ts` à côté de chaque `.js`).
   `import LayerSwitcher from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';`
   (type d'options : `LayerSwitcherOptions` exporté du même module).
+- **Fragilité** : ces chemins (`src/packages/...`) ne sont pas une API publique et peuvent changer d'une version bêta à l'autre.
+  La version est donc **épinglée exactement** dans `apps/explorer-les-cartes/package.json` (`"geopf-extensions-openlayers": "1.0.0-beta.16"`,
+  sans `^` ni `~`). Toute montée de version : vérifier chaque import profond, les `.d.ts` utilisés et relancer tests + contrôle Playwright.
 - **Ne pas importer l'index racine** (`from 'geopf-extensions-openlayers'`) : il réexporte le contrôle `Panoramax`, qui importe
   `@panoramax/web-viewer` (dépendance pair non installée) et tire tous les widgets.
 - Chaque contrôle importe son propre CSS (`import "../../CSS/Controls/.../*.css"`) : Vite le gère sans configuration.
