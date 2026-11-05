@@ -135,7 +135,7 @@ export type DeepLinkRequest =
       opacity?: number;
       visible?: boolean;
     }
-  | { kind: 'unsupported'; name: string; type: string }
+  | { kind: 'unsupported'; name: string; type: string; style?: string }
   | { kind: 'invalid'; name: string };
 
 /** Candidate GPF services for a service type without endpoint: WMS raster then vector, WMTS. */
@@ -162,7 +162,14 @@ export function readDeepLink(search: string): DeepLinkRequest | null {
     const [first] = parsePermalinkLayers(permalink);
     if (first) {
       const candidates = candidatesForType(first.serviceType);
-      if (!candidates) return { kind: 'unsupported', name: first.name, type: first.serviceType };
+      if (!candidates) {
+        return {
+          kind: 'unsupported',
+          name: first.name,
+          type: first.serviceType,
+          ...(first.style ? { style: first.style } : {}),
+        };
+      }
       return {
         kind: 'layer',
         name: first.name,

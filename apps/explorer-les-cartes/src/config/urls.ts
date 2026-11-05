@@ -69,6 +69,11 @@ export const GPF_ENDPOINTS = {
   csw: 'https://data.geopf.fr/csw/gissol-osf_c',
 } as const;
 
+/** MapLibre styles of the GIS Sol TMS layers; a cartes.gouv.fr TMS link carries `<file>` (without .json). */
+export function solsStyleUrl(file: string): string {
+  return `https://data.geopf.fr/annexes/gissol-osf/style/${encodeURIComponent(file)}.json`;
+}
+
 /** Host of every GPF service: deep links to other hosts are refused. */
 export const GPF_HOST = 'data.geopf.fr';
 

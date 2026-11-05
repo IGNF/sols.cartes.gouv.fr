@@ -69,4 +69,19 @@ describe('DeepLinkNotice', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('ne renvoie pas d’image');
     useMapStore.setState(initialMapState);
   });
+
+  it('nomme le style TMS reçu et donne le lien vers son fichier', () => {
+    status.current = {
+      state: 'unsupported',
+      name: 'style',
+      type: 'TMS',
+      style: 'abc_sols_gironde',
+    };
+    render(<DeepLinkNotice />);
+    expect(screen.getByRole('status')).toHaveTextContent('abc_sols_gironde');
+    expect(screen.getByRole('link', { name: 'fichier de style' })).toHaveAttribute(
+      'href',
+      'https://data.geopf.fr/annexes/gissol-osf/style/abc_sols_gironde.json',
+    );
+  });
 });

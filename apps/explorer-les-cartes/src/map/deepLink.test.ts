@@ -147,6 +147,7 @@ describe('readDeepLink', () => {
       kind: 'unsupported',
       name: 'cartogrammes_gpkg_11-09-2026_tms',
       type: 'TMS',
+      style: 'style',
     });
     expect(readDeepLink('?l=nimporte-quoi')).toEqual({ kind: 'invalid', name: 'nimporte-quoi' });
   });
@@ -167,5 +168,75 @@ describe('readDeepLink', () => {
       name: 'x',
     });
     expect(readDeepLink('')).toBeNull();
+  });
+});
+
+describe('valeurs émises par le catalogue (C6, doc/agents/geonetwork-ui.md §10)', () => {
+  it('WMS : rrp_loiret, options par défaut', () => {
+    expect(
+      readDeepLink('?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no'),
+    ).toEqual({
+      kind: 'layer',
+      name: 'rrp_loiret_gpkg_11-09-2026_wmsv',
+      candidates: ['wms-raster', 'wms-vector'],
+      opacity: 1,
+      visible: true,
+    });
+  });
+
+  it('WMTS : INRAE_CARTE-SOLS', () => {
+    expect(readDeepLink('?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no')).toEqual({
+      kind: 'layer',
+      name: 'INRAE_CARTE-SOLS',
+      candidates: ['wmts'],
+      opacity: 1,
+      visible: true,
+    });
+  });
+
+  it('TMS : `style` et le nom du fichier de style en cinquième champ', () => {
+    const l = 'style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)';
+    expect(parsePermalinkLayers(l)).toEqual([
+      {
+        name: 'style',
+        geopType: 'GPP',
+        serviceType: 'TMS',
+        opacity: 1,
+        visible: true,
+        style: 'c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde',
+      },
+    ]);
+    expect(readDeepLink(`?l=${l}&permalink=no`)).toEqual({
+      kind: 'unsupported',
+      name: 'style',
+      type: 'TMS',
+      style: 'c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde',
+    });
+  });
+
+  it('valeur à deux couches : les deux sont lues, la première est suivie', () => {
+    const l =
+      'stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;0.7;1;0),INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(2;1;0;0)';
+    expect(parsePermalinkLayers(l)).toEqual([
+      {
+        name: 'stock_carbone_fao_fr_wmsv',
+        geopType: 'OGC',
+        serviceType: 'WMS',
+        opacity: 0.7,
+        visible: true,
+      },
+      {
+        name: 'INRAE_CARTE-SOLS',
+        geopType: 'OGC',
+        serviceType: 'WMTS',
+        opacity: 1,
+        visible: false,
+      },
+    ]);
+    expect(readDeepLink(`?l=${l}&permalink=no`)).toMatchObject({
+      kind: 'layer',
+      name: 'stock_carbone_fao_fr_wmsv',
+      opacity: 0.7,
+    });
   });
 });

@@ -15,7 +15,7 @@ export type DeepLinkStatus =
   | { state: 'added'; name: string; title: string; key: string }
   | { state: 'not-found'; name: string }
   | { state: 'invalid'; name: string }
-  | { state: 'unsupported'; name: string; type: string };
+  | { state: 'unsupported'; name: string; type: string; style?: string };
 
 const ENDPOINTS: Record<SolsService, string> = {
   wmts: GPF_ENDPOINTS.wmts,
@@ -66,8 +66,14 @@ export default function useDeepLink(search: string = window.location.search): De
 
   let status: DeepLinkStatus = { state: 'none' };
   let found: { service: SolsService; title: string } | null = null;
-  if (request?.kind === 'unsupported') status = { state: 'unsupported', name, type: request.type };
-  else if (request?.kind === 'invalid') status = { state: 'invalid', name };
+  if (request?.kind === 'unsupported') {
+    status = {
+      state: 'unsupported',
+      name,
+      type: request.type,
+      ...(request.style ? { style: request.style } : {}),
+    };
+  } else if (request?.kind === 'invalid') status = { state: 'invalid', name };
   else if (known?.match) found = { service: known.service, title: known.match.layer.title };
   else if (layerRequest) {
     status = { state: 'not-found', name };

@@ -165,4 +165,36 @@ describe('useDeepLink', () => {
       type: 'TMS',
     });
   });
+
+  it('lien `l` WMS vers INRAE_CARTE-SOLS (publié sur wms-r, le CSW dit wms-v) : trouvé en sondant wms-r', async () => {
+    const fetchMock = vi.fn((url: string) =>
+      Promise.resolve(
+        new Response(
+          url.includes('wmts')
+            ? capabilitiesXml
+            : url.includes('wms-r')
+              ? WMS_CAPABILITIES.replace(/couche_publiee/, 'INRAE_CARTE-SOLS')
+              : WMS_VECTOR_ONLY,
+        ),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { result } = render('?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no');
+    await waitFor(() =>
+      expect(result.current).toMatchObject({ state: 'added', key: 'wms-raster:INRAE_CARTE-SOLS' }),
+    );
+  });
+
+  it('lien `l` TMS du catalogue : non pris en charge, style nommé', () => {
+    mockFetch();
+    const { result } = render(
+      '?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no',
+    );
+    expect(result.current).toEqual({
+      state: 'unsupported',
+      name: 'style',
+      type: 'TMS',
+      style: 'c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde',
+    });
+  });
 });
