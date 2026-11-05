@@ -403,6 +403,8 @@ fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` en balisage
   état React (pas de `fr-collapse`, dont le script DSFR lutterait avec React). Échap (écouté en phase de capture, pour ne pas fermer
   la modale du menu mobile), un clic ou le focus hors du menu le ferment ; Échap rend le focus au bouton. react-dsfr rend les outils
   deux fois (bureau et modale mobile) : identifiants par `useId`.
+- Chevron (M10, D-carto-3) : icône DSFR `fr-icon-arrow-down-s-line` dans le bouton (`header-menu__btn`), tournée de
+  -180° quand `aria-expanded="true"`, comme `.sols-tool-menu__btn` de l'edito ; `check:map` mesure la rotation.
 - Comportement DSFR connu : en thème sombre, un bouton d'outil ouvert (« Aide », « Services ») prend le fond de survol DSFR
   (`--background-default-grey-hover`), au contraste plus faible que le fond de l'en-tête ; c'est le rendu DSFR natif, non modifié.
 - Icônes : `react-dsfr update-icons` ne lit que les sources de l'application ; les icônes de `brand.json` sont donc listées dans
