@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import accueil from '../src/_data/accueil.js';
 import site from '../src/_data/site.js';
@@ -13,6 +13,10 @@ const FOOTER_PAGES = [
   site.sections.donneesPersonnelles,
   site.sections.planDuSite,
 ];
+
+const ARTICLE_SLUGS = readdirSync(join(APP_DIR, 'src', 'articles'))
+  .filter((file) => file.endsWith('.md'))
+  .map((file) => file.replace(/\.md$/, ''));
 
 const read = (url) => readFileSync(join(DIST, url, 'index.html'), 'utf8');
 const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -63,9 +67,9 @@ describe('page d’accueil générée', () => {
 
   test('contient les sections Le service, Données disponibles et GIS Sol', () => {
     expect(home.match(/class="fr-tile"/g)).toHaveLength(accueil.service.items.length);
-    expect(home.match(/class="fr-card fr-enlarge-link"/g)).toHaveLength(
-      accueil.donnees.items.length,
-    );
+    expect(
+      home.match(/<h3 class="fr-card__title"><a href="\/rechercher-une-donnee\/">/g),
+    ).toHaveLength(accueil.donnees.items.length);
     expect(home).toContain('class="fr-callout');
     expect(home).toMatch(new RegExp(`class="fr-btn" href="${escape(site.external.gissol)}"`));
   });
@@ -90,6 +94,37 @@ describe('pages du pied de page', () => {
     for (const link of [...site.header.nav, ...site.footer.bottomLinks]) {
       expect(html).toContain(`<li><a href="${link.href}"`);
     }
+  });
+});
+
+describe('articles', () => {
+  test('au moins un article existe', () => {
+    expect(ARTICLE_SLUGS.length).toBeGreaterThan(0);
+  });
+
+  test('la liste contient une carte datée par article', () => {
+    const html = read(site.sections.articles);
+    expectPageBasics(html);
+    for (const slug of ARTICLE_SLUGS) {
+      expect(html).toContain(`<a href="${site.sections.articles}${slug}/">`);
+    }
+    expect(html.match(/class="fr-card fr-enlarge-link"/g)).toHaveLength(ARTICLE_SLUGS.length);
+    expect(html.match(/<time datetime="\d{4}-\d{2}-\d{2}">/g)).toHaveLength(ARTICLE_SLUGS.length);
+  });
+
+  test.each(ARTICLE_SLUGS)('l’article %s a un h1, le fil d’Ariane et sa date', (slug) => {
+    const html = read(`${site.sections.articles}${slug}/`);
+    expectPageBasics(html);
+    expect(html).toContain('class="fr-breadcrumb"');
+    expect(html).toContain(
+      `<a class="fr-breadcrumb__link" href="${site.sections.articles}">Articles</a>`,
+    );
+    expect(html).toMatch(/<time datetime="\d{4}-\d{2}-\d{2}">[^<]+<\/time>/);
+  });
+
+  test('l’accueil et le plan du site lient la liste des articles', () => {
+    expect(home).toContain(`href="${site.sections.articles}"`);
+    expect(read(site.sections.planDuSite)).toContain(`<li><a href="${site.sections.articles}">`);
   });
 });
 
