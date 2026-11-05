@@ -25,12 +25,36 @@ thumbnail_placeholder = 'assets/img/sols-placeholder.svg'
 [search]
 # Toutes les fiches du périmètre sont des jeux de données : pas de filtre rapide par type.
 record_kind_quick_filter = false
-# Le filtre « organization » est retiré : ses valeurs proviennent d'agrégations non filtrées
-# (tout le catalogue cartes.gouv.fr), cf. doc/agents/geonetwork-ui.md §2.2.
-advanced_filters = ['topic', 'publicationYear', 'format', 'license']
-# Périmètre « sols » permanent, ajouté à chaque recherche (patch 0001, doc/catalogue-patches.md).
+# Filtres proposés : seulement ceux qui ont des valeurs dans le périmètre (C9). Relevé sur les 7 fiches :
+# thèmes (3 valeurs), mots-clés (une soixantaine, liste avec champ de recherche). Retirés : année de publication et
+# format (aucune valeur), licence (une seule valeur « Non reconnue ou absente »), producteur (une seule organisation).
+advanced_filters = ['topic', 'keyword']
+# Périmètre « sols » permanent, ajouté à chaque requête (patchs 0001 et 0005, doc/catalogue-patches.md).
 # Même filtre que le sous-portail GeoNetwork gissol-osf_c et le CSW de référence.
 config_filters.groupPublished = ['gissol-osf_g']
+# Puces de mots-clés sous la barre de recherche (maquette Figma « recherche mots clés », question G-2) :
+# préréglages du datahub, chacun applique un filtre « Mot-clé ». Mots-clés réels des 7 fiches (nombre de fiches).
+do_not_use_default_search_preset = true
+[[search_preset]]
+    # 4 fiches
+    name = 'RRP'
+    filters.keyword = ['RRP']
+[[search_preset]]
+    # 4 fiches
+    name = 'pédologie'
+    filters.keyword = ['pédologie']
+[[search_preset]]
+    # 3 fiches
+    name = 'carte des sols'
+    filters.keyword = ['carte des sols']
+[[search_preset]]
+    # 2 fiches
+    name = 'RMQS'
+    filters.keyword = ['RMQS']
+[[search_preset]]
+    # 1 fiche
+    name = 'Carbone organique'
+    filters.keyword = ['Carbone organique']
 
 [metadata-quality]
 # Désactivé : les fiches GPF n'ont pas l'indicateur (avertissement console sinon).

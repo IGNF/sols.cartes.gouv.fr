@@ -445,3 +445,32 @@ par Plan IGN v2 en tuiles WMTS (`type = 'xyz'`, `TILEMATRIXSET=PM`), comme la br
 erreur ; un premier essai a reçu 4 réponses 502 du WMTS (instabilité côté GPF, non corrigeable ici).
 
 Captures : `doc/screenshots/C7/`.
+
+## 13. Autocomplétion, filtres et puces de mots-clés (C9)
+
+Mesures sur le build de `main` (`45fe939`, patchs 0001 à 0005), Playwright, toutes les requêtes `_search` interceptées.
+
+- **Autocomplétion** : une seule requête, `POST /search/records/_search?bucket=bucket` (`buildAutocompletePayload`,
+  `size: 20`), qui porte déjà `groupPublished:gissol-osf_g` depuis le patch 0005 (C5). « route » ne propose rien ;
+  « cadastre » propose une seule fiche « sols » (« Les sols dominants de France métropolitaine », le mot figure dans son
+  texte) ; « sol » propose les fiches « sols ». **Non reproduit** sur `main` : l'observation venait probablement d'un
+  build antérieur à C5 (avant le patch 0005) ; question C-4.
+- **Filtres** : les 6 requêtes d'agrégation (`size: 0`, thèmes, années, formats, licences, organisations) portent le
+  filtre depuis C5 ; décomptes observés ≤ 7 (« Agriculture (7) » : les 7 fiches portent les trois mêmes thèmes, un
+  décompte par valeur ne peut donc pas se sommer). Également non reproduit (C-4). En revanche, trois filtres n'avaient
+  aucune valeur utile dans le périmètre : année de publication (vide), format (vide), licence (« Non reconnue ou absente
+  (7) »). `advanced_filters` devient `['topic', 'keyword']` : thèmes (3 valeurs) et mots-clés (85 valeurs, décompte
+  maximal 6, liste avec champ de recherche, ce qui correspond au « Rechercher des mots clés… » de la maquette).
+- **Puces de mots-clés** (G-2) : configuration seule. Le datahub affiche les `[[search_preset]]` en boutons sous la
+  barre de recherche (`home-header.component.html`) ; chacun applique `filters.keyword`. Cinq puces, mots-clés réels :
+  RRP (4 fiches), pédologie (4), carte des sols (3), RMQS (2), Carbone organique (1). La rangée, masquée en C7 quand elle
+  était vide, est réaffichée par `sols-overrides.css`, avec un aspect de « tag » DSFR (fond `--background-action-low-blue-france`,
+  texte `--text-action-high-blue-france`). Une puce **ajoute** le filtre (« RMQS » → 2 résultats, `?keyword=RMQS`) ; le
+  **retrait** passe par la croix du filtre « Mot-clé » (→ 7 résultats).
+- Limite et proposition de patch (non faite) : une puce n'a pas d'état « sélectionnée » et un second clic ne retire pas le
+  filtre ; en outre `clearSearchAndFilterAndSort` remplace la recherche et les autres filtres. Un patch de
+  `home-header.component.html` et `.ts` (environ 15 lignes : `aria-pressed` selon `searchFacade.searchFilters$`, bascule du
+  mot-clé au lieu du remplacement) rapprocherait la maquette. À décider (question C-4).
+
+axe sur la recherche (bureau et mobile) : 0 violation critique ou sérieuse ; `heading-order` (modérée) inchangée.
+Captures : `doc/screenshots/C9/`.

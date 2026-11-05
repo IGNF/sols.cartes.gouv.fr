@@ -104,3 +104,12 @@ test('checkConfig reports a wrong viewer template', () => {
   const toml = readFileSync(CONFIG_FILE, 'utf8').replace('&permalink=no', '')
   assert.match(checkConfig(toml, valid).join('\n'), /external_viewer_url_template/)
 })
+
+test('search filters and keyword presets stay within the sols scope (C9)', () => {
+  const toml = readFileSync(CONFIG_FILE, 'utf8')
+  assert.match(toml, /^advanced_filters = \['topic', 'keyword'\]$/m)
+  assert.match(toml, /^do_not_use_default_search_preset = true$/m)
+  const presets = [...toml.matchAll(/^\[\[search_preset\]\]\n(?:\s+#.*\n)*\s+name = '([^']+)'\n\s+filters\.keyword = \['([^']+)'\]$/gm)]
+  assert.ok(presets.length >= 3)
+  for (const [, name, keyword] of presets) assert.equal(name, keyword)
+})
