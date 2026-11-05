@@ -17,10 +17,11 @@ test.describe('Accueil', () => {
     expect(c.errors).toEqual([]);
   });
 
-  for (const [href, nom] of [
+  const liens: [string, string][] = [
     ['/rechercher-une-donnee/', 'catalogue'],
     ['/explorer-les-cartes/', 'carto'],
-  ]) {
+  ];
+  for (const [href, nom] of liens) {
     test(`le lien d'en-tête vers ${nom} répond 200 et affiche un h1`, async ({
       page,
       request,

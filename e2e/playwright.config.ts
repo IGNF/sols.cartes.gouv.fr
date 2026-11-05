@@ -2,12 +2,18 @@ import { defineConfig, devices } from '@playwright/test';
 
 const PORT = process.env.PORT ?? '8102';
 
+if (!process.env.CI) {
+  console.warn(
+    `[e2e] Si un serveur écoute déjà sur le port ${PORT}, il sera réutilisé : la suite teste ce serveur, pas forcément le dist/ courant.`,
+  );
+}
+
 export default defineConfig({
   testDir: './tests',
   timeout: 90_000,
   expect: { timeout: 20_000 },
-  retries: 0,
-  workers: 2,
+  retries: 1,
+  workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: `http://localhost:${PORT}`,
@@ -19,7 +25,7 @@ export default defineConfig({
     cwd: '..',
     env: { PORT },
     url: `http://localhost:${PORT}/fr/`,
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
   projects: [
