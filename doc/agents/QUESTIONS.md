@@ -86,6 +86,7 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Décision appliquée (orchestrateur) : (b) `/explorer-les-cartes/?layer=<nom de couche>&type=<wms|wmts|wfs|tms>&url=<URL du service>`, valeurs encodées. Template C4 : `external_viewer_url_template = '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'`. Attention pour le lecteur carto : le datahub IGN envoie `type` en **majuscules** (`WMS`, `WMTS`, `TMS`, `GEOJSON` ; WFS est désactivé dans le bouton) et n'encode que `url` (`layer` est inséré tel quel). Lecture insensible à la casse et `decodeURIComponent` tolérant attendus côté carto.
   -> je pense que tu te trompes et que le format de cartes.gouv n'est pas le meilleur mais par soucis d'homogénéité, il faudrait l'employer.
 - Suite (orchestrateur, 2026-11-05) : décision humaine appliquée. Le catalogue passe au format cartes.gouv.fr (`l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no`, tâche C6) et le lecteur carto lit ce paramètre `l` en priorité (tâche M5), le format simple restant accepté en secours.
+- Suite C6 (décision humaine) : format de cartes.gouv.fr pour l'homogénéité, chemin relatif. Template final : `external_viewer_url_template = '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no'`, `external_viewer_open_new_tab = false`. URL émises et grammaire de `l` : `doc/agents/geonetwork-ui.md` §10.
 
 ## E-2. Chemins sans langue après l'internationalisation (edito, E5)
 

@@ -90,17 +90,17 @@ test('checkNodeMajor compares the running major with .nvmrc', () => {
   assert.match(checkNodeMajor('24', '26.5.0')[0], /differs from .nvmrc \(24\)/)
 })
 
-test('the "Voir sur la carte" template is the C-3 format, same tab', () => {
+test('the "Voir sur la carte" template is the cartes.gouv.fr format (C6), same tab', () => {
   const toml = readFileSync(CONFIG_FILE, 'utf8')
   assert.equal(
     toml.match(/^external_viewer_url_template = '(.*)'$/m)?.[1],
-    '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+    '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no'
   )
   assert.equal(EXTERNAL_VIEWER_TEMPLATE, toml.match(/^external_viewer_url_template = '(.*)'$/m)?.[1])
   assert.match(toml, /^external_viewer_open_new_tab = false$/m)
 })
 
 test('checkConfig reports a wrong viewer template', () => {
-  const toml = readFileSync(CONFIG_FILE, 'utf8').replace('&url=${service_url}', '')
+  const toml = readFileSync(CONFIG_FILE, 'utf8').replace('&permalink=no', '')
   assert.match(checkConfig(toml, valid).join('\n'), /external_viewer_url_template/)
 })

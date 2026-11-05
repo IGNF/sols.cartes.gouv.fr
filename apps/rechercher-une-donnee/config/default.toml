@@ -39,10 +39,11 @@ enabled = false
 [map]
 max_feature_count = 5000
 do_not_use_default_basemap = true
-# Bouton « Voir sur la carte » de l'aperçu carte d'une fiche (format décidé, question C-3).
-# Variables remplacées par le datahub IGN : ${layer_name} (non encodé), ${service_type} (WMS, WMTS, TMS ; WFS désactivé),
-# ${service_url} (encodé). Chemin relatif : même origine, pas de domaine en dur.
-external_viewer_url_template = '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+# Bouton « Voir sur la carte » de l'aperçu carte d'une fiche : format de cartes.gouv.fr (question C-3, suite C6),
+# chemin relatif (même origine, pas de domaine en dur). Variables remplacées par le datahub IGN
+# (openInIgnExternalViewer) : ${layer_name} (non encodé), ${geop_type} (OGC, ou GPP pour TMS), ${service_type}
+# (WMS, WMTS, TMS en majuscules ; WFS désactivé), ${tms_style} (« ;<style> » pour TMS, vide sinon).
+external_viewer_url_template = '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no'
 # Même onglet : navigation interne au site.
 external_viewer_open_new_tab = false
 
