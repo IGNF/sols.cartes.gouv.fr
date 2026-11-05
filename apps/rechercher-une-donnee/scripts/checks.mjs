@@ -1,8 +1,8 @@
 // Pure checks shared by lint and tests.
 
-/** URL read by the carto brick (decision C-3, doc/agents/QUESTIONS.md). */
+/** cartes.gouv.fr viewer format, relative path (decision C-3 then C6, doc/agents/QUESTIONS.md). */
 export const EXTERNAL_VIEWER_TEMPLATE =
-  '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+  '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no'
 
 /** Minimal sanity checks of config/default.toml (no TOML parser dependency). */
 export function checkConfig(toml, upstream) {
