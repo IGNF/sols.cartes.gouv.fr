@@ -6,7 +6,7 @@ import {
   type BaseLayerId,
   type SidePanelTab,
 } from '../config/map';
-import { readDeepLink } from '../map/deepLink';
+import { readDeepLinks, readPermalinkBaseLayer } from '../map/deepLink';
 import type { OverlayRef } from '../map/overlays';
 
 /**
@@ -43,11 +43,17 @@ export const initialMapState = {
 } satisfies Partial<MapState>;
 
 /**
- * A "Voir sur la carte" link opens the "Données sols" tab. It must be selected from the first render:
- * the DSFR tabs script reads the selected tab when it initialises and keeps it otherwise.
+ * A "Voir sur la carte" link (or a permalink with data layers) opens the "Données sols" tab. It must be
+ * selected from the first render: the DSFR tabs script reads the selected tab when it initialises and
+ * keeps it otherwise. A permalink that only names a base layer keeps the "Fonds de carte" tab.
  */
 export function initialTab(search: string): SidePanelTab {
-  return readDeepLink(search) ? 'sols' : 'fonds';
+  return readDeepLinks(search).length > 0 ? 'sols' : 'fonds';
+}
+
+/** Base layer named by a permalink (`l`), else the default one. */
+export function initialBaseLayer(search: string): BaseLayerId {
+  return readPermalinkBaseLayer(search) ?? DEFAULT_BASE_LAYER_ID;
 }
 
 /**
@@ -67,6 +73,7 @@ export const useMapStore = create<MapState>()((set) => ({
     typeof window.matchMedia === 'function' ? window.matchMedia.bind(window) : undefined,
   ),
   activeTab: initialTab(window.location.search),
+  activeBaseLayerId: initialBaseLayer(window.location.search),
   setMap: (map) => set({ map }),
   setActiveBaseLayer: (activeBaseLayerId) => set({ activeBaseLayerId }),
   togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),

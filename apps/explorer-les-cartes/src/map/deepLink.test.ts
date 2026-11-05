@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { parseDeepLink, parsePermalinkLayers, readDeepLink, resolveDeepLink } from './deepLink';
+import {
+  parseDeepLink,
+  parsePermalinkLayers,
+  readDeepLink,
+  readDeepLinks,
+  readPermalinkBaseLayer,
+  resolveDeepLink,
+} from './deepLink';
 
 describe('parseDeepLink', () => {
   it('lit le lien émis par le catalogue (type en majuscules, layer non encodé, url encodée)', () => {
@@ -214,7 +221,7 @@ describe('valeurs émises par le catalogue (C6, doc/agents/geonetwork-ui.md §10
     });
   });
 
-  it('valeur à deux couches : les deux sont lues, la première est suivie', () => {
+  it('valeur à deux couches : les deux sont lues et suivies dans l’ordre', () => {
     const l =
       'stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;0.7;1;0),INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(2;1;0;0)';
     expect(parsePermalinkLayers(l)).toEqual([
@@ -238,5 +245,53 @@ describe('valeurs émises par le catalogue (C6, doc/agents/geonetwork-ui.md §10
       name: 'stock_carbone_fao_fr_wmsv',
       opacity: 0.7,
     });
+    expect(readDeepLinks(`?l=${l}&permalink=no`).map((r) => r.name)).toEqual([
+      'stock_carbone_fao_fr_wmsv',
+      'INRAE_CARTE-SOLS',
+    ]);
+  });
+});
+
+describe('readDeepLinks et readPermalinkBaseLayer (permalien de cette carte)', () => {
+  const permalink =
+    '?c=2.5,46.6&z=6&l=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS(0;1;1;0),stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;0.6;0;0),INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(2;1;1;0)&permalink=yes';
+
+  it('reconnaît le fond de carte (entrée WMTS d’un fond configuré) et ne le suit pas comme couche', () => {
+    expect(readPermalinkBaseLayer(permalink)).toBe('plan-ign');
+    expect(readDeepLinks(permalink)).toEqual([
+      {
+        kind: 'layer',
+        name: 'stock_carbone_fao_fr_wmsv',
+        candidates: ['wms-raster', 'wms-vector'],
+        opacity: 0.6,
+        visible: false,
+      },
+      {
+        kind: 'layer',
+        name: 'INRAE_CARTE-SOLS',
+        candidates: ['wmts'],
+        opacity: 1,
+        visible: true,
+      },
+    ]);
+  });
+
+  it('un fond nommé en WMS n’est pas un fond ; un permalien sans fond ne change pas le fond', () => {
+    expect(
+      readPermalinkBaseLayer('?l=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMS(0;1;1;0)'),
+    ).toBeNull();
+    expect(readPermalinkBaseLayer('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)')).toBe(
+      'orthophotos',
+    );
+    expect(readPermalinkBaseLayer('?l=x$GEOPORTAIL:OGC:WMS(1;1;1;0)')).toBeNull();
+    expect(readPermalinkBaseLayer('')).toBeNull();
+  });
+
+  it('un permalien qui ne nomme qu’un fond n’a aucune couche à suivre', () => {
+    expect(
+      readDeepLinks('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)&permalink=yes'),
+    ).toEqual([]);
+    expect(readDeepLink('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)')).toBeNull();
+    expect(readDeepLinks('')).toEqual([]);
   });
 });

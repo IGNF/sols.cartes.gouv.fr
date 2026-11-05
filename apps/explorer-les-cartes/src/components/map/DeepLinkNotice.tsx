@@ -1,12 +1,38 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import useDeepLink from '../../hooks/useDeepLink';
+import { useState } from 'react';
 import { solsStyleUrl } from '../../config/urls';
+import { useDeepLinkLayer } from '../../hooks/useDeepLink';
+import { readDeepLinks, type DeepLinkRequest } from '../../map/deepLink';
 import { useMapStore } from '../../store/useMapStore';
 
-/** Outcome of the "Voir sur la carte" deep link coming from the catalogue. */
-export default function DeepLinkNotice() {
-  const status = useDeepLink();
+interface DeepLinkNoticeProps {
+  /** Query string; defaults to the current location. */
+  search?: string;
+}
+
+/**
+ * Outcome of the "Voir sur la carte" link coming from the catalogue, or of each data layer of a permalink
+ * (src/map/permalink.ts): one notice per layer, read once at mount.
+ */
+export default function DeepLinkNotice({ search = window.location.search }: DeepLinkNoticeProps) {
+  const [requests] = useState(() => readDeepLinks(search));
+  return (
+    <>
+      {requests.map((request, index) => (
+        <DeepLinkLayerNotice key={`${index}-${request.kind}-${request.name}`} request={request} />
+      ))}
+    </>
+  );
+}
+
+interface DeepLinkLayerNoticeProps {
+  request: DeepLinkRequest;
+}
+
+/** Follows one layer and reports its outcome. */
+export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
+  const status = useDeepLinkLayer(request);
   const unavailable = useMapStore((state) => state.unavailableOverlays);
   switch (status.state) {
     case 'checking':

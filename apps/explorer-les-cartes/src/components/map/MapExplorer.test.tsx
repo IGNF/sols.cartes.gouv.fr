@@ -8,6 +8,15 @@ import MapExplorer from './MapExplorer';
 
 vi.mock('./MapView', () => ({ default: () => <div data-testid="map-view" /> }));
 vi.mock('./DeepLinkNotice', () => ({ default: () => null }));
+// The dialogs need the map and the GPF capabilities (TanStack Query): tested on their own.
+vi.mock('./ShareModal', () => ({
+  default: () => <div data-testid="share-modal" />,
+  ShareButton: () => <button type="button">Partager</button>,
+}));
+vi.mock('./PrintModal', () => ({
+  default: () => <div data-testid="print-modal" />,
+  PrintButton: () => <button type="button">Imprimer</button>,
+}));
 vi.mock('./BaseLayerPanel', () => ({ default: () => <p>Contenu fonds de carte</p> }));
 vi.mock('./SolsDatasetsPanel', () => ({ default: () => <p>Contenu données sols</p> }));
 
@@ -59,5 +68,14 @@ describe('MapExplorer', () => {
     expect(
       screen.getByRole('link', { name: 'Version accessible de la liste des données' }),
     ).toHaveAttribute('href', LIST_VIEW_PATH);
+  });
+
+  it('place les boutons « Partager » et « Imprimer » dans la barre d’outils, avec leurs dialogues', () => {
+    render(<MapExplorer />);
+    const toolbar = screen.getByRole('button', { name: 'Masquer le panneau' }).parentElement;
+    expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Partager' }));
+    expect(toolbar).toContainElement(screen.getByRole('button', { name: 'Imprimer' }));
+    expect(screen.getByTestId('share-modal')).toBeInTheDocument();
+    expect(screen.getByTestId('print-modal')).toBeInTheDocument();
   });
 });

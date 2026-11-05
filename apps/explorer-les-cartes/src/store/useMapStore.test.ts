@@ -2,7 +2,13 @@ import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_BASE_LAYER_ID } from '../config/map';
 import type { OverlayRef } from '../map/overlays';
-import { initialMapState, initialPanelOpen, initialTab, useMapStore } from './useMapStore';
+import {
+  initialBaseLayer,
+  initialMapState,
+  initialPanelOpen,
+  initialTab,
+  useMapStore,
+} from './useMapStore';
 
 const LOIRET: OverlayRef = {
   key: 'wms-vector:rrp_loiret',
@@ -68,6 +74,18 @@ describe('useMapStore', () => {
     expect(useMapStore.getState().activeTab).toBe('sols');
     expect(initialTab('?layer=x&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v')).toBe('sols');
     expect(initialTab('')).toBe('fonds');
+    // A permalink naming only a base layer keeps the base layer tab.
+    expect(
+      initialTab('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)&permalink=yes'),
+    ).toBe('fonds');
+  });
+
+  it('prend le fond de carte d’un permalien, sinon le fond par défaut', () => {
+    expect(initialBaseLayer('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)')).toBe(
+      'orthophotos',
+    );
+    expect(initialBaseLayer('?l=x$GEOPORTAIL:OGC:WMS(1;1;1;0)')).toBe(DEFAULT_BASE_LAYER_ID);
+    expect(initialBaseLayer('')).toBe(DEFAULT_BASE_LAYER_ID);
   });
 
   it('ferme le panneau par défaut sous le point de rupture DSFR md, l’ouvre au-delà', () => {

@@ -27,6 +27,31 @@
 }
 
 /*
+ * Print sheet (PrintModal): mounted at the end of the body only while printing; it is the only thing the
+ * browser prints (title, map image, sources, date).
+ */
+.map-print-sheet {
+  display: none;
+}
+
+@media print {
+  body > :not(.map-print-sheet) {
+    display: none !important;
+  }
+
+  .map-print-sheet {
+    display: block;
+    padding: 0;
+  }
+
+  .map-print-sheet img {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+  }
+}
+
+/*
  * From the DSFR md breakpoint: the body fills the main area, the panel is docked left with a bounded
  * width (18 to 26 rem, 30 %): the map keeps at least ~60 % of the width (62 % at 768 px) and scrolls nothing.
  */
