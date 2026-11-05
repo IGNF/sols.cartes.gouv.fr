@@ -334,7 +334,7 @@ Issue commune :
 | Élément | Sélecteur conseillé |
 |---|---|
 | Carte | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas` |
-| Bouton du panneau latéral | `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`) |
+| Bouton du panneau latéral | `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
 | Onglets | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })` |
 | Fond orthophotos | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut |
 | Ajouter une couche sols | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre ») |
@@ -347,4 +347,25 @@ Issue commune :
 | Contrôles | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée) |
 
 Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lente peut retarder l'inactivité réseau de plus de 30 s.
+
+## 8. Correctifs M6 (2026-11-05)
+
+### 8.1 D-carto-1 : carte sans canvas
+
+- Cause, mesurée : la requête GetCapabilities WMTS de la GPF est parfois acceptée puis **jamais servie** (ni en-têtes, ni erreur).
+  Dans le navigateur, 3 à 4 chargements sur 20 restaient sans fond, donc sans canvas (OpenLayers ne crée le canvas qu'au rendu d'une
+  couche) et sans entrée dans « Ma sélection de cartes », indéfiniment ; avec `curl`, 5 requêtes sur 25 sans réponse au bout de 12 s,
+  les autres en 0,15 à 0,23 s. TanStack Query ne réessayait pas : la requête n'échouait jamais. Les liens profonds WMS semblaient
+  épargnés parce que la couche sols dessine un canvas même sans fond.
+- Correctif : `src/map/fetchWithTimeout.ts` abandonne une requête sans en-têtes de réponse au bout de `GPF_REQUEST_TIMEOUT_MS` (3 s ;
+  le téléchargement du corps n'est pas limité, un réseau lent n'est pas pénalisé), puis `GPF_REQUEST_RETRIES` (4) nouveaux essais
+  espacés de 300 ms, pour les capacités WMTS et WMS. Pire cas ≈ 16 s, alerte « n'ont pas pu être chargés » ensuite.
+- Vérifié : 0 chargement sans canvas sur 40 (bureau) ; les chargements où le premier essai bloquait obtiennent le canvas en 4 à 6 s.
+  `bun run check:map` charge la page 20 fois dans des contextes neufs et exige un canvas à chaque fois (attente 20 s).
+
+### 8.2 Panneau latéral sur mobile
+
+- `initialPanelOpen` (store) : ouvert si `matchMedia('(min-width: 48em)')` (DSFR `md`), fermé sinon ; ouvert sans `matchMedia`.
+  À 375 px, la carte commence au-dessus du pli (y ≈ 490 px), « Afficher le panneau » reste avant la carte ; clavier inchangé.
+- Impact e2e (projet mobile) : ouvrir le panneau avant de cibler les onglets « Fonds de carte » / « Données sols ».
 

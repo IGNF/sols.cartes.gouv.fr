@@ -55,7 +55,9 @@ describe('BaseLayerPanel', () => {
   it('signale l’échec du chargement', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })));
     renderPanel();
-    expect(await screen.findByText(/n’ont pas pu être chargés/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/n’ont pas pu être chargés/, undefined, { timeout: 5000 }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 
