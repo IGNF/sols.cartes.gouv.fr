@@ -57,7 +57,10 @@ Lu dans `node_modules/geopf-extensions-openlayers` : `README.md`, `DOCUMENTATION
 `src/packages/Layers/LayerWMTS.{js,d.ts}`, `src/packages/Utils/Config.js`, `src/packages/Controls/LayerSwitcher/LayerSwitcher.{js,d.ts}`,
 `src/packages/Controls/Control.js`, la démo `demos/react-project` du tag ; en M3 : `Controls/Zoom/GeoportalZoom.{js,d.ts}`,
 `Controls/FullScreen/GeoportalFullScreen.{js,d.ts}`, `Controls/Attribution/GeoportalAttribution.{js,d.ts}`,
-`Controls/SearchEngine/SearchEngine.{js,d.ts}` et `SearchEngineDOM.js`, `geoportal-access-lib/src/Services/Services.js` (URL de géocodage). JSDoc : https://ignf.github.io/geopf-extensions-openlayers/jsdoc/
+`Controls/SearchEngine/SearchEngine.{js,d.ts}` et `SearchEngineDOM.js`, `geoportal-access-lib/src/Services/Services.js` (URL de géocodage) ;
+en M8 : les `.js`/`.d.ts` de chaque contrôle du §10, `Controls/Control.js` (positions, `listable`), `Controls/PanelDOM.js`,
+`Sources/WMTS.js` (GetFeatureInfo), `CRS/CRS.js`, `Utils/LoggerByDefault.js`, `geoportal-access-lib/src/Services/DefaultUrlService.js`,
+`Services/Route/Route.js`, `Services/ProcessIsoCurve/ProcessIsoCurve.js`, `Services/Alti/Alti.js` (ressources par défaut). JSDoc : https://ignf.github.io/geopf-extensions-openlayers/jsdoc/
 (la page n'affiche pas de numéro de version ; se fier aux `.d.ts` installés). Intégration React de référence :
 IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navigation/MainMap.tsx`, `controls/layerSwitcherControl.ts`,
 `src/hooks/navigation/useGpConfig.ts`, `layers/useGetWMTSLayer.tsx`, `capabilities/useGetCapabilitiesWMTS.ts`).
@@ -76,11 +79,16 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 - Découpage (`vite build`, M3) : `index` 391 kB (103 kB gzip) ; `MapExplorer` (OpenLayers, LayerSwitcher, zoom, plein écran,
   attributions) 695 kB (203 kB gzip), chargé par `React.lazy` ; `SearchEngine` 567 kB (161 kB gzip : `geoportal-access-lib`, proj4,
   classes de couches geopf) chargé à part par `loadSearchEngine()` **après** l'affichage de la carte. `chunkSizeWarningLimit` = 1000 kB.
+- M8 : `loadMapTools()` charge les quinze contrôles du §10 en morceaux séparés (Route 50 kB, LayerImport, Drawing… ; Vite partage
+  `geoportal-access-lib` avec le moteur de recherche) après l'affichage de la carte ; `index` 426 kB (114 kB gzip), `MapExplorer` 376 kB
+  (112 kB gzip). Le JSON intégré `Controls/Territories/Territories.json` est importé par le même chemin profond.
 
 ### 5.3 CSS
 
 - `ol/ol.css` (dans `MapView.tsx`) et, dans `geopf.ts`, **uniquement** les feuilles DSFR utiles : `CSS/DSFRgeneralWidget.css` et
-  `CSS/Controls/{Zoom/DSFRzoomStyle,FullScreen/DSFRfullScreenStyle,LayerSwitcher/DSFRlayerSwitcherStyle,SearchEngine/DSFRsearchEngineStyle}.css`.
+  `CSS/Controls/{Zoom/DSFRzoomStyle,FullScreen/DSFRfullScreenStyle,LayerSwitcher/DSFRlayerSwitcherStyle,SearchEngine/DSFRsearchEngineStyle}.css`,
+  plus, en M8, celles des outils (`Legends`, `Territories`, `OverviewMap`, `MousePosition`, `Measures` ×4, `ElevationPath`, `Isochron`,
+  `Route`, `LocationSelector`, `ReverseGeocoding`, `Drawing`, `LayerImport`, `GetFeatureInfo`, `ControlList`, `Export`).
   `Attribution/DSFRattributionStyle.css` est vide (1 octet) : non importé. CSS de la carte : 348 kB (M2, `css/Dsfr.css` complet avec
   images en ligne et CSS Panoramax) → 154 kB.
 - Rendu identique au bundle complet (comparaison de captures du moteur de recherche avec et sans `css/Dsfr.css`).
@@ -169,7 +177,7 @@ Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/
 - **Lacunes d'accessibilité amont à signaler** (ticket à ouvrir sur IGNF/geopf-extensions-openlayers, version 1.0.0-beta.16 ;
   contournées ici, à retirer quand elles seront corrigées) :
   1. modales DSFR sans nom accessible (`GPlayersList`, `GPlayerInfoPanel`, `GPlayerStylePanel`, `GPgeocodeResultsList`,
-     `GPautoCompleteList`) ;
+     `GPautoCompleteList` ; en M8 tous les panneaux des outils, §10.4) ;
   2. suggestions de recherche rendues en `<p class="GPautoCompleteProposal">` dans un `div.fr-modal` (ici `role="group"`) au lieu d'un
      `listbox`/`option` avec `aria-activedescendant` sur le champ : la sélection au clavier (flèche bas, Entrée) n'est pas annoncée ;
   3. champ de recherche sans `<label>` ;
@@ -438,3 +446,84 @@ Vitest 189 tests ; `check:map` 76/76 ; axe 0 violation : carte claire et sombre 
 - Le `h1` « Explorer les cartes » est masqué (`fr-sr-only`) : chercher le titre par rôle, pas sa visibilité.
 - Pied de page compact : plus de liens de contenu (legifrance...), de partenaires ni de licence sur la carto.
 - « Version accessible de la liste des données » et le bouton du panneau sont dans la barre d'outils au-dessus de la carte.
+
+## 10. Jeu d'outils de l'entrée carto (M8, 2026-11-05)
+
+Référence : `IGNF/cartes.gouv.fr-entree-carto` (`src/composables/controls.js`, `src/components/carte/Controls.vue`,
+`src/components/carte/control/*.vue`, `src/stores/mapStore.js`), même version de geopf-ext (`1.0.0-beta.16-648`). Plan : `doc/plans/M8.md`.
+Aucun des contrôles retenus n'appelle `Gp.Config` (vérifié par `grep Config\.` dans leurs sources) : pas d'autoconf, pas de clé.
+
+### 10.1 Contrôles, options, services
+
+Options dans `MAP_TOOLS_OPTIONS` (`src/config/map.ts`), instanciation dans `createMapTools` (`src/hooks/useMapTools.ts`), chargement à
+la demande par `loadMapTools()` (`src/map/geopf.ts`) **après** `loadCrs('EPSG:2154')` et `loadCrs('EPSG:27572')` (`TOOL_PROJECTIONS`).
+`position`, `gutter` et `listable` sont lus par tous les contrôles (`Controls/Control.js`, `setMap`) mais absents de la plupart des `.d.ts`
+(type `ControlPlacement`).
+
+| Contrôle (classe) | Position | Options retenues | Service appelé | Remarques |
+|---|---|---|---|---|
+| `LayerImport` | haut gauche | `title` | GetCapabilities du service saisi (WMS, WMTS), fichiers KML/GPX/GeoJSON/MapBox | la couche WMS importée est une `TileWMS` **sans `crossOrigin`** : elle fonctionne mais rend le canvas opaque à l'export PNG (message de la modale d'impression) ; l'import ajuste la vue à l'étendue de la couche ; WFS « pas encore disponible » (message amont) |
+| `GetFeatureInfo` | haut gauche | `button: true`, `active: false`, `noDataMessage` (JSDoc, hors `.d.ts`) | GetFeatureInfo (`INFO_FORMAT=text/html`) des couches visibles, du haut vers le bas | interroge **toutes** les couches visibles ; exige `getFeatureInfoUrl` sur chaque source : porté sur `ol/source/WMTS` dans `src/map/wmtsFeatureInfo.ts` (copie de `Sources/WMTS.js`, sans `geoportal-access-lib`) ; une couche WMTS sans `InfoFormat` publié répond `data:text/plain,` (sinon 400 « not queryable » de la GPF en console) ; GeoServer (wms-v) répond en HTML, wms-r en 400 traité comme « sans donnée » |
+| `ControlList` | haut droite | `header`, `sortable: true` | — | liste les contrôles `listable` ; **`sortable: true` obligatoire** (sinon `this._controlsListStateSync` n'existe pas et l'ouverture lève `Cannot read properties of undefined (reading 'set')`) ; bouton « Afficher plus » renommé « Mes outils » (`labelToggleButton`) |
+| `MeasureLength`, `MeasureArea`, `MeasureAzimuth` | haut droite, listables | `layerDescription`, `geodesic: true` (azimut) | — | info-bulle `GPmeasureTooltip` (overlay OL) ; couche vecteur titrée dans le gestionnaire |
+| `MousePosition` | haut droite, listable | `editCoordinates`, `displayAltitude`, `systems` (géographiques, Web Mercator, Lambert 93), `altitude.serviceOptions.serverUrl` (JSDoc, hors `.d.ts`) | `GPF_ENDPOINTS.elevation` (ressource `ign_rge_alti_wld` par défaut de la lib) | `_initProjectionSystems` résout **toujours** `EPSG:2154` et `EPSG:27572` (même avec `systems`) et lève si l'une est inconnue d'OpenLayers : d'où `TOOL_PROJECTIONS` |
+| `ElevationPath` | haut droite, listable | `elevationPathOptions.serverUrl`, `layerDescription`, `export: true` | `GPF_ENDPOINTS.elevationLine` | `export` doit être un **booléen** (défaut `false` ; un objet fait planter `mergeParams`) : bouton d'export GeoJSON par défaut |
+| `Route` | haut droite, listable | `routeOptions.{serverUrl,resource}`, `autocompleteOptions.serverUrl`, `prettifyCompute`, `export: true` | `GPF_ENDPOINTS.route` (`bdtopo-pgr`), complétion `geocodage/completion` | `geoportal-access-lib` 3.4.7 prend `bdtopo-osrm` par défaut : **400** « resource invalid » sur la GPF (ressources publiées : `bdtopo-pgr`, `bdtopo-valhalla`) ; panneau construit dans `setMap` |
+| `Isocurve` | haut droite, listable | `isocurveOptions.{serverUrl,resource}`, `autocompleteOptions`, `export: true` | `GPF_ENDPOINTS.isochrone` | idem Route (défaut lib `bdtopo-valhalla`, valide) ; panneau construit dans `setMap` |
+| `ReverseGeocode` | haut droite, listable | `reverseGeocodeOptions.serverUrl`, `layerDescription` | `GPF_ENDPOINTS.geocodeReverse` | |
+| `Drawing` | haut droite, listable | `layerDescription`, `tools.export: true` | — | fenêtres d'édition en overlays OL |
+| `Legends` | bas gauche | `panel`, `auto: true` | — | ne lit que les couches **geopf** (`layer.hasOwnProperty("name")` + `getLegends()`…) : `attachLayerInfo` (`src/map/layerInfo.ts`) donne cette interface à nos couches OL ; URL de légende : `LegendURL` des capacités (champ `legendUrl` de `sols-layers.json` et des index, `Style[0].LegendURL[0].href` côté WMTS OL), sinon GetLegendGraphic sur wms-v (GeoServer ; wms-r répond 400) |
+| `Territories` | bas gauche | `panel`, `auto: false` + `territories` (JSON intégré moins `ATF`, `IDF`), `thumbnail: false`, `tiles: 3`, `title` | vues/vignettes sur `data.geopf.fr/annexes/cartes.gouv.fr-config` | `view`/`upload` inactifs par défaut |
+| `GeoportalOverviewMap` | bas gauche | `collapsed: true` | WMTS `GEOGRAPHICALGRIDSYSTEMS.MAPS.OVERVIEW` | configuration de couche **intégrée** au contrôle (`LAYER_CONFIG`) : pas de `Gp.Config` ; `tipLabel` « Mini-carte » forcé |
+
+Non retenus : `ContextMenu` (dépend d'`ol-contextmenu`, ouvre le signalement dans l'entrée carto), `Reporting` (anomalies cartes.gouv.fr),
+`Panoramax` (pair non installé), `Catalog` (M9). Les widgets « Partager » et « Imprimer » de l'entrée carto ne sont pas des contrôles geopf
+(modales Vue DSFR + jsPDF) : ici `ShareModal` et `PrintModal` (react-dsfr `createModal`, boutons dans la barre d'outils).
+
+### 10.2 Disposition
+
+Haut gauche : zoom, plein écran (M3), import, interrogation ; haut droite : gestionnaire de couches, « Mes outils », puis les neuf outils
+listables ; bas gauche (geopf **prépose** les widgets du bas : le dernier ajouté est en haut) : mini-carte, territoires, légendes. L'échelle
+OL passe à `left: 3.5rem` (`MapView.css`). Sous 48em, les boutons des outils listables sont masqués (`.map-tool--listable > .gpf-btn-icon`) ;
+ils s'ouvrent depuis « Mes outils » (le panneau occupe la largeur de la carte, CSS mobile de geopf). Le panneau d'un outil de droite s'ouvre
+à gauche de sa colonne, en haut (`PositionFactory`, mode DSFR).
+
+### 10.3 Partage et impression
+
+- Permalien (`src/map/permalink.ts`, `mapPermalink.ts`) : `?c=<lon>,<lat>&z=<zoom>&l=<fond>$GEOPORTAIL:OGC:WMTS(0;1;1;0),<couche>$GEOPORTAIL:OGC:WMS(1;opacité;visible;0)…&permalink=yes`,
+  `l` brut comme cartes.gouv.fr. Lecture : `readPermalinkView` (vue initiale dans `useMap`), `readPermalinkBaseLayer` (fond initial du
+  store), `readDeepLinks` (toutes les entrées hors fond, une `DeepLinkLayerNotice` chacune). Couches importées, croquis et calculs ne sont
+  pas dans le lien (ils n'ont pas de nom GPF).
+- Impression : `exportMapImage` compose les canvas OL (motif « export map »), « Télécharger en PNG » ou `window.print()` sur une feuille
+  `.map-print-sheet` (seul contenu imprimé, `MapExplorer.css`). Un canvas « taint » (tuile sans CORS, couche importée) fait échouer l'export :
+  message `PRINT_LABELS.exportFailed`.
+
+### 10.4 Accessibilité et bruits amont (à ajouter au ticket du §5.7)
+
+5. Panneaux des outils sans nom : `GEOPF_DIALOG_LABELS` étendu (`GPlegendsPanel`, `GPterritoriesPanel`, `GPcontrolListPanel`,
+   `GPmousePositionPanel`, `GPelevationPathPanel`, `GProutePanel`, `GProuteResultsPanel`, `GPisochronPanel`, `GPisoResultsPanel`,
+   `GPreverseGeocodingPanel`, `GPreverseGeocodingResultsPanel/List`, `GPdrawingPanel`, `GPimportPanel`, `GPimportGetCapPanel`,
+   `GPimportMapBoxPanel`, `GPgetFeatureInfoPanel`, `GPlocationAutoCompleteList_<n>`, `gpf-territories-views-container-id`) ; Route et
+   Isocurve créent leurs panneaux dans `setMap` : `labelDialogsOnInit` enveloppe `_initContainer` sur l'instance (`src/map/labelToolButtons.ts`).
+6. Boutons sans nom : dépliage d'une légende (`GPcollapseLegend_ID_*`, `title=""`) et retrait d'un territoire
+   (`gpf-territories-view-entry-button-id-*`) : `watchToolButtons` (observateur de mutations) pose « Afficher la légende : <titre> » et
+   « Retirer le territoire : <titre> ». Bouton de `ControlList` nommé « Afficher plus » : renommé.
+7. Les `<li>` de « Mes outils » ont `role="button"` et `tabindex="0"` (Entrée/Espace gérés), pas de `aria-pressed`.
+8. `LayerSwitcher._updateLayerGrayScale` appelle `console.warn("Greyscale only implemented for raster and vector tiles")` pour **chaque**
+   couche vecteur ajoutée (mesures, croquis, calculs), sans option pour l'éviter : `check:map` compte ces avertissements (`UPSTREAM_WARNINGS`)
+   au lieu d'échouer ; à signaler aussi.
+
+### 10.5 Vérification et sélecteurs e2e
+
+`check:map` (M8) : quinze boutons nommés, aucune fenêtre sans nom, mesure de distance (texte d'un `.ol-overlay-container` en km), interrogation
+d'une couche sols (accordéon GeoServer dans `GPgetFeatureInfoPanel-*`), légendes (`.legend-entry-container#<nom>`), permalien de la modale
+« Partager » rouvert dans une page neuve (mêmes titres dans le gestionnaire), PNG téléchargé et `window.print` appelé, ouverture/fermeture
+des panneaux, import WMS de `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` (`[id^="GPimportTypeSelect-"]` → `WMS`, `[id^="GPimportServiceUrl-"]`,
+`[id^="GPimportSubmit-"]`, rubrique `label.GPimportGetCapRubriqueTitle` à déplier, entrée `.GPimportGetCapProposal` « Plan IGN »), mobile.
+
+| Élément | Sélecteur |
+|---|---|
+| Boutons des outils | `getByRole('button', { name, exact: true })` avec les libellés de `check-map.ts` (`TOOL_BUTTONS`) |
+| « Mes outils » | `getByRole('button', { name: 'Mes outils', exact: true })`, entrées `[id^="GPcontrolListPanel-"] li` |
+| Partager / Imprimer | boutons `Partager`, `Imprimer` de la barre d'outils ; champ `getByRole('textbox', { name: /^Lien permanent/ })` ; boutons `Télécharger en PNG`, `Lancer l’impression` |
+| Panneaux | `[id^="GProutePanel-"]`, `[id^="GPisochronPanel-"]`, `[id^="GPgetFeatureInfoPanel-"]`, `[id^="GPlegendsPanel-"]`… |
