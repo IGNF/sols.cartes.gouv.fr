@@ -56,6 +56,16 @@ export function exportMapImage(map: OlMap): Promise<string> {
   });
 }
 
+/** Plain text of an attribution (OpenLayers attributions are HTML snippets): parsed, never regex-stripped. */
+function attributionText(html: string): string {
+  return (
+    new DOMParser()
+      .parseFromString(html, 'text/html')
+      .body.textContent?.replace(/\s+/g, ' ')
+      .trim() ?? ''
+  );
+}
+
 /** Attributions of the visible layers, as plain text, without duplicates ("Sources" of a printed map). */
 export function mapSources(map: OlMap): string[] {
   const sources = new Set<string>();
@@ -67,9 +77,7 @@ export function mapSources(map: OlMap): string[] {
       typeof attributions === 'function' ? attributions(undefined as never) : attributions;
     const list = Array.isArray(value) ? value : value ? [value] : [];
     for (const html of list) {
-      const text = String(html)
-        .replace(/<[^>]+>/g, '')
-        .trim();
+      const text = attributionText(String(html));
       if (text) sources.add(text);
     }
   }
