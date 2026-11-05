@@ -28,7 +28,14 @@ export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap 
       }),
     });
     setMap(instance);
+    // Keep the canvas in sync with its container (side panel toggled, window resized).
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => instance.updateSize());
+    observer?.observe(target);
     return () => {
+      observer?.disconnect();
       instance.setTarget(undefined);
       instance.dispose();
       setMap(null);
