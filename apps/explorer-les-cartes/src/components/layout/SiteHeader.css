@@ -1,7 +1,7 @@
 /*
  * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn in
- * `::after` (DSFR uses `::before` for the separator). The PNG has an opaque white background: a rounded
- * tile, invisible in the light theme, deliberate in the dark one.
+ * `::after` (DSFR uses `::before` for the separator). The PNG is transparent: no tile. Hidden below 62em,
+ * where the DSFR header stacks the service title under the brand.
  */
 @media (min-width: 62em) {
   .site-header .fr-header__service {
@@ -17,8 +17,7 @@
     width: 3rem;
     height: 3rem;
     transform: translateY(-50%);
-    border-radius: 0.25rem;
-    background: var(--osf-mark) center / contain no-repeat #fff;
+    background: var(--osf-mark) center / contain no-repeat;
   }
 }
 
@@ -38,7 +37,7 @@
   right: 0;
   min-width: 16rem;
   background-color: var(--background-overlap-grey);
-  box-shadow: 0 6px 18px 0 rgb(0 0 18 / 16%);
+  filter: drop-shadow(var(--overlap-shadow));
 }
 
 .header-menu__panel .fr-menu__list {
@@ -56,5 +55,5 @@
 /* In the DSFR mobile menu modal, the list is part of the flow. */
 .fr-header__menu .header-menu__panel {
   position: static;
-  box-shadow: none;
+  filter: none;
 }

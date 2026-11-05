@@ -30,3 +30,6 @@ export type HeaderMenuIcon = (typeof HEADER_MENU_ICONS)[number];
 
 export const isMenuIcon = (icon: string): icon is HeaderMenuIcon =>
   (HEADER_MENU_ICONS as readonly string[]).includes(icon);
+
+/** Label of the compact footer link back to the header. */
+export const BACK_TO_TOP_LABEL = 'Haut de page';
