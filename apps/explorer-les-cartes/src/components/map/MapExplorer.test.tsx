@@ -48,6 +48,25 @@ describe('MapExplorer', () => {
     expect(screen.getByText('Contenu fonds de carte')).toBeVisible();
   });
 
+  it('signale une couche de la carte qui ne renvoie pas d’image, quel que soit son mode d’ajout', () => {
+    useMapStore.setState({
+      overlays: [
+        {
+          key: 'wms-vector:rrp',
+          service: 'wms-vector',
+          name: 'rrp',
+          title: 'RRP du Loiret',
+          endpoint: 'https://data.geopf.fr/wms-v/ows',
+        },
+      ],
+      unavailableOverlays: ['wms-vector:rrp'],
+    });
+    render(<MapExplorer />);
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Couche indisponible');
+    expect(alert).toHaveTextContent('« RRP du Loiret »');
+  });
+
   it('propose la version accessible de la liste des données dans la barre d’outils', () => {
     render(<MapExplorer />);
     expect(

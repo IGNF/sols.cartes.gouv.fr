@@ -88,6 +88,22 @@ export function solsStyleUrl(file: string): string {
 /** Host of every GPF service: deep links to other hosts are refused. */
 export const GPF_HOST = 'data.geopf.fr';
 
+/** Hosts whose images the map may show (record thumbnails): the GPF annexes and the GIS Sol site. */
+export const TRUSTED_IMAGE_HOSTS: readonly string[] = [
+  GPF_HOST,
+  new URL(EXTERNAL_LINKS.gisSol).hostname,
+];
+
+/** True for an `https:` URL on a trusted image host (anything else is dropped by the generator). */
+export function isTrustedImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && TRUSTED_IMAGE_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * CSW GetRecords request returning the 7 "sols" records (ISO 19115-3), see doc/agents/gpf-sols-data.md §1.
  * Read by scripts/build-sols-layers.ts only.

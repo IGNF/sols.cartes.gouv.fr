@@ -100,10 +100,11 @@ export function fixCatalogMarkup(root: HTMLElement): number {
 }
 
 /** Applies `fixToolButtons` now and to every entry the controls add later (legends follow the map layers). */
-export function watchToolButtons(root: HTMLElement): () => void {
+export function watchToolButtons(root: HTMLElement, onChange?: () => void): () => void {
   const fix = () => {
     fixToolButtons(root);
     fixCatalogMarkup(root);
+    onChange?.();
   };
   fix();
   const observer = new MutationObserver(fix);

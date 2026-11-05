@@ -3,10 +3,11 @@ import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_OPTIONS, CONTROL_LABELS, GEOPF_DIALOG_LABELS } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
-import useCatalog, { CATALOG_CLASS, createCatalog } from './useCatalog';
+import useCatalog, { CATALOG_CLASS, createCatalog, patchProducerLinks } from './useCatalog';
 
 const geopf = vi.hoisted(() => {
   const created: FakeCatalog[] = [];
+  let failNext = false;
   class FakeCatalog {
     options: Record<string, unknown>;
     element: HTMLElement;
@@ -25,10 +26,22 @@ const geopf = vi.hoisted(() => {
       return null;
     }
   }
-  return { created, FakeCatalog };
+  return {
+    created,
+    FakeCatalog,
+    original: FakeCatalog.prototype.createCatalogProducerLinks,
+    failNext: () => {
+      failNext = true;
+    },
+    loadCatalog: () => {
+      if (!failNext) return Promise.resolve(FakeCatalog);
+      failNext = false;
+      return Promise.reject(new Error('chunk'));
+    },
+  };
 });
 
-vi.mock('../map/geopf', () => ({ loadCatalog: () => Promise.resolve(geopf.FakeCatalog) }));
+vi.mock('../map/geopf', () => ({ loadCatalog: () => geopf.loadCatalog() }));
 
 type CatalogClass = Parameters<typeof createCatalog>[0];
 
@@ -86,6 +99,17 @@ describe('createCatalog', () => {
     ]);
   });
 
+  it('ne patche le prototype qu’une fois', () => {
+    const Catalog = geopf.FakeCatalog as unknown as CatalogClass;
+    const prototype = Catalog.prototype as unknown as { createCatalogProducerLinks: unknown };
+    patchProducerLinks(Catalog);
+    const patched = prototype.createCatalogProducerLinks;
+    expect(patched).not.toBe(geopf.original);
+    createCatalog(Catalog, vi.fn(), vi.fn());
+    patchProducerLinks(Catalog);
+    expect(prototype.createCatalogProducerLinks).toBe(patched);
+  });
+
   it('transmet les évènements d’ajout et de retrait avec nom et service', () => {
     const onAdd = vi.fn();
     const onRemove = vi.fn();
@@ -126,6 +150,65 @@ describe('useCatalog', () => {
     expect(useMapStore.getState().overlays).toEqual([]);
     unmount();
     expect(removeControl).toHaveBeenCalledWith(catalog);
+  });
+
+  it('n’ajoute pas deux fois une fiche dont un lien a déjà posé une autre couche, et retire toutes ses couches', async () => {
+    const { map, addControl } = createFakeMap();
+    renderHook(() => useCatalog(map));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const catalog = geopf.created[0];
+    // The Loiret record publishes two WMS layers: the link adds the second one, the entry is the first.
+    useMapStore.getState().addOverlay({
+      key: 'wms-vector:rrp_loiret_gpkg_11-09-2026_wmsv',
+      service: 'wms-vector',
+      name: 'rrp_loiret_gpkg_11-09-2026_wmsv',
+      title: 'RRP du Loiret',
+      endpoint: 'https://data.geopf.fr/wms-v/ows',
+    });
+    catalog?.listeners.get('catalog:layer:add')?.({
+      name: 'rrp_dept_loiret_gpkg_11-09-2026_wmsv',
+      service: 'WMS',
+    });
+    expect(useMapStore.getState().overlays.map((o) => o.key)).toEqual([
+      'wms-vector:rrp_loiret_gpkg_11-09-2026_wmsv',
+    ]);
+    catalog?.listeners.get('catalog:layer:remove')?.({
+      name: 'rrp_dept_loiret_gpkg_11-09-2026_wmsv',
+      service: 'WMS',
+    });
+    expect(useMapStore.getState().overlays).toEqual([]);
+  });
+
+  it('coche l’entrée d’une fiche dont une couche est sur la carte et la décoche quand elle en sort', async () => {
+    const { map, addControl } = createFakeMap();
+    renderHook(() => useCatalog(map));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const dialog = geopf.created[0]?.element.querySelector('dialog');
+    if (!dialog) throw new Error('fixture');
+    dialog.innerHTML = `<div data-layeritem><input type="checkbox" data-layer="rrp_dept_loiret_gpkg_11-09-2026_wmsv:WMS" />
+      <label class="catalog-layer-title">RRP du Loiret</label></div>
+      <div data-layeritem><input type="checkbox" data-layer="stock_carbone_fao_fr_wmsv:WMS" />
+      <label class="catalog-layer-title">Carbone</label></div>`;
+    const inputs = () =>
+      Array.from(dialog.querySelectorAll<HTMLInputElement>('input')).map((i) => i.checked);
+    useMapStore.getState().addOverlay({
+      key: 'wms-vector:rrp_loiret_gpkg_11-09-2026_wmsv',
+      service: 'wms-vector',
+      name: 'rrp_loiret_gpkg_11-09-2026_wmsv',
+      title: 'RRP du Loiret',
+      endpoint: 'https://data.geopf.fr/wms-v/ows',
+    });
+    await waitFor(() => expect(inputs()).toEqual([true, false]));
+    useMapStore.getState().removeOverlay('wms-vector:rrp_loiret_gpkg_11-09-2026_wmsv');
+    await waitFor(() => expect(inputs()).toEqual([false, false]));
+  });
+
+  it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {
+    geopf.failNext();
+    const { map, addControl } = createFakeMap();
+    renderHook(() => useCatalog(map));
+    await waitFor(() => expect(useMapStore.getState().catalogueUnavailable).toBe(true));
+    expect(addControl).not.toHaveBeenCalled();
   });
 
   it('nomme les cases à cocher des entrées rendues après le chargement', async () => {

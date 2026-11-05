@@ -21,6 +21,8 @@ export interface MapState {
   overlays: OverlayRef[];
   /** Keys of overlays whose tiles all fail (the service answers with errors). */
   unavailableOverlays: string[];
+  /** The catalogue widget could not be loaded (its chunk failed): the list view is the fallback. */
+  catalogueUnavailable: boolean;
   setMap: (map: OlMap | null) => void;
   setActiveBaseLayer: (id: BaseLayerId) => void;
   togglePanel: () => void;
@@ -28,6 +30,7 @@ export interface MapState {
   addOverlay: (overlay: OverlayRef) => void;
   removeOverlay: (key: string) => void;
   markOverlayUnavailable: (key: string) => void;
+  setCatalogueUnavailable: (unavailable: boolean) => void;
 }
 
 export const initialMapState = {
@@ -36,6 +39,7 @@ export const initialMapState = {
   isPanelOpen: true,
   overlays: [] as OverlayRef[],
   unavailableOverlays: [] as string[],
+  catalogueUnavailable: false,
 } satisfies Partial<MapState>;
 
 /** Base layer named by a permalink (`l`), else the default one. */
@@ -80,4 +84,5 @@ export const useMapStore = create<MapState>()((set) => ({
         ? state
         : { unavailableOverlays: [...state.unavailableOverlays, key] },
     ),
+  setCatalogueUnavailable: (catalogueUnavailable) => set({ catalogueUnavailable }),
 }));
