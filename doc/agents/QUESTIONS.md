@@ -77,3 +77,9 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Question : les pages edito passent sous `/fr/` et `/en/`. Les briques catalogue et carto lient l'accueil (`/`) et les pages du pied de page (`/mentions-legales/`, ...) : faut-il changer leurs liens en `/fr/...` ?
 - Options : (a) les autres briques passent à `/fr/...` ; (b) l'edito garde chaque chemin sans langue sous forme de page de renvoi (meta refresh vers `/fr/...`, liens visibles vers les deux langues, sans JS).
 - Défaut appliqué : (b) ; aucun lien à changer dans les autres briques. Les pages edito, elles, lient directement leur langue. Le jour où un serveur HTTP est configuré, une redirection 301 (ou selon `Accept-Language`) pourra remplacer le meta refresh.
+
+## M-2. Tuiles WMTS Plan IGN en erreur 400 intermittente (carto-dev, M2)
+
+- Constat : `https://data.geopf.fr/wmts` répond parfois `400` avec `<Exception exceptionCode="InvalidParameterValue">Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown</Exception>` à une requête `GetTile` valide (même URL : 2 réponses 400 sur 60 en `curl`, sans le navigateur ; environ 1 tuile sur 15 à 1 chargement de page sur 2 dans Playwright). La tuile reste vide et le navigateur journalise « Failed to load resource » : ce n'est pas une erreur du code de l'application.
+- Options : (a) accepter et signaler l'incident à l'équipe Géoplateforme ; (b) ajouter un nouvel essai unique des tuiles en échec (`tileLoadFunction` personnalisée) ; (c) les deux.
+- Défaut appliqué : (a) en M2 (aucun contournement, signalement à faire par un humain, l'agent n'ayant pas de canal vers la GPF) ; (b) à décider en M3 si le problème persiste.

@@ -43,6 +43,89 @@ Bun utilise le linker isolé : les dépendances de l'app sont dans `apps/explore
 - Un lien `target="_blank"` reçoit déjà l'icône « nouvelle fenêtre » du DSFR : ne pas choisir `fr-icon-external-link-line` comme `iconId` d'un accès rapide (icône doublée).
 - jsdom : les composants `Header` / `Footer` se rendent sans mock de `matchMedia`.
 
-## 5. geopf-extensions-openlayers
+## 5. geopf-extensions-openlayers (M2, 2026-11-05)
 
-À compléter en M2 (version installée, imports compatibles Vite, CSS à charger, pièges).
+### 5.1 Versions et sources lues
+
+| Paquet | Version | Remarque |
+|---|---|---|
+| `geopf-extensions-openlayers` | 1.0.0-beta.16 (tag `1.0.0-beta.16`) | dépend de `ol ^10.8`, `@gouvfr/dsfr 1.14.4`, `geoportal-access-lib 3.4.7` ; pair `@panoramax/web-viewer` (non installé) |
+| `ol` | 10.11.0 | |
+| `zustand` / `@tanstack/react-query` | 5.0 / 5.106 | |
+
+Lu dans `node_modules/geopf-extensions-openlayers` : `README.md`, `DOCUMENTATION.md` (identique à celui du tag), `src/index.d.ts`,
+`src/packages/Layers/LayerWMTS.{js,d.ts}`, `src/packages/Utils/Config.js`, `src/packages/Controls/LayerSwitcher/LayerSwitcher.{js,d.ts}`,
+`src/packages/Controls/Control.js`, la démo `demos/react-project` du tag. JSDoc : https://ignf.github.io/geopf-extensions-openlayers/jsdoc/
+(la page n'affiche pas de numéro de version ; se fier aux `.d.ts` installés). Intégration React de référence :
+IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navigation/MainMap.tsx`, `controls/layerSwitcherControl.ts`,
+`src/hooks/navigation/useGpConfig.ts`, `layers/useGetWMTSLayer.tsx`, `capabilities/useGetCapabilitiesWMTS.ts`).
+
+### 5.2 Imports qui marchent avec Vite
+
+- Le paquet n'a pas de champ `exports` : les **imports profonds** fonctionnent et ont des types (`.d.ts` à côté de chaque `.js`).
+  `import LayerSwitcher from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';`
+  (type d'options : `LayerSwitcherOptions` exporté du même module).
+- **Fragilité** : ces chemins (`src/packages/...`) ne sont pas une API publique et peuvent changer d'une version bêta à l'autre.
+  La version est donc **épinglée exactement** dans `apps/explorer-les-cartes/package.json` (`"geopf-extensions-openlayers": "1.0.0-beta.16"`,
+  sans `^` ni `~`). Toute montée de version : vérifier chaque import profond, les `.d.ts` utilisés et relancer tests + contrôle Playwright.
+- **Ne pas importer l'index racine** (`from 'geopf-extensions-openlayers'`) : il réexporte le contrôle `Panoramax`, qui importe
+  `@panoramax/web-viewer` (dépendance pair non installée) et tire tous les widgets.
+- Chaque contrôle importe son propre CSS (`import "../../CSS/Controls/.../*.css"`) : Vite le gère sans configuration.
+- La carte (OpenLayers + geopf-ext) est chargée en différé (`React.lazy` dans `App.tsx`) : morceau `MapView-*.js` ~670 kB
+  (193 kB gzip), `chunkSizeWarningLimit` relevé à 1000 kB dans `vite.config.ts`.
+
+### 5.3 CSS
+
+- `ol/ol.css` puis `geopf-extensions-openlayers/css/Dsfr.css` (thème DSFR des widgets, 332 kB ; il **suppose le DSFR déjà chargé**,
+  fourni ici par react-dsfr 1.14.2 ; ne pas charger `@gouvfr/dsfr` 1.14.4 en plus). `css/Classic.css` est le thème non-DSFR : inutile.
+- Importés dans `src/components/map/MapView.tsx`, donc dans le morceau différé.
+
+### 5.4 Configuration et clé d'API
+
+- Aucune clé n'est nécessaire : les services GPF sont en accès libre.
+- Les **couches** geopf-ext (`LayerWMTS`, `LayerWMS`, `LayerMapBox`) exigent une configuration : option `configuration`
+  ou objet global `Gp.Config` chargé par `Gp.Services.getConfig` (`geoportal-access-lib`), sinon le constructeur lève
+  `contract key configuration has to be loaded`. Le guichet charge `fullConfig.json` depuis raw.githubusercontent.com
+  (dépôt `IGNF/geoportal-configuration`, ~330 kB gzip ; il existe aussi `solConfig.json` avec `INRA.CARTE.SOLS`).
+- **Choix M2** : pas de `Gp.Config`. Le fond Plan IGN est une couche OpenLayers standard (`ol/source/WMTS` +
+  `optionsFromCapabilities`) construite depuis le GetCapabilities WMTS de `data.geopf.fr` (265 kB gzip, CORS `*`), chargé une
+  fois par TanStack Query (`staleTime`/`gcTime` infinis). Le nom de couche est ainsi vérifié contre les capacités à l'exécution
+  (`createWmtsLayer` renvoie `null` si absent, l'interface affiche une alerte). Le `LayerSwitcher` accepte toute couche OL.
+- À revoir si un widget qui dépend de `Gp.Config` (moteur de recherche, etc.) est ajouté en M3.
+
+### 5.5 Architecture React (style guichet-collaboratif)
+
+| Élément | Rôle |
+|---|---|
+| `src/store/useMapStore.ts` (Zustand) | état client : instance `map`, `activeBaseLayerId`, `isPanelOpen` |
+| `src/hooks/useWmtsCapabilities.ts` (TanStack Query) | état serveur : capacités WMTS GPF, jamais recopiées dans le store |
+| `src/hooks/useMap.ts` | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
+| `src/hooks/useBaseLayer.ts` | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage |
+| `src/hooks/useLayerSwitcher.ts` | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage |
+| `src/config/map.ts` | fonds (`BASE_LAYERS`), vue initiale, options du `LayerSwitcher` et des contrôles OL, libellés |
+
+L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL : pas de copie dans React.
+
+### 5.6 LayerSwitcher : options et comportement
+
+- Signature : `new LayerSwitcher({ layers?: LayerSwitcherLayersConfig[], options?: LayerSwitcherOptions })`.
+- Options utilisées (vérifiées dans `LayerSwitcher.d.ts`) : `position: 'top-right'`, `collapsed: true`, `panel: true`,
+  `counter: true`, `allowDelete: false`, `allowEdit: false`.
+- Dans `setMap`, le contrôle ajoute les couches déjà présentes puis **écoute `map.getLayers()` (`add`/`remove`)** : ajouter ou
+  retirer une couche de la carte suffit, inutile d'appeler `addLayer`. Libellé et description lus dans les propriétés OL
+  `title` et `description` (réactives via `layer.set`).
+
+### 5.7 Pièges
+
+- Les fenêtres du `LayerSwitcher` (`dialog.fr-modal` `GPlayersList-*`, `GPlayerInfoPanel-*`, `GPlayerStylePanel-*`) n'ont pas de nom
+  accessible ; le JS du DSFR l'écrit en avertissement console (`Modal #... missing accessible name`). Contournement :
+  `labelSwitcherDialogs` pose un `aria-label` sur `control.element` **avant** `map.addControl` (libellés dans `src/config/map.ts`).
+- Les conteneurs de position des widgets ont des id globaux (`position-container-top-right`...) : **une seule carte geopf-ext par page**.
+- Les contrôles OL par défaut sont en anglais : libellés français passés à `defaults(...)` (`zoomOptions`, `rotateOptions`, `attributionOptions`).
+- Clavier : le conteneur de carte a `tabIndex=0` (interactions clavier OL : flèches, `+`/`-`) ; règle jsx-a11y
+  `no-noninteractive-tabindex` autorisée pour le rôle `region`. Le bouton du gestionnaire de couches s'atteint en 3 Tab depuis la carte
+  et s'ouvre avec Entrée.
+- GPF WMTS : réponses `400 Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown` intermittentes sur des `GetTile` valides (environ 3 %, reproduit en `curl`) ; tuile vide et « Failed to load resource » en console. Côté serveur, voir `QUESTIONS.md` M-2.
+- `ol/format/WMTSCapabilities.read` renvoie un objet même pour un document invalide : `parseWmtsCapabilities` exige `Contents`.
+- Tests : `ol/Map` et le module `LayerSwitcher` sont simulés (`vi.mock`) ; `createWmtsLayer` et le parseur utilisent un extrait réel
+  des capacités (`src/test/fixtures/wmts-capabilities.xml`, importé avec `?raw`).

@@ -1,8 +1,8 @@
 /** Shared site identity, identical to the edito brick (apps/accueil/src/_data/site.js). */
 export const SITE = {
-  serviceTitle: 'Observatoire des sols',
+  serviceTitle: 'sols.cartes.gouv.fr',
   brandTop: ['République', 'Française'],
-  serviceTagline: 'Les données sols de la Géoplateforme',
+  serviceTagline: 'Observatoire des sols de France',
   footerDescription:
     'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).',
   licenceText: 'Sauf mention contraire, tous les contenus de ce site sont sous',
@@ -10,7 +10,7 @@ export const SITE = {
 } as const;
 
 /** Title of the header home link. */
-export const HEADER_HOME_TITLE = `Accueil - ${SITE.serviceTitle}`;
+export const HEADER_HOME_TITLE = `Accueil - ${SITE.serviceTitle} - ${SITE.serviceTagline}`;
 
 /** Title of the footer home link, as in the edito footer partial. */
 export const FOOTER_HOME_TITLE = `Retour à l'accueil du site - ${SITE.serviceTitle} - ${SITE.brandTop.join(' ')}`;
