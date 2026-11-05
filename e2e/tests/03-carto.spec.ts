@@ -194,8 +194,10 @@ test.describe('Carto', () => {
     expect(await page.locator('canvas').count()).toBe(0);
   });
 
-  // D-carto-1 : la carte s'affiche parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Ce test échoue
-  // tant que le défaut n'est pas corrigé (tâche M6) et passera au vert de lui-même ensuite.
+  // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6
+  // (PR #39, délai et nouveaux essais sur les capacités WMTS) le test passe la plupart du temps ; un chargement
+  // manqué résiduel (environ 1 sur 20) peut encore le faire échouer et le nouvel essai Playwright peut le masquer :
+  // lire les annotations « sans canvas » et « Plan IGN absent » avant de se fier à un run vert.
   test('stabilité du rendu : la carte a un canvas à chaque chargement (D-carto-1)', async ({
     browser,
   }, testInfo) => {
