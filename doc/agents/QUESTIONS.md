@@ -148,3 +148,9 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Question : la page d'aide demande une section « Nous contacter » avec un lien mailto ; aucune adresse de contact du service n'est connue. Par ailleurs `brand.json` donne `/aide/#contact` : ce chemin sans langue passe par une page de renvoi (meta refresh) qui perd l'ancre.
 - Options : (a) adresse réelle fournie par l'équipe (INRAE / GIS Sol / IGN) ; (b) formulaire hébergé ailleurs ; pour l'ancre : (c) `brand.json` passe à `/fr/aide/#contact` ; (d) garder `/aide/#contact` (arrivée en haut de la page d'aide).
 - Défaut appliqué : adresse provisoire `contact@example.org` (domaine réservé, marquée « (adresse provisoire) ») dans `apps/accueil/src/_data/site.js` (`contactEmail`) ; le balisage partagé de l'edito utilise `/fr/aide/#contact` ; (c) proposé pour `brand.json`.
+
+## E-4. Accueil v1 : agenda, étiquettes de données, illustrations (edito, E8)
+
+- Agenda : les six événements de la maquette sont repris en 2026 avec des liens d'inscription provisoires vers `/fr/aide/#contact` ; les événements passés sont masqués au build (reconstruction nécessaire pour les retirer). Question : où publier les vrais liens d'inscription, et qui tient `apps/accueil/src/_data/agenda.json` à jour ?
+- Étiquettes « Données disponibles » (RPG, BDAT…) : non cliquables. Options : (a) en rester là ; (b) les lier à une recherche du catalogue (`/rechercher-une-donnee/search?q=…`) une fois les mots-clés du périmètre sols stabilisés (C9). Défaut : (a).
+- Illustrations : `cas-usage-2.jpg` représente une mairie (collectivités) et `cas-usage-3.jpg` un bureau (bureaux d'études), l'inverse de `packages/brand/README.md`. L'accueil utilise la correspondance visuelle ; corriger le README (ou renommer les fichiers) côté racine.
