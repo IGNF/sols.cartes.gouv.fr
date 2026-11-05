@@ -1,0 +1,780 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Extrait de doc/agents/gissol-osf_c.xml (CSW gissol-osf_c, 2026-11-05) : 2 fiches sur 7. -->
+<csw:GetRecordsResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-discovery.xsd">
+  <csw:SearchStatus timestamp="2026-11-05T10:52:40.947912Z" />
+  <csw:SearchResults numberOfRecordsMatched="2" numberOfRecordsReturned="2" elementSet="full" nextRecord="0">
+<mdb:MD_Metadata xmlns:mdb="http://standards.iso.org/iso/19115/-3/mdb/2.0" xmlns:cat="http://standards.iso.org/iso/19115/-3/cat/1.0" xmlns:gfc="http://standards.iso.org/iso/19110/gfc/1.1" xmlns:cit="http://standards.iso.org/iso/19115/-3/cit/2.0" xmlns:gcx="http://standards.iso.org/iso/19115/-3/gcx/1.0" xmlns:gex="http://standards.iso.org/iso/19115/-3/gex/1.0" xmlns:lan="http://standards.iso.org/iso/19115/-3/lan/1.0" xmlns:srv="http://standards.iso.org/iso/19115/-3/srv/2.0" xmlns:mas="http://standards.iso.org/iso/19115/-3/mas/1.0" xmlns:mcc="http://standards.iso.org/iso/19115/-3/mcc/1.0" xmlns:mco="http://standards.iso.org/iso/19115/-3/mco/1.0" xmlns:mda="http://standards.iso.org/iso/19115/-3/mda/1.0" xmlns:mds="http://standards.iso.org/iso/19115/-3/mds/2.0" xmlns:mdt="http://standards.iso.org/iso/19115/-3/mdt/2.0" xmlns:mex="http://standards.iso.org/iso/19115/-3/mex/1.0" xmlns:mmi="http://standards.iso.org/iso/19115/-3/mmi/1.0" xmlns:mpc="http://standards.iso.org/iso/19115/-3/mpc/1.0" xmlns:mrc="http://standards.iso.org/iso/19115/-3/mrc/2.0" xmlns:mrd="http://standards.iso.org/iso/19115/-3/mrd/1.0" xmlns:mri="http://standards.iso.org/iso/19115/-3/mri/1.0" xmlns:mrl="http://standards.iso.org/iso/19115/-3/mrl/2.0" xmlns:mrs="http://standards.iso.org/iso/19115/-3/mrs/1.0" xmlns:msr="http://standards.iso.org/iso/19115/-3/msr/2.0" xmlns:mdq="http://standards.iso.org/iso/19157/-2/mdq/1.0" xmlns:dqm="http://standards.iso.org/iso/19157/-2/dqm/1.0" xmlns:mac="http://standards.iso.org/iso/19115/-3/mac/2.0" xmlns:gco="http://standards.iso.org/iso/19115/-3/gco/1.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" uuid="osf63e6c177-455e-5805-b70b-0894ee1c7174">
+      <mdb:metadataIdentifier>
+        <mcc:MD_Identifier>
+          <mcc:code>
+            <gco:CharacterString>osf63e6c177-455e-5805-b70b-0894ee1c7174</gco:CharacterString>
+          </mcc:code>
+        </mcc:MD_Identifier>
+      </mdb:metadataIdentifier>
+      <mdb:defaultLocale>
+        <lan:PT_Locale>
+          <lan:language>
+            <lan:LanguageCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#LanguageCode" codeListValue="fre">fre</lan:LanguageCode>
+          </lan:language>
+          <lan:characterEncoding>
+            <lan:MD_CharacterSetCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_CharacterSetCode" codeListValue="utf8">utf8</lan:MD_CharacterSetCode>
+          </lan:characterEncoding>
+        </lan:PT_Locale>
+      </mdb:defaultLocale>
+      <mdb:metadataScope>
+        <mdb:MD_MetadataScope>
+          <mdb:resourceScope>
+            <mcc:MD_ScopeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_ScopeCode" codeListValue="dataset">dataset</mcc:MD_ScopeCode>
+          </mdb:resourceScope>
+          <mdb:name>
+            <gco:CharacterString>Jeu de données</gco:CharacterString>
+          </mdb:name>
+        </mdb:MD_MetadataScope>
+      </mdb:metadataScope>
+      <mdb:contact />
+      <mdb:dateInfo>
+        <cit:CI_Date>
+          <cit:date>
+            <gco:DateTime>2026-10-30T08:20:16.362576Z</gco:DateTime>
+          </cit:date>
+          <cit:dateType>
+            <cit:CI_DateTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="revision">revision</cit:CI_DateTypeCode>
+          </cit:dateType>
+        </cit:CI_Date>
+      </mdb:dateInfo>
+      <mdb:identificationInfo>
+        <mri:MD_DataIdentification>
+          <mri:citation>
+            <cit:CI_Citation>
+              <cit:title>
+                <gco:CharacterString>Seuils de détection des anomalies pour différents éléments traces mesurés sur le le Réseau de Mesure de la Qualité des Sols</gco:CharacterString>
+              </cit:title>
+              <cit:date>
+                <cit:CI_Date>
+                  <cit:date>
+                    <gco:Date>2018-01-06</gco:Date>
+                  </cit:date>
+                  <cit:dateType>
+                    <cit:CI_DateTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="creation">creation</cit:CI_DateTypeCode>
+                  </cit:dateType>
+                </cit:CI_Date>
+              </cit:date>
+            </cit:CI_Citation>
+          </mri:citation>
+          <mri:abstract>
+            <gco:CharacterString>Ce jeu de données rassemble les résultats du calcul d'indicateurs pouvant
+                    servir de seuils de détection pour les anomalies d'éléments traces (arsenic, cadmium, cobalt,
+                    chrome, cuivre, mercure, nickel, plomb, thallium, zinc) dans les sols de surface.
+                    Ces indicateurs correspondent à des vibrisses calculées à partir d'un ensemble de mesures
+                    situées dans un rayon de 50 km autour du point considéré.
+                    Les mesures correspondent aux teneurs totales en éléments traces et proviennent des sites du Réseau
+                    de Mesure de la Qualité des Sols (RMQS) pour les horizons 0-30 cm (tous les éléments) et 30-50 cm
+                    (excepté pour l'arsenic et le mercure).
+                    Nous considérons ici que ces calculs régionalisés de vibrisses jouent un rôle d'indicateur de
+                    tendance régionale, prenant en compte à la fois les valeurs des fonds pédo-géochimiques et les
+                    contributions d'origine anthropique. Ils correspondent à la teneur limite au-delà de laquelle
+                    une valeur peut être considérée comme anormale. Ils permettent ainsi de détecter des anomalies
+                    ponctuelles tout en évitant la valeur du bruit de fond local.
+
+```
+                Le jeu présenté ici correspond à celui du cadmium total dans la couche 0-30cm en mg/kg. Pour accéder
+                aux autres éléments, il est recommandé d'utiliser le flux wfs dans un SIG ou de télécharger le
+                géopackage disponible dans les documents liés à cette ressource.
+
+                 **Contraintes** :
+                Les valeurs fournies pour les seuils de détection d'anomalies doivent être manipulées avec
+                prudence. Les interprétations qui en découlent doivent tenir compte de la nature assez frustrante de
+                ces indicateurs. En effet, il est important de noter que les calculs ne prennent pas en compte les
+                processus pédologiques locaux.
+```</gco:CharacterString>
+          </mri:abstract>
+          <mri:pointOfContact>
+            <cit:CI_Responsibility>
+              <cit:role xmlns:gcoold="http://www.isotc211.org/2005/gco" gcoold:nilReason="missing" />
+              <cit:party>
+                <cit:CI_Organisation>
+                  <cit:name>
+                    <gco:CharacterString>INRAE - Info&amp;Sols</gco:CharacterString>
+                  </cit:name>
+                  <cit:contactInfo>
+                    <cit:CI_Contact>
+                      <cit:address>
+                        <cit:CI_Address>
+                          <cit:electronicMailAddress>
+                            <gco:CharacterString>osf@inrae.fr</gco:CharacterString>
+                          </cit:electronicMailAddress>
+                        </cit:CI_Address>
+                      </cit:address>
+                    </cit:CI_Contact>
+                  </cit:contactInfo>
+                </cit:CI_Organisation>
+              </cit:party>
+            </cit:CI_Responsibility>
+          </mri:pointOfContact>
+          <mri:spatialRepresentationType>
+            <mcc:MD_SpatialRepresentationTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="vector">vector</mcc:MD_SpatialRepresentationTypeCode>
+          </mri:spatialRepresentationType>
+          <mri:spatialResolution>
+            <mri:MD_Resolution>
+              <mri:equivalentScale>
+                <mri:MD_RepresentativeFraction>
+                  <mri:denominator>
+                    <gco:Integer>250000</gco:Integer>
+                  </mri:denominator>
+                </mri:MD_RepresentativeFraction>
+              </mri:equivalentScale>
+            </mri:MD_Resolution>
+          </mri:spatialResolution>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>farming</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>environment</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>geoscientificInformation</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:extent>
+            <gex:EX_Extent>
+              <gex:geographicElement>
+                <gex:EX_GeographicBoundingBox>
+                  <gex:westBoundLongitude>
+                    <gco:Decimal>-5.11625</gco:Decimal>
+                  </gex:westBoundLongitude>
+                  <gex:eastBoundLongitude>
+                    <gco:Decimal>9.7475</gco:Decimal>
+                  </gex:eastBoundLongitude>
+                  <gex:southBoundLatitude>
+                    <gco:Decimal>41.4753125</gco:Decimal>
+                  </gex:southBoundLatitude>
+                  <gex:northBoundLatitude>
+                    <gco:Decimal>51.2346875</gco:Decimal>
+                  </gex:northBoundLatitude>
+                </gex:EX_GeographicBoundingBox>
+              </gex:geographicElement>
+            </gex:EX_Extent>
+          </mri:extent>
+          <mri:resourceMaintenance>
+            <mmi:MD_MaintenanceInformation>
+              <mmi:maintenanceAndUpdateFrequency>
+                <mmi:MD_MaintenanceFrequencyCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="notPlanned" />
+              </mmi:maintenanceAndUpdateFrequency>
+            </mmi:MD_MaintenanceInformation>
+          </mri:resourceMaintenance>
+          <mri:graphicOverview>
+            <mcc:MD_BrowseGraphic>
+              <mcc:fileName>
+                <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/thumbnail/e6360cc0-d4da-438b-8976-348bf8a4314e.png</gco:CharacterString>
+              </mcc:fileName>
+              <mcc:fileDescription>
+                <gco:CharacterString>Aperçu</gco:CharacterString>
+              </mcc:fileDescription>
+              <mcc:fileType>
+                <gco:CharacterString>png</gco:CharacterString>
+              </mcc:fileType>
+            </mcc:MD_BrowseGraphic>
+          </mri:graphicOverview>
+          <mri:descriptiveKeywords>
+            <mri:MD_Keywords>
+              <mri:keyword>
+                <gco:CharacterString>contamination</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>ETM</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>éléments traces</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>RMQS</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>France</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>statistiques</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>vibrisses</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>INRAE</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Info&amp;Sols</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Arsenic total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Cadmium total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Cobalt total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Chrome total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Cuivre total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Mercure total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Molybdène total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Nickel total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Plomb total</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Zinc total</gco:CharacterString>
+              </mri:keyword>
+              <mri:type>
+                <mri:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" />
+              </mri:type>
+            </mri:MD_Keywords>
+          </mri:descriptiveKeywords>
+        </mri:MD_DataIdentification>
+      </mdb:identificationInfo>
+      <mdb:distributionInfo>
+        <mrd:MD_Distribution>
+          <mrd:transferOptions>
+            <mrd:MD_DigitalTransferOptions>
+              <mrd:onLine type="offering" offeringId="4be3e2e2-5a56-4f4b-84a0-de1f09b28664" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wms-v</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>vibrisses_rmqs_gpkg_03-09-2026_wmsv</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="619bcdde-f2c9-4b6a-a788-c3fac12a6270" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wfs</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WFS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>vibrisses_rmqs_gpkg_03-09-2026_wfs:cd_0_30</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="619bcdde-f2c9-4b6a-a788-c3fac12a6270" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wfs</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WFS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>vibrisses_rmqs_gpkg_03-09-2026_wfs:cd_30_50</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="619bcdde-f2c9-4b6a-a788-c3fac12a6270" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wfs</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WFS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>vibrisses_rmqs_gpkg_03-09-2026_wfs:vibrisses</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="getcapabilities">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/gpf-geoserver-wfs/capabilities.xml</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>GetCapabilities - WFS</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Service de diffusion WFS principal</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/documents/Vibrisses du
+                                    RMQS/0f2eec64-9812-43cc-83bc-7fc18c48b298/dictionnaire_methodes_vibrisse.pdf</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Dictionnaire de données</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Dictionnaire de données sur les méthodes utilisées pour les
+                                    vibrisses</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://downloads.gissol.fr/d/b6e00091cd7d9bc41cd39ad796248796</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Geopackage des vibrisses</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://doi.org/10.15454/UEZXBY</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>DOI</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+            </mrd:MD_DigitalTransferOptions>
+          </mrd:transferOptions>
+        </mrd:MD_Distribution>
+      </mdb:distributionInfo>
+      <mdb:resourceLineage>
+        <mrl:LI_Lineage>
+          <mrl:statement>
+            <gco:CharacterString>La plupart des étapes du calcul des vibrisses sont réalisées à l'aide
+                            de scripts exécutés sous le logiciel R (R Development Core Team, 2007). La première étape
+                            consiste à calculer la distance entre les sites. Ensuite, les concentrations en éléments
+                            traces sont extraites de la base de données. Les étapes suivantes sont réalisées pour chaque
+                            élément trace et chaque horizon à l'aide d'un seul script R :
+                            • Sélection, pour chaque site, des concentrations en éléments traces des sites voisins dans
+                            un rayon de 50 km,
+                            • Comptage du nombre de sites présentant une concentration en éléments traces ; le calcul de
+                            la vibrisse n'est effectué que s'il y a au moins 10 sites,
+                            • Calcul, pour chaque site, de la vibrisse selon la formule suivante : v = médiane + 3 x
+                            écart interquartile.
+                            Source : E. Villanneau, C. Perry-Giraud, N. Saby, C. Jolivet, F. Marot, D. Maton, A.
+                            Floch-Barneaud, V. Antoni et D. Arrouays, 2008. Détection de valeurs anomaliques d’éléments
+                            traces métalliques dans les sols à l’aide du Réseau de Mesure de la Qualité des Sols. Étude
+                            et Gestion des Sols, Volume 15,3, 2008 - pages 183 à 200</gco:CharacterString>
+          </mrl:statement>
+        </mrl:LI_Lineage>
+      </mdb:resourceLineage>
+    </mdb:MD_Metadata>
+<mdb:MD_Metadata xmlns:mdb="http://standards.iso.org/iso/19115/-3/mdb/2.0" xmlns:cat="http://standards.iso.org/iso/19115/-3/cat/1.0" xmlns:gfc="http://standards.iso.org/iso/19110/gfc/1.1" xmlns:cit="http://standards.iso.org/iso/19115/-3/cit/2.0" xmlns:gcx="http://standards.iso.org/iso/19115/-3/gcx/1.0" xmlns:gex="http://standards.iso.org/iso/19115/-3/gex/1.0" xmlns:lan="http://standards.iso.org/iso/19115/-3/lan/1.0" xmlns:srv="http://standards.iso.org/iso/19115/-3/srv/2.0" xmlns:mas="http://standards.iso.org/iso/19115/-3/mas/1.0" xmlns:mcc="http://standards.iso.org/iso/19115/-3/mcc/1.0" xmlns:mco="http://standards.iso.org/iso/19115/-3/mco/1.0" xmlns:mda="http://standards.iso.org/iso/19115/-3/mda/1.0" xmlns:mds="http://standards.iso.org/iso/19115/-3/mds/2.0" xmlns:mdt="http://standards.iso.org/iso/19115/-3/mdt/2.0" xmlns:mex="http://standards.iso.org/iso/19115/-3/mex/1.0" xmlns:mmi="http://standards.iso.org/iso/19115/-3/mmi/1.0" xmlns:mpc="http://standards.iso.org/iso/19115/-3/mpc/1.0" xmlns:mrc="http://standards.iso.org/iso/19115/-3/mrc/2.0" xmlns:mrd="http://standards.iso.org/iso/19115/-3/mrd/1.0" xmlns:mri="http://standards.iso.org/iso/19115/-3/mri/1.0" xmlns:mrl="http://standards.iso.org/iso/19115/-3/mrl/2.0" xmlns:mrs="http://standards.iso.org/iso/19115/-3/mrs/1.0" xmlns:msr="http://standards.iso.org/iso/19115/-3/msr/2.0" xmlns:mdq="http://standards.iso.org/iso/19157/-2/mdq/1.0" xmlns:dqm="http://standards.iso.org/iso/19157/-2/dqm/1.0" xmlns:mac="http://standards.iso.org/iso/19115/-3/mac/2.0" xmlns:gco="http://standards.iso.org/iso/19115/-3/gco/1.0" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" uuid="osfd95caa37-436b-431c-9391-643164f010bb">
+      <mdb:metadataIdentifier>
+        <mcc:MD_Identifier>
+          <mcc:code>
+            <gco:CharacterString>osfd95caa37-436b-431c-9391-643164f010bb</gco:CharacterString>
+          </mcc:code>
+        </mcc:MD_Identifier>
+      </mdb:metadataIdentifier>
+      <mdb:defaultLocale>
+        <lan:PT_Locale>
+          <lan:language>
+            <lan:LanguageCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#LanguageCode" codeListValue="fre">fre</lan:LanguageCode>
+          </lan:language>
+          <lan:characterEncoding>
+            <lan:MD_CharacterSetCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_CharacterSetCode" codeListValue="utf8">utf8</lan:MD_CharacterSetCode>
+          </lan:characterEncoding>
+        </lan:PT_Locale>
+      </mdb:defaultLocale>
+      <mdb:metadataScope>
+        <mdb:MD_MetadataScope>
+          <mdb:resourceScope>
+            <mcc:MD_ScopeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_ScopeCode" codeListValue="dataset">dataset</mcc:MD_ScopeCode>
+          </mdb:resourceScope>
+          <mdb:name>
+            <gco:CharacterString>Jeu de données</gco:CharacterString>
+          </mdb:name>
+        </mdb:MD_MetadataScope>
+      </mdb:metadataScope>
+      <mdb:contact />
+      <mdb:dateInfo>
+        <cit:CI_Date>
+          <cit:date>
+            <gco:DateTime>2026-11-02T10:04:03.813041Z</gco:DateTime>
+          </cit:date>
+          <cit:dateType>
+            <cit:CI_DateTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="revision">revision</cit:CI_DateTypeCode>
+          </cit:dateType>
+        </cit:CI_Date>
+      </mdb:dateInfo>
+      <mdb:identificationInfo>
+        <mri:MD_DataIdentification>
+          <mri:citation>
+            <cit:CI_Citation>
+              <cit:title>
+                <gco:CharacterString>Les sols dominants de France métropolitaine – Carte harmonisée</gco:CharacterString>
+              </cit:title>
+              <cit:date>
+                <cit:CI_Date>
+                  <cit:date>
+                    <gco:Date>2026-09-01</gco:Date>
+                  </cit:date>
+                  <cit:dateType>
+                    <cit:CI_DateTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="creation">creation</cit:CI_DateTypeCode>
+                  </cit:dateType>
+                </cit:CI_Date>
+              </cit:date>
+            </cit:CI_Citation>
+          </mri:citation>
+          <mri:abstract>
+            <gco:CharacterString>Les Référentiels Régionaux Pédologiques (RRP) sont une représentation des sols à l’échelle du 1/250 000, réalisés par département ou par région dans le cadre du programme Inventaire, Gestion et Conservation des Sols (IGCS) coordonné par le Groupement d’intérêt scientifique sur les Sols ou Gis Sol. Il s’agit de l’information pédologique cartographique la plus précise actuellement disponible sur la totalité du territoire de France métropolitaine.
+
+Cartographier les sols à l’échelle du 1/250 000 consiste à délimiter la portion de la couverture pédologique qui présente des caractéristiques communes en termes de paysage et de répartition des sols. Ces ensembles cohérents sont alors appelés Unités Cartographiques de Sols (UCS). A cette échelle de représentation, chacune des plages cartographiques ou UCS est caractérisée par un ou plusieurs types de sol différents, nommés Unités Typologiques de Sol (UTS). Le pourcentage surfacique de chaque UTS a été estimé au sein de chaque UCS, et les noms de sols ont été décrits suivant le Référentiel Pédologique français (Baize et al., 2008 - [https://www.afes.fr/referentiel-pedologique](https://www.afes.fr/referentiel-pedologique)). Les RRP sont constitués d’une carte associée à une base de données sémantiques décrivant de manière exhaustive les UCS et les UTS du territoire concerné. Cette base de données est structurée selon un format national : Donesol. La présente carte est issue de l’harmonisation de l’ensemble des RRP au niveau des limites administratives pour aboutir au RRP harmonisé national par l’unité Info&amp;amp;Sols d’INRAE.
+
+Les données par territoire (régional ou départemental) peuvent être obtenues auprès des gestionnaires locaux des RRP.
+
+Cette carte des sols a été produite avec le soutien du [RMT Sols et Territoires.](https://sols-et-territoires.org/)
+
+**Avertissement important : La fiabilité attendue de la carte est liée à l’échelle des données représentées (1 : 250 000).**  
+**Toute interprétation des données à une plus grande échelle (échelle cadastrale en particulier) est déconseillée sans observation complémentaire de terrain.**</gco:CharacterString>
+          </mri:abstract>
+          <mri:pointOfContact>
+            <cit:CI_Responsibility>
+              <cit:role xmlns:gcoold="http://www.isotc211.org/2005/gco" gcoold:nilReason="missing" />
+              <cit:party>
+                <cit:CI_Organisation>
+                  <cit:name>
+                    <gco:CharacterString>INRAE - Info&amp;Sols</gco:CharacterString>
+                  </cit:name>
+                  <cit:contactInfo>
+                    <cit:CI_Contact>
+                      <cit:address>
+                        <cit:CI_Address>
+                          <cit:electronicMailAddress>
+                            <gco:CharacterString>osf@inrae.fr</gco:CharacterString>
+                          </cit:electronicMailAddress>
+                        </cit:CI_Address>
+                      </cit:address>
+                    </cit:CI_Contact>
+                  </cit:contactInfo>
+                </cit:CI_Organisation>
+              </cit:party>
+            </cit:CI_Responsibility>
+          </mri:pointOfContact>
+          <mri:spatialRepresentationType>
+            <mcc:MD_SpatialRepresentationTypeCode codeList="https://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="vector">vector</mcc:MD_SpatialRepresentationTypeCode>
+          </mri:spatialRepresentationType>
+          <mri:spatialResolution>
+            <mri:MD_Resolution>
+              <mri:equivalentScale>
+                <mri:MD_RepresentativeFraction>
+                  <mri:denominator>
+                    <gco:Integer>250000</gco:Integer>
+                  </mri:denominator>
+                </mri:MD_RepresentativeFraction>
+              </mri:equivalentScale>
+            </mri:MD_Resolution>
+          </mri:spatialResolution>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>farming</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>environment</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:topicCategory>
+            <mri:MD_TopicCategoryCode>geoscientificInformation</mri:MD_TopicCategoryCode>
+          </mri:topicCategory>
+          <mri:extent>
+            <gex:EX_Extent>
+              <gex:geographicElement>
+                <gex:EX_GeographicBoundingBox>
+                  <gex:westBoundLongitude>
+                    <gco:Decimal>-5.4325</gco:Decimal>
+                  </gex:westBoundLongitude>
+                  <gex:eastBoundLongitude>
+                    <gco:Decimal>8.4825</gco:Decimal>
+                  </gex:eastBoundLongitude>
+                  <gex:southBoundLatitude>
+                    <gco:Decimal>42.1259375</gco:Decimal>
+                  </gex:southBoundLatitude>
+                  <gex:northBoundLatitude>
+                    <gco:Decimal>51.2346875</gco:Decimal>
+                  </gex:northBoundLatitude>
+                </gex:EX_GeographicBoundingBox>
+              </gex:geographicElement>
+            </gex:EX_Extent>
+          </mri:extent>
+          <mri:resourceMaintenance>
+            <mmi:MD_MaintenanceInformation>
+              <mmi:maintenanceAndUpdateFrequency>
+                <mmi:MD_MaintenanceFrequencyCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="asNeeded" />
+              </mmi:maintenanceAndUpdateFrequency>
+            </mmi:MD_MaintenanceInformation>
+          </mri:resourceMaintenance>
+          <mri:graphicOverview>
+            <mcc:MD_BrowseGraphic>
+              <mcc:fileName>
+                <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/thumbnail/89bd96f1-6713-4291-b359-bcc0071c8225.png</gco:CharacterString>
+              </mcc:fileName>
+              <mcc:fileDescription>
+                <gco:CharacterString>Aperçu</gco:CharacterString>
+              </mcc:fileDescription>
+              <mcc:fileType>
+                <gco:CharacterString>png</gco:CharacterString>
+              </mcc:fileType>
+            </mcc:MD_BrowseGraphic>
+          </mri:graphicOverview>
+          <mri:descriptiveKeywords>
+            <mri:MD_Keywords>
+              <mri:keyword>
+                <gco:CharacterString>Référentiels Régionaux Pédologiques</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>RRP</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>UCS</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>UTS</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>GER</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>sols dominants</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>sol</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>pédologie</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>Info&amp;Sols</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>INRAE</gco:CharacterString>
+              </mri:keyword>
+              <mri:keyword>
+                <gco:CharacterString>inventaire gestion et conservation des sols</gco:CharacterString>
+              </mri:keyword>
+              <mri:type>
+                <mri:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" />
+              </mri:type>
+            </mri:MD_Keywords>
+          </mri:descriptiveKeywords>
+        </mri:MD_DataIdentification>
+      </mdb:identificationInfo>
+      <mdb:distributionInfo>
+        <mrd:MD_Distribution>
+          <mrd:transferOptions>
+            <mrd:MD_DigitalTransferOptions>
+              <mrd:onLine type="offering" offeringId="ef6f8a1c-bff0-46f5-8c75-d3a0922b3f0b" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wmts</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>INRAE_CARTE-SOLS_WMTS</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="96ea3a5a-1828-4563-bf91-e4830056108a" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wms-r/wms</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>inrae_carte_sols_wmsr</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="c325ad0d-808b-4f6d-934e-ab80f9af076e" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wfs</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WFS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>etude_34015_gpkg_04-09-2026_wfs:sols_dominants</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="8addddbf-5653-4805-8f2f-0d4b1b07270d" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wfs</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WFS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>INRAE_CARTE-SOLS:sols_dominants</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="988017bc-78ad-443a-98e1-1dc9560dcba6" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wmts</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMTS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>INRAE_CARTE-SOLS</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="1a0521ca-dfdd-4e1f-b389-1601baf8b4ce" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wms-v</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>INRAE_CARTE-SOLS</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="offering" offeringId="077e6c7e-a741-46b7-899b-d33b98025273" offeringOpen="1">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/wms-v</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:protocol>
+                    <gco:CharacterString>OGC:WMS</gco:CharacterString>
+                  </cit:protocol>
+                  <cit:name>
+                    <gco:CharacterString>etude_34015_gpkg_04-09-2026_wmsv</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="style">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/style/880f1199-833f-4370-8209-50960e3ce933_sols_dominants.sld</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Style sols dominants - etude_34015_gpkg_04-09-2026_wfs:sols_dominants_france_metropolitaine</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Style pour la couche etude_34015_gpkg_04-09-2026_wfs:sols_dominants_france_metropolitaine</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="getcapabilities">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/gpf-geoserver-wfs/capabilities.xml</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>GetCapabilities - WFS</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Service de diffusion WFS principal</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="getcapabilities">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/gpf-rok4-server-wmts-tms/capabilities.xml</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>GetCapabilities - WMTS-TMS</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Service de diffusion WMTS/TMS principal</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="getcapabilities">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://data.geopf.fr/annexes/gissol-osf/gpf-geoserver-wms-v/capabilities.xml</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>GetCapabilities - WMS-VECTOR</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Service de diffusion WMS Vecteur principal</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://downloads.gissol.fr/d/e9f89be98cc14ef30321c6d846812331</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Geopackage</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Base de données géographique et sémantique compète - 1,3Go</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://dw4.gissol.fr/fichiers/dictionnaire_donesol_igcs_latest.pdf</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Dictionnaire Donesol</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Dernière version du dictionnaire de données Donesol</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>https://refersols.gissol.fr/</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Refersols</gco:CharacterString>
+                  </cit:name>
+                  <cit:description>
+                    <gco:CharacterString>Répertoire national des études cartographiques de sol</gco:CharacterString>
+                  </cit:description>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+              <mrd:onLine type="document">
+                <cit:CI_OnlineResource>
+                  <cit:linkage>
+                    <gco:CharacterString>http://gissol.fr/gissol/fiches_geoportail/fiches_descriptives_ger.pdf</gco:CharacterString>
+                  </cit:linkage>
+                  <cit:name>
+                    <gco:CharacterString>Fiches descriptives des sols dominants</gco:CharacterString>
+                  </cit:name>
+                </cit:CI_OnlineResource>
+              </mrd:onLine>
+            </mrd:MD_DigitalTransferOptions>
+          </mrd:transferOptions>
+        </mrd:MD_Distribution>
+      </mdb:distributionInfo>
+      <mdb:resourceLineage>
+        <mrl:LI_Lineage>
+          <mrl:statement>
+            <gco:CharacterString>Pour la représentation des grands types de sols dominants, la première étape a consisté au regroupement des différents types de sols (UTS) rencontrés dans les RRP en 33 grandes familles de sols (ou grands ensembles de références du Référentiel Pédologique français ; cf. http://gissol.fr/gissol/fiches_geoportail/fiches_descriptives_ger.pdf ). Dans une seconde étape, les RRP ont été fusionnés au niveau graphique afin d’obtenir une carte nationale. Enfin, en se basant sur les pourcentages estimés pour chaque type de sol (UTS) au sein des UCS, la famille de sol dominante a été identifiée et représentée pour chacune UCS de la carte.</gco:CharacterString>
+          </mrl:statement>
+        </mrl:LI_Lineage>
+      </mdb:resourceLineage>
+    </mdb:MD_Metadata>
+</csw:SearchResults>
+</csw:GetRecordsResponse>
