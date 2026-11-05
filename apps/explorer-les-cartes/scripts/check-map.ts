@@ -9,6 +9,7 @@
  * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links (`l=` cartes.gouv.fr
  * permalink, and the `layer/type/url` alias) add their layer or show the matching notice.
  * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
+ * M6: a canvas on 20 fresh loads (D-carto-1) and the side panel closed by default at 375 px.
  * Exits 1 on failure.
  */
 import { chromium } from 'playwright';
@@ -297,6 +298,73 @@ for (const [label, query, assertion] of deepLinks) {
   );
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `liste : console vide${notes} ${messages.join(' | ')}`);
+  await page.close();
+}
+
+// D-carto-1: the map must get its canvas on every load, even when the GPF hangs a capabilities request
+// (timeout + retry). 20 fresh browser contexts, as in the e2e report.
+{
+  let missing = 0;
+  let slowest = 0;
+  for (let i = 0; i < 20; i++) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const page = await context.newPage();
+    const start = Date.now();
+    await page.goto(url, { waitUntil: 'load' });
+    const ok = await page
+      .locator('.map-view canvas')
+      .first()
+      .waitFor({ state: 'attached', timeout: 20_000 })
+      .then(() => true)
+      .catch(() => false);
+    slowest = Math.max(slowest, Date.now() - start);
+    if (!ok) missing += 1;
+    await context.close();
+  }
+  check(
+    missing === 0,
+    `20 chargements neufs : canvas à chaque fois (${missing} sans canvas, le plus lent ${slowest} ms)`,
+  );
+}
+
+// Mobile: side panel closed by default below the DSFR md breakpoint, map above the fold, toggle first.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  await page.goto(url, { waitUntil: 'load' });
+  const toggle = page.getByRole('button', { name: 'Afficher le panneau' });
+  await toggle.waitFor({ state: 'attached', timeout: 15_000 }).catch(() => undefined);
+  check(
+    (await toggle.getAttribute('aria-expanded')) === 'false' &&
+      !(await page.locator('#panneau-lateral').isVisible()),
+    '375px : panneau latéral fermé par défaut',
+  );
+  const mapBox = await page.locator('.map-view').boundingBox();
+  check(
+    Boolean(mapBox && mapBox.y < 812),
+    `375px : la carte commence au-dessus du pli (y = ${Math.round(mapBox?.y ?? -1)} px)`,
+  );
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  check(
+    (await page
+      .getByRole('button', { name: 'Masquer le panneau' })
+      .getAttribute('aria-expanded')) === 'true' &&
+      (await page.getByRole('tab', { name: 'Fonds de carte' }).isVisible()),
+    '375px : Entrée sur « Afficher le panneau » ouvre le panneau et ses onglets',
+  );
+  await page.close();
+}
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  check(
+    await page
+      .getByRole('button', { name: 'Masquer le panneau' })
+      .waitFor({ state: 'attached', timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false),
+    '1280px : panneau latéral ouvert par défaut',
+  );
   await page.close();
 }
 
