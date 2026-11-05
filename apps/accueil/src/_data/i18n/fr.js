@@ -141,54 +141,158 @@ export default {
   },
   accueil: {
     hero: {
-      overline: 'Portail d’accès aux données sur les sols',
-      title: 'Observatoire des sols',
+      overline: 'Le portail d’accès aux données des sols pour les territoires',
+      title: 'Toute la connaissance des sols de France réunie en un seul endroit',
       intro:
-        'L’Observatoire des sols rassemble en un point d’entrée unique les données sur les sols du GIS Sol, servies par la Géoplateforme (texte provisoire).',
+        'Soixante ans de données pédologiques collectées sur le territoire français. L’Observatoire des Sols de France vous permet de les localiser et les mobiliser dans vos études et décisions territoriales.',
       actions: {
         rechercherUneDonnee: 'Rechercher une donnée',
         explorerLesCartes: 'Explorer les cartes',
       },
+      figuresLabel: 'Chiffres clés',
+      figures: {
+        annees: { value: '60 ans', label: 'de données collectées' },
+        referentiels: { value: '12+', label: 'Référentiels nationaux' },
+        publiques: { value: '100 %', label: 'Données publiques' },
+      },
     },
     service: {
       overline: 'Le service',
-      title: 'Trouver, comprendre et utiliser les données sur les sols',
-      intro: 'Présentation courte du service (texte provisoire).',
-      items: {
-        trouver: { title: 'Trouver les données', desc: 'Description courte (texte provisoire).' },
-        comprendre: {
-          title: 'Comprendre les données',
-          desc: 'Description courte (texte provisoire).',
+      title: 'Localisez, comprenez et mobilisez les données sur les sols',
+      intro:
+        'Les données sur les sols sont dispersées entre de nombreux acteurs et difficiles à exploiter. L’Observatoire vous permet de les trouver, les comprendre et les mobiliser.',
+      frieze: {
+        without: {
+          title: 'Sans l’Observatoire des Sols de France',
+          items: [
+            'Données dispersées entre BRGM, INRAE, IGN, ADEME…',
+            'Formats hétérogènes, métadonnées incomplètes',
+            'Impossible de savoir quelle donnée utiliser',
+            'Temps de collecte élevé avant chaque étude',
+          ],
         },
-        utiliser: { title: 'Utiliser les données', desc: 'Description courte (texte provisoire).' },
+        with: {
+          title: 'Avec l’Observatoire des Sols de France',
+          items: [
+            'Un seul point d’accès, toutes sources centralisées',
+            'Qualité, source et échelle documentées pour chaque donnée',
+            'Données exportables dans vos outils SIG',
+            'Gain de temps immédiat sur la collecte',
+          ],
+        },
       },
+      items: {
+        trouver: {
+          title: 'Trouver les données pertinentes',
+          desc: 'Localisez immédiatement les données pertinentes et disponibles sur votre zone d’étude sans multiplier les sources, les interlocuteurs ou les plateformes.',
+        },
+        comprendre: {
+          title: 'Comprendre la fiabilité des données',
+          desc: 'Accédez à la source, l’échelle et la qualité de chaque référentiel. Évaluez la fiabilité avant d’intégrer les données à vos analyses et rapports.',
+        },
+        utiliser: {
+          title: 'Mobiliser dans vos outils',
+          desc: 'Exportez les données dans vos outils SIG et logiciels métier, dans des formats compatibles avec vos environnements de travail.',
+        },
+      },
+    },
+    usages: {
+      overline: 'Cas d’usage',
+      title: 'Un portail conçu pour vos usages métier',
+      intro:
+        'Ces cas d’usage illustrent comment l’Observatoire des Sols de France peut s’intégrer dans vos pratiques. Si vous travaillez avec des données des sols, le portail est fait pour vous.',
+      profile: 'Profil',
+      items: {
+        chambres: {
+          title: 'Chambres d’agriculture',
+          lead: 'Mobiliser les données des sols pour renforcer le conseil agricole et objectiver les diagnostics parcellaires.',
+          points: [
+            'Un conseiller analyse une parcelle, identifie les caractéristiques des sols et formule une recommandation agronomique documentée.',
+            'Un technicien prépare un diagnostic en accédant à toutes les données depuis un seul point, réduisant le temps de collecte.',
+            'Un accompagnement terrain s’appuie sur des données sourcées pour crédibiliser les échanges avec l’agriculteur.',
+          ],
+        },
+        bureaux: {
+          title: 'Bureaux d’études',
+          lead: 'Accéder rapidement aux données des sols pour fiabiliser les études environnementales, d’aménagement, réglementaires et de délimitation de zones humides.',
+          points: [
+            'Un bureau d’études réalise une étude d’impact, identifie les contraintes des sols et sécurise son analyse documentaire.',
+            'Un chargé d’étude prépare un dossier en accédant aux bonnes données en un seul point, réduisant le temps de collecte.',
+            'Un projet d’aménagement s’appuie sur des données fiables pour améliorer la qualité du diagnostic préalable.',
+          ],
+        },
+        collectivites: {
+          title: 'Collectivités territoriales',
+          lead: 'Intégrer les enjeux sols dans les politiques d’aménagement et les décisions stratégiques du territoire.',
+          points: [
+            'Identifier les zones à enjeux environnementaux, agronomiques et de biodiversité pour orienter les décisions',
+            'Appuyer les politiques publiques avec des données pédologiques fiables et sourcées',
+            'Intégrer les contraintes sols dans les documents d’urbanisme (PLU, SCOT, SRADDET)',
+          ],
+        },
+      },
+      note: 'Ces exemples sont délibérément ciblés. Si vous travaillez avec des données des sols pour d’autres usages, le portail peut également vous être utile.',
     },
     donnees: {
       overline: 'Données disponibles',
-      title: 'Les jeux de données sur les sols',
-      intro: 'Présentation courte des données disponibles (texte provisoire).',
+      title: 'Accédez à des référentiels structurés et documentés',
+      intro:
+        'Accédez à un ensemble de référentiels nationaux organisés par usage. Certaines données sont visualisables sur le portail cartographique, toutes sont référencées et documentées.',
+      tagsLabel: 'Référentiels',
+      usageLabel: 'Usage :',
       items: {
         referentiels: {
           title: 'Référentiels territoriaux',
-          desc: 'Description courte (texte provisoire).',
+          usage: 'diagnostic territorial, étude d’impact, analyse des contraintes pédologiques.',
         },
-        agricoles: { title: 'Données agricoles', desc: 'Description courte (texte provisoire).' },
+        agricoles: {
+          title: 'Données agricoles',
+          usage:
+            'recommandations agronomiques, gestion de la fertilité, pratiques culturales adaptées.',
+        },
         environnement: {
-          title: 'Environnement et recherche',
-          desc: 'Description courte (texte provisoire).',
+          title: 'Environnement & recherche',
+          usage: 'bilan carbone, pollution, études environnementales, recherche scientifique.',
         },
       },
-      allLabel: 'Voir toutes les données',
+      banner: {
+        title:
+          'Toutes ces données sont référencées sur le portail de l’Observatoire des Sols de France',
+        text: 'Certaines sont visualisables directement sur l’interface cartographique, d’autres référencées avec un lien vers leur source d’origine.',
+        button: 'Accéder au portail',
+      },
+    },
+    agenda: {
+      overline: 'Agenda',
+      title: 'Les prochains rendez-vous de l’Observatoire',
+      intro:
+        'Webinaires, ateliers, événements… Échangeons autour des données sur les sols et de leurs usages.',
+      listLabel: 'Événements à venir',
+      previous: 'Événements précédents',
+      next: 'Événements suivants',
+      empty: 'Aucun rendez-vous n’est programmé pour le moment. Revenez bientôt.',
+      types: { webinaire: 'Webinaire', evenement: 'Événement', salon: 'Salon' },
+      actions: { inscrire: 'S’inscrire', participer: 'Participer' },
+      placeLabel: 'Lieu :',
     },
     articles: {
       overline: 'Articles',
       title: 'Derniers articles',
       allLabel: 'Voir tous les articles',
     },
-    gissol: {
-      title: 'Le GIS Sol',
-      text: 'Présentation courte du groupement d’intérêt scientifique Sol (texte provisoire).',
-      label: 'Site du GIS Sol',
+    partners: {
+      overline: 'Partenaires & sponsors',
+      title: 'Un service piloté par l’INRAE avec l’écosystème public',
+      intro:
+        'L’Observatoire des Sols de France s’appuie sur un réseau d’acteurs publics et scientifiques pour faciliter l’accès, la compréhension et l’usage des données pédologiques françaises.',
+      networkOverline: 'Partenaires scientifiques, techniques et environnementaux',
+      networkTitle: 'Acteurs du réseau',
+      gissolLink: 'Site du GIS Sol',
+      callout: {
+        title: 'Vous produisez des données sur les sols et souhaitez les référencer ?',
+        text: 'L’Observatoire des Sols de France a vocation à centraliser les données sur les sols des acteurs publics et scientifiques. Contactez-nous pour soumettre vos données au catalogue.',
+        button: 'Soumettre des données',
+      },
     },
   },
 };

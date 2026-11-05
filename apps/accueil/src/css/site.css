@@ -57,8 +57,8 @@
   }
 }
 
-/* Dark theme: the brand images are drawn for a white background: one white plate behind the
-   whole operator group, so the separator between the two images stays visible. */
+/* Dark theme: one white plate behind the whole operator group, so the separator stays visible.
+   #fff on purpose, not a DSFR token: the brand images are drawn for a white background. */
 [data-fr-theme='dark'] .sols-operator {
   padding: 0.25rem 0.5rem;
   background-color: #fff;
@@ -107,10 +107,272 @@
 /* Footer partner logos: same height (DSFR sets height: auto on .fr-footer__partners .fr-footer__logo). */
 .fr-footer__partners .fr-footer__logo.sols-partner-logo {
   height: 4.5rem;
+  max-width: 12rem;
   padding: 0.5rem;
+  object-fit: contain;
 }
 
-/* Dark theme: keep a white plate behind each partner logo (drawn for a light background). */
+/* Dark theme: keep a white plate behind each partner logo. #fff on purpose, not a DSFR token: the
+   logos are their owners' artwork, drawn for a white background, and must keep their colours. */
 [data-fr-theme='dark'] .fr-footer__partners .fr-footer__logo.sols-partner-logo {
   background-color: #fff;
+}
+
+/* ---------- Home page (v1) ---------- */
+
+/* Section bands (DSFR illustrative background tokens). */
+.sols-band--beige {
+  background-color: var(--background-alt-beige-gris-galet);
+}
+
+.sols-band--green {
+  background-color: var(--background-alt-green-emeraude);
+}
+
+/* Hero key figures. */
+.sols-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 3rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-default-grey);
+}
+
+.sols-figures__value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 2.25rem;
+  color: var(--text-default-success);
+}
+
+.sols-figures__label {
+  display: block;
+  font-size: 0.875rem;
+}
+
+/* « Sans / Avec » frieze. */
+.sols-frieze {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-default-grey);
+}
+
+@media (min-width: 48em) {
+  .sols-frieze {
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 2rem;
+  }
+}
+
+.sols-frieze__title {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sols-frieze__column--without .sols-frieze__title,
+.sols-frieze__column--without [class*='fr-icon-'] {
+  color: var(--text-default-error);
+}
+
+.sols-frieze__column--with .sols-frieze__title,
+.sols-frieze__column--with [class*='fr-icon-'] {
+  color: var(--text-default-success);
+}
+
+.sols-frieze__item {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sols-frieze__arrow {
+  display: none;
+}
+
+@media (min-width: 48em) {
+  .sols-frieze__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    color: var(--text-inverted-success);
+    background-color: var(--background-flat-success);
+  }
+}
+
+/* Use case cards and section note. */
+.sols-usage__points {
+  margin-top: 1rem;
+  padding-left: 1rem;
+  font-size: 0.875rem;
+  list-style-type: disc;
+}
+
+.sols-usage__points li {
+  margin-bottom: 0.5rem;
+}
+
+/* Data cards: tags between the title and the usage line, as on the mockup. */
+.fr-card__content .sols-data-tags {
+  order: 3; /* DSFR orders the title 2 and the description 3 */
+  margin-top: 1rem;
+}
+
+.fr-card__content .sols-data-tags + .fr-card__desc {
+  order: 4;
+}
+
+.sols-note {
+  font-style: italic;
+  text-align: center;
+}
+
+/* Data cards: icon before the title. */
+.sols-card-icon {
+  margin-right: 0.5rem;
+  color: var(--text-title-blue-france);
+}
+
+/* Blue banner under the data cards. */
+.sols-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding: 1.5rem 2rem;
+  color: var(--text-inverted-blue-france);
+  background-color: var(--background-action-high-blue-france);
+}
+
+.sols-banner__title {
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+
+.sols-banner .sols-banner__btn {
+  color: var(--text-action-high-blue-france);
+  background-color: var(--background-default-grey);
+}
+
+.sols-banner .sols-banner__btn:hover {
+  background-color: var(--background-default-grey-hover);
+}
+
+/* Agenda carousel: horizontal scroll-snap list; buttons shown by js/carousel.js. */
+.sols-carousel__controls:not([hidden]) {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sols-carousel__controls .fr-btn {
+  overflow: hidden;
+  width: 2.5rem;
+  white-space: nowrap;
+}
+
+.sols-carousel__viewport {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 0;
+  padding-bottom: 0.5rem;
+}
+
+.sols-carousel__track {
+  display: flex;
+  gap: 1rem;
+}
+
+.sols-carousel__item {
+  flex: 0 0 min(85%, 34rem);
+  scroll-snap-align: start;
+}
+
+/* Event card: date column next to the DSFR card body. */
+.sols-event.fr-card {
+  flex-direction: row;
+  height: 100%;
+}
+
+.sols-event__date {
+  display: flex;
+  flex: 0 0 5.5rem;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  border-right: 1px solid var(--border-default-grey);
+}
+
+.sols-event__day {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 2.5rem;
+  color: var(--text-default-success);
+}
+
+.sols-event__month {
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-default-success);
+}
+
+.sols-event__time {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Partner logos of the home page. */
+.sols-partners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.sols-partners__link {
+  display: flex;
+  align-items: center;
+  height: 6rem;
+  padding: 1rem 1.5rem;
+  background-color: #fff;
+  background-image: none;
+}
+
+.sols-partners__logo {
+  max-height: 4rem;
+  width: auto;
+}
+
+.sols-partners__overline {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Small screens: the event date goes above the card body, on one line. */
+@media (max-width: 35.99em) {
+  .sols-event.fr-card {
+    flex-direction: column;
+  }
+
+  .sols-event__date {
+    flex: none;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 1rem 2rem 0.75rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-default-grey);
+  }
+
+  .sols-event__time {
+    margin-top: 0;
+  }
 }

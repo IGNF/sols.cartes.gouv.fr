@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
 import { I18nPlugin } from '@11ty/eleventy';
@@ -14,8 +14,16 @@ const BRAND_DIR = dirname(require.resolve('@sols/brand/brand.json'));
 const CACHE_DIR = join(import.meta.dirname, 'node_modules', '.cache', 'sols-accueil');
 
 /** DSFR utility icons used by the site; only their rules and SVGs are published (/dsfr/icons.css). */
+/** DSFR utility icons of the home page (frieze, data cards, agenda). */
+const HOME_ICONS = [
+  accueil.frieze.without.icon,
+  accueil.frieze.with.icon,
+  accueil.frieze.arrow,
+  ...accueil.donnees.items.map((item) => item.icon),
+  ...Object.values(accueil.agenda.icons),
+];
 const DSFR_ICONS = [
-  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill']),
+  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill', ...HOME_ICONS]),
 ];
 
 /** DSFR stylesheets served by the site; every file they reference through url() is copied too. */
@@ -75,28 +83,6 @@ function buildIconStylesheet() {
   return svgs;
 }
 
-/**
- * SVG logos of @sols/brand exported without a viewBox (fixed canvas, content offset) do not
- * scale with CSS. The published copy gets a viewBox fitted to the drawing; the source file is
- * untouched (to be fixed upstream in packages/brand).
- */
-const BRAND_SVG_VIEWBOX = { 'logo-inrae.svg': '0 52 128 30' };
-
-/** Copies the @sols/brand images to the cache, fixing the SVGs listed above; returns the folder. */
-function prepareBrandAssets() {
-  const target = join(CACHE_DIR, 'brand');
-  cpSync(join(BRAND_DIR, 'assets'), target, { recursive: true });
-  for (const [file, viewBox] of Object.entries(BRAND_SVG_VIEWBOX)) {
-    const [, , width, height] = viewBox.split(' ');
-    const svg = readFileSync(join(target, file), 'utf8').replace(
-      /<svg width="[^"]*" height="[^"]*"/,
-      `<svg viewBox="${viewBox}" width="${width}" height="${height}"`,
-    );
-    writeFileSync(join(target, file), svg);
-  }
-  return target;
-}
-
 export function dsfrPassthrough() {
   const files = [
     ...DSFR_STYLESHEETS,
@@ -115,13 +101,17 @@ const DATE_FORMATS = Object.fromEntries(
     new Intl.DateTimeFormat(dateLocale, { dateStyle: 'long', timeZone: 'UTC' }),
   ]),
 );
+/** Build day (UTC, YYYY-MM-DD): agenda events before it are not published. */
+const BUILD_DAY = new Date().toISOString().slice(0, 10);
 const REFRESH = /<meta http-equiv="refresh" content="0; url=([^"]+)">/;
 
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
+  eleventyConfig.addPassthroughCopy({ 'src/js': 'js' });
   eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
-  eleventyConfig.addPassthroughCopy({ [prepareBrandAssets()]: site.assets.brand.slice(1) });
+  // Brand images are published unchanged from packages/brand/assets/.
+  eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });
 
   // Pages live in src/<locale>/; locale_url and locale_links come from the plugin. errorMode "never":
   // a link without a translation falls back to the given URL (the link checker still runs on dist).
@@ -159,8 +149,28 @@ export default function (eleventyConfig) {
   eleventyConfig.addCollection(site.defaultLanguage, (collectionApi) =>
     collectionApi.getFilteredByGlob(`src/${site.defaultLanguage}/**/*.{njk,md}`),
   );
+  // Agenda: events of the build day and later, sorted by date and time.
+  eleventyConfig.addFilter('upcoming', (events) =>
+    events
+      .filter((event) => event.date >= BUILD_DAY)
+      .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`)),
+  );
+  eleventyConfig.addFilter('eventDay', (date) => date.slice(8, 10));
+  eleventyConfig.addFilter('eventMonth', (date, locale) =>
+    new Intl.DateTimeFormat(site.languages.find((l) => l.code === locale).dateLocale, {
+      month: 'short',
+      timeZone: 'UTC',
+    })
+      .format(new Date(`${date}T00:00:00Z`))
+      .replace('.', ''),
+  );
+  eleventyConfig.addFilter('eventTime', (time, locale) =>
+    locale === 'fr' ? time.replace(':', 'h') : time,
+  );
   eleventyConfig.addFilter('dateIso', (date) => date.toISOString().slice(0, 10));
-  eleventyConfig.addFilter('dateLong', (date, locale) => DATE_FORMATS[locale].format(date));
+  eleventyConfig.addFilter('dateLong', (date, locale) =>
+    DATE_FORMATS[locale].format(typeof date === 'string' ? new Date(`${date}T00:00:00Z`) : date),
+  );
 
   eleventyConfig.addLinter('seo-head', function (content) {
     if (!this.page.outputPath?.endsWith('.html')) return;
