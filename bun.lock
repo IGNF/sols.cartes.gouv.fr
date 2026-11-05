@@ -60,6 +60,10 @@
         "vitest": "^5.1.0",
       },
     },
+    "packages/brand": {
+      "name": "@sols/brand",
+      "version": "0.1.0",
+    },
   },
   "packages": {
     "@11ty/chokidar-with-glob-support": ["@11ty/chokidar-with-glob-support@1.1.1", "", { "dependencies": { "chokidar": "^4.0.3", "picomatch": "^4.0.7" } }, "sha512-wyugY5VKwQ9OabCBNwa3BLwei54aV36jy8K3O762m/ZVKiczLvnKJN+JYGFL5Ct2faDoBr3Bp0AjNbZpz0xo3A=="],
@@ -317,6 +321,8 @@
     "@sindresorhus/transliterate": ["@sindresorhus/transliterate@1.6.0", "", { "dependencies": { "escape-string-regexp": "^5.0.0" } }, "sha512-doH1gimEu3A46VX6aVxpHTeHrytJAG6HgdxntYnCFiIFHEM/ZGpG8KiZGBChchjQmG0XFIBL552kBTjVcMZXwQ=="],
 
     "@sols/accueil": ["@sols/accueil@workspace:apps/accueil"],
+
+    "@sols/brand": ["@sols/brand@workspace:packages/brand"],
 
     "@sols/explorer-les-cartes": ["@sols/explorer-les-cartes@workspace:apps/explorer-les-cartes"],
 
