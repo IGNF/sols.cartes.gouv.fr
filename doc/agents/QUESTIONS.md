@@ -35,6 +35,24 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Options : (a) `https://www.gouvernement.fr` ; (b) `https://www.info.gouv.fr` comme le gabarit DSFR 1.14.
 - Défaut appliqué : (b). Modifiable en une ligne dans `apps/accueil/src/_data/site.js` (`external.gouvernement`).
 
+## Q7. Pied de page de la maquette (edito, E2)
+
+- Question : la maquette Figma (frame « 1440w light », nœud 8:4414) propose un pied de page sombre personnalisé : titre « Observatoire des Sols de France », « Le portail d'accès aux données des sols pour les territoires. Un service piloté par INRAE · Incubé par beta.gouv.fr », trois liens (contenu non défini) et « 2026 INRAE GIS Sol ».
+- Options : (a) reproduire ce bloc sombre (hors DSFR, contenu à valider : pilotage, incubation) ; (b) garder le pied de page DSFR standard (marque, liens obligatoires, liens bas, licence).
+- Défaut appliqué : (b) pour la v0 ; le contenu de la maquette pourra être repris dans `site.footer.description` une fois validé.
+
+## M-1. Libellé « Site du GIS Sol » dans les liens de contenu du pied de page carto (carto-dev, M1)
+
+- Constat : le `Footer` de react-dsfr 1.36.0 ne propose que `domains` pour la liste de liens de contenu ; chaque entrée est rendue avec le domaine comme libellé et `https://<domaine>` comme cible. La brique edito affiche « Site du GIS Sol » → `https://www.gissol.fr/` (et des cibles en `www.`).
+- Options : (a) garder `domains` : le lien se lit « gissol.fr » → `https://gissol.fr` (redirige vers le site) ; (b) l'edito renomme son libellé en « gissol.fr » pour une parité exacte ; (c) balisage personnalisé côté carto (contraire à « utiliser les props react-dsfr »).
+- Défaut appliqué : (a) côté carto ; (b) proposé à l'edito. Même liste, même ordre, même phrase de licence et même titre du lien d'accueil.
+
+## E-1. Titres des cartes « Données disponibles » de l'accueil (edito, E2)
+
+- Question : les trois cartes de la section « Données disponibles » portent les titres de la maquette Figma (« Référentiels territoriaux », « Données agricoles », « Environnement et recherche »). Ces catégories ne sont pas validées par le GIS Sol ni rattachées à un filtre du catalogue.
+- Options : (a) garder les titres de la maquette ; (b) des libellés neutres en attendant la validation ; (c) des catégories issues des mots-clés du catalogue (après C1-C4).
+- Défaut appliqué : (a), décision de l'orchestrateur ; les descriptions portent « (texte provisoire) ». À valider avec le designer et le GIS Sol ; contenu dans `apps/accueil/src/_data/accueil.js` (`donnees.items`).
+
 ## C-1. Sous-portail GeoNetwork `gissol-osf_c` pour le catalogue (catalogue-dev, C1)
 
 - Question : le sous-portail `gissol-osf_c` (filtre serveur `groupPublished:gissol-osf_g`, les 7 fiches du CSW) existe sur le GeoNetwork GPF, mais son API n'est pas joignable : `https://data.geopf.fr/geonetwork/gissol-osf_c/api/...` répond `404 no Route matched` (passerelle) et `https://data.geopf.fr/catalog/gissol-osf_c/api/...` répond 403 (réécrit en `/geonetwork/srv/api/gissol-osf_c/api/...`). Seul `srv` est routé, via `/catalog`, qui répond déjà `access-control-allow-origin: *`.

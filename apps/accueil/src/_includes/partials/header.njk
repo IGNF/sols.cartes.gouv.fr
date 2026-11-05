@@ -8,14 +8,14 @@
               <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
             </div>
             <div class="fr-header__navbar">
-              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" aria-haspopup="dialog" id="bouton-menu-principal" title="Menu">Menu</button>
+              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" id="bouton-menu-principal" title="Menu">Menu</button>
             </div>
           </div>
           <div class="fr-header__service">
-            <a href="{{ site.sections.accueil }}" title="Accueil - {{ site.name }}">
-              <p class="fr-header__service-title">{{ site.name }}</p>
+            <a href="{{ site.sections.accueil }}" title="Accueil - {{ site.header.serviceTitle }} - {{ site.header.tagline }}">
+              <p class="fr-header__service-title">{{ site.header.serviceTitle }}</p>
             </a>
-            <p class="fr-header__service-tagline">{{ site.tagline }}</p>
+            <p class="fr-header__service-tagline">{{ site.header.tagline }}</p>
           </div>
         </div>
         <div class="fr-header__tools">
@@ -23,7 +23,7 @@
             <ul class="fr-btns-group">
               {%- for link in site.header.tools %}
               <li>
-                <a class="fr-btn" href="{{ link.href }}"{% if link.external %} target="_blank" rel="noopener" title="{{ link.label }} - nouvelle fenêtre"{% endif %}>{{ link.label }}</a>
+                <a class="fr-btn" href="{{ link.href }}"{% if link.external %} target="_blank" rel="noopener external" title="{{ link.label }} - nouvelle fenêtre"{% endif %}>{{ link.label }}</a>
               </li>
               {%- endfor %}
             </ul>

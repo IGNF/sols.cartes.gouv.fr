@@ -8,7 +8,8 @@
     "dev": "eleventy --serve --port=8081",
     "build": "eleventy",
     "lint": "eleventy --quiet && html-validate \"dist/**/*.html\"",
-    "test": "bun test"
+    "test": "bun test",
+    "check-links": "bun scripts/check-links.js"
   },
   "dependencies": {
     "@gouvfr/dsfr": "1.14.2"
