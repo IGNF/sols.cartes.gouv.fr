@@ -1,37 +1,55 @@
 /** English strings. Every prose string is placeholder text, marked "(placeholder text)". */
 const description =
   'Soil observatory: portal for the GIS Sol (INRAE) soil data served by the Géoplateforme (placeholder text).';
+const footerDescription =
+  'Soil observatory of France: the access portal to soil data for territories, led by INRAE with the GIS Sol and served by the Géoplateforme (placeholder text).';
 
 export default {
   name: 'Soil observatory',
   tagline: 'Soil observatory of France',
   description,
   newWindow: 'new window',
-  skiplinks: { label: 'Quick access', contenu: 'Content', menu: 'Menu', piedDePage: 'Footer' },
+  skiplinks: { label: 'Quick access', contenu: 'Content', piedDePage: 'Footer' },
+  mainSections: {
+    accueil: 'Home',
+    rechercherUneDonnee: 'Find data (in French)',
+    explorerLesCartes: 'Explore maps (in French)',
+    aide: 'Help',
+  },
   header: {
-    homeTitle: 'Home',
+    homeLinkTitle: 'Back to the home page of the Soil observatory of France - République Française',
+    operatorLogoAlt: 'GIS Sol, scientific interest group on soils',
     menu: 'Menu',
     close: 'Close',
-    navLabel: 'Main menu',
     translateTitle: 'Select a language',
-    nav: {
-      accueil: 'Home',
-      rechercherUneDonnee: 'Find data (in French)',
-      explorerLesCartes: 'Explore maps (in French)',
+    tools: {
+      help: {
+        label: 'Help',
+        items: {
+          '/aide/': { label: 'Help centre' },
+          '/fr/aide/#contact': { label: 'Contact us' },
+        },
+      },
+      services: {
+        label: 'Services',
+        items: {
+          '/rechercher-une-donnee/': {
+            label: 'Find data (in French)',
+            desc: 'The soil data catalogue',
+          },
+          '/explorer-les-cartes/': {
+            label: 'Explore maps (in French)',
+            desc: 'The map viewer',
+          },
+          '/fr/': { label: 'Discover', desc: 'The Soil observatory of France' },
+        },
+      },
     },
-    tools: { gissol: 'GIS Sol website' },
   },
   footer: {
-    description,
-    homeTitle: 'Back to the home page',
-    contentLinks: {
-      cartesGouv: 'cartes.gouv.fr',
-      gissol: 'gissol.fr',
-      infoGouv: 'info.gouv.fr',
-      servicePublic: 'service-public.gouv.fr',
-      legifrance: 'legifrance.gouv.fr',
-      dataGouv: 'data.gouv.fr',
-    },
+    description: footerDescription,
+    homeLinkTitle: 'Back to the home page of the Soil observatory of France - République Française',
+    partnersTitle: 'Our partners',
     bottomLinks: {
       accessibilite: 'Accessibility: not compliant',
       mentionsLegales: 'Legal notice',
@@ -42,6 +60,15 @@ export default {
       text: 'Unless otherwise stated, all content on this site is available under',
       label: 'licence etalab-2.0',
     },
+  },
+  display: {
+    button: 'Display settings',
+    title: 'Display settings',
+    legend: 'Choose a theme to customise the look of the site.',
+    light: 'Light theme',
+    dark: 'Dark theme',
+    system: 'System',
+    systemHint: 'Uses the system settings',
   },
   breadcrumb: {
     label: 'you are here:',
@@ -54,6 +81,27 @@ export default {
     link: 'English version',
   },
   pages: {
+    aide: {
+      title: 'Help',
+      description: 'Help centre of the Soil observatory of France (placeholder text).',
+      intro:
+        'Find here the answers to the most frequent questions about the Soil observatory of France (placeholder text).',
+      faqTitle: 'Frequently asked questions',
+      faq: [
+        {
+          question: 'What is the Soil observatory of France?',
+          answer: 'Answer to come (placeholder text).',
+        },
+        { question: 'How do I find soil data?', answer: 'Answer to come (placeholder text).' },
+        {
+          question: 'How do I display data on the map?',
+          answer: 'Answer to come (placeholder text).',
+        },
+      ],
+      contactTitle: 'Contact us',
+      contactText: 'For any question about the service, write to us at',
+      contactNote: '(placeholder address)',
+    },
     accueil: { title: 'Soil observatory', description },
     accessibilite: {
       title: 'Accessibility',

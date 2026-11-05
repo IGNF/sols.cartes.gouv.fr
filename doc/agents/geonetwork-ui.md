@@ -508,3 +508,40 @@ resteraient claires sous un en-tête sombre. Un mode sombre cohérent demande un
 importante) ; à traiter avec C8 (paramètres d'affichage du pied de page v1) si le propriétaire le confirme.
 
 Captures : `doc/screenshots/C10/`.
+
+## 15. En-tête et pied de page v1 (C8)
+
+Référence : `doc/agents/edito.md`, section « En-tête et pied de page partagés v1 », sur la branche E7
+(`feat/E7-header-footer-v1`, `b49dadb`), et `packages/brand/brand.json`.
+
+Génération (`scripts/layout.mjs`, appelé par `prepare.mjs`) :
+
+- Trois blocs extraits tels quels : liens d'évitement (`#contenu`, `#pied-de-page`), en-tête, pied de page suivi de la
+  modale `dialog#fr-theme-modal`.
+- Badge de la brique : `brand.json` `badges.catalogue` (« Rechercher ») ajouté dans `p.fr-header__service-title`, en
+  `fr-badge fr-badge--sm fr-badge--green-menthe`.
+- Menu mobile : en mode `angular`, le JS DSFR ne recopie pas les outils dans `fr-header__menu-links` ; la copie est faite
+  à la génération, `id` et `aria-controls` suffixés `-mobile` (`menu-help-mobile`, `menu-services-mobile`). Le JS DSFR
+  compare ensuite les deux copies et ajoute `fr-nav__item--align-right` aux menus visibles : cette classe est posée
+  d'avance dans les deux copies, sinon il signale une différence en console.
+- Chemins : `/assets/brand/*` devient `/rechercher-une-donnee/assets/brand/*` (images copiées depuis
+  `packages/brand/assets/` par `prepare.mjs`) ; `/dsfr/artwork/...` devient `/rechercher-une-donnee/assets/dsfr/artwork/...`
+  (pictogrammes copiés par le patch 0003).
+- CSS : les règles `.sols-operator*`, `.sols-tool-menu*`, `.sols-partner-logo` de `apps/accueil/src/css/site.css` sont
+  extraites (y compris dans `@media`) vers `apps/datahub/src/sols-shared.css`, `url(../dsfr/...)` réécrit.
+
+Vérifications (Playwright, bureau 1280×900 et mobile 393×851) : menus « Aide » et « Services » ouverts à la souris et au
+clavier (Entrée), fermés par Échap et par clic extérieur ; menu mobile avec les deux menus (`-mobile`) ; lien de marque
+→ `/` (page de renvoi vers `/fr/`) ; aucune erreur ni avertissement console sur la recherche ; axe : 0 violation
+critique ou sérieuse sur la recherche et la fiche `osff858525a-…` (seule `heading-order`, modérée, amont).
+
+**Paramètres d'affichage : masqués dans le catalogue.** La modale DSFR fonctionne dans l'application Angular (ouverture,
+choix enregistré, `data-fr-theme="dark"` posé par le JS DSFR, vérifié). Mais avec la feuille `scheme` DSFR, seul ce qui
+utilise les jetons DSFR passe en sombre : les gabarits amont gardent leurs couleurs Tailwind claires (194 classes,
+`tailwind.base.css`), d'où des titres et textes sombres sur fond sombre (fiche illisible, capture de test). Sans la
+feuille `scheme`, le choix n'a aucun effet. Le bouton « Paramètres d'affichage » est donc masqué dans le catalogue
+(`sols-overrides.css`, règle `:has()`), la modale reste dans le balisage (identique à l'edito), et un choix « sombre »
+fait sur l'edito n'a pas d'effet ici. Question C-6.
+
+Captures : `doc/screenshots/C8/`.
+

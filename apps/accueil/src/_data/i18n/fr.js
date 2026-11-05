@@ -1,52 +1,70 @@
-/** French strings (default language). Prose marked "(texte provisoire)" is placeholder. */
+/**
+ * French strings (default language). Prose marked "(texte provisoire)" is placeholder.
+ * Header and footer labels come from @sols/brand, the content shared by the three bricks.
+ */
+import brand from '@sols/brand';
+import site from '../site.js';
+
 const description =
   'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).';
 
+/** { href: label } (and description for services) of a brand tools menu. */
+const menuItems = (items) =>
+  Object.fromEntries(items.map(({ href, label, description: desc }) => [href, { label, desc }]));
+
 export default {
   name: 'Observatoire des sols',
-  tagline: 'Observatoire des sols de France',
+  tagline: brand.service.tagline,
   description,
   newWindow: 'nouvelle fenêtre',
   skiplinks: {
     label: 'Accès rapide',
     contenu: 'Contenu',
-    menu: 'Menu',
     piedDePage: 'Pied de page',
   },
+  mainSections: {
+    accueil: 'Accueil',
+    rechercherUneDonnee: 'Rechercher une donnée',
+    explorerLesCartes: 'Explorer les cartes',
+    aide: 'Aide',
+  },
   header: {
-    homeTitle: 'Accueil',
+    homeLinkTitle: brand.service.homeLinkTitle,
+    operatorLogoAlt: brand.header.operator.logoAlt,
     menu: 'Menu',
     close: 'Fermer',
-    navLabel: 'Menu principal',
     translateTitle: 'Sélectionner une langue',
-    nav: {
-      accueil: 'Accueil',
-      rechercherUneDonnee: 'Rechercher une donnée',
-      explorerLesCartes: 'Explorer les cartes',
+    tools: {
+      help: {
+        label: brand.header.tools.help.label,
+        items: menuItems(brand.header.tools.help.items),
+      },
+      services: {
+        label: brand.header.tools.services.label,
+        items: menuItems(brand.header.tools.services.items),
+      },
     },
-    tools: { gissol: 'Site du GIS Sol' },
   },
   footer: {
-    description,
-    homeTitle: 'Retour à l’accueil du site',
-    contentLinks: {
-      cartesGouv: 'cartes.gouv.fr',
-      gissol: 'gissol.fr',
-      infoGouv: 'info.gouv.fr',
-      servicePublic: 'service-public.gouv.fr',
-      legifrance: 'legifrance.gouv.fr',
-      dataGouv: 'data.gouv.fr',
-    },
-    bottomLinks: {
-      accessibilite: 'Accessibilité : non conforme',
-      mentionsLegales: 'Mentions légales',
-      donneesPersonnelles: 'Données personnelles',
-      planDuSite: 'Plan du site',
-    },
-    licence: {
-      text: 'Sauf mention contraire, tous les contenus de ce site sont sous',
-      label: 'licence etalab-2.0',
-    },
+    description: brand.footer.description,
+    homeLinkTitle: brand.service.homeLinkTitle,
+    partnersTitle: 'Nos partenaires',
+    bottomLinks: Object.fromEntries(
+      brand.footer.bottomLinks.map(({ href, label }, index) => [
+        site.footer.bottomLinks[index].key,
+        label,
+      ]),
+    ),
+    licence: { text: brand.footer.licence.text, label: brand.footer.licence.label },
+  },
+  display: {
+    button: brand.footer.displaySettings.label,
+    title: brand.footer.displaySettings.label,
+    legend: 'Choisissez un thème pour personnaliser l’apparence du site.',
+    light: 'Thème clair',
+    dark: 'Thème sombre',
+    system: 'Système',
+    systemHint: 'Utilise les paramètres système',
   },
   breadcrumb: {
     label: 'vous êtes ici :',
@@ -69,6 +87,30 @@ export default {
     body: 'Page technique non indexée : balisage commun repris par les briques catalogue et carto.',
   },
   pages: {
+    aide: {
+      title: 'Aide',
+      description: 'Centre d’aide de l’Observatoire des sols de France (texte provisoire).',
+      intro:
+        'Retrouvez ici les réponses aux questions les plus fréquentes sur l’Observatoire des sols de France (texte provisoire).',
+      faqTitle: 'Questions fréquentes',
+      faq: [
+        {
+          question: 'Qu’est-ce que l’Observatoire des sols de France ?',
+          answer: 'Réponse à venir (texte provisoire).',
+        },
+        {
+          question: 'Comment rechercher une donnée sur les sols ?',
+          answer: 'Réponse à venir (texte provisoire).',
+        },
+        {
+          question: 'Comment afficher une donnée sur la carte ?',
+          answer: 'Réponse à venir (texte provisoire).',
+        },
+      ],
+      contactTitle: 'Nous contacter',
+      contactText: 'Pour toute question sur le service, écrivez-nous à l’adresse',
+      contactNote: '(adresse provisoire)',
+    },
     accueil: { title: 'Observatoire des sols', description },
     accessibilite: {
       title: 'Accessibilité',

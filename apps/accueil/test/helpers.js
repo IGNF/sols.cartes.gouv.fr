@@ -39,3 +39,12 @@ export const articleSlugs = (locale) =>
   readdirSync(join(APP_DIR, 'src', locale, 'articles'))
     .filter((file) => file.endsWith('.md'))
     .map((file) => file.replace(/\.md$/, ''));
+
+/** Text as Nunjucks autoescape renders it in HTML. */
+export const html = (text) =>
+  String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');

@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import accueil from '../src/_data/accueil.js';
 import i18n from './i18n.js';
+import brand from '@sols/brand';
 import site from '../src/_data/site.js';
 import {
   APP_DIR,
@@ -13,10 +14,12 @@ import {
   articleSlugs,
   build,
   escape,
+  html,
   read,
 } from './helpers.js';
 
 const EDITO_DOC = join(APP_DIR, '..', '..', 'doc', 'agents', 'edito.md');
+const headerOf = (html) => html.slice(html.indexOf('<header'), html.indexOf('</header>'));
 
 beforeAll(build);
 
@@ -42,12 +45,50 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     expect(home()).toContain(`<p class="fr-header__service-tagline">${t.tagline}</p>`);
   });
 
-  test('navigation : Accueil localisé et courant, briques catalogue et carto sans langue', () => {
-    expect(home()).toContain(
-      `class="fr-nav__link" href="/${locale}/" target="_self" aria-current="page">${t.header.nav.accueil}<`,
+  test('en-tête v1 : pas de barre de navigation, marque et logos vers l’accueil', () => {
+    const header = headerOf(home());
+    expect(header).not.toContain('fr-nav__list');
+    expect(header).not.toContain('navigation-principale');
+    expect(header).not.toMatch(/Se connecter|Log in/);
+    expect(header).toContain(`<a class="sols-operator" href="/${locale}/"`);
+    expect(header).toContain(
+      `src="${site.header.operator.logo}" alt="${html(t.header.operatorLogoAlt)}"`,
     );
-    for (const path of site.crossBrick) {
-      expect(home()).toMatch(new RegExp(`class="fr-nav__link" href="${escape(path)}"`));
+    expect(header).toContain(`src="${site.header.operator.mark}" alt=""`);
+    expect(header).not.toContain('class="fr-badge');
+  });
+
+  test('menus Aide et Services avec leurs entrées', () => {
+    const header = headerOf(home());
+    for (const tool of site.header.tools) {
+      expect(header).toContain(
+        `class="fr-btn ${tool.icon} fr-btn--icon-left sols-tool-menu__btn" aria-expanded="false" aria-controls="${tool.id}">${t.header.tools[tool.key].label}</button>`,
+      );
+      expect(header).toContain(
+        `<div class="fr-collapse fr-menu sols-tool-menu__menu" id="${tool.id}">`,
+      );
+      for (const href of tool.items) {
+        expect(t.header.tools[tool.key].items[href]).toBeDefined();
+        expect(header).toContain(`>${html(t.header.tools[tool.key].items[href].label)}`);
+      }
+    }
+    expect(header).toContain(`href="/${locale}${site.sections.aide}"`);
+    expect(header).toContain(`href="/${locale}${site.sections.aide}#contact"`);
+    for (const path of site.crossBrick) expect(header).toContain(`href="${path}"`);
+  });
+
+  test('pied de page v1 : partenaires, paramètres d’affichage', () => {
+    const html = home();
+    expect(html).toContain('class="fr-footer__partners"');
+    for (const partner of site.footer.partners) {
+      expect(html).toContain(`href="${partner.href}"`);
+      expect(html).toContain(`src="${partner.logo}" alt="${partner.name}"`);
+      expect(existsSync(join(DIST, partner.logo))).toBe(true);
+    }
+    expect(html).toContain('aria-controls="fr-theme-modal" data-fr-opened="false">');
+    expect(html).toContain('<dialog id="fr-theme-modal" class="fr-modal"');
+    for (const theme of site.display.themes) {
+      expect(html).toContain(`id="fr-radios-theme-${theme.value}" name="fr-radios-theme"`);
     }
   });
 
@@ -91,10 +132,25 @@ describe.each(LOCALES)('pages du pied de page /%s/', (locale) => {
 
   test('le plan du site lie les pages du pied de page, la navigation et les articles', () => {
     const html = read(`/${locale}${site.sections.planDuSite}`);
-    for (const path of [...FOOTER_PATHS, site.sections.articles, site.sections.accueil]) {
+    for (const path of [
+      ...FOOTER_PATHS,
+      site.sections.articles,
+      site.sections.accueil,
+      site.sections.aide,
+    ]) {
       expect(html).toContain(`<li><a href="/${locale}${path}"`);
     }
     for (const path of site.crossBrick) expect(html).toContain(`<li><a href="${path}"`);
+  });
+});
+
+describe.each(LOCALES)('aide /%s/', (locale) => {
+  test('centre d’aide : trois accordéons et section #contact avec mailto', () => {
+    const html = read(`/${locale}${site.sections.aide}`);
+    expectPageBasics(html, locale);
+    expect(html.match(/class="fr-accordion"/g)).toHaveLength(i18n[locale].pages.aide.faq.length);
+    expect(html).toContain(`<h2 id="contact"`);
+    expect(html).toContain(`href="mailto:${site.contactEmail}"`);
   });
 });
 
@@ -123,7 +179,12 @@ describe.each(LOCALES)('articles /%s/', (locale) => {
 });
 
 describe('pages de renvoi sans langue', () => {
-  const paths = [site.sections.accueil, ...FOOTER_PATHS, site.sections.articles];
+  const paths = [
+    site.sections.accueil,
+    ...FOOTER_PATHS,
+    site.sections.articles,
+    site.sections.aide,
+  ];
 
   test.each(paths)('%s renvoie vers la version française, sans JS', (path) => {
     const html = read(path);
@@ -136,6 +197,30 @@ describe('pages de renvoi sans langue', () => {
       expect(html).toContain(
         `<a href="/${code}${path}" hreflang="${code}" lang="${code}">${i18n[code].reroute.link}</a>`,
       );
+    }
+  });
+});
+
+describe('@sols/brand', () => {
+  test('les liens bas du pied de page sont ceux de brand.json', () => {
+    expect(site.footer.bottomLinks.map((link) => link.href)).toEqual(
+      brand.footer.bottomLinks.map((link) => link.href),
+    );
+  });
+
+  test.each(LOCALES)('chaque entrée des menus a un libellé en %s', (locale) => {
+    for (const tool of site.header.tools) {
+      expect(Object.keys(i18n[locale].header.tools[tool.key].items).sort()).toEqual(
+        [...tool.items].sort(),
+      );
+    }
+  });
+
+  test('icônes DSFR des menus publiées dans /dsfr/icons.css', () => {
+    const css = readFileSync(join(DIST, 'dsfr', 'icons.css'), 'utf8');
+    for (const tool of site.header.tools) expect(css).toContain(`.${tool.icon}::before`);
+    for (const [, svg] of css.matchAll(/url\(([^)]+)\)/g)) {
+      expect(existsSync(join(DIST, 'dsfr', svg))).toBe(true);
     }
   });
 });
@@ -154,9 +239,13 @@ describe('page de référence partagée et doc/agents/edito.md', () => {
     const html = read(SHARED_PAGE);
     expect(html).toContain('<meta name="robots" content="noindex">');
     expect(html).not.toContain('fr-translate');
-    expect(html).toContain(`class="fr-nav__link" href="${site.sections.accueil}" target="_self">`);
+    expect(html).toContain(`<a class="sols-operator" href="${site.header.brandLink}"`);
+    expect(html).toContain(`href="${site.sections.aide}"`);
+    // A rerouting page cannot keep an anchor: anchored links point to the default language.
+    expect(html).toContain(`href="/${site.defaultLanguage}${site.sections.aide}#contact"`);
     for (const path of FOOTER_PATHS)
       expect(html).toContain(`class="fr-footer__bottom-link" href="${path}"`);
+    expect(html).toContain('<dialog id="fr-theme-modal"');
   });
 
   test('chaque bloc HTML de la doc est identique octet pour octet à la page de référence', () => {
