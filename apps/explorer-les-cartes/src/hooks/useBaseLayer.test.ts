@@ -1,7 +1,9 @@
 import { renderHook } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
+import BaseEvent from 'ol/events/Event';
 import { describe, expect, it, vi } from 'vitest';
+import { TILE_RETRY_DELAY_MS } from '../config/map';
 import { parseWmtsCapabilities } from '../map/wmtsCapabilities';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import useBaseLayer from './useBaseLayer';
@@ -50,5 +52,28 @@ describe('useBaseLayer', () => {
     const { map, insertAt } = createFakeMap();
     renderHook(() => useBaseLayer(map, capabilities, 'COUCHE.INEXISTANTE'));
     expect(insertAt).not.toHaveBeenCalled();
+  });
+
+  it('réessaie une tuile en erreur tant que le fond est affiché, plus après son retrait', () => {
+    vi.useFakeTimers();
+    const { map, insertAt } = createFakeMap();
+    const { unmount } = renderHook(() => useBaseLayer(map, capabilities, PLAN_IGN));
+    const layer = insertAt.mock.calls[0]?.[1] as unknown as {
+      getSource: () => { dispatchEvent: (event: BaseEvent) => void };
+    };
+    const source = layer.getSource();
+    const fail = (key: string) => {
+      const tile = { load: vi.fn(), getKey: () => key };
+      source.dispatchEvent(Object.assign(new BaseEvent('tileloaderror'), { tile }));
+      return tile;
+    };
+    const first = fail('tuile-1');
+    vi.advanceTimersByTime(TILE_RETRY_DELAY_MS);
+    expect(first.load).toHaveBeenCalledTimes(1);
+    unmount();
+    const second = fail('tuile-2');
+    vi.advanceTimersByTime(TILE_RETRY_DELAY_MS);
+    expect(second.load).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });

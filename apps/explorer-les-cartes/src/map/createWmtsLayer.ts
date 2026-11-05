@@ -1,7 +1,6 @@
 import TileLayer from 'ol/layer/Tile';
 import WMTS, { optionsFromCapabilities } from 'ol/source/WMTS';
-import { GPF_ATTRIBUTION, TILE_RETRY_DELAY_MS } from '../config/map';
-import attachTileRetry from './tileRetry';
+import { GPF_ATTRIBUTION } from '../config/map';
 import { findWmtsLayer, type WmtsCapabilities } from './wmtsCapabilities';
 
 /**
@@ -18,7 +17,6 @@ export default function createWmtsLayer(
   const options = optionsFromCapabilities(capabilities, { layer: layerName });
   if (!options) return null;
   const source = new WMTS({ ...options, crossOrigin: 'anonymous', attributions: GPF_ATTRIBUTION });
-  attachTileRetry(source, TILE_RETRY_DELAY_MS);
   return new TileLayer({
     source,
     properties: {
