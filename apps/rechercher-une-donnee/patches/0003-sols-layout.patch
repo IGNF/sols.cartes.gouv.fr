@@ -1,0 +1,531 @@
+diff --git a/apps/datahub/project.json b/apps/datahub/project.json
+index c4dd0ba..d917717 100644
+--- a/apps/datahub/project.json
++++ b/apps/datahub/project.json
+@@ -38,6 +38,11 @@
+             "input": "node_modules/@gouvfr/dsfr/dist",
+             "output": "assets/dsfr/"
+           },
++          {
++            "glob": "favicon.*",
++            "input": "node_modules/@gouvfr/dsfr/dist/favicon",
++            "output": "assets/dsfr/favicon/"
++          },
+           {
+             "glob": "analytics.module.min.js",
+             "input": "node_modules/@gouvfr/dsfr/dist/analytics",
+@@ -58,6 +63,7 @@
+           "./node_modules/@gouvfr/dsfr/dist/component/search/search.min.css",
+           "./node_modules/@gouvfr/dsfr/dist/component/header/header.min.css",
+           "./node_modules/@gouvfr/dsfr/dist/component/footer/footer.min.css",
++          "./node_modules/@gouvfr/dsfr/dist/component/skiplink/skiplink.min.css",
+           "tailwind.base.css",
+           "apps/datahub/src/styles.css",
+           "node_modules/tippy.js/dist/tippy.css",
+diff --git a/apps/datahub/src/app/app.component.html b/apps/datahub/src/app/app.component.html
+index f792cc8..c00f5b7 100644
+--- a/apps/datahub/src/app/app.component.html
++++ b/apps/datahub/src/app/app.component.html
+@@ -1,321 +1,11 @@
++<sols-skiplinks></sols-skiplinks>
+ <div
+   gnUiSearchRouterContainer="mainSearch"
+   class="selection:bg-primary-lightest selection:text-primary-darker"
+ >
+-  <dsfr-header
+-    [beta]="'true'"
+-    [serviceTitle]="'cartes.gouv.fr'"
+-    [logoLink]="'https://cartes.gouv.fr'"
+-    [operatorImagePath]="
+-      'https://data.geopf.fr/annexes/ressources/header/cartes-gouv-logo.svg'
+-    "
+-    [serviceTagline]="'Notre territoire commun'"
+-    [menu]="[]"
+-  >
+-    <ng-template #toolsLinksTemplate>
+-      <li>
+-        <dsfr-tool-link-menu
+-          [outline]="false"
+-          [labelMenu]="'Aide'"
+-          [iconMenu]="'fr-icon-question-fill'"
+-        >
+-          <ng-template #linksTemplate>
+-            <ul>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/aide/fr/'"
+-                [linkTarget]="'_blank'"
+-                [label]="'Questions fréquentes'"
+-                [icon]="'fr-icon-question-mark'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <dsfr-link
+-                [link]="
+-                  'https://cartes.gouv.fr/aide/fr/guides-utilisateur/rechercher-une-donnee/'
+-                "
+-                [linkTarget]="'_blank'"
+-                [label]="'Guide d\'utilisation'"
+-                [icon]="'fr-icon-book-2-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/aide/fr/niveau-de-service/'"
+-                [linkTarget]="'_blank'"
+-                [label]="'Niveau de service'"
+-                [icon]="'fr-icon-rfid-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/nous-ecrire'"
+-                [linkTarget]="'_blank'"
+-                [label]="'Nous contacter'"
+-                [icon]="'fr-icon-mail-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-            </ul>
+-          </ng-template>
+-        </dsfr-tool-link-menu>
+-      </li>
+-      <li>
+-        <dsfr-tool-link-menu
+-          [outline]="false"
+-          [labelMenu]="'Services'"
+-          [iconMenu]="'fr-icon-grid-fill'"
+-        >
+-          <ng-template #linksTemplate>
+-            <ul>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/explorer-les-cartes/'"
+-                [label]="'Explorer les cartes'"
+-                [icon]="'fr-icon-road-map-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/rechercher-une-donnee/search'"
+-                [label]="'Rechercher une donnée'"
+-                [icon]="'fr-icon-search-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <dsfr-link
+-                [link]="'https://cartes.gouv.fr/publier-une-donnee'"
+-                [label]="'Publier une donnée'"
+-                [icon]="'fr-icon-database-line'"
+-                [customClass]="'fr-nav__link'"
+-                [iconPosition]="'left'"
+-              ></dsfr-link>
+-              <!--<li><a class="fr-nav__link" href="https://cartes.gouv.fr/editeur/cartes"> <span
+-                    class="fr-icon-brush-line fr-link--icon-left" aria-hidden="true"></span>
+-                  Créer une carte &nbsp; <span
+-                    class="fr-badge fr-badge--success fr-badge--no-icon fr-badge--sm">Bêta</span></a></li>-->
+-              <li style="display: flex">
+-                <a
+-                  style="margin: 16px 24px"
+-                  class="fr-btn bouton-cartes-gouv"
+-                  target="_self"
+-                  href="https://cartes.gouv.fr/decouvrir"
+-                  >Découvrir cartes.gouv.fr</a
+-                >
+-              </li>
+-            </ul>
+-          </ng-template>
+-        </dsfr-tool-link-menu>
+-      </li>
+-      <li>
+-        <div id="header-auth">
+-          <button
+-            class="login-btn fr-btn--sm fr-btn--icon-left fr-btn fr-btn--tertiary-no-outline fr-icon-account-circle-fill"
+-            type="button"
+-            title="Se connecter"
+-          >
+-            Se connecter
+-          </button>
+-        </div>
+-      </li>
+-    </ng-template>
+-  </dsfr-header>
+-  <router-outlet></router-outlet>
+-  <div class="fr-follow">
+-    <div class="fr-container">
+-      <div class="fr-grid-row">
+-        <div class="fr-col-12 fr-col-md-6">
+-          <div class="fr-follow__newsletter">
+-            <div>
+-              <h2 class="fr-h5">Inscrivez-vous à notre lettre d’information</h2>
+-              <p class="fr-text--sm">
+-                Retrouvez toutes les actualités directement par courriel chaque
+-                trimestre.
+-              </p>
+-            </div>
+-            <div>
+-              <a
+-                href="https://cartes.gouv.fr/lettre-d-information"
+-                class="fr-btn"
+-                id="newsletter-registration"
+-                data-fr-js-button-actionee="true"
+-                >S’inscrire</a
+-              >
+-            </div>
+-          </div>
+-        </div>
+-        <div class="fr-col-12 fr-col-md-6">
+-          <div class="fr-follow__newsletter">
+-            <h2 class="fr-h5">Communauté</h2>
+-            <p class="fr-text--sm">
+-              Rejoignez la communauté Géoplateforme - cartes.gouv.fr pour suivre
+-              les actualités et échanger avec les membres.
+-            </p>
+-            <a
+-              href="https://www.expertises-territoires.fr/jcms/pl1_557493/fr/communaute-geoplateforme-et-cartes-gouv"
+-              title="www.expertises-territoires.fr - ouvre une nouvelle fenêtre"
+-              rel="noopener external"
+-              target="_blank"
+-              class="fr-link"
+-              data-fr-js-link-actionee="true"
+-              >Rejoindre la communauté</a
+-            >
+-          </div>
+-        </div>
+-      </div>
+-    </div>
+-  </div>
+-  <dsfr-footer
+-    [presentation]="
+-      'Cartes.gouv.fr est le service public des cartes et données du territoire français. Porté par l’IGN et ses partenaires, il offre à tous un accès à la référence de la cartographie publique et permet à chacun de créer, d’héberger et de publier ses propres données et représentations.'
+-    "
+-    [institutionalLinks]="[
+-      {
+-        label: 'info.gouv.fr',
+-        link: 'https://info.gouv.fr',
+-        tooltipMessage: 'info.gouv.fr - ouvre une nouvelle fenêtre',
+-        target: '_blank',
+-      },
+-      {
+-        label: 'service-public.gouv.fr',
+-        link: 'https://service-public.gouv.fr',
+-        tooltipMessage: 'service-public.gouv.fr- ouvre une nouvelle fenêtre',
+-        target: '_blank',
+-      },
+-      {
+-        label: 'legifrance.gouv.fr',
+-        link: 'https://legifrance.gouv.fr',
+-        tooltipMessage: 'legifrance.gouv.fr - ouvre une nouvelle fenêtre',
+-        target: '_blank',
+-      },
+-      {
+-        label: 'data.gouv.fr',
+-        link: 'https://data.gouv.fr',
+-        tooltipMessage: 'data.gouv.fr - ouvre une nouvelle fenêtre',
+-        target: '_blank',
+-      },
+-    ]"
+-    [mandatoryLinks]="[
+-      { label: 'Plan du site', link: 'https://cartes.gouv.fr/plan-du-site' },
+-      {
+-        label: 'Accessibilité: partiellement conforme',
+-        link: 'https://cartes.gouv.fr/accessibilite',
+-      },
+-      {
+-        label: 'Mentions légales',
+-        link: 'https://cartes.gouv.fr/mentions-legales',
+-      },
+-      {
+-        label: 'Conditions générales d’utilisation',
+-        link: 'https://cartes.gouv.fr/cgu',
+-      },
+-      {
+-        label: 'Données personnelles',
+-        link: 'https://cartes.gouv.fr/donnees-personnelles',
+-      },
+-    ]"
+-    [partnerMain]="{
+-      imagePath: 'https://data.geopf.fr/annexes/ressources/footer/ign.png',
+-      imageAlt: 'IGN',
+-      link: 'https://www.ign.fr',
+-    }"
+-    [partnersSub]="[
+-      {
+-        imagePath: 'https://data.geopf.fr/annexes/ressources/footer/min_fp.jpg',
+-        imageAlt: 'MINISTÈRE DE LA TRANSFORMATION ET DE LA FONCTION PUBLIQUES',
+-        link: 'https://www.transformation.gouv.fr/',
+-      },
+-      {
+-        imagePath:
+-          'https://data.geopf.fr/annexes/ressources/footer/min%5Fecologie.jpg',
+-        imageAlt:
+-          'MINISTÈRE DE LA TRANSITION ÉCOLOGIQUE ET DE LA COHÉSION DES TERRITOIRES',
+-        link: 'https://www.ecologie.gouv.fr/',
+-      },
+-      {
+-        imagePath:
+-          'https://data.geopf.fr/annexes/ressources/footer/rf%5Fcnig.jpg',
+-        imageAlt: 'Conseil National de l’Information Géolocalisée',
+-        link: 'https://cnig.gouv.fr/',
+-      },
+-    ]"
+-    [reboundLinks]="[]"
+-    [license]="
+-      'Sauf mention explicite de propriété intellectuelle détenue par
+-    des tiers, les contenus de ce site sont proposés sous &#60;a href=&#34;https://github.com/etalab/licence-ouverte/blob/master/LO.md&#34; target=&#34;_blank&#34; title=&#34;licence etalab-2.0 - ouvre une nouvelle fenêtre&#34;&#62;licence etalab-2.0&#60;/a&#62;'
+-    "
+-  ></dsfr-footer>
+-  <dsfr-modal dialogId="welcomeModal" icon="" #welcomeModal modalSize="lg">
+-    <div class="fr-container--fluid">
+-      <div class="fr-grid-row logo-row">
+-        <p class="fr-logo" style="font-size: 0.8rem; padding-right: 10px">
+-          République<br />Française
+-        </p>
+-        <img
+-          src="https://data.geopf.fr/annexes/ressources/header/cartes-gouv-logo.svg"
+-          alt=""
+-        />
+-      </div>
+-      <div class="fr-grid-row content" style="padding-top: 20px">
+-        <h2 class="fr-modal__title">Bienvenue sur cartes.gouv.fr</h2>
+-        <p style="margin: 0 0 1.5rem">
+-          Géoservices converge vers cartes.gouv.fr. Retrouvez ici une vaste
+-          collection de données et services :
+-        </p>
+-        <br />
+-        <div style="margin-bottom: 1rem">
+-          <span class="icon-welcome span-welcome purple-glycine"
+-            ><i class="fr-icon-filter-line"></i></span
+-          >Recherchez une fiche de données, triez, filtrez par thème ou
+-          producteur
+-        </div>
+-        <div style="margin-bottom: 1rem">
+-          <span class="icon-welcome span-welcome yellow-tournesol"
+-            ><i class="fr-icon-search-line"></i></span
+-          >Consultez leur contenu, accédez aux documents joints
+-        </div>
+-        <div style="margin-bottom: 1rem">
+-          <span class="icon-welcome span-welcome green-archipel"
+-            ><i class="fr-icon-download-line"></i></span
+-          >Téléchargez les données et retrouvez les flux associés à utiliser
+-          dans votre logiciel ou en API
+-        </div>
+-        <div style="margin-bottom: 1rem">
+-          <span class="icon-welcome span-welcome orange-abricot"
+-            ><i class="fr-icon-question-line"></i></span
+-          >Consultez l'aide via l'en-tête du site pour retrouver vos usages et
+-          vous guider dans l'utilisation du site
+-        </div>
+-      </div>
+-    </div>
+-    <div id="welcomeModalCheckboxContainer">
+-      <input
+-        type="checkbox"
+-        id="welcomeModalCheckbox"
+-        class="fr-checkbox"
+-        (change)="onWelcomeModalCheckboxChange($event)"
+-      />
+-      <label class="fr-label" for="welcomeModalCheckbox">
+-        Ne plus afficher ce message</label
+-      >
+-    </div>
+-    <ng-template #modalFooterTemplate>
+-      <dsfr-buttons-group
+-        inline="LG"
+-        alignment="reverse"
+-        iconPosition="left"
+-        groupMarkup="div"
+-      >
+-        <dsfr-button
+-          label="Continuer ma recherche >"
+-          (click)="welcomeModal.close()"
+-        ></dsfr-button>
+-        <a
+-          href="https://cartes.gouv.fr/decouvrir/rechercher-une-donnee/"
+-          class="fr-btn fr-btn--secondary"
+-          target="_blank"
+-          rel="noopener noreferrer"
+-          >En savoir plus</a
+-        >
+-      </dsfr-buttons-group>
+-    </ng-template>
+-  </dsfr-modal>
++  <sols-header></sols-header>
++  <main id="contenu" tabindex="-1">
++    <router-outlet></router-outlet>
++  </main>
++  <sols-footer></sols-footer>
+ </div>
+diff --git a/apps/datahub/src/app/app.component.ts b/apps/datahub/src/app/app.component.ts
+index d9e31d8..e348c23 100644
+--- a/apps/datahub/src/app/app.component.ts
++++ b/apps/datahub/src/app/app.component.ts
+@@ -35,6 +35,9 @@ import {
+   DsfrButtonsGroupComponent,
+ } from '@edugouvfr/ngx-dsfr'
+ import { DsfrAnalyticsService } from './services/dsfr-analytics.service'
++import { SolsFooterComponent } from './sols-layout/sols-footer.component'
++import { SolsHeaderComponent } from './sols-layout/sols-header.component'
++import { SolsSkiplinksComponent } from './sols-layout/sols-skiplinks.component'
+ 
+ @Component({
+   selector: 'datahub-root',
+@@ -52,6 +55,9 @@ import { DsfrAnalyticsService } from './services/dsfr-analytics.service'
+     DsfrModalComponent,
+     DsfrButtonComponent,
+     DsfrButtonsGroupComponent,
++    SolsFooterComponent,
++    SolsHeaderComponent,
++    SolsSkiplinksComponent,
+   ],
+ })
+ export class AppComponent implements OnInit, AfterViewInit {
+@@ -102,22 +108,9 @@ export class AppComponent implements OnInit, AfterViewInit {
+ 
+     const favicon = getThemeConfig().FAVICON
+     if (favicon) ThemeService.setFavicon(favicon)
+-    this.dsfrAnalytics.init()
+   }
+ 
+   ngAfterViewInit(): void {
+-    const title = document
+-      .getElementsByClassName('fr-badge--green-emeraude')
+-      .item(0)
+-    const spanBadge = document.createElement('span')
+-    spanBadge.classList.add('fr-icon-search-fill')
+-    spanBadge.style.scale = '0.5'
+-    this.renderer.setProperty(title, 'innerText', 'RECHERCHER')
+-    this.renderer.removeClass(title, 'fr-badge--green-emeraude')
+-    this.renderer.insertBefore(title, spanBadge, title.firstChild)
+-    this.renderer.addClass(title, 'fr-badge--blue-cumulus')
+-    this.keycloakCheckAuth()
+-    this.welcomeModalGeoservices()
+     ;(window as any).dsfr?.start?.()
+ 
+     // Workaround: when DSFR runs in `mode: 'angular'` (set in index.html), it
+diff --git a/apps/datahub/src/app/home/home-header/home-header.component.html b/apps/datahub/src/app/home/home-header/home-header.component.html
+index 91f4cc6..f9d789c 100644
+--- a/apps/datahub/src/app/home/home-header/home-header.component.html
++++ b/apps/datahub/src/app/home/home-header/home-header.component.html
+@@ -26,14 +26,6 @@
+         [style.opacity]="expandRatio"
+         [innerHTML]="'datahub.header.title.html' | translate"
+       ></div>
+-      <a
+-        href="https://cartes.gouv.fr/aide/fr/partenaires/"
+-        target="_blank"
+-        rel="noopener noreferrer"
+-        style="display: inline-block; transform: translateY(-18px)"
+-      >
+-        Découvrez les producteurs partenaires et leur offre
+-      </a>
+ 
+       <gn-ui-fuzzy-search
+         class="text-[18px] pointer-events-auto"
+diff --git a/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts b/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
+index 19bbab1..bc92d70 100644
+--- a/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
++++ b/apps/datahub/src/app/record/record-metadata/record-metadata.component.ts
+@@ -204,9 +204,8 @@ export class RecordMetadataComponent {
+   displayOtherLinks$ = this.metadataViewFacade.otherLinks$.pipe(
+     map((links) => links?.length > 0)
+   )
+-  displayRelated$ = this.metadataViewFacade.related$.pipe(
+-    map((records) => records?.length > 0)
+-  )
++  // Sols scope: similar records come from an unscoped query, never shown
++  displayRelated$ = this.metadataViewFacade.related$.pipe(map(() => false))
+ 
+   displayLinked$ = this.metadataViewFacade.linkedRecords$.pipe(
+     map((linkedRecords) => linkedRecords?.length > 0)
+diff --git a/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts b/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts
+index 407e084..4954ad5 100644
+--- a/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts
++++ b/apps/datahub/src/app/router/datahub-page-title-strategy.service.ts
+@@ -39,7 +39,7 @@ export class DatahubTemplatePageTitleStrategy extends TitleStrategy {
+       }).subscribe(
+         ({ titlePattern, translatedPageTitle, translatedEntityTitle }) => {
+           const formattedTitle = (
+-            titlePattern || '{pageTitle} | cartes.gouv.fr'
++            titlePattern || '{pageTitle} - Observatoire des sols'
+           ).replace('{pageTitle}', translatedEntityTitle || translatedPageTitle)
+           this.title.setTitle(formattedTitle)
+ 
+diff --git a/apps/datahub/src/app/router/datahub-router.service.ts b/apps/datahub/src/app/router/datahub-router.service.ts
+index 086b850..4c08739 100644
+--- a/apps/datahub/src/app/router/datahub-router.service.ts
++++ b/apps/datahub/src/app/router/datahub-router.service.ts
+@@ -75,13 +75,10 @@ export class DatahubRouterService {
+             },
+             title: 'datahub.pageTitle.recordSearch',
+           },
++          // Sols scope: the organisations list comes from unscoped aggregations
+           {
+             path: ROUTER_ROUTE_ORGANIZATIONS,
+-            component: OrganisationsPageComponent,
+-            data: {
+-              shouldDetach: true,
+-            },
+-            title: 'datahub.pageTitle.organizations',
++            redirectTo: ROUTER_ROUTE_SEARCH,
+           },
+         ],
+       },
+diff --git a/apps/datahub/src/index.html b/apps/datahub/src/index.html
+index d5adeee..7bf0627 100644
+--- a/apps/datahub/src/index.html
++++ b/apps/datahub/src/index.html
+@@ -1,8 +1,12 @@
+ <!doctype html>
+-<html lang="en" class="overflow-y-scroll">
++<html lang="fr" class="overflow-y-scroll">
+   <head>
+     <meta charset="utf-8" />
+-    <title>Catalogue | cartes.gouv.fr</title>
++    <title>Rechercher une donnée - Observatoire des sols</title>
++    <meta
++      name="description"
++      content="Catalogue des données sols du GIS Sol (INRAE) servies par la Géoplateforme."
++    />
+     <base href="/" />
+     <meta name="viewport" content="width=device-width, initial-scale=1" />
+     <link
+@@ -15,36 +19,12 @@
+       window.dsfr = window.dsfr || {
+         mode: 'angular',
+       }
+-      window.dsfr.analytics = {
+-        domain: 'acwg.cartes.gouv.fr',
+-        collection: 'manual',
+-        page: {
+-          template: 'search',
+-        },
+-        site: {
+-          entity: 'IGN',
+-        },
+-      }
++      // French UI: the i18n initializer reads this key before the browser language
++      try {
++        localStorage.setItem('geonetwork-ui-language', 'fr')
++      } catch (e) {}
+     </script>
+     <script type="module" src="assets/dsfr/dsfr.module.min.js"></script>
+-    <script type="module" src="assets/dsfr/analytics.module.min.js"></script>
+-    <!-- Matomo -->
+-    <script type="text/javascript">
+-      var _paq = (window._paq = window._paq || [])
+-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+-      _paq.push(['enableLinkTracking'])
+-      ;(function () {
+-        var u = 'https://matomo.ign.fr/'
+-        _paq.push(['setTrackerUrl', u + 'matomo.php'])
+-        _paq.push(['setSiteId', '11'])
+-        var d = document,
+-          g = d.createElement('script'),
+-          s = d.getElementsByTagName('script')[0]
+-        g.async = true
+-        g.src = u + 'matomo.js'
+-        s.parentNode.insertBefore(g, s)
+-      })()
+-    </script>
+     <!--
+       Add more preload links here to reduce the time to initial page render!
+       Example:
