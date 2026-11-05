@@ -14,7 +14,13 @@ test.describe('Captures', () => {
       }
       // JPEG qualité 70 : garde chaque capture sous 300 kB sans étape manuelle.
       const file = `${OUT_DIR}/${nom}-${testInfo.project.name}.jpg`;
-      await page.screenshot({ path: file, type: 'jpeg', quality: 70, scale: 'css', fullPage: nom === 'home' });
+      await page.screenshot({
+        path: file,
+        type: 'jpeg',
+        quality: 70,
+        scale: 'css',
+        fullPage: nom === 'home',
+      });
       expect(statSync(file).size, `${file} dépasse 300 kB`).toBeLessThan(MAX_SCREENSHOT_BYTES);
     });
   }

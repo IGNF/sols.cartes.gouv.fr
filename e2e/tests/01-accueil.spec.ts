@@ -21,9 +21,15 @@ test.describe('Accueil', () => {
     ['/rechercher-une-donnee/', 'catalogue'],
     ['/explorer-les-cartes/', 'carto'],
   ]) {
-    test(`le lien d'en-tête vers ${nom} répond 200 et affiche un h1`, async ({ page, request, isMobile }) => {
+    test(`le lien d'en-tête vers ${nom} répond 200 et affiche un h1`, async ({
+      page,
+      request,
+      isMobile,
+    }) => {
       await page.goto('/fr/');
-      const link = page.locator(`header a[href="${href}"], header a[href="${href.replace(/\/$/, '')}"]`).first();
+      const link = page
+        .locator(`header a[href="${href}"], header a[href="${href.replace(/\/$/, '')}"]`)
+        .first();
       await expect(link, `lien ${href} absent de l'en-tête`).toHaveCount(1);
       const resp = await request.get(href);
       expect(resp.status()).toBe(200);
