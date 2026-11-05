@@ -1,18 +1,13 @@
 import { Header } from '@codegouvfr/react-dsfr/Header';
-import { SITE } from '../../config/site';
+import { HEADER_HOME_TITLE, SITE } from '../../config/site';
 import { EXTERNAL_LINKS, SECTION_PATHS } from '../../config/urls';
+import BrandTop from './BrandTop';
 
 export default function SiteHeader() {
   return (
     <Header
-      brandTop={
-        <>
-          République
-          <br />
-          Française
-        </>
-      }
-      homeLinkProps={{ href: SECTION_PATHS.home, title: `Accueil - ${SITE.serviceTitle}` }}
+      brandTop={<BrandTop />}
+      homeLinkProps={{ href: SECTION_PATHS.home, title: HEADER_HOME_TITLE }}
       serviceTitle={SITE.serviceTitle}
       serviceTagline={SITE.serviceTagline}
       quickAccessItems={[

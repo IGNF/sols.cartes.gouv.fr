@@ -18,7 +18,21 @@ export const SECTION_PATHS = {
 /** External links. */
 export const EXTERNAL_LINKS = {
   gisSol: 'https://www.gissol.fr/',
+  licenceEtalab: 'https://github.com/etalab/licence-ouverte/blob/master/LO.md',
 } as const;
+
+/**
+ * Footer content links, same list and order as the edito brick (apps/accueil/src/_data/site.js).
+ * react-dsfr renders each entry as `https://<domain>` with the domain as label.
+ */
+export const FOOTER_DOMAINS = [
+  'cartes.gouv.fr',
+  'gissol.fr',
+  'legifrance.gouv.fr',
+  'info.gouv.fr',
+  'service-public.fr',
+  'data.gouv.fr',
+];
 
 /** Géoplateforme (GPF) service endpoints, see doc/agents/gpf-sols-data.md. */
 export const GPF_ENDPOINTS = {

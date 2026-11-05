@@ -1,8 +1,9 @@
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
-import { SITE } from '../../config/site';
 import { FOOTER_ID } from '../../config/landmarks';
-import { SECTION_PATHS } from '../../config/urls';
+import { FOOTER_HOME_TITLE, SITE } from '../../config/site';
+import { EXTERNAL_LINKS, FOOTER_DOMAINS, SECTION_PATHS } from '../../config/urls';
+import BrandTop from './BrandTop';
 
 export default function SiteFooter() {
   return (
@@ -17,14 +18,22 @@ export default function SiteFooter() {
         headerFooterDisplayItem,
       ]}
       contentDescription={SITE.footerDescription}
-      brandTop={
+      domains={FOOTER_DOMAINS}
+      license={
         <>
-          République
-          <br />
-          Française
+          {SITE.licenceText}{' '}
+          <a
+            href={EXTERNAL_LINKS.licenceEtalab}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${SITE.licenceLabel} - nouvelle fenêtre`}
+          >
+            {SITE.licenceLabel}
+          </a>
         </>
       }
-      homeLinkProps={{ href: SECTION_PATHS.home, title: `Accueil - ${SITE.serviceTitle}` }}
+      brandTop={<BrandTop />}
+      homeLinkProps={{ href: SECTION_PATHS.home, title: FOOTER_HOME_TITLE }}
     />
   );
 }
