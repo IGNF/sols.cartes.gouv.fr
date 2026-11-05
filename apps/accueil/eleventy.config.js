@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
 import accueil from './src/_data/accueil.js';
+import site from './src/_data/site.js';
 
 const require = createRequire(import.meta.url);
 const DSFR_DIST = join(dirname(require.resolve('@gouvfr/dsfr/package.json')), 'dist');
@@ -52,6 +53,19 @@ export default function (eleventyConfig) {
   );
   eleventyConfig.addFilter('dateIso', (date) => date.toISOString().slice(0, 10));
   eleventyConfig.addFilter('dateFr', (date) => DATE_FR.format(date));
+
+  eleventyConfig.addLinter('seo-head', function (content) {
+    if (!this.page.outputPath?.endsWith('.html')) return;
+    const missing = [];
+    if (!/<meta name="description" content="[^"\s][^"]*">/.test(content))
+      missing.push('meta description');
+    if (!content.includes(`<link rel="canonical" href="${site.url}${this.page.url}">`)) {
+      missing.push('canonical');
+    }
+    if (missing.length > 0) {
+      throw new Error(`${this.page.inputPath}: ${missing.join(', ')} manquant(e)`);
+    }
+  });
 
   return {
     dir: { input: 'src', output: 'dist', includes: '_includes', data: '_data' },
