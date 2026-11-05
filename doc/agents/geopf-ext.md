@@ -298,7 +298,10 @@ Issue commune :
   Mesure du 2026-11-05 : instructions 97,0 %, branches 87,8 %, fonctions 99,0 %, lignes 98,6 % (`src/**` et `scripts/sols-layers/**`,
   hors `main.tsx` et tests).
 - `bun run check:map` (Playwright, aperçu `PORT=8101 bun run preview:all`) : disposition et noms à 375/768/1280 px, couche sols au
-  clavier, liens `l=` et alias, clavier, vue liste (55 vérifications).
+  clavier, liens `l=` et alias, clavier, vue liste (55 vérifications). Robustesse face à la GPF : attente de `load` puis
+  d'éléments précis (jamais `networkidle`), assertions des liens profonds par attente (jusqu'à 20 s, la vérification en direct des
+  capacités peut être lente), erreurs de tuiles GPF tolérées jusqu'à 10 % des requêtes de tuiles (comme la suite e2e, M-2) et
+  signalées en note ; toute autre erreur console fait échouer.
 - axe (`@axe-core/playwright` du dossier `e2e/`, balises wcag2a/aa, wcag21a/aa, wcag22aa, best-practice) : 0 violation sur la carte,
   `?vue=liste`, les liens `l=` (WMS, WMTS introuvable, TMS, Loiret) et l'état « onglet Données sols, couche ajoutée, liste des
   couches ouverte ».
