@@ -5,7 +5,7 @@
  * Asserts at 375, 768 and 1280 px: the zoom-in button is clickable (not covered by the search engine),
  * the search engine never overlaps the zoom column, the attribution/rotate buttons and the search input
  * have accessible names, and no console error or warning is logged.
- * Sols layers (M4): a layer added from the "Données sols" tab with the keyboard is drawn (GetMap answered
+ * Sols layers (M4, M9): a layer added from the catalogue with the keyboard is drawn (GetMap answered
  * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links (`l=` cartes.gouv.fr
  * permalink, and the `layer/type/url` alias) add their layer or show the matching notice.
  * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
@@ -156,6 +156,17 @@ for (const width of [375, 768, 1280]) {
 const switcherTitles = (page: import('playwright').Page) =>
   page.locator('[id^="GPtitle_ID_"]').allInnerTexts();
 
+const CATALOGUE = 'Catalogue des données sols';
+const CARBONE_ENTRY = 'input[data-layer="stock_carbone_fao_fr_wmsv:WMS"]';
+/** Opens the catalogue (geopf Catalog control, M9) and waits for its entries. */
+async function openCatalogue(page: import('playwright').Page) {
+  await page.getByRole('button', { name: CATALOGUE, exact: true }).click();
+  await page.locator('input[data-layer]').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.waitForTimeout(300);
+}
+const closeCatalogue = (page: import('playwright').Page) =>
+  page.getByRole('button', { name: CATALOGUE, exact: true }).click();
+
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const images: string[] = [];
@@ -164,20 +175,25 @@ const switcherTitles = (page: import('playwright').Page) =>
       images.push(`${r.status()} ${r.headers()['content-type']}`);
   });
   await page.goto(url, { waitUntil: 'load' });
-  await page.getByRole('tab', { name: 'Données sols' }).click();
+  await page.getByRole('button', { name: CATALOGUE, exact: true }).waitFor({ timeout: 30_000 });
+  await openCatalogue(page);
   const title =
     'Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO';
-  const add = page.getByRole('button', { name: new RegExp(`^Ajouter à la carte\\s*: ${title}$`) });
-  await add.focus();
+  const entry = page.locator(CARBONE_ENTRY);
+  check(
+    (await entry.getAttribute('aria-label')) === `Ajouter à la carte : ${title}`,
+    'catalogue : case à cocher nommée avec le titre de la donnée',
+  );
+  await entry.focus();
   const firstGetMap = page.waitForResponse((r) => /REQUEST=GetMap/i.test(r.url()), {
     timeout: 30_000,
   });
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('Space');
   await firstGetMap;
   await page.waitForTimeout(3000);
   check(
     images.length > 0 && images.every((i) => i === '200 image/png'),
-    `couche sols ajoutée au clavier : ${images.length} GetMap, toutes « 200 image/png »`,
+    `couche sols ajoutée au clavier depuis le catalogue : ${images.length} GetMap, toutes « 200 image/png »`,
   );
   check(
     (await switcherTitles(page))[0] === title,
@@ -199,17 +215,21 @@ const listed = (pattern: RegExp) => (page: import('playwright').Page) =>
   visible(page.locator('[id^="GPtitle_ID_"]').filter({ hasText: pattern }));
 const alertWith = (text: string) => (page: import('playwright').Page) =>
   visible(page.getByRole('alert').filter({ hasText: text }));
-const deepLinks: Array<[string, string, (page: import('playwright').Page) => Promise<boolean>]> = [
+const deepLinks: Array<
+  [string, string, (page: import('playwright').Page) => Promise<boolean>, string?]
+> = [
   // Primary format: cartes.gouv.fr permalink, values emitted by the catalogue (C6).
   [
     'lien l= WMS (stock_carbone_fao_fr_wmsv)',
     '?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
     listed(/stocks de carbone/i),
+    'stock_carbone_fao_fr_wmsv:WMS',
   ],
   [
     'lien l= WMTS Lambert-93 (INRAE_CARTE-SOLS, reprojeté)',
     '?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no',
     listed(/sols dominants/i),
+    'INRAE_CARTE-SOLS:WMTS',
   ],
   [
     'lien l= WMS INRAE_CARTE-SOLS (absent du fichier, trouvé sur wms-r)',
@@ -241,6 +261,7 @@ const deepLinks: Array<[string, string, (page: import('playwright').Page) => Pro
     'alias layer/type/url WMS',
     '?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v',
     listed(/stocks de carbone/i),
+    'stock_carbone_fao_fr_wmsv:WMS',
   ],
   [
     'alias vers un hôte refusé',
@@ -248,18 +269,21 @@ const deepLinks: Array<[string, string, (page: import('playwright').Page) => Pro
     alertWith('Lien invalide'),
   ],
 ];
-for (const [label, query, assertion] of deepLinks) {
+for (const [label, query, assertion, entry] of deepLinks) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleReport = watchConsole(page);
   // `load` + a fixed wait: a slow GPF request must not block the check (no reliance on network idle).
   await page.goto(`${url}${query}`, { waitUntil: 'load' });
   await page.waitForTimeout(4000);
   check(await assertion(page), label);
-  check(
-    (await page.getByRole('tab', { name: 'Données sols' }).getAttribute('aria-selected')) ===
-      'true' && (await page.locator('[role=tab][aria-selected=true]').count()) === 1,
-    `${label} : onglet « Données sols » seul sélectionné`,
-  );
+  if (entry) {
+    // The catalogue ticks the entry of a layer already on the map (own `name`/`service` of the layer).
+    await openCatalogue(page);
+    check(
+      await page.locator(`input[data-layer="${entry}"]`).isChecked(),
+      `${label} : entrée cochée dans le catalogue`,
+    );
+  }
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `${label} : console vide${notes} ${messages.join(' | ')}`);
   await page.close();
@@ -269,32 +293,48 @@ for (const [label, query, assertion] of deepLinks) {
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto(url, { waitUntil: 'load' });
-  const focused = () =>
-    page.evaluate(() => {
-      const element = document.activeElement;
-      return `${element?.getAttribute('role') ?? element?.tagName}:${(element?.textContent ?? '').trim()}`;
-    });
-  await page.getByRole('tab', { name: 'Fonds de carte' }).focus();
-  await page.keyboard.press('ArrowRight');
-  check(
-    (await focused()) === 'tab:Données sols' &&
-      (await page.getByRole('heading', { level: 2, name: 'Données sols' }).count()) === 1,
-    'clavier : flèche droite sélectionne l’onglet « Données sols »',
-  );
-  const add = page.getByRole('button', {
-    name: /^Ajouter à la carte\s*: Carte nationale des stocks/,
-  });
-  await add.focus();
+  // Catalogue at the keyboard: Enter opens it, Tab reaches the search box, the entry's checkbox adds.
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.focus();
   await page.keyboard.press('Enter');
+  await page.locator('input[data-layer]').first().waitFor({ state: 'attached', timeout: 20_000 });
+  let reachedSearch = false;
+  for (let i = 0; i < 6 && !reachedSearch; i += 1) {
+    await page.keyboard.press('Tab');
+    reachedSearch = await page.evaluate(
+      () => document.activeElement?.id === 'catalog-input-search-global',
+    );
+  }
   check(
-    (await focused()).startsWith('BUTTON:Retirer de la carte'),
-    'clavier : Entrée ajoute la couche, le focus reste sur le bouton (« Retirer de la carte »)',
+    (await catalogue.getAttribute('aria-pressed')) === 'true' && reachedSearch,
+    'clavier : Entrée ouvre le catalogue, Tab atteint le champ de recherche',
   );
-  await page.keyboard.press(' ');
+  await page.keyboard.type('carbone');
+  await page.waitForTimeout(700);
+  const visibleEntries = await page
+    .locator('[data-layeritem]')
+    .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  check(visibleEntries === 1, `clavier : « carbone » ne laisse qu’une donnée (${visibleEntries})`);
+  const entry = page.locator(CARBONE_ENTRY);
+  await entry.focus();
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(1500);
   check(
-    (await focused()).startsWith('BUTTON:Ajouter à la carte'),
-    'clavier : Espace retire la couche, le focus reste sur le bouton (« Ajouter à la carte »)',
+    (await entry.isChecked()) &&
+      (await page.evaluate(() => document.activeElement?.getAttribute('data-layer'))) ===
+        'stock_carbone_fao_fr_wmsv:WMS' &&
+      (await switcherTitles(page)).some((t) => /stocks de carbone/i.test(t)),
+    'clavier : Espace ajoute la couche, le focus reste sur la case cochée',
   );
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(800);
+  check(
+    !(await entry.isChecked()) &&
+      !(await switcherTitles(page)).some((t) => /stocks de carbone/i.test(t)),
+    'clavier : Espace retire la couche',
+  );
+  await closeCatalogue(page);
   const toggle = page.getByRole('button', { name: 'Ma sélection de cartes' });
   await toggle.focus();
   await page.keyboard.press('Enter');
@@ -391,8 +431,8 @@ for (const [label, query, assertion] of deepLinks) {
     (await page
       .getByRole('button', { name: 'Masquer le panneau' })
       .getAttribute('aria-expanded')) === 'true' &&
-      (await page.getByRole('tab', { name: 'Fonds de carte' }).isVisible()),
-    '375px : Entrée sur « Afficher le panneau » ouvre le panneau et ses onglets',
+      (await page.getByRole('heading', { level: 2, name: 'Fonds de carte' }).isVisible()),
+    '375px : Entrée sur « Afficher le panneau » ouvre le panneau des fonds de carte',
   );
   await page.close();
 }
@@ -535,7 +575,6 @@ for (const scheme of ['light', 'dark'] as const) {
 }
 
 // M8: the tool set of the cartes.gouv.fr map viewer.
-const CARBONE = /^Ajouter à la carte\s*: Carte nationale des stocks/;
 const TOOL_BUTTONS = [
   "Ouvrir l'import de couches",
   "Activer/désactiver l'interrogation des couches",
@@ -606,8 +645,10 @@ const TOOL_BUTTONS = [
   check(Boolean(measure), `outils : mesure de distance effectuée (${measure ?? 'aucune valeur'})`);
   await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
   // Feature info on a sols layer (GeoServer HTML output), legends listing the layer.
-  await page.getByRole('tab', { name: 'Données sols' }).click();
-  await page.getByRole('button', { name: CARBONE }).click();
+  await openCatalogue(page);
+  await page.locator(CARBONE_ENTRY).focus();
+  await page.keyboard.press('Space');
+  await closeCatalogue(page);
   await page.waitForTimeout(3000);
   await page
     .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
@@ -777,6 +818,106 @@ const TOOL_BUTTONS = [
     `partage : console vide à la réouverture${reopenedConsole.notes} ${reopenedConsole.messages.join(' | ')}`,
   );
   await context.close();
+}
+
+// M9: the catalogue of the sols datasets (geopf Catalog): entries, record links, producer tags, search,
+// one-click add with the legend, no axe violation with the catalogue open.
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  await page.getByRole('button', { name: CATALOGUE, exact: true }).waitFor({ timeout: 30_000 });
+  const column = await page
+    .locator('#position-container-top-right > *')
+    .evaluateAll((widgets) => widgets.map((w) => w.id.split('-')[0]));
+  check(
+    column[0] === 'GPcatalog',
+    `catalogue : premier widget de la colonne de droite (${column[0]})`,
+  );
+  await openCatalogue(page);
+  const entries = await page.locator('[data-layeritem]').evaluateAll((items) =>
+    items.map((item) => ({
+      layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
+      name: item.querySelector('input')?.getAttribute('aria-label') ?? '',
+      thumbnail: item.querySelector('img')?.getAttribute('src') ?? '',
+      record: item.querySelector('a.fr-link')?.getAttribute('href') ?? '',
+      producer: item.querySelector('a.fr-tag')?.getAttribute('href') ?? '',
+    })),
+  );
+  check(
+    entries.length === 7 &&
+      entries.every(
+        (e) =>
+          e.name.startsWith('Ajouter à la carte : ') &&
+          e.thumbnail.startsWith('https://data.geopf.fr/annexes/gissol-osf/thumbnail/') &&
+          e.record.startsWith('/rechercher-une-donnee/dataset/') &&
+          e.producer.startsWith('/rechercher-une-donnee/search?organization='),
+      ),
+    `catalogue : 7 données nommées, avec vignette, lien de la fiche et étiquette producteur vers notre catalogue (${entries.length})`,
+  );
+  const axe = await new AxeBuilder({ page }).analyze();
+  check(
+    axe.violations.length === 0,
+    `a11y : axe sans violation avec le catalogue ouvert${
+      axe.violations.length
+        ? ` : ${axe.violations
+            .map(
+              (v) => `${v.id} [${v.impact}] ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+            )
+            .join(' | ')}`
+        : ''
+    }`,
+  );
+  await page.locator('#catalog-input-search-global').fill('carbone');
+  await page.waitForTimeout(700);
+  const visible = await page
+    .locator('[data-layeritem]')
+    .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  check(visible === 1, `catalogue : la recherche « carbone » ne laisse qu’une donnée (${visible})`);
+  await page.locator(CARBONE_ENTRY).focus();
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(3000);
+  await closeCatalogue(page);
+  check(
+    (await switcherTitles(page))[0]?.startsWith('Carte nationale des stocks de carbone') === true,
+    'catalogue : la donnée ajoutée est en tête du gestionnaire de couches',
+  );
+  await page.getByRole('button', { name: 'Légende', exact: true }).click();
+  await page.waitForTimeout(800);
+  // The legend image is lazy: expand the entry, then wait for the GetLegendGraphic image.
+  await page
+    .getByRole('button', { name: /^Afficher la légende : Carte nationale des stocks/ })
+    .click();
+  const legendLoaded = await page
+    .waitForFunction(
+      () => {
+        const img = document.querySelector(
+          '#stock_carbone_fao_fr_wmsv img',
+        ) as HTMLImageElement | null;
+        return Boolean(img && img.complete && img.naturalWidth > 0);
+      },
+      undefined,
+      { timeout: 20_000 },
+    )
+    .then(() => true)
+    .catch(() => false);
+  check(legendLoaded, 'catalogue : la légende de la donnée ajoutée est chargée (GetLegendGraphic)');
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `catalogue : console vide${notes} ${messages.join(' | ')}`);
+  await context.close();
+}
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.getByRole('button', { name: CATALOGUE, exact: true }).waitFor({ timeout: 30_000 });
+  await openCatalogue(page);
+  const panel = await page.locator('[id^="GPcatalogPanel-"]').boundingBox();
+  check(
+    Boolean(panel && panel.x >= 0 && panel.width <= 375),
+    `375px : le catalogue tient dans la largeur de l’écran (x = ${Math.round(panel?.x ?? -1)}, ${Math.round(panel?.width ?? 0)} px)`,
+  );
+  await page.close();
 }
 
 // M8 mobile: the listable tools are hidden, « Mes outils » opens them; a panel fills the map width.
