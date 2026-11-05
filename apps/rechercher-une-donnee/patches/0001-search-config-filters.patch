@@ -1,0 +1,91 @@
+diff --git a/apps/datahub/src/app/app.component.ts b/apps/datahub/src/app/app.component.ts
+index 88c4d91..d9e31d8 100644
+--- a/apps/datahub/src/app/app.component.ts
++++ b/apps/datahub/src/app/app.component.ts
+@@ -7,12 +7,21 @@ import {
+   ViewChild,
+ } from '@angular/core'
+ import { DOCUMENT } from '@angular/common'
+-import { getGlobalConfig, getThemeConfig } from '@geonetwork-ui/util/app-config'
++import {
++  getGlobalConfig,
++  getOptionalSearchConfig,
++  getThemeConfig,
++} from '@geonetwork-ui/util/app-config'
+ import {
+   handleScrollOnNavigation,
+   ThemeService,
+ } from '@geonetwork-ui/util/shared'
+-import { SearchRouterContainerDirective } from '@geonetwork-ui/feature/router'
++import {
++  ROUTER_CONFIG,
++  SearchRouterContainerDirective,
++} from '@geonetwork-ui/feature/router'
++import { SetConfigFilters } from '@geonetwork-ui/feature/search'
++import { Store } from '@ngrx/store'
+ import { Router, RouterOutlet } from '@angular/router'
+ import { CommonModule, ViewportScroller } from '@angular/common'
+ import Keycloak from 'keycloak-js'
+@@ -54,10 +63,30 @@ export class AppComponent implements OnInit, AfterViewInit {
+   readonly renderer = inject(Renderer2)
+   private readonly document = inject(DOCUMENT)
+   private readonly dsfrAnalytics = inject(DsfrAnalyticsService)
++  private readonly store = inject(Store)
++  private readonly routerConfig = inject(ROUTER_CONFIG)
+ 
+   @ViewChild('welcomeModal') welcomeModalRef: DsfrModalComponent
+ 
+   ngOnInit(): void {
++    // Permanent search scope read from [search] config_filters, e.g.
++    // config_filters.groupPublished = ['my_group'] restricts the main search
++    // and the organization page search (aggregations are not scoped)
++    const configFilters = getOptionalSearchConfig()?.CONFIG_FILTERS
++    if (configFilters) {
++      const filters = Object.fromEntries(
++        Object.entries(configFilters).map(([field, values]) => [
++          field,
++          Object.fromEntries([].concat(values).map((value) => [value, true])),
++        ])
++      )
++      for (const searchId of [
++        this.routerConfig.searchStateId,
++        'organization-page',
++      ]) {
++        this.store.dispatch(new SetConfigFilters(filters, searchId))
++      }
++    }
+     // Disable automatic scroll restoration to avoid race conditions
+     this.viewportScroller.setHistoryScrollRestoration('manual')
+     handleScrollOnNavigation(this.router, this.viewportScroller)
+diff --git a/libs/util/app-config/src/lib/app-config.ts b/libs/util/app-config/src/lib/app-config.ts
+index bcd7cb5..cfef071 100644
+--- a/libs/util/app-config/src/lib/app-config.ts
++++ b/libs/util/app-config/src/lib/app-config.ts
+@@ -259,6 +259,7 @@ export function loadAppConfig(configUrl = 'assets/configuration/default.toml') {
+           'spatial_extent_max_file_size',
+           'geocoding_provider',
+           'geocoding_provider_options',
++          'config_filters',
+         ],
+         warnings,
+         errors
+@@ -310,6 +311,7 @@ export function loadAppConfig(configUrl = 'assets/configuration/default.toml') {
+               GEOCODING_PROVIDER: parsedSearchSection.geocoding_provider,
+               GEOCODING_PROVIDER_OPTIONS:
+                 parsedSearchSection.geocoding_provider_options,
++              CONFIG_FILTERS: parsedSearchSection.config_filters,
+             } as SearchConfig)
+ 
+       const parsedMetadataQualitySection = parseConfigSection(
+diff --git a/libs/util/app-config/src/lib/model.ts b/libs/util/app-config/src/lib/model.ts
+index f655b86..464648e 100644
+--- a/libs/util/app-config/src/lib/model.ts
++++ b/libs/util/app-config/src/lib/model.ts
+@@ -79,6 +79,7 @@ export interface SearchConfig {
+   SPATIAL_EXTENT_MAX_FILE_SIZE?: number
+   GEOCODING_PROVIDER?: GeocodingProviderName
+   GEOCODING_PROVIDER_OPTIONS?: Record<string, string | number>
++  CONFIG_FILTERS?: Record<string, string[]>
+ }
+ 
+ export interface MetadataQualityConfig {

@@ -1,0 +1,17 @@
+{
+  "name": "@sols/rechercher-une-donnee",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Catalogue « sols » : datahub IGNF/geonetwork-ui épinglé (upstream.json), configuré et patché sans modifier le dépôt amont.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "prepare-upstream": "node scripts/prepare.mjs",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node --test \"test/**/*.test.mjs\""
+  }
+}
