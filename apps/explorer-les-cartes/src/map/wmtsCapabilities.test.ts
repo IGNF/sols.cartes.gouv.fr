@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { BASE_LAYERS } from '../config/map';
+import { BASE_LAYER_CANDIDATES } from '../config/map';
 import { GPF_ENDPOINTS } from '../config/urls';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import {
@@ -9,7 +9,7 @@ import {
   WMTS_CAPABILITIES_URL,
 } from './wmtsCapabilities';
 
-const planIgn = BASE_LAYERS[0].layerName;
+const planIgn = BASE_LAYER_CANDIDATES[0].layerName;
 
 describe('wmtsCapabilities', () => {
   afterEach(() => {

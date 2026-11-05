@@ -2,12 +2,13 @@ import { renderHook } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import { describe, expect, it, vi } from 'vitest';
-import { BASE_LAYERS } from '../config/map';
 import { parseWmtsCapabilities } from '../map/wmtsCapabilities';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import useBaseLayer from './useBaseLayer';
 
 const capabilities = parseWmtsCapabilities(capabilitiesXml);
+const PLAN_IGN = 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2';
+const ORTHO = 'ORTHOIMAGERY.ORTHOPHOTOS';
 
 function createFakeMap() {
   const insertAt = vi.fn<(index: number, layer: BaseLayer) => void>();
@@ -19,27 +20,35 @@ function createFakeMap() {
 describe('useBaseLayer', () => {
   it('n’ajoute rien tant que les capacités ne sont pas chargées', () => {
     const { map, insertAt } = createFakeMap();
-    const { result } = renderHook(() => useBaseLayer(map, undefined, 'plan-ign'));
+    renderHook(() => useBaseLayer(map, undefined, PLAN_IGN));
     expect(insertAt).not.toHaveBeenCalled();
-    expect(result.current.isMissing).toBe(false);
   });
 
-  it('ajoute le fond actif sous les autres couches puis le retire au démontage', () => {
+  it('ajoute le fond sous les autres couches puis le retire au démontage', () => {
     const { map, insertAt, removeLayer } = createFakeMap();
-    const { result, unmount } = renderHook(() => useBaseLayer(map, capabilities, 'plan-ign'));
+    const { unmount } = renderHook(() => useBaseLayer(map, capabilities, PLAN_IGN));
     expect(insertAt).toHaveBeenCalledTimes(1);
     const [index, layer] = insertAt.mock.calls[0] ?? [];
     expect(index).toBe(0);
-    expect(layer?.get('name')).toBe(BASE_LAYERS[0].layerName);
-    expect(result.current.isMissing).toBe(false);
+    expect(layer?.get('name')).toBe(PLAN_IGN);
     unmount();
     expect(removeLayer).toHaveBeenCalledWith(layer);
   });
 
-  it('signale un fond absent des capacités', () => {
+  it('remplace l’ancien fond quand le fond actif change', () => {
+    const { map, insertAt, removeLayer } = createFakeMap();
+    const { rerender } = renderHook(({ name }) => useBaseLayer(map, capabilities, name), {
+      initialProps: { name: PLAN_IGN },
+    });
+    const first = insertAt.mock.calls[0]?.[1];
+    rerender({ name: ORTHO });
+    expect(removeLayer).toHaveBeenCalledWith(first);
+    expect(insertAt.mock.calls[1]?.[1]?.get('name')).toBe(ORTHO);
+  });
+
+  it('n’ajoute rien pour une couche absente des capacités', () => {
     const { map, insertAt } = createFakeMap();
-    const { result } = renderHook(() => useBaseLayer(map, { Contents: { Layer: [] } }, 'plan-ign'));
+    renderHook(() => useBaseLayer(map, capabilities, 'COUCHE.INEXISTANTE'));
     expect(insertAt).not.toHaveBeenCalled();
-    expect(result.current.isMissing).toBe(true);
   });
 });
