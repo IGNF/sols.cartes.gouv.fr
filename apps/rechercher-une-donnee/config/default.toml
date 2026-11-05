@@ -47,10 +47,11 @@ external_viewer_url_template = '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL
 # Même onglet : navigation interne au site.
 external_viewer_open_new_tab = false
 
+# Fond de l'aperçu carte : Plan IGN v2 en tuiles WMTS (cache GPF, PM = Web Mercator) plutôt qu'en WMS wms-r,
+# qui renvoyait des 400 ou 502 sur certaines tuiles (C7).
 [[map_layer]]
-type = 'wms'
-url = 'https://data.geopf.fr/wms-r'
-name = 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2'
+type = 'xyz'
+url = 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'
 
 [translations.fr]
 # Titres d'onglet (« <titre> - Observatoire des sols », motif du patch 0003) et titre de la page de recherche (h1 unique).
