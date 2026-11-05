@@ -1,11 +1,18 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Build outputs
+dist/
+_site/
+.angular/
+.nx/
+coverage/
+
 # Environments
 .env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+.env.*
+!.env.example
 
 # Fichier de config personnel
 config.ini
@@ -13,9 +20,12 @@ config_*.ini
 config-*.ini
 test.ini
 
+# Tooling
+.DS_Store
+*.log
+.eslintcache
+test-results/
+playwright-report/
 
-/node_modules
-.env
-
+# Rapport LaTeX (local uniquement)
 /retex
-/docs
