@@ -1,0 +1,18 @@
+import { startReactDsfr } from '@codegouvfr/react-dsfr/spa';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+startReactDsfr({ defaultColorScheme: 'system' });
+
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Élément #root introuvable dans index.html');
+}
+
+createRoot(rootElement).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
