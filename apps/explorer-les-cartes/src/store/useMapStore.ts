@@ -1,7 +1,7 @@
 import type OlMap from 'ol/Map';
 import { create } from 'zustand';
 import { DEFAULT_BASE_LAYER_ID, type BaseLayerId, type SidePanelTab } from '../config/map';
-import { parseDeepLink } from '../map/deepLink';
+import { readDeepLink } from '../map/deepLink';
 import type { OverlayRef } from '../map/overlays';
 
 /**
@@ -42,7 +42,7 @@ export const initialMapState = {
  * the DSFR tabs script reads the selected tab when it initialises and keeps it otherwise.
  */
 export function initialTab(search: string): SidePanelTab {
-  return parseDeepLink(search) ? 'sols' : 'fonds';
+  return readDeepLink(search) ? 'sols' : 'fonds';
 }
 
 export const useMapStore = create<MapState>()((set) => ({

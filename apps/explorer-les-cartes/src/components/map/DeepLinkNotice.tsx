@@ -37,7 +37,11 @@ export default function DeepLinkNotice() {
           as="h2"
           small
           title="Format non pris en charge"
-          description={`Le lien « Voir sur la carte » reçu (${status.type}) désigne un style de tuiles vectorielles, qui ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`}
+          description={
+            status.type === 'TMS'
+              ? `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+              : `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+          }
         />
       );
     default:

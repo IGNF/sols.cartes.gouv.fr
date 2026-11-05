@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseDeepLink, resolveDeepLink } from './deepLink';
+import { parseDeepLink, parsePermalinkLayers, readDeepLink, resolveDeepLink } from './deepLink';
 
 describe('parseDeepLink', () => {
   it('lit le lien émis par le catalogue (type en majuscules, layer non encodé, url encodée)', () => {
@@ -66,5 +66,106 @@ describe('resolveDeepLink', () => {
       kind: 'invalid',
     });
     expect(resolveDeepLink(link('WMTS', 'pas une url'))).toEqual({ kind: 'invalid' });
+  });
+});
+
+describe('parsePermalinkLayers (format cartes.gouv.fr)', () => {
+  it('lit nom, type GPF, type de service et options (position;opacité;visibilité;gris)', () => {
+    expect(parsePermalinkLayers('INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;0.6;1;0)')).toEqual([
+      {
+        name: 'INRAE_CARTE-SOLS',
+        geopType: 'OGC',
+        serviceType: 'WMTS',
+        opacity: 0.6,
+        visible: true,
+      },
+    ]);
+  });
+
+  it('lit le style TMS facultatif et la forme courte (opacité;visibilité;gris)', () => {
+    expect(
+      parsePermalinkLayers(
+        'rrp_gironde_gpkg_03-09-2026_tms$GEOPORTAIL:GPP:TMS(1;1;0;0;sols_gironde)',
+      ),
+    ).toEqual([
+      {
+        name: 'rrp_gironde_gpkg_03-09-2026_tms',
+        geopType: 'GPP',
+        serviceType: 'TMS',
+        opacity: 1,
+        visible: false,
+        style: 'sols_gironde',
+      },
+    ]);
+    expect(parsePermalinkLayers('ACCES.BIOMETHANE$GEOPORTAIL:OGC:WMTS(0.47;1;0)')[0]).toMatchObject(
+      {
+        opacity: 0.47,
+        visible: true,
+      },
+    );
+  });
+
+  it('tolère casse, encodage, absence d’options et entrées invalides', () => {
+    expect(parsePermalinkLayers('couche%24GEOPORTAIL%3Aogc%3Awms')).toEqual([
+      { name: 'couche', geopType: 'OGC', serviceType: 'WMS' },
+    ]);
+    expect(
+      parsePermalinkLayers('a$GEOPORTAIL:OGC:WMS(1;5;1;0),pas-une-couche,b$GEOPORTAIL:OGC:WMTS'),
+    ).toEqual([
+      { name: 'a', geopType: 'OGC', serviceType: 'WMS', opacity: 1, visible: true },
+      { name: 'b', geopType: 'OGC', serviceType: 'WMTS' },
+    ]);
+  });
+});
+
+describe('readDeepLink', () => {
+  it('lit `l` en priorité, ignore `permalink=no` et propose wms-r puis wms-v pour un WMS', () => {
+    const search = `?l=${encodeURIComponent('stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;0.8;1;0)')}&permalink=no&layer=autre&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`;
+    expect(readDeepLink(search)).toEqual({
+      kind: 'layer',
+      name: 'stock_carbone_fao_fr_wmsv',
+      candidates: ['wms-raster', 'wms-vector'],
+      opacity: 0.8,
+      visible: true,
+    });
+  });
+
+  it('accepte le gabarit de production non encodé (`$` et `:` bruts)', () => {
+    expect(
+      readDeepLink('?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no'),
+    ).toMatchObject({
+      kind: 'layer',
+      name: 'INRAE_CARTE-SOLS',
+      candidates: ['wmts'],
+    });
+  });
+
+  it('signale TMS comme non pris en charge et un `l` illisible comme invalide', () => {
+    expect(
+      readDeepLink('?l=cartogrammes_gpkg_11-09-2026_tms$GEOPORTAIL:GPP:TMS(1;1;1;0;style)'),
+    ).toEqual({
+      kind: 'unsupported',
+      name: 'cartogrammes_gpkg_11-09-2026_tms',
+      type: 'TMS',
+    });
+    expect(readDeepLink('?l=nimporte-quoi')).toEqual({ kind: 'invalid', name: 'nimporte-quoi' });
+  });
+
+  it('garde `layer/type/url` comme alias', () => {
+    expect(readDeepLink('?layer=couche&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v')).toEqual({
+      kind: 'layer',
+      name: 'couche',
+      candidates: ['wms-vector'],
+    });
+    expect(readDeepLink('?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fx.json')).toEqual({
+      kind: 'unsupported',
+      name: 'style',
+      type: 'TMS',
+    });
+    expect(readDeepLink('?layer=x&type=WMS&url=https%3A%2F%2Fexemple.fr%2Fwms-v')).toEqual({
+      kind: 'invalid',
+      name: 'x',
+    });
+    expect(readDeepLink('')).toBeNull();
   });
 });
