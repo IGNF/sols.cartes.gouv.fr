@@ -28,9 +28,9 @@ export const EXTERNAL_LINKS = {
 export const FOOTER_DOMAINS = [
   'cartes.gouv.fr',
   'gissol.fr',
-  'legifrance.gouv.fr',
   'info.gouv.fr',
-  'service-public.fr',
+  'service-public.gouv.fr',
+  'legifrance.gouv.fr',
   'data.gouv.fr',
 ];
 
