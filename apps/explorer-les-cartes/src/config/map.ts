@@ -6,10 +6,28 @@
 import type { DefaultsOptions } from 'ol/control/defaults';
 import type { Options as AttributionOptions } from 'ol/control/Attribution';
 import type { Options as FullScreenOptions } from 'ol/control/FullScreen';
+import type { Options as OverviewMapOptions } from 'ol/control/OverviewMap';
 import type { Options as ScaleLineOptions } from 'ol/control/ScaleLine';
 import type { Options as ZoomOptions } from 'ol/control/Zoom';
-import type { LayerSwitcherOptions, SearchEngineOptions } from '../map/geopf';
-import { EXTERNAL_LINKS } from './urls';
+import type {
+  ControlListOptions,
+  DrawingOptions,
+  ElevationPathOptions,
+  GetFeatureInfoOptions,
+  IsocurveOptions,
+  LayerImportOptions,
+  LayerSwitcherOptions,
+  LegendsOptions,
+  MeasureAreaOptions,
+  MeasureAzimuthOptions,
+  MeasureLengthOptions,
+  MousePositionOptions,
+  ReverseGeocodeOptions,
+  RouteOptions,
+  SearchEngineOptions,
+  TerritoriesOptions,
+} from '../map/geopf';
+import { EXTERNAL_LINKS, GPF_ENDPOINTS } from './urls';
 
 /** WMTS version requested from the GPF. */
 export const WMTS_VERSION = '1.0.0';
@@ -107,7 +125,67 @@ export const DEFAULT_CONTROLS_OPTIONS: DefaultsOptions = {
 /** Position of a geopf-extensions control (values listed in Controls/Control.js). */
 export type ControlPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
-/** Options of the map tools; geopf-ext Zoom/FullScreen/Attribution take OL options plus `position`. */
+/**
+ * Options every geopf-extensions control reads (`Controls/Control.js` constructor, `setMap`) but which the
+ * `.d.ts` of most controls omit (upstream gap, doc/agents/geopf-ext.md §10): position container, button
+ * glued to the previous one (`gutter: false`), entry in the ControlList ("Mes outils").
+ */
+export interface ControlPlacement {
+  position?: ControlPosition;
+  gutter?: boolean;
+  listable?: boolean;
+}
+
+/** Titles of the vector layers the tools draw (listed by the LayerSwitcher). */
+const TOOL_LAYERS = {
+  measureLength: { title: 'Mesure de distance', description: 'Tracé de la mesure de distance' },
+  measureArea: { title: 'Mesure de surface', description: 'Tracé de la mesure de surface' },
+  measureAzimuth: { title: 'Mesure d’azimut', description: 'Tracé de la mesure d’azimut' },
+  elevationPath: { title: 'Profil altimétrique', description: 'Tracé du profil altimétrique' },
+  route: { title: 'Itinéraire', description: 'Itinéraire calculé par la Géoplateforme' },
+  isocurve: { title: 'Zone selon le temps de trajet', description: 'Isochrone ou isodistance' },
+  reverseGeocode: {
+    title: 'Adresses trouvées',
+    description: 'Résultats de la recherche d’adresse',
+  },
+  drawing: { title: 'Mes annotations', description: 'Croquis dessiné sur la carte' },
+} as const;
+
+/**
+ * Road2 resource used for routes and isochrones: lists `car`/`pedestrian` profiles and `fastest`/`shortest`
+ * (`/navigation/getcapabilities`, 2026-11-05). geoportal-access-lib 3.4.7 defaults to `bdtopo-osrm`, which
+ * the service no longer knows (HTTP 400 "Parameter 'resource' is invalid").
+ */
+export const NAVIGATION_RESOURCE = 'bdtopo-pgr';
+
+/** Built-in territories of the Territories control left out, as in cartes.gouv.fr (TAAF, Paris petite couronne). */
+export const EXCLUDED_TERRITORY_IDS: readonly string[] = ['ATF', 'IDF'];
+
+/**
+ * Coordinate systems of the MousePosition control (entrée carto, `Controls.vue`): the two OpenLayers
+ * built-ins and Lambert 93, whose definition the geopf CRS module registers before the tools are created
+ * (the control resolves every system with `ol/proj.get` when it initialises).
+ */
+export const MOUSE_POSITION_SYSTEMS = [
+  { label: 'Géographiques', crs: 'EPSG:4326', type: 'Geographical' },
+  { label: 'Web Mercator', crs: 'EPSG:3857', type: 'Metric' },
+  { label: 'Lambert 93', crs: 'EPSG:2154', type: 'Metric' },
+] as const;
+
+/**
+ * Projections registered through the geopf CRS module before the tools are created: MousePosition
+ * always resolves Lambert 93 and Lambert II étendu for its default list (`_initProjectionSystems`,
+ * even with explicit `systems`; upstream gap) and throws when one is unknown to OpenLayers.
+ */
+export const TOOL_PROJECTIONS: readonly string[] = ['EPSG:2154', 'EPSG:27572'];
+
+/**
+ * Options of the map tools; geopf-ext Zoom/FullScreen/Attribution take OL options plus `position`.
+ * Names and values checked in the `.d.ts` of 1.0.0-beta.16 and in IGNF/cartes.gouv.fr-entree-carto
+ * (`src/components/carte/Controls.vue`); the GPF service URLs come from GPF_ENDPOINTS.
+ * `altitude` (MousePosition), `noDataMessage` (GetFeatureInfo) and `export` payloads are documented in the
+ * JSDoc of the controls but missing from their `.d.ts` (upstream gap).
+ */
 export const MAP_TOOLS_OPTIONS = {
   zoom: { position: 'top-left' } satisfies ZoomOptions & { position: ControlPosition },
   fullScreen: {
@@ -129,7 +207,169 @@ export const MAP_TOOLS_OPTIONS = {
     resources: { search: false },
     zoomTo: 'auto',
   } satisfies SearchEngineOptions,
+  layerImport: {
+    position: 'top-left',
+    gutter: false,
+    title: 'Importer des données',
+  } satisfies LayerImportOptions & ControlPlacement,
+  getFeatureInfo: {
+    position: 'top-left',
+    gutter: false,
+    button: true,
+    active: false,
+    noDataMessage:
+      '<p class="fr-text--sm fr-mb-0">Aucune information disponible ici : aucune couche interrogeable à cet endroit.</p>',
+  } satisfies GetFeatureInfoOptions & ControlPlacement & { noDataMessage: string },
+  controlList: {
+    position: 'top-right',
+    gutter: false,
+    collapsed: true,
+    header: true,
+    // Required: the control only creates its state map when sortable (else opening the list throws).
+    sortable: true,
+  } satisfies ControlListOptions & ControlPlacement,
+  measureLength: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    layerDescription: TOOL_LAYERS.measureLength,
+  } satisfies MeasureLengthOptions & ControlPlacement,
+  measureArea: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    layerDescription: TOOL_LAYERS.measureArea,
+  } satisfies MeasureAreaOptions & ControlPlacement,
+  measureAzimuth: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    geodesic: true,
+    layerDescription: TOOL_LAYERS.measureAzimuth,
+  } satisfies MeasureAzimuthOptions & ControlPlacement,
+  mousePosition: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    collapsed: true,
+    editCoordinates: true,
+    displayAltitude: true,
+    systems: [...MOUSE_POSITION_SYSTEMS],
+    altitude: { serviceOptions: { serverUrl: GPF_ENDPOINTS.elevation } },
+  } satisfies MousePositionOptions &
+    ControlPlacement & { altitude: { serviceOptions: { serverUrl: string } } },
+  elevationPath: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    elevationPathOptions: { serverUrl: GPF_ENDPOINTS.elevationLine },
+    layerDescription: TOOL_LAYERS.elevationPath,
+    // Boolean only: the default is `false` and geopf merges options into it (an object would throw).
+    export: true,
+  } satisfies ElevationPathOptions & ControlPlacement,
+  route: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    prettifyCompute: true,
+    routeOptions: { serverUrl: GPF_ENDPOINTS.route, resource: NAVIGATION_RESOURCE },
+    autocompleteOptions: { serverUrl: GPF_ENDPOINTS.geocodeCompletion },
+    layerDescription: TOOL_LAYERS.route,
+    // Boolean only: the default is `false` and geopf merges options into it (an object would throw).
+    export: true,
+  } satisfies RouteOptions & ControlPlacement,
+  isocurve: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    isocurveOptions: { serverUrl: GPF_ENDPOINTS.isochrone, resource: NAVIGATION_RESOURCE },
+    autocompleteOptions: { serverUrl: GPF_ENDPOINTS.geocodeCompletion },
+    layerDescription: TOOL_LAYERS.isocurve,
+    // Boolean only: the default is `false` and geopf merges options into it (an object would throw).
+    export: true,
+  } satisfies IsocurveOptions & ControlPlacement,
+  reverseGeocode: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    reverseGeocodeOptions: { serverUrl: GPF_ENDPOINTS.geocodeReverse },
+    layerDescription: TOOL_LAYERS.reverseGeocode,
+  } satisfies ReverseGeocodeOptions & ControlPlacement,
+  drawing: {
+    position: 'top-right',
+    gutter: false,
+    listable: true,
+    layerDescription: TOOL_LAYERS.drawing,
+    tools: { export: true },
+  } satisfies DrawingOptions & ControlPlacement,
+  legends: {
+    position: 'bottom-left',
+    gutter: false,
+    panel: true,
+    auto: true,
+    draggable: false,
+    collapsed: true,
+  } satisfies LegendsOptions & ControlPlacement,
+  territories: {
+    position: 'bottom-left',
+    gutter: false,
+    panel: true,
+    auto: false, // our own list: the built-in one minus EXCLUDED_TERRITORY_IDS
+    thumbnail: false,
+    reduce: false,
+    tiles: 3,
+    title: 'Sélectionner un territoire',
+    collapsed: true,
+  } satisfies TerritoriesOptions & ControlPlacement,
+  overviewMap: {
+    position: 'bottom-left',
+    gutter: false,
+    collapsed: true,
+  } satisfies OverviewMapOptions & ControlPlacement,
 };
+
+/** Query parameters of the cartes.gouv.fr permalink (src/map/permalink.ts, src/map/deepLink.ts). */
+export const PERMALINK_PARAMS = {
+  center: 'c',
+  zoom: 'z',
+  layers: 'l',
+  permalink: 'permalink',
+} as const;
+
+/** Value of `permalink` in the links this map emits (`no` in the catalogue's links, both ignored on reading). */
+export const PERMALINK_FLAG = 'yes';
+
+/** Strings of the "Partager la carte" dialog. */
+export const SHARE_LABELS = {
+  button: 'Partager',
+  title: 'Partager la carte',
+  linkLabel: 'Lien permanent vers la carte',
+  linkHint:
+    'Toute personne ayant ce lien retrouve la même vue, le même fond de carte et les mêmes données sols.',
+  copy: 'Copier le lien',
+  copied: 'Lien copié dans le presse-papiers.',
+  copyFailed: 'La copie automatique a échoué : sélectionnez le lien puis copiez-le.',
+  mail: 'Envoyer par courriel',
+  mailSubject: 'Carte à consulter sur sols.cartes.gouv.fr',
+  mailBody: 'Bonjour,\nJe vous invite à consulter cette carte :',
+  limits: 'Les données importées et les annotations ne font pas partie du lien.',
+} as const;
+
+/** Strings of the "Imprimer la carte" dialog and print sheet. */
+export const PRINT_LABELS = {
+  button: 'Imprimer',
+  title: 'Imprimer la carte',
+  titleLabel: 'Titre de la carte',
+  defaultTitle: 'Carte des sols',
+  hint: 'La vue actuelle de la carte est imprimée avec son titre, les sources des données et la date.',
+  download: 'Télécharger en PNG',
+  print: 'Lancer l’impression',
+  busy: 'Préparation de l’image de la carte…',
+  exportFailed:
+    'L’image de la carte n’a pas pu être produite. Une donnée importée depuis un autre serveur peut l’empêcher : retirez-la puis réessayez.',
+  sources: 'Sources',
+  printedOn: 'Imprimé le',
+} as const;
 
 /**
  * Accessible names of the geopf-extensions dialogs, keyed by their id prefix.
@@ -141,17 +381,45 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
   GPlayerStylePanel: 'Style de la couche',
   GPautoCompleteList: 'Suggestions de lieux',
   GPgeocodeResultsList: 'Résultats de la recherche de lieu',
+  // Tools (M8)
+  GPlegendsPanel: 'Légendes',
+  GPterritoriesPanel: 'Sélectionner un territoire',
+  GPcontrolListPanel: 'Mes outils',
+  GPmousePositionPanel: 'Coordonnées du curseur',
+  GPelevationPathPanel: 'Profil altimétrique',
+  GProutePanel: 'Itinéraire',
+  GProuteResultsPanel: 'Résultats de l’itinéraire',
+  GPisochronPanel: 'Zone selon le temps de trajet ou la distance',
+  GPisoResultsPanel: 'Résultats de l’isochrone',
+  GPreverseGeocodingPanel: 'Trouver une adresse',
+  GPreverseGeocodingResultsPanel: 'Adresses trouvées',
+  GPreverseGeocodingResultsList: 'Adresses trouvées',
+  GPdrawingPanel: 'Annoter la carte',
+  GPimportPanel: 'Importer des données',
+  GPimportGetCapPanel: 'Couches du service',
+  GPimportMapBoxPanel: 'Style de la couche importée',
+  GPgetFeatureInfoPanel: 'Informations sur les couches',
+  GPlocationAutoCompleteList: 'Suggestions de lieux',
+  // Sub-dialog of the Territories panel (fixed id, no uid).
+  'gpf-territories-views-container-id': 'Vues des territoires',
 };
 
-/** Id of the base layer side panel (target of the toggle button). */
+/** Names of the icon-only buttons of the Legends and Territories panels (src/map/labelToolButtons.ts). */
+export const TOOL_BUTTON_LABELS = {
+  showLegend: 'Afficher la légende',
+  removeTerritory: 'Retirer le territoire',
+} as const;
+
 /**
  * Accessible names of map controls whose visible content is a glyph (OL attribution "›", rotate "⇧") or
- * which have no label (geopf search input). Set as aria-label before the control is added (RGAA 11.1).
+ * which have no label (geopf search input), or whose geopf label is unclear ("Afficher plus" on the
+ * ControlList button). Set as aria-label before the control is added (RGAA 11.1).
  */
 export const CONTROL_LABELS = {
   attribution: 'Sources des données',
   rotate: 'Réinitialiser l’orientation',
   searchInput: 'Rechercher un lieu ou une adresse',
+  controlList: 'Mes outils',
 } as const;
 
 /** Id of the side panel (target of the toggle button). */

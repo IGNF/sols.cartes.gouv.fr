@@ -12,7 +12,8 @@
           "service": "wms-vector",
           "name": "stock_carbone_fao_fr_wmsv",
           "title": "Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=stock_carbone_fao_fr_wmsv"
         },
         {
           "service": "wfs",
@@ -33,7 +34,8 @@
           "service": "wms-vector",
           "name": "cartogrammes_gpkg_11-09-2026_wmsv",
           "title": "Cartogrammes des teneurs ponctuelles des 49 variables mesurées sur la première campagne RMQS (2001 - 2009)",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=cartogrammes_gpkg_11-09-2026_wmsv"
         },
         {
           "service": "tms",
@@ -62,7 +64,8 @@
           "name": "INRAE_CARTE-SOLS",
           "title": "Les sols dominants de France métropolitaine – Carte harmonisée",
           "endpoint": "https://data.geopf.fr/wmts",
-          "crs": ["EPSG:2154"]
+          "crs": ["EPSG:2154"],
+          "legendUrl": "https://data.geopf.fr/annexes/gissol-osf/legendes/INRAE_CARTE-SOLS.png"
         }
       ],
       "rejected": [
@@ -114,7 +117,8 @@
           "service": "wms-vector",
           "name": "etude_30110_gpkg_03-09-2026_wmsv",
           "title": "Référentiel Régional Pédologique du département de la Gironde",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=etude_30110_gpkg_03-09-2026_wmsv"
         },
         {
           "service": "tms",
@@ -148,7 +152,8 @@
           "service": "wms-vector",
           "name": "rrp_landes_gpkg_11-09-2026_wmsv",
           "title": "Référentiel Régional Pédologique du département des Landes",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=rrp_landes_gpkg_11-09-2026_wmsv"
         },
         {
           "service": "tms",
@@ -176,13 +181,15 @@
           "service": "wms-vector",
           "name": "rrp_dept_loiret_gpkg_11-09-2026_wmsv",
           "title": "Référentiel Régional Pédologique du département du Loiret",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=rrp_dept_loiret_gpkg_11-09-2026_wmsv"
         },
         {
           "service": "wms-vector",
           "name": "rrp_loiret_gpkg_11-09-2026_wmsv",
           "title": "Référentiel Régional Pédologique du département du Loiret",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=rrp_loiret_gpkg_11-09-2026_wmsv"
         }
       ],
       "rejected": [
@@ -204,7 +211,8 @@
           "service": "wms-vector",
           "name": "vibrisses_rmqs_gpkg_03-09-2026_wmsv",
           "title": "Seuils de détection des anomalies pour différents éléments traces",
-          "endpoint": "https://data.geopf.fr/wms-v/ows"
+          "endpoint": "https://data.geopf.fr/wms-v/ows",
+          "legendUrl": "https://data.geopf.fr/wms-v/ows?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image%2Fpng&width=20&height=20&layer=vibrisses_rmqs_gpkg_03-09-2026_wmsv"
         }
       ],
       "rejected": [

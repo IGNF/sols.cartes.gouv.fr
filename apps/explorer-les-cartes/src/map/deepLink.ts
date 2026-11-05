@@ -1,3 +1,4 @@
+import { BASE_LAYER_CANDIDATES, PERMALINK_PARAMS, type BaseLayerId } from '../config/map';
 import { GPF_HOST } from '../config/urls';
 import type { SolsService } from '../data/solsLayersSchema';
 
@@ -150,41 +151,69 @@ export function candidatesForType(serviceType: string): SolsService[] | null {
   }
 }
 
+/** The configured base layer a permalink entry names (a WMTS entry with a candidate's layer name), else null. */
+function baseLayerFor(layer: PermalinkLayer): BaseLayerId | null {
+  if (layer.serviceType !== 'WMTS') return null;
+  return BASE_LAYER_CANDIDATES.find((c) => c.layerName === layer.name)?.id ?? null;
+}
+
+function toRequest(layer: PermalinkLayer): DeepLinkRequest {
+  const candidates = candidatesForType(layer.serviceType);
+  if (!candidates) {
+    return {
+      kind: 'unsupported',
+      name: layer.name,
+      type: layer.serviceType,
+      ...(layer.style ? { style: layer.style } : {}),
+    };
+  }
+  return {
+    kind: 'layer',
+    name: layer.name,
+    candidates,
+    ...(layer.opacity !== undefined ? { opacity: layer.opacity } : {}),
+    ...(layer.visible !== undefined ? { visible: layer.visible } : {}),
+  };
+}
+
 /**
- * Reads the deep link of a query string: `l` (primary) if it holds a parsable layer, else the
- * `layer/type/url` alias. Only the first layer of `l` is used. `permalink` and the other cartes.gouv.fr
- * parameters are ignored. Returns null when there is no link.
+ * Base layer selected by a permalink: the first WMTS entry of `l` naming one of the configured base layers
+ * (this map's own permalinks put it first, src/map/permalink.ts). Null when `l` names none.
  */
-export function readDeepLink(search: string): DeepLinkRequest | null {
+export function readPermalinkBaseLayer(search: string): BaseLayerId | null {
+  const permalink = new URLSearchParams(search).get(PERMALINK_PARAMS.layers);
+  if (!permalink) return null;
+  for (const layer of parsePermalinkLayers(permalink)) {
+    const id = baseLayerFor(layer);
+    if (id) return id;
+  }
+  return null;
+}
+
+/**
+ * Reads the layers to add from a query string: every entry of `l` (primary) that is not a base layer, in
+ * order, else the `layer/type/url` alias. `permalink`, `c`, `z` and the other cartes.gouv.fr parameters are
+ * not layers (see readPermalinkView). An `l` without any parsable entry and no alias is one invalid link.
+ * Empty when there is no link.
+ */
+export function readDeepLinks(search: string): DeepLinkRequest[] {
   const params = new URLSearchParams(search);
-  const permalink = params.get('l');
+  const permalink = params.get(PERMALINK_PARAMS.layers);
   if (permalink) {
-    const [first] = parsePermalinkLayers(permalink);
-    if (first) {
-      const candidates = candidatesForType(first.serviceType);
-      if (!candidates) {
-        return {
-          kind: 'unsupported',
-          name: first.name,
-          type: first.serviceType,
-          ...(first.style ? { style: first.style } : {}),
-        };
-      }
-      return {
-        kind: 'layer',
-        name: first.name,
-        candidates,
-        ...(first.opacity !== undefined ? { opacity: first.opacity } : {}),
-        ...(first.visible !== undefined ? { visible: first.visible } : {}),
-      };
-    }
+    const layers = parsePermalinkLayers(permalink);
+    if (layers.length > 0) return layers.filter((layer) => !baseLayerFor(layer)).map(toRequest);
   }
   const alias = parseDeepLink(search);
-  if (!alias) return permalink ? { kind: 'invalid', name: tolerantDecode(permalink) } : null;
+  if (!alias) return permalink ? [{ kind: 'invalid', name: tolerantDecode(permalink) }] : [];
   const target = resolveDeepLink(alias);
   if (target.kind === 'layer')
-    return { kind: 'layer', name: target.name, candidates: [target.service] };
+    return [{ kind: 'layer', name: target.name, candidates: [target.service] }];
   if (target.kind === 'unsupported')
-    return { kind: 'unsupported', name: alias.layer, type: target.type };
-  return { kind: 'invalid', name: alias.layer };
+    return [{ kind: 'unsupported', name: alias.layer, type: target.type }];
+  return [{ kind: 'invalid', name: alias.layer }];
+}
+
+/** The first layer to add (the catalogue sends one); null when there is no link. */
+export function readDeepLink(search: string): DeepLinkRequest | null {
+  return readDeepLinks(search)[0] ?? null;
 }

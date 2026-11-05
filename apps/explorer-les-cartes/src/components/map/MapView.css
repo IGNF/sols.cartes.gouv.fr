@@ -52,3 +52,23 @@
     width: 18rem;
   }
 }
+
+/*
+ * Tools (M8). The OpenLayers scale line sits right of the bottom-left column (legends, territories,
+ * overview map), like the search engine right of the zoom column.
+ */
+.map-view .ol-scale-line {
+  left: 3.5rem;
+  bottom: 0.5rem;
+}
+
+/*
+ * Below the DSFR md breakpoint the right column cannot hold the eleven tool buttons over a 70dvh map:
+ * only the layer switcher and « Mes outils » stay visible, the listable tools open from that list
+ * (their panels stay in the DOM and open in place).
+ */
+@media (max-width: 47.99em) {
+  .map-view .map-tool--listable > .gpf-btn-icon {
+    display: none;
+  }
+}

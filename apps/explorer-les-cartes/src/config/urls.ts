@@ -42,7 +42,10 @@ export const EXTERNAL_LINKS = {
   cartesGouv: brand.external.cartesGouv,
 } as const;
 
-/** Géoplateforme (GPF) service endpoints, see doc/agents/gpf-sols-data.md. */
+/**
+ * Géoplateforme (GPF) service endpoints, see doc/agents/gpf-sols-data.md and doc/agents/geopf-ext.md §10.
+ * All are open (no API key); checked with curl on 2026-11-05.
+ */
 export const GPF_ENDPOINTS = {
   wmts: 'https://data.geopf.fr/wmts',
   wmsVector: 'https://data.geopf.fr/wms-v/ows',
@@ -50,7 +53,27 @@ export const GPF_ENDPOINTS = {
   wfs: 'https://data.geopf.fr/wfs/ows',
   tms: 'https://data.geopf.fr/tms/1.0.0',
   csw: 'https://data.geopf.fr/csw/gissol-osf_c',
+  /** Elevation of points (MousePosition) and along a path (ElevationPath). */
+  elevation: 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json',
+  elevationLine: 'https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevationLine.json',
+  /** Routing and isochrones (Road2); resources listed by /navigation/getcapabilities. */
+  route: 'https://data.geopf.fr/navigation/itineraire',
+  isochrone: 'https://data.geopf.fr/navigation/isochrone',
+  /** Geocoding: autocompletion (search engine, route and isochrone forms) and reverse geocoding. */
+  geocodeCompletion: 'https://data.geopf.fr/geocodage/completion',
+  geocodeReverse: 'https://data.geopf.fr/geocodage/reverse',
 } as const;
+
+/** WMS 1.3.0 GetLegendGraphic of a layer (GeoServer, wms-v: used when the capabilities carry no LegendURL). */
+export function legendGraphicUrl(endpoint: string, layer: string): string {
+  const url = new URL(endpoint);
+  url.searchParams.set('SERVICE', 'WMS');
+  url.searchParams.set('VERSION', '1.3.0');
+  url.searchParams.set('REQUEST', 'GetLegendGraphic');
+  url.searchParams.set('FORMAT', 'image/png');
+  url.searchParams.set('LAYER', layer);
+  return url.toString();
+}
 
 /** MapLibre styles of the GIS Sol TMS layers; a cartes.gouv.fr TMS link carries `<file>` (without .json). */
 export function solsStyleUrl(file: string): string {

@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CONTROL_LABELS, INITIAL_VIEW } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
-import useMap from './useMap';
+import useMap, { initialView } from './useMap';
 
 const created: Array<{
   options: Record<string, unknown>;
@@ -48,6 +48,18 @@ describe('useMap', () => {
     render(<Harness />);
     const view = created[0]?.options['view'] as { getZoom: () => number };
     expect(view.getZoom()).toBe(INITIAL_VIEW.zoom);
+  });
+
+  it('part de la vue d’un permalien (c, z) quand il y en a un, sinon de la vue configurée', () => {
+    expect(initialView('')).toEqual({
+      centerLonLat: [...INITIAL_VIEW.centerLonLat],
+      zoom: INITIAL_VIEW.zoom,
+    });
+    expect(initialView('?c=-61.5,16.2&z=10&l=x&permalink=yes')).toEqual({
+      centerLonLat: [-61.5, 16.2],
+      zoom: 10,
+    });
+    expect(initialView('?c=oui&z=non')).toMatchObject({ zoom: INITIAL_VIEW.zoom });
   });
 
   it('nomme le bouton de rotation', () => {

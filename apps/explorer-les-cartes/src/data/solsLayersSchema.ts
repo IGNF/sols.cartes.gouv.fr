@@ -26,6 +26,8 @@ export interface SolsLayer {
   endpoint: string;
   /** WMTS only: CRS of the tile matrix sets the layer is published in. */
   crs?: string[];
+  /** Legend image published in the capabilities (`LegendURL`), when there is one. */
+  legendUrl?: string;
 }
 
 export interface SolsRejectedLayer {
@@ -63,13 +65,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 function isSolsLayer(value: unknown): value is SolsLayer {
   if (!isRecord(value)) return false;
-  const { service, name, title, endpoint, crs } = value;
+  const { service, name, title, endpoint, crs, legendUrl } = value;
   return (
     SOLS_SERVICES.includes(service as SolsService) &&
     isString(name) &&
     isString(title) &&
     isString(endpoint) &&
-    (crs === undefined || (Array.isArray(crs) && crs.every(isString)))
+    (crs === undefined || (Array.isArray(crs) && crs.every(isString))) &&
+    (legendUrl === undefined || isString(legendUrl))
   );
 }
 

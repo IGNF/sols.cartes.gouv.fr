@@ -7,13 +7,15 @@ import ListViewLink from '../list/ListViewLink';
 import BaseLayerPanel from './BaseLayerPanel';
 import DeepLinkNotice from './DeepLinkNotice';
 import MapView from './MapView';
+import PrintModal, { PrintButton } from './PrintModal';
+import ShareModal, { ShareButton } from './ShareModal';
 import SolsDatasetsPanel from './SolsDatasetsPanel';
 import './MapExplorer.css';
 
 /**
- * Map page body: a slim toolbar (panel toggle, link to the list view), deep-link notices, then the side
- * panel docked left of the map. The panel width is bounded so the map keeps most of the width on
- * desktop; on small screens the map comes first and the panel below it.
+ * Map page body: a slim toolbar (panel toggle, share and print dialogs, link to the list view), deep-link
+ * notices, then the side panel docked left of the map. The panel width is bounded so the map keeps most
+ * of the width on desktop; on small screens the map comes first and the panel below it.
  */
 export default function MapExplorer() {
   const isPanelOpen = useMapStore((state) => state.isPanelOpen);
@@ -34,10 +36,14 @@ export default function MapExplorer() {
         >
           {isPanelOpen ? 'Masquer le panneau' : 'Afficher le panneau'}
         </Button>
+        <ShareButton />
+        <PrintButton />
         <span className={fr.cx('fr-text--sm', 'fr-mb-0')}>
           <ListViewLink />
         </span>
       </div>
+      <ShareModal />
+      <PrintModal />
       <DeepLinkNotice />
       <div className="map-explorer__body">
         <div id={SIDE_PANEL_ID} hidden={!isPanelOpen} className="map-explorer__panel">

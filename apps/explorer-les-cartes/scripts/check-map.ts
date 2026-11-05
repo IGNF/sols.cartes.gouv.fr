@@ -11,16 +11,43 @@
  * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
  * M6: a canvas on 20 fresh loads (D-carto-1) and the side panel closed by default at 375 px.
  * M7: header v1 (brand), compact footer, map width and no page scroll, controls in both themes.
+ * M8: the geopf-extensions tool set (every button named and operable, a distance measured, a WMS import of
+ * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the share permalink reopened
+ * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
  * Exits 1 on failure.
  */
+import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 import brand from '@sols/brand/brand.json';
-import { CONTROL_LABELS } from '../src/config/map';
+import { CONTROL_LABELS, PRINT_LABELS, SHARE_LABELS } from '../src/config/map';
+import { GPF_ENDPOINTS } from '../src/config/urls';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
 
 /** Share of GPF tile (GetTile/GetMap) requests allowed to fail: intermittent GPF errors under load (M-2). */
 const TILE_ERROR_TOLERANCE = 0.1;
+
+/**
+ * Console warnings geopf-extensions 1.0.0-beta.16 writes itself (`console.warn` in LayerSwitcher.js,
+ * `_updateLayerGrayScale`, called for every added layer, vector layers of the tools included): known
+ * upstream noise, counted in the notes (doc/agents/geopf-ext.md §10).
+ */
+const UPSTREAM_WARNINGS = [
+  'Greyscale only implemented for raster and vector tiles',
+  'Grayscale not implemented for layer groups',
+];
+
+/**
+ * GPF requests the geopf controls send on their own and the service refuses (HTTP 4xx logged by the
+ * browser as "Failed to load resource"): the Route/Isocurve forms call the geocoding completion with a
+ * blank or numeric text (`geocodage/completion?text=73%20`, 400). Only those (text shorter than three
+ * characters, or digits only) are counted in the notes, like the tile errors.
+ */
+function isUpstreamRequestError(url: string): boolean {
+  if (!/\/geocodage\/completion\?/.test(url)) return false;
+  const text = new URL(url).searchParams.get('text')?.trim() ?? '';
+  return text.length < 3 || /^\d+$/.test(text);
+}
 
 /**
  * Console messages of a page, minus the "Failed to load resource" lines caused by GPF tiles, as long as
@@ -30,6 +57,7 @@ const TILE_ERROR_TOLERANCE = 0.1;
 function watchConsole(page: import('playwright').Page) {
   const messages: string[] = [];
   const tiles = new Map<string, number[]>();
+  let upstreamRequests = 0;
   page.on('console', (m) => {
     if (m.type() === 'error' || m.type() === 'warning') messages.push(m.text());
   });
@@ -37,20 +65,36 @@ function watchConsole(page: import('playwright').Page) {
   page.on('response', (r) => {
     if (/REQUEST=Get(Tile|Map)/i.test(r.url()))
       tiles.set(r.url(), [...(tiles.get(r.url()) ?? []), r.status()]);
+    else if (r.status() >= 400 && isUpstreamRequestError(r.url())) upstreamRequests += 1;
   });
   return () => {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
     const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
-    const unexplained = messages.filter((m) => !m.startsWith('Failed to load resource'));
-    const loadErrors = messages.length - unexplained.length;
+    const upstream = messages.filter((m) => UPSTREAM_WARNINGS.includes(m)).length;
+    const unexplained = messages.filter(
+      (m) => !m.startsWith('Failed to load resource') && !UPSTREAM_WARNINGS.includes(m),
+    );
+    const loadErrors = messages.length - unexplained.length - upstream;
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
-    if (loadErrors > 0 && (!withinTolerance || failed.length === 0)) {
+    const explainedByTiles = failed.length > 0 && withinTolerance;
+    const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
+    if (loadErrors > 0 && !explainedByTiles && !explainedByRequests) {
       unexplained.push(...lost.map(([u, c]) => `${c.join('→')} ${u}`));
-      if (failed.length === 0) unexplained.push(`${loadErrors} ressource(s) en erreur hors tuiles`);
+      if (failed.length === 0)
+        unexplained.push(`${loadErrors - upstreamRequests} ressource(s) en erreur hors tuiles`);
     }
-    const notes = failed.length
-      ? ` (${failed.length} tuile(s) GPF en erreur sur ${tiles.size}, dont ${lost.length} perdue(s), tolérance ${TILE_ERROR_TOLERANCE * 100} %)`
-      : '';
+    const noted = [
+      ...(failed.length
+        ? [
+            `${failed.length} tuile(s) GPF en erreur sur ${tiles.size}, dont ${lost.length} perdue(s), tolérance ${TILE_ERROR_TOLERANCE * 100} %`,
+          ]
+        : []),
+      ...(upstream ? [`${upstream} avertissement(s) amont geopf-ext (niveaux de gris)`] : []),
+      ...(upstreamRequests
+        ? [`${upstreamRequests} requête(s) de complétion refusée(s) par la GPF (amont)`]
+        : []),
+    ];
+    const notes = noted.length ? ` (${noted.join(' ; ')})` : '';
     return { messages: unexplained, notes };
   };
 }
@@ -506,6 +550,297 @@ for (const scheme of ['light', 'dark'] as const) {
     `thème ${scheme} : zoom et attributions sur le fond DSFR (${colours.token} ; zoom ${colours.zoom}, attributions ${colours.attribution})`,
   );
   await context.close();
+}
+
+// M8: the tool set of the cartes.gouv.fr map viewer.
+const CARBONE = /^Ajouter à la carte\s*: Carte nationale des stocks/;
+const TOOL_BUTTONS = [
+  "Ouvrir l'import de couches",
+  "Activer/désactiver l'interrogation des couches",
+  CONTROL_LABELS.controlList,
+  'Mesurer une distance',
+  'Mesurer une surface',
+  'Mesurer un angle',
+  'Afficher les coordonnées du curseur',
+  'Profil altimétrique',
+  'Itinéraire',
+  'Zone selon le temps de trajet ou distance',
+  'Trouver une adresse',
+  'Annoter la carte',
+  'Légende',
+  'Sélectionner un territoire',
+  'Mini-carte',
+];
+{
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    acceptDownloads: true,
+  });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  let prints = 0;
+  await page.exposeFunction('reportPrint', () => {
+    prints += 1;
+  });
+  await page.addInitScript(() => {
+    window.print = () => {
+      (window as unknown as { reportPrint: () => void }).reportPrint();
+    };
+  });
+  await page.goto(url, { waitUntil: 'load' });
+  const toolsLoaded = await page
+    .locator('[id^="GPcontrolList-"]')
+    .waitFor({ timeout: 30_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(
+    toolsLoaded,
+    'outils : le jeu d’outils geopf-extensions est chargé (« Mes outils » présent)',
+  );
+  await page.waitForTimeout(1500);
+  for (const name of TOOL_BUTTONS) {
+    const button = page.getByRole('button', { name, exact: true });
+    check((await button.count()) === 1, `outils : bouton « ${name} » nommé`);
+  }
+  const unnamedDialogs = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.map-view dialog, .map-view .fr-modal'))
+      .filter((d) => !d.hasAttribute('aria-label') && !d.hasAttribute('aria-labelledby'))
+      .map((d) => d.id),
+  );
+  check(
+    unnamedDialogs.length === 0,
+    `outils : toutes les fenêtres geopf sont nommées (${unnamedDialogs.join(', ') || 'aucune sans nom'})`,
+  );
+  // Measure a distance: two clicks and a double click, the tooltip shows kilometres.
+  await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
+  await page.mouse.click(700, 500);
+  await page.mouse.click(800, 520);
+  await page.mouse.dblclick(900, 560);
+  await page.waitForTimeout(800);
+  // The measure tooltip is an OpenLayers overlay (`GPmeasureTooltip`).
+  const measure = (await page.locator('.ol-overlay-container').allInnerTexts())
+    .map((t) => t.trim())
+    .find((t) => /\d\s*(km|m)$/.test(t));
+  check(Boolean(measure), `outils : mesure de distance effectuée (${measure ?? 'aucune valeur'})`);
+  await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
+  // Feature info on a sols layer (GeoServer HTML output), legends listing the layer.
+  await page.getByRole('tab', { name: 'Données sols' }).click();
+  await page.getByRole('button', { name: CARBONE }).click();
+  await page.waitForTimeout(3000);
+  await page
+    .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
+    .click();
+  // Let the control register its map listener before the (single) click it waits for.
+  await page.waitForTimeout(500);
+  // Click on central France (inside the sols layer, north of the measure line drawn above). The GeoServer
+  // answer lands in a collapsed accordion: wait for its text (textContent, not innerText).
+  await page.mouse.click(820, 430);
+  const gfiPanel = page.locator('[id^="GPgetFeatureInfoPanel-"]');
+  const gfiContent = await page
+    .waitForFunction(
+      () => {
+        const text = document.querySelector('[id^="GPgetFeatureInfoPanel-"]')?.textContent ?? '';
+        return /STOCK_C|featureInfo|FID/i.test(text) ? text : null;
+      },
+      undefined,
+      { timeout: 25_000 },
+    )
+    .then((handle) => handle.jsonValue() as Promise<string>)
+    .catch(() => gfiPanel.evaluate((panel) => panel.textContent ?? ''));
+  check(
+    /stocks de carbone/i.test(gfiContent) && /STOCK_C|featureInfo|FID/i.test(gfiContent),
+    `infos : GetFeatureInfo sur la couche sols affiche les attributs (sortie GeoServer) [${gfiContent.replace(/\s+/g, ' ').slice(0, 100)}]`,
+  );
+  await page
+    .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Légende', exact: true }).click();
+  await page.waitForTimeout(500);
+  const legendIds = await page
+    .locator('.legend-entry-container')
+    .evaluateAll((entries) => entries.map((e) => e.id));
+  check(
+    legendIds.includes('stock_carbone_fao_fr_wmsv') &&
+      legendIds.includes('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2'),
+    `légendes : couche sols et fond listés (${legendIds.join(', ')})`,
+  );
+  check(
+    (await page.getByRole('button', { name: /^Afficher la légende : Plan IGN/ }).count()) >= 1,
+    'légendes : bouton de dépliage nommé',
+  );
+  await page.getByRole('button', { name: 'Légende', exact: true }).click();
+  // Share: the permalink carries the view, the base layer and the sols layer, and reopens the same map.
+  await page.getByRole('button', { name: SHARE_LABELS.button, exact: true }).click();
+  await page.waitForTimeout(500);
+  const permalink = await page
+    .getByRole('textbox', { name: new RegExp(`^${SHARE_LABELS.linkLabel}`) })
+    .inputValue();
+  const query = new URL(permalink || url).searchParams;
+  check(
+    permalink.startsWith(url) &&
+      /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(query.get('c') ?? '') &&
+      Number.isFinite(Number(query.get('z'))) &&
+      (query.get('l') ?? '').startsWith(
+        'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS(0;',
+      ) &&
+      (query.get('l') ?? '').includes('stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(') &&
+      query.get('permalink') === 'yes',
+    `partage : permalien au format cartes.gouv.fr (${permalink.slice(url.length, url.length + 90)}…)`,
+  );
+  await page.keyboard.press('Escape');
+  // Print: PNG download and the print sheet.
+  await page.getByRole('button', { name: PRINT_LABELS.button, exact: true }).click();
+  await page.waitForTimeout(400);
+  const download = page.waitForEvent('download', { timeout: 20_000 }).catch(() => null);
+  await page.getByRole('button', { name: PRINT_LABELS.download }).click();
+  const file = await download;
+  check(
+    file?.suggestedFilename() === 'carte-des-sols.png',
+    'impression : téléchargement PNG de la carte',
+  );
+  await page.getByRole('button', { name: PRINT_LABELS.print }).click();
+  await page.waitForTimeout(1500);
+  check(
+    prints === 1 && (await page.locator('.map-print-sheet img').count()) === 1,
+    'impression : la feuille d’impression (titre, image, sources) est produite et window.print appelé',
+  );
+  await page.keyboard.press('Escape');
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `outils : console vide${notes} ${messages.join(' | ')}`);
+  // Last: the panels of the compute tools, then a WMS import (it fits the view to the layer extent and
+  // its tiles, loaded without CORS by geopf, taint the canvas: nothing else is printed afterwards).
+  for (const name of [
+    'Itinéraire',
+    'Zone selon le temps de trajet ou distance',
+    'Profil altimétrique',
+  ]) {
+    const button = page.getByRole('button', { name, exact: true });
+    await button.click();
+    await page.waitForTimeout(300);
+    const pressed = (await button.getAttribute('aria-pressed')) === 'true';
+    await button.click();
+    await page.waitForTimeout(200);
+    check(
+      pressed && (await button.getAttribute('aria-pressed')) === 'false',
+      `outils : « ${name} » s’ouvre et se ferme`,
+    );
+  }
+  // Accessibility with « Mes outils » open (axe-core, default rule set, as the e2e suite).
+  await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
+  await page.waitForTimeout(500);
+  const axe = await new AxeBuilder({ page }).analyze();
+  check(
+    axe.violations.length === 0,
+    `a11y : axe sans violation avec « Mes outils » ouvert${
+      axe.violations.length
+        ? ` : ${axe.violations
+            .map(
+              (v) => `${v.id} [${v.impact}] ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+            )
+            .join(' | ')}`
+        : ''
+    }`,
+  );
+  await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
+  await page.waitForTimeout(300);
+  // WMS import of GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 ("Plan IGN" on wms-r).
+  await page.getByRole('button', { name: "Ouvrir l'import de couches", exact: true }).click();
+  await page.locator('[id^="GPimportTypeSelect-"]').selectOption('WMS');
+  await page.locator('[id^="GPimportServiceUrl-"]').fill(GPF_ENDPOINTS.wmsRaster);
+  await page.locator('[id^="GPimportSubmit-"]').click();
+  const capabilitiesListed = await page
+    .locator('[id^="GPimportGetCapResults-"] .GPimportGetCapProposal')
+    .first()
+    .waitFor({ state: 'attached', timeout: 40_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(capabilitiesListed, 'import : les couches du WMS raster de la Géoplateforme sont listées');
+  const rubric = page.locator('label.GPimportGetCapRubriqueTitle').first();
+  if (!(await page.locator('[id^="GPimportGetCapRubrique-"]').first().isChecked())) {
+    await rubric.click();
+  }
+  const planIgnEntry = page
+    .locator('[id^="GPimportGetCapResults-"] .GPimportGetCapProposal')
+    .filter({ hasText: /^Plan IGN$/ })
+    .first();
+  await planIgnEntry.click();
+  await page.waitForTimeout(2500);
+  const titlesAfterImport = await switcherTitles(page);
+  check(
+    titlesAfterImport.filter((t) => t === 'Plan IGN').length === 2,
+    `import : la couche WMS Plan IGN importée est dans le gestionnaire (${titlesAfterImport.join(' | ')})`,
+  );
+  await page.getByRole('button', { name: "Ouvrir l'import de couches", exact: true }).click();
+  const importReport = consoleReport();
+  check(
+    importReport.messages.length === 0,
+    `import : console vide${importReport.notes} ${importReport.messages.join(' | ')}`,
+  );
+  // The permalink reopens the same layers in a fresh page.
+  const reopened = await context.newPage();
+  const reopenedReport = watchConsole(reopened);
+  await reopened.goto(permalink, { waitUntil: 'load' });
+  const sameLayers = await visible(
+    reopened.locator('[id^="GPtitle_ID_"]').filter({ hasText: /stocks de carbone/i }),
+  );
+  await reopened.waitForTimeout(1000);
+  const reopenedTitles = await switcherTitles(reopened);
+  check(
+    sameLayers && reopenedTitles.includes('Plan IGN'),
+    `partage : le permalien rouvre les mêmes couches (${reopenedTitles.join(' | ')})`,
+  );
+  const reopenedConsole = reopenedReport();
+  check(
+    reopenedConsole.messages.length === 0,
+    `partage : console vide à la réouverture${reopenedConsole.notes} ${reopenedConsole.messages.join(' | ')}`,
+  );
+  await context.close();
+}
+
+// M8 mobile: the listable tools are hidden, « Mes outils » opens them; a panel fills the map width.
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  await page.goto(url, { waitUntil: 'load' });
+  await page
+    .locator('[id^="GPcontrolList-"]')
+    .waitFor({ timeout: 30_000 })
+    .catch(() => undefined);
+  await page.waitForTimeout(1000);
+  check(
+    !(await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).isVisible()) &&
+      (await page
+        .getByRole('button', { name: CONTROL_LABELS.controlList, exact: true })
+        .isVisible()),
+    '375px : outils listables masqués, « Mes outils » visible',
+  );
+  const toolsButton = page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true });
+  await toolsButton.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const firstEntryFocused = await page.evaluate(
+    () => document.activeElement?.closest('[id^="GPcontrolListPanel-"] li') !== null,
+  );
+  // Arrow down to « Itinéraire » (sixth entry), Enter activates it: the list closes, the panel shows.
+  for (let i = 0; i < 5; i += 1) await page.keyboard.press('ArrowDown');
+  const onRoute = await page.evaluate(
+    () => document.activeElement?.textContent?.trim() === 'Itinéraire',
+  );
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(800);
+  const panel = await page.locator('[id^="GProutePanel-"]').boundingBox();
+  const listClosed = (await toolsButton.getAttribute('aria-pressed')) === 'false';
+  const focusOnTools = await page.evaluate(
+    () => document.activeElement?.id.startsWith('GPshowControlListPicto-') === true,
+  );
+  check(
+    firstEntryFocused && onRoute,
+    '375px : Entrée ouvre « Mes outils » sur sa première entrée, les flèches y circulent',
+  );
+  check(
+    listClosed && focusOnTools && Boolean(panel && panel.width >= 360 && panel.x <= 8),
+    `375px : Entrée sur « Itinéraire » ferme la liste, rend le focus à « Mes outils » et ouvre le panneau sur la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
+  );
+  await page.close();
 }
 
 await browser.close();

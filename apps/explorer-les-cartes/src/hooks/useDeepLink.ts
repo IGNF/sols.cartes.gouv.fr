@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { GPF_ENDPOINTS } from '../config/urls';
 import { findSolsLayer } from '../data/solsLayers';
 import { solsLayerKey, type SolsService } from '../data/solsLayersSchema';
-import { readDeepLink } from '../map/deepLink';
+import { readDeepLink, type DeepLinkRequest } from '../map/deepLink';
 import { toOverlayRef } from '../map/overlays';
 import { findWmtsLayer } from '../map/wmtsCapabilities';
 import { useMapStore } from '../store/useMapStore';
@@ -28,12 +28,11 @@ const ENDPOINTS: Record<SolsService, string> = {
 type Lookup = { state: 'found'; title: string } | { state: 'absent' } | { state: 'pending' };
 
 /**
- * Reads the "Voir sur la carte" link once (`l` permalink, or the `layer/type/url` alias). The layer is
- * looked up in sols-layers.json for each candidate service, then in the live capabilities of the
- * candidates in order (wms-r then wms-v for WMS, wmts for WMTS), and added to the map if published.
+ * Follows one layer of a "Voir sur la carte" link or permalink. The layer is looked up in sols-layers.json
+ * for each candidate service, then in the live capabilities of the candidates in order (wms-r then wms-v
+ * for WMS, wmts for WMTS), and added to the map if published. `request` must be stable (read once).
  */
-export default function useDeepLink(search: string = window.location.search): DeepLinkStatus {
-  const [request] = useState(() => readDeepLink(search));
+export function useDeepLinkLayer(request: DeepLinkRequest | null): DeepLinkStatus {
   const addOverlay = useMapStore((state) => state.addOverlay);
 
   const layerRequest = request?.kind === 'layer' ? request : null;
@@ -100,17 +99,32 @@ export default function useDeepLink(search: string = window.location.search): De
 
   const foundService = found?.service ?? null;
   const foundTitle = found?.title ?? '';
+  const knownLegend = known?.match?.layer.legendUrl;
   useEffect(() => {
     if (!foundService || request?.kind !== 'layer') return;
     addOverlay({
       ...toOverlayRef(
-        { service: foundService, name: request.name, endpoint: ENDPOINTS[foundService] },
+        {
+          service: foundService,
+          name: request.name,
+          endpoint: ENDPOINTS[foundService],
+          ...(knownLegend ? { legendUrl: knownLegend } : {}),
+        },
         foundTitle,
       ),
       ...(request.opacity !== undefined ? { opacity: request.opacity } : {}),
       ...(request.visible !== undefined ? { visible: request.visible } : {}),
     });
-  }, [foundService, foundTitle, request, addOverlay]);
+  }, [foundService, foundTitle, knownLegend, request, addOverlay]);
 
   return status;
+}
+
+/**
+ * Reads the first layer of the "Voir sur la carte" link once (`l` permalink, or the `layer/type/url`
+ * alias) and follows it. The other layers of a permalink are followed by DeepLinkNotice (one per entry).
+ */
+export default function useDeepLink(search: string = window.location.search): DeepLinkStatus {
+  const [request] = useState(() => readDeepLink(search));
+  return useDeepLinkLayer(request);
 }

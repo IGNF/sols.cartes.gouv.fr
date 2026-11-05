@@ -6,7 +6,16 @@ import { fromLonLat } from 'ol/proj';
 import { useEffect, type RefObject } from 'react';
 import { CONTROL_LABELS, DEFAULT_CONTROLS_OPTIONS, INITIAL_VIEW } from '../config/map';
 import { labelControlButtons } from '../map/labelControls';
+import { readPermalinkView } from '../map/permalink';
 import { useMapStore } from '../store/useMapStore';
+
+/** Initial centre (lon, lat) and zoom: the permalink's `c` and `z` when present, else the configured view. */
+export function initialView(search: string): { centerLonLat: [number, number]; zoom: number } {
+  const permalink = readPermalinkView(search);
+  return permalink
+    ? { centerLonLat: permalink.center, zoom: permalink.zoom }
+    : { centerLonLat: [...INITIAL_VIEW.centerLonLat], zoom: INITIAL_VIEW.zoom };
+}
 
 /**
  * Creates the single OpenLayers map on the given element and publishes it in the store.
@@ -23,12 +32,13 @@ export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap 
     controls.forEach((control) => {
       if (control instanceof Rotate) labelControlButtons(control, CONTROL_LABELS.rotate);
     });
+    const { centerLonLat, zoom } = initialView(window.location.search);
     const instance = new OlMap({
       target,
       controls,
       view: new View({
-        center: fromLonLat([...INITIAL_VIEW.centerLonLat]),
-        zoom: INITIAL_VIEW.zoom,
+        center: fromLonLat(centerLonLat),
+        zoom,
         minZoom: INITIAL_VIEW.minZoom,
         maxZoom: INITIAL_VIEW.maxZoom,
       }),

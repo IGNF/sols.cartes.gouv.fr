@@ -105,6 +105,7 @@ export function buildSolsLayersFile(
         title: entry.title,
         endpoint: endpoints[service],
         ...(entry.crs ? { crs: entry.crs } : {}),
+        ...(entry.legendUrl ? { legendUrl: entry.legendUrl } : {}),
       });
     }
     return {
