@@ -4,15 +4,19 @@ enable:
   
 tooling:
   - .github/**/*
+  - .claude/**/*
   - .gitignore
+  - .prettierignore
   - .vscode/**/*
 
 
 documentation:
-  - docs/*
+  - doc/**/*
 
 enhancement:
-  - src/**/*
+  - apps/**/*
+  - scripts/**/*
 
 quality:
+  - e2e/**/*
   - tests/**/*
