@@ -46,3 +46,10 @@ gn-ui-copy-text-button .opacity-50 {
   background-color: var(--background-action-high-blue-france, #000091) !important;
   opacity: 1 !important;
 }
+
+/* Pied de page v1 : « Paramètres d'affichage » masqué dans le catalogue (C8). Le mode sombre DSFR
+   (feuille scheme) assombrirait l'en-tête et le fond, mais les gabarits amont gardent leurs couleurs
+   Tailwind claires : textes illisibles. Voir doc/agents/geonetwork-ui.md §15 et QUESTIONS C-6. */
+#pied-de-page .fr-footer__bottom-item:has(> [aria-controls='fr-theme-modal']) {
+  display: none;
+}

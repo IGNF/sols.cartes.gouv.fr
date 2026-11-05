@@ -143,8 +143,21 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
 - Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.
 
+## C-5. Boucle de l'aperçu sur un lien WFS introuvable (catalogue-dev, C10)
+
+- Constat : sur notre build (`main`, `10fa84a`) et sur cartes.gouv.fr, la sélection d'un lien WFS introuvable (`wfs.featuretype.notfound`) affiche le message d'erreur et n'émet plus aucune requête (mesures sur 40 s, 7 fiches, onglets Carte, Tableau, Graphique et formulaires d'API ; `doc/agents/geonetwork-ui.md` §14).
+- Question : sur quelle fiche, quel lien, quel onglet et quel navigateur la boucle a-t-elle été observée (une capture de l'onglet Réseau aiderait) ?
+- Défaut appliqué : pas de patch tant que la boucle n'est pas reproduite.
+
 ## E-3. Adresse de contact et lien « Nous contacter » (edito, E7)
 
 - Question : la page d'aide demande une section « Nous contacter » avec un lien mailto ; aucune adresse de contact du service n'est connue. Par ailleurs `brand.json` donne `/aide/#contact` : ce chemin sans langue passe par une page de renvoi (meta refresh) qui perd l'ancre.
 - Options : (a) adresse réelle fournie par l'équipe (INRAE / GIS Sol / IGN) ; (b) formulaire hébergé ailleurs ; pour l'ancre : (c) `brand.json` passe à `/fr/aide/#contact` ; (d) garder `/aide/#contact` (arrivée en haut de la page d'aide).
 - Défaut appliqué : adresse provisoire `contact@example.org` (domaine réservé, marquée « (adresse provisoire) ») dans `apps/accueil/src/_data/site.js` (`contactEmail`) ; le balisage partagé de l'edito utilise `/fr/aide/#contact` ; (c) proposé pour `brand.json`.
+
+## C-6. Mode sombre dans le catalogue (catalogue-dev, C8)
+
+- Constat : la modale DSFR « Paramètres d'affichage » fonctionne dans le datahub, mais le mode sombre ne s'applique qu'aux éléments DSFR ; les gabarits amont (couleurs Tailwind fixes) restent clairs et deviennent illisibles sur fond sombre.
+- Options : (a) masquer le bouton dans le catalogue, catalogue toujours clair ; (b) feuille de surcharge des couleurs amont pour le sombre (travail important, à maintenir à chaque montée de version) ; (c) laisser le bouton sans effet.
+- Défaut appliqué : (a). Détails : `doc/agents/geonetwork-ui.md` §15.
+
