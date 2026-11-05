@@ -475,6 +475,40 @@ Mesures sur le build de `main` (`45fe939`, patchs 0001 à 0005), Playwright, tou
 axe sur la recherche (bureau et mobile) : 0 violation critique ou sérieuse ; `heading-order` (modérée) inchangée.
 Captures : `doc/screenshots/C9/`.
 
+## 14. Boucle WFS, lien de fiche « Voir sur la carte », mode sombre (C10)
+
+**(a) Boucle sur un lien WFS introuvable : non reproduite.** Mesures Playwright sur le build de `main` (`10fa84a`), puis
+sur cartes.gouv.fr (v1.6.2, même code), en comptant toutes les requêtes et les erreurs console par tranches de 5 s :
+
+- Aperçu carte, sélection d'un lien WFS sur les 7 fiches : de 0 à 16 requêtes juste après la sélection, puis 0 nouvelle
+  requête sur 40 s. Sur `osf63e6c177-…` (`…_wfs:cd_0_30`) et `osfd95b355a-…` (`…_wfs:geometrie_ucs`), noms absents des
+  capacités WFS : message « La classe d'objets n'a pas été trouvée dans le service » (`wfs.featuretype.notfound`), quelques
+  erreurs console une seule fois, puis plus rien.
+- Onglets « Tableau » et « Graphique » et formulaires d'API des liens WFS : 0 requête et 0 erreur après les 5 premières
+  secondes.
+- cartes.gouv.fr, même fiche et même lien : 0 requête après la sélection.
+
+Pas de patch sans reproduction (question C-5 : fiche, lien, onglet et navigateur où la boucle a été vue).
+
+**(b) Lien « Voir sur la carte » au niveau de la fiche** (patch 0006). Sous les cartes « Téléchargements et flux », un
+lien texte DSFR par lien WMS ou WMTS de la fiche, libellé « Voir sur la carte : <nom> (<TYPE>) », `href` relatif au format
+`l=` décidé en C6, même onglet (`external_viewer_open_new_tab = false`). L'URL est calculée par le composant amont
+(`ExternalViewerButtonComponent`, accesseur `ignExternalViewerUrl` extrait de `openInIgnExternalViewer`), donc identique à
+celle du bouton de l'aperçu carte. Exemple (`osff858525a-…`) :
+`/explorer-les-cartes/?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`. Le navigateur affiche
+la version encodée (`%24GEOPORTAIL%3AOGC%3AWMS%281%3B1%3B1%3B0%29`), comme le lien du catalogue cartes.gouv.fr cité par
+le propriétaire ; les deux se décodent à l'identique. Les liens TMS restent dans l'aperçu carte seulement (le format `l=`
+d'un TMS ne porte pas de nom de couche, §10).
+
+**(c) Mode clair/sombre : non fait, coût élevé.** Le build du datahub ne charge que `core` et quelques composants DSFR
+(`apps/datahub/project.json`, cible `build`, `styles`) : la feuille `scheme` (jetons sombres, `data-fr-theme`) n'y est pas,
+et poser `data-fr-theme="dark"` ne change rien (vérifié). L'ajouter ne suffirait pas : les gabarits amont utilisent 194
+classes Tailwind de couleur fixe (`bg-white`, `bg-gray-*`, `text-gray-*`) et la palette de `tailwind.base.css`, qui
+resteraient claires sous un en-tête sombre. Un mode sombre cohérent demande une surcharge de ces couleurs (feuille dédiée
+importante) ; à traiter avec C8 (paramètres d'affichage du pied de page v1) si le propriétaire le confirme.
+
+Captures : `doc/screenshots/C10/`.
+
 ## 15. En-tête et pied de page v1 (C8)
 
 Référence : `doc/agents/edito.md`, section « En-tête et pied de page partagés v1 », sur la branche E7

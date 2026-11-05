@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'packages/**'
       - 'scripts/**'
       - 'e2e/**'
       - 'package.json'
@@ -12,6 +13,7 @@ on:
       - '.github/workflows/ci-root.yml'
   pull_request:
     paths:
+      - 'packages/**'
       - 'scripts/**'
       - 'e2e/**'
       - 'package.json'

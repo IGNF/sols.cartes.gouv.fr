@@ -158,3 +158,14 @@ test('the CSS overrides ship in overlay/ and are loaded by the build (patch 0003
   assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-overrides.css",?$/m)
   assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-shared.css",?$/m)
 })
+
+test('patch 0006 adds record-level map links on the expected files (C10)', () => {
+  const patch = readFileSync(join(PATCHES_DIR, '0006-record-map-links.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(patch).sort(), [
+    'apps/datahub/src/app/record/record-apis/record-apis.component.html',
+    'apps/datahub/src/app/record/record-apis/record-apis.component.ts',
+    'libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html',
+    'libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts',
+  ])
+  assert.match(patch, /\['wms', 'wmts'\]/)
+})

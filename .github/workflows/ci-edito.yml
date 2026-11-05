@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'packages/**'
       - 'apps/accueil/**'
       - 'package.json'
       - 'bun.lock'
@@ -11,6 +12,7 @@ on:
       - '.github/workflows/ci-edito.yml'
   pull_request:
     paths:
+      - 'packages/**'
       - 'apps/accueil/**'
       - 'package.json'
       - 'bun.lock'
