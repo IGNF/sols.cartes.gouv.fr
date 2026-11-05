@@ -4,7 +4,7 @@ Quatre workflows GitHub Actions, filtrés par chemin pour ne lancer que ce qui e
 
 | Workflow | Déclencheurs (`paths`) | Étapes |
 |---|---|---|
-| `ci-root.yml` | `scripts/**`, `package.json`, `bun.lock`, `.bun-version`, le workflow | prettier, `tsc --strict` sur `scripts/`, `build-all --skip-build` |
+| `ci-root.yml` | `scripts/**`, `e2e/**`, `package.json`, `bun.lock`, `.bun-version`, le workflow | prettier, `tsc --strict` sur `scripts/`, `build-all --skip-build` |
 | `ci-edito.yml` | `apps/accueil/**`, `package.json`, `bun.lock`, `.bun-version`, le workflow | `bun run --if-present lint`, `test`, `build` dans `apps/accueil` |
 | `ci-carto.yml` | `apps/explorer-les-cartes/**`, `package.json`, `bun.lock`, `.bun-version`, le workflow | `bun run --if-present lint`, `typecheck`, `test`, `build` dans `apps/explorer-les-cartes` |
 | `ci-catalogue.yml` | `apps/rechercher-une-donnee/**`, `doc/agents/edito.md` (source de l'en-tête/pied de page injectés au build), `.nvmrc`, le workflow | `npm ci`, `lint`, `test` (si présents), `build` ; toutes les étapes sont sautées tant que `apps/rechercher-une-donnee/package-lock.json` n'existe pas |
