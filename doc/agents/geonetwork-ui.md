@@ -173,3 +173,125 @@ sha256sum dist/apps/datahub/main.*.js
 ```
 
 La vérification navigateur (§1) a servi `dist/apps/datahub` sous `/rechercher-une-donnee/` avec un petit serveur statique à repli SPA. Playwright (Chromium sans interface) a ouvert `search?organization=INRAE%20-%20Info%26Sols` et intercepté les `POST .../_search`.
+
+## 8. La brique `apps/rechercher-une-donnee` (C2)
+
+Construite selon l'option A du §5 : rien du dépôt amont n'est copié dans notre dépôt, tout est rejoué depuis la ref épinglée.
+
+| Fichier | Rôle |
+| --- | --- |
+| `upstream.json` | **Seul endroit** de la ref : dépôt, `ref` (`v1.6.2`), `commit` (SHA complet vérifié après clonage), `app`, `baseHref`, `devPort`. |
+| `config/default.toml` | Notre configuration, copiée sur `.upstream/conf/default.toml` (que le build publie en `assets/configuration/default.toml`). |
+| `patches/*.patch` | Patchs rejoués dans l'ordre lexical, listés dans `doc/catalogue-patches.md` (le lint échoue sinon). |
+| `scripts/prepare.mjs` | Clone superficiel (`git clone --depth 1 --branch <ref>`) dans `.upstream/`, contrôle du SHA, remise à zéro (`git checkout -- .` puis `git clean -fd`, sans toucher `node_modules`), `npm ci` seulement si `package-lock.json` amont a changé (empreinte dans `node_modules/.sols-install-stamp`), patchs (`git apply --check` puis `git apply`), copie de la config. Idempotent. |
+| `scripts/build.mjs`, `scripts/dev.mjs` | `nx build datahub --configuration=production` puis copie vers `dist/` ; `nx serve datahub --port=4200`. Le base href `/rechercher-une-donnee/` vient de `project.json` (patch 0002), commun au build et au serveur de dev. |
+| `scripts/lint.mjs`, `scripts/checks.mjs`, `test/` | Vérifications hors ligne de ce que la brique possède : syntaxe des scripts, `upstream.json`, config (clés obligatoires, `datahub_url`, `config_filters`, guillemets), patchs documentés, `baseHref` du patch 0002 égal à `upstream.json`. Le code amont n'est ni linté ni testé ici. |
+| `.gitignore` | `.upstream/` (~2 Go avec `node_modules`) et `dist/`. |
+| `package-lock.json` | Lockfile vide (aucune dépendance propre), commité pour activer le job `ci-catalogue.yml`. |
+
+Commandes (dans `apps/rechercher-une-donnee`, avec **npm**, hors workspace bun) :
+
+```bash
+npm run dev               # prépare .upstream puis http://localhost:4200/rechercher-une-donnee/
+npm run build             # prépare puis build de production dans dist/ (base href /rechercher-une-donnee/)
+npm run lint              # hors ligne, < 1 s
+npm test                  # node --test, hors ligne
+npm run prepare-upstream  # clone + install + patchs + config seulement ; --no-install pour sauter npm ci
+```
+
+Depuis la racine : `bun run dev:catalogue`, `bun run lint`, `bun run test`, `bun run build:all` (registre `scripts/apps.ts`).
+
+Mesures (Node 26.5.0, npm 12.0.2, 22 cœurs, 30 Go) : premier `npm run build` (clone + `npm ci` + build) 80 s, pic mémoire
+4,9 Go ; builds suivants 39 s (pas de nouvel `npm ci`) ; `dev` répond sur le port 4200 après une compilation d'environ une minute.
+
+Versions et options npm :
+
+- Node >= 24 (`engines`, contrôlé par `prepare.mjs`), npm >= 10. Construire et tester avec le **majeur de `.nvmrc`
+  (24)**, celui de la CI : `npm run lint` avertit (sans échouer) si le Node courant a un autre majeur. Exemple : avant
+  la correction, `cpSync(..., { errorOnExist: true })` passait en Node 26 et échouait en Node 24 (`ERR_FS_CP_EEXIST`) ;
+  l'overlay est désormais copié fichier par fichier avec `COPYFILE_EXCL`. Vérifié en Node 24.18.0 / npm 11.16.0.
+- `npm ci --allow-remote=all` est passé par `prepare.mjs` : npm 12 refuse par défaut le tarball distant `xlsx` du lockfile
+  amont (`EALLOWREMOTE`). npm 10 et 11 autorisent déjà ces tarballs et signalent seulement l'option inconnue.
+- npm 12 bloque aussi les scripts d'installation (`allow-scripts`) : on ne les autorise pas, le build n'en a pas besoin.
+
+Configuration retenue (`config/default.toml`) :
+
+- `[global]` : `geonetwork4_api_url = "https://data.geopf.fr/catalog"`, `datahub_url = "/rechercher-une-donnee"`. `sso_url`
+  et `client_id` sont retirés, mais le code IGN initialise Keycloak avec ses valeurs par défaut (§2.3) : C3 retire ce bloc.
+- `[search]` : `config_filters.groupPublished = ['gissol-osf_g']` (patch 0001, décision C-1), `advanced_filters` sans
+  `organization` (§2.2). Les recherches `mainSearch` et `organization-page` sont filtrées ; la liste `/organisations`
+  (agrégation) ne l'est pas, voir `doc/catalogue-patches.md`.
+- `[map]` : pas encore de `external_viewer_url_template` (C4, décision C-3) ; fond `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2`.
+- `[translations.fr]` : libellés IGN repris. La langue de l'interface suit encore le navigateur (repli `en`,
+  `libs/util/i18n/src/lib/i18n.providers.ts:35`) : le forçage du français est traité en C3.
+- DSFR : 1.15.3 embarqué par le fork, conservé dans le catalogue seulement (décision C-2).
+
+Vérification navigateur du build (Playwright, `doc/screenshots/C2/`) : `/rechercher-une-donnee/` sans paramètre affiche
+« 7 résultats. », la requête de résultats porte `query_string` `groupPublished:("gissol-osf_g")` ; `search?q=route`
+(9 fiches sans le filtre, même requête `query_string` sur l'API) affiche « Aucun résultat. ». Les requêtes d'agrégation (`size: 0`) ne
+portent pas le filtre, conformément à la limite du patch 0001. Deux erreurs console viennent du code IGN (iframe Keycloak
+bloquée par la CSP de `sso.geopf.fr`, une 400) et seront traitées en C3 avec l'en-tête.
+
+Contenu d'en-tête et pied de page prévu pour C3 (orchestrateur) : titre de service « sols.cartes.gouv.fr », slogan
+« Observatoire des sols de France », navigation Accueil `/`, Rechercher une donnée `/rechercher-une-donnee/`, Explorer les
+cartes `/explorer-les-cartes/`, lien rapide « Site du GIS Sol » ; balisage de référence dans `doc/agents/edito.md`.
+
+## 9. Interface française, en-tête et pied de page, périmètre (C3)
+
+Référence d'en-tête et de pied de page : `doc/agents/edito.md` tel que sur `origin/main` au début de C3 (merge `94fb97f`,
+dernier commit du fichier `96723edc`), section « En-tête et pied de page partagés ».
+
+Langue :
+
+- Aucune option de config ne fixe la langue par défaut à v1.6.2. `[global] languages` n'affiche qu'un sélecteur
+  (`showLanguageSwitcher = getGlobalConfig().LANGUAGES?.length > 0`, `home-header.component.ts:91`). L'initialiseur i18n
+  choisit `localStorage['geonetwork-ui-language']`, puis la langue du navigateur, puis `en`
+  (`libs/util/i18n/src/lib/i18n.providers.ts:26-36`, clé dans `i18n.constants.ts:17`).
+- Mécanisme retenu (patch 0003, `index.html`) : un script en ligne écrit `geonetwork-ui-language = fr` avant le démarrage.
+  Sans `localStorage` (navigation privée stricte), la langue du navigateur s'applique. `languages` reste absent : pas de
+  sélecteur. `<html lang="fr">`.
+
+En-tête et pied de page :
+
+- `scripts/layout.mjs` extrait les trois blocs HTML (liens d'évitement, en-tête, pied de page) de `doc/agents/edito.md`,
+  déplace `aria-current="page"` sur « Rechercher une donnée » (`upstream.json` `baseHref`) et recopie le lien « Site du GIS
+  Sol » dans `fr-header__menu-links`. En mode `angular`, le JS DSFR ne fait pas cette copie et l'annonce en console. Les
+  gabarits sont écrits dans `.upstream/apps/datahub/src/app/sols-layout/` à chaque `prepare`, à côté des trois composants
+  autonomes de `overlay/` (sélecteurs `sols-skiplinks`, `sols-header`, `sols-footer`, `:host { display: contents }`).
+  Seule source : un changement des partiels edito (E5 : sélecteur de langue, pages sous `/fr/`) est repris au build
+  suivant. Le job `ci-catalogue.yml` ne se déclenche pas sur `doc/agents/edito.md` : relancer `npm test` dans la brique
+  après une modification des partiels.
+- Le patch 0003 branche ces composants dans `app.component.html` (`<main id="contenu" tabindex="-1">` autour du routeur) et
+  retire l'habillage cartes.gouv.fr, Keycloak, Matomo et DSFR analytics (détail dans `doc/catalogue-patches.md`).
+- Configuration seule : polices Marianne (`[theme] main_font`, `title_font`), favicon DSFR
+  (`/rechercher-une-donnee/assets/dsfr/favicon/favicon.ico`, copié par le patch 0003), `record_kind_quick_filter = false`
+  (toutes les fiches sont des jeux de données), `[metadata-quality] enabled = false` (indicateur absent des fiches GPF,
+  avertissement console sinon), titres d'onglet et `h1` unique de la page de recherche (`[translations.fr]`
+  `datahub.pageTitle.*`, `datahub.header.title.html`).
+- DSFR : 1.15.3 du fork (décision C-2) ; les classes de l'en-tête et du pied de page edito sont identiques en 1.14.2 et
+  1.15.3.
+
+Périmètre (voir aussi `doc/catalogue-patches.md`, « Limites connues ») :
+
+| Route ou bloc | État |
+| --- | --- |
+| Recherche (`search`) | Filtrée (patch 0001, `mainSearch`) |
+| `organization/<nom>` | Filtrée (patch 0001, `organization-page`) : 0 fiche pour l'IGN (87 fiches hors filtre) |
+| `organisations` | Redirigée vers la recherche (patch 0003) |
+| Fiche : « Explorez le catalogue » (fiches similaires) | Masquée (patch 0003) ; avant : 1 fiche hors périmètre sur `osf63e6c177-…` |
+| Fiche hors périmètre saisie à la main (`dataset/<uuid>`) | Non filtrée (le sous-portail C-1 le réglerait) |
+| Fiches associées déclarées dans la métadonnée | Non filtrées (liens explicites du producteur) |
+| Listes de valeurs des filtres avancés | Non filtrées (agrégations) |
+
+Vérification (Playwright, aperçu complet `PORT=8091 bun run preview:all`, contexte navigateur `en-US` sans stockage) :
+titre « Rechercher une donnée - Observatoire des sols », `lang="fr"`, aucune chaîne anglaise repérée, en-tête
+« sols.cartes.gouv.fr » / « Observatoire des sols de France », `aria-current` sur `/rechercher-une-donnee/`, 4 liens bas de
+pied de page, « 7 résultats. », **aucune erreur ni avertissement console** sur la recherche (bureau 1280×900 et mobile
+393×851). Messages restants, hors périmètre de C3 :
+
+- Fiche `osf63e6c177-…` : `error: Invalid layer for legend creation` (légende de l'aperçu carte, geospatial-sdk).
+- Fiche `osfd95caa37-…` : `Error creating legend for layer INRAE_CARTE-SOLS_WMTS: ... was not found in the endpoint
+  capabilities`. Le nom WMTS publié dans le CSW n'existe pas (cf. `doc/agents/gpf-sols-data.md` §5), c'est une donnée à
+  corriger côté producteur.
+
+Captures : `doc/screenshots/C3/` (recherche bureau et mobile, menu mobile, pied de page, fiche).
