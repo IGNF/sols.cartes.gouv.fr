@@ -334,7 +334,7 @@ Issue commune :
 | Élément | Sélecteur conseillé |
 |---|---|
 | Carte | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas` |
-| Bouton du panneau latéral | `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
+| Bouton du panneau latéral | dans la barre d'outils au-dessus de la carte (M7) : `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
 | Onglets | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })` |
 | Fond orthophotos | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut |
 | Ajouter une couche sols | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre ») |
@@ -368,4 +368,72 @@ Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lent
 - `initialPanelOpen` (store) : ouvert si `matchMedia('(min-width: 48em)')` (DSFR `md`), fermé sinon ; ouvert sans `matchMedia`.
   À 375 px, la carte commence au-dessus du pli (y ≈ 490 px), « Afficher le panneau » reste avant la carte ; clavier inchangé.
 - Impact e2e (projet mobile) : ouvrir le panneau avant de cibler les onglets « Fonds de carte » / « Données sols ».
+
+## 9. Mise en page et en-tête v1 (M7, 2026-11-05)
+
+Brief : `.claude/commands/refine.md` (v1), plan `doc/v1/PLAN.md`, maquette Figma `1:10562`, contenu partagé `packages/brand`.
+
+### 9.1 Mise en page cartes.gouv.fr
+
+- `App.tsx` / `App.css` : en vue carte, à partir de 48em (DSFR `md`), colonne flex de hauteur `100dvh` : en-tête, zone principale
+  (`flex: 1`, `min-height: 0`), pied de page compact ; la page ne défile pas. Le `h1` « Explorer les cartes » est en `fr-sr-only`
+  (pas de bloc de titre visible). Sous 48em, la page défile : carte (70dvh) d'abord, panneau en dessous.
+- `MapExplorer` : barre d'outils fine (« Masquer/Afficher le panneau », « Version accessible de la liste des données »), avis du lien
+  profond, puis corps en ligne : panneau ancré à gauche, largeur `clamp(18rem, 30 %, 26rem)` avec défilement propre, carte `flex: 1`.
+  Mesuré : carte à 70 % (1024 px) et 71 % (1440 px) de la largeur, panneau ouvert. `useMap` suit la taille par `ResizeObserver`.
+- Vue liste (`?vue=liste`) : page classique qui défile, même en-tête et pied de page compact.
+
+### 9.2 En-tête v1 (`@sols/brand`)
+
+- Dépendance `"@sols/brand": "workspace:*"`, `import brand from '@sols/brand/brand.json'` (`src/config/site.ts`), images importées
+  par Vite (`@sols/brand/assets/*`, publiées dans `dist/assets`). `SECTION_PATHS` et `EXTERNAL_LINKS` en dérivent. Aucun contenu
+  d'en-tête ou de pied de page n'est écrit dans la brique.
+- `Header` react-dsfr : lien de marque `header.brandLink` (`/`, jamais cartes.gouv.fr), Marianne, `operatorLogo` = logo GIS Sol
+  (`header.operator.logo`/`logoAlt`), titre `service.title` + badge `badges.carto` (« Explorer », `fr-badge--sm
+  fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` en balisage DSFR direct : le composant `Badge` de react-dsfr
+  ajoute `fr-badge--no-icon` sans sévérité), slogan `service.tagline`. Pas de `navigation` (pas de barre `fr-nav`), pas de
+  « Se connecter » (`header.tools.login` vaut `false`).
+- Marque Observatoire (`header.operator.mark`, `alt=""`) : react-dsfr n'accepte qu'une image d'opérateur ; la marque est dessinée en
+  CSS dans `.fr-header__service::after` (le DSFR utilise `::before` pour le séparateur), image passée par la variable
+  `--osf-mark` posée sur l'en-tête. **`osf-carotte.png` est un PNG RGB à fond blanc opaque** : tuile arrondie blanche, invisible en
+  thème clair, assumée en sombre ; une version à fond transparent dans `packages/brand` supprimerait la tuile.
+- Menus « Aide » et « Services » (`src/components/layout/HeaderMenu.tsx`) : react-dsfr 1.36 n'a pas de menu dans
+  `quickAccessItems`, mais accepte des éléments JSX : chaque menu est un composant React (bouton `fr-btn` + icône de la marque,
+  chevron, `aria-expanded`/`aria-controls`, liste `fr-menu__list` de liens `fr-nav__link` avec la description en `fr-hint-text`),
+  état React (pas de `fr-collapse`, dont le script DSFR lutterait avec React). Échap (écouté en phase de capture, pour ne pas fermer
+  la modale du menu mobile), un clic ou le focus hors du menu le ferment ; Échap rend le focus au bouton. react-dsfr rend les outils
+  deux fois (bureau et modale mobile) : identifiants par `useId`.
+- Icônes : `react-dsfr update-icons` ne lit que les sources de l'application ; les icônes de `brand.json` sont donc listées dans
+  `HEADER_MENU_ICONS` (un test vérifie que les icônes de la marque y figurent ; il a détecté `fr-icon-grid-fill`).
+
+### 9.3 Pied de page compact
+
+`SiteFooter` : `fr-footer` réduit à `fr-footer__bottom` (`footer.compactOnCarto`) : liens `footer.bottomLinks`, « Paramètres
+d'affichage » (`headerFooterDisplayItem`, la modale reste montée par le `Header`), « Haut de page » vers `#en-tete`. 52 px de haut à
+partir de 48em. Plus de description, de partenaires, de liens de contenu ni de licence sur la carto (ils restent sur l'edito et le
+catalogue).
+
+### 9.4 Thème des contrôles
+
+- Mesure (clair, sombre, et bascule par « Paramètres d'affichage ») : le zoom geopf-ext (`fr-btn fr-btn--tertiary`), le plein
+  écran, la recherche et le gestionnaire de couches suivent déjà le thème DSFR (variables `--background-*`, `--text-*`). Ceux qui ne
+  le suivaient pas : les contrôles OpenLayers (attributions, échelle, rotation), blancs en sombre, car `ol.css` utilise ses propres
+  variables `--ol-*`.
+- Correctif : `MapView.css` fait pointer `--ol-background-color`, `--ol-accent-background-color`, `--ol-subtle-background-color`,
+  `--ol-partial-background-color` (`color-mix` à 80 %), `--ol-foreground-color`, `--ol-subtle-foreground-color` et
+  `--ol-brand-color` vers les jetons DSFR. `check:map` vérifie que le zoom et les attributions prennent le fond
+  `--background-default-grey` dans les deux thèmes.
+
+### 9.5 Vérifications
+
+Vitest 189 tests ; `check:map` 76/76 ; axe 0 violation : carte claire et sombre (1440 px), menu « Services » ouvert, menu mobile avec
+« Aide » ouvert, vue liste, lien `l=`. Captures `doc/screenshots/M7/`.
+
+### 9.6 Impact pour la suite e2e
+
+- Plus de barre de navigation : les liens vers le catalogue et la carte sont dans le menu « Services » de l'en-tête
+  (`getByRole('button', { name: 'Services' })` dans `.fr-header__tools`, puis les liens).
+- Le `h1` « Explorer les cartes » est masqué (`fr-sr-only`) : chercher le titre par rôle, pas sa visibilité.
+- Pied de page compact : plus de liens de contenu (legifrance...), de partenaires ni de licence sur la carto.
+- « Version accessible de la liste des données » et le bouton du panneau sont dans la barre d'outils au-dessus de la carte.
 
