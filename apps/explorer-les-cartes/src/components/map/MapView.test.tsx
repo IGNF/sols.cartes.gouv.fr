@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   useBaseLayer: vi.fn(),
   useMapControls: vi.fn(),
   useLayerSwitcher: vi.fn(),
+  useOverlays: vi.fn(),
 }));
 
 vi.mock('../../hooks/useMap', () => ({ default: () => null }));
@@ -17,6 +18,7 @@ vi.mock('../../hooks/useBaseLayerCatalogue', () => ({ default: () => state.catal
 vi.mock('../../hooks/useBaseLayer', () => ({ default: state.useBaseLayer }));
 vi.mock('../../hooks/useMapControls', () => ({ default: state.useMapControls }));
 vi.mock('../../hooks/useLayerSwitcher', () => ({ default: state.useLayerSwitcher }));
+vi.mock('../../hooks/useOverlays', () => ({ default: state.useOverlays }));
 
 const PLAN_IGN = {
   id: 'plan-ign',
@@ -37,6 +39,7 @@ describe('MapView', () => {
     expect(region).toHaveAttribute('tabindex', '0');
     expect(state.useMapControls).toHaveBeenCalled();
     expect(state.useLayerSwitcher).toHaveBeenCalled();
+    expect(state.useOverlays).toHaveBeenCalled();
   });
 
   it('annonce le chargement du fond de carte', () => {

@@ -1,7 +1,16 @@
 import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_BASE_LAYER_ID } from '../config/map';
-import { initialMapState, useMapStore } from './useMapStore';
+import type { OverlayRef } from '../map/overlays';
+import { initialMapState, initialTab, useMapStore } from './useMapStore';
+
+const LOIRET: OverlayRef = {
+  key: 'wms-vector:rrp_loiret',
+  service: 'wms-vector',
+  name: 'rrp_loiret',
+  title: 'RRP du Loiret',
+  endpoint: 'https://data.geopf.fr/wms-v/ows',
+};
 
 describe('useMapStore', () => {
   beforeEach(() => {
@@ -33,5 +42,31 @@ describe('useMapStore', () => {
   it('change le fond actif', () => {
     useMapStore.getState().setActiveBaseLayer('orthophotos');
     expect(useMapStore.getState().activeBaseLayerId).toBe('orthophotos');
+  });
+
+  it('ajoute une couche sols une seule fois, puis la retire', () => {
+    const { addOverlay, removeOverlay } = useMapStore.getState();
+    addOverlay(LOIRET);
+    addOverlay(LOIRET);
+    expect(useMapStore.getState().overlays).toEqual([LOIRET]);
+    removeOverlay(LOIRET.key);
+    expect(useMapStore.getState().overlays).toEqual([]);
+  });
+
+  it('marque une couche indisponible, et oublie la marque quand elle est retirée', () => {
+    const { addOverlay, markOverlayUnavailable, removeOverlay } = useMapStore.getState();
+    addOverlay(LOIRET);
+    markOverlayUnavailable(LOIRET.key);
+    markOverlayUnavailable(LOIRET.key);
+    expect(useMapStore.getState().unavailableOverlays).toEqual([LOIRET.key]);
+    removeOverlay(LOIRET.key);
+    expect(useMapStore.getState().unavailableOverlays).toEqual([]);
+  });
+
+  it('change d’onglet et ouvre « Données sols » pour un lien « Voir sur la carte »', () => {
+    useMapStore.getState().setActiveTab('sols');
+    expect(useMapStore.getState().activeTab).toBe('sols');
+    expect(initialTab('?layer=x&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v')).toBe('sols');
+    expect(initialTab('')).toBe('fonds');
   });
 });

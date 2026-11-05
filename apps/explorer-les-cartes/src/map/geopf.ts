@@ -25,3 +25,12 @@ export async function loadSearchEngine() {
     await import('geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngine');
   return module.default;
 }
+
+/**
+ * Registers a projection (proj4 definition and extent) with OpenLayers through the geopf CRS module,
+ * loaded on demand: needed by WMTS layers published only in Lambert-93 (EPSG:2154).
+ */
+export async function loadCrs(name: string): Promise<void> {
+  const module = await import('geopf-extensions-openlayers/src/packages/CRS/CRS');
+  module.default.loadByName(name);
+}
