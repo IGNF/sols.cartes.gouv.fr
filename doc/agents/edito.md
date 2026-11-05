@@ -44,11 +44,17 @@ apps/accueil/
   chemin de `site.sections` : `/mentions-legales/` → `/fr/mentions-legales/` sur une page française) et
   `locale_links` (traductions d'une page, pour `hreflang`, le sitemap et le sélecteur de langue).
 - Chaînes : une seule source par langue, `src/_data/i18n/<langue>.js`, exposée aux gabarits par la variable `t`.
-  Aucune chaîne dans les gabarits.
+  Aucune chaîne dans les gabarits, y compris la page de référence partagée (`t.partage`).
 - Chaque page porte `<html lang>` de sa langue et `<link rel="alternate" hreflang>` vers elle-même, ses traductions et
-  `x-default` (le chemin sans langue, c'est-à-dire la page de renvoi).
-- Sélecteur de langue : composant DSFR `fr-translate` dans les outils de l'en-tête ; chaque lien porte `hreflang` et
-  `lang` et pointe vers la traduction de la page courante (accueil de la langue à défaut).
+  `x-default`. `x-default` vise la page canonique française (`/fr/...`, filtre `defaultLocaleUrl`), pas la page de
+  renvoi : une cible `hreflang` doit être canonique, or la page de renvoi est canonicalisée vers `/fr/...`.
+- Sélecteur de langue : composant DSFR `fr-translate` dans les outils de l'en-tête ; le bouton porte un `title`
+  traduit (« Sélectionner une langue » / « Select a language », comme l'exemple DSFR 1.14.2) ; chaque lien porte
+  `hreflang` et `lang` et pointe vers la traduction de la page courante (accueil de la langue à défaut).
+- Erreur DSFR amont connue : en enchaînant très vite Échap, Entrée et Tab sur le bouton du sélecteur, le JS DSFR
+  1.14.2 lève `Cannot read properties of null (reading 'node')` dans `dsfr.module.min.js` (constatée lors des tests
+  clavier automatisés). Elle vient du bundle DSFR, pas du balisage du site, ne bloque pas le menu et n'est pas
+  reproductible en usage normal ; à signaler en amont (https://github.com/GouvernementFR/dsfr) si elle réapparaît.
 - Pages de renvoi (`src/reroute.njk`, pagination sur la collection `fr`) : chaque page française a une page à son
   chemin sans `/fr` (`/`, `/accessibilite/`, `/mentions-legales/`, `/donnees-personnelles/`, `/plan-du-site/`,
   `/articles/`, `/articles/<slug>/`) avec `<meta http-equiv="refresh" content="0; url=/fr/...">`, une canonique vers
