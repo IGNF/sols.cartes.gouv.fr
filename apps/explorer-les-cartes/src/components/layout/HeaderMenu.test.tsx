@@ -66,6 +66,18 @@ describe('HeaderMenu', () => {
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('porte le chevron DSFR piloté par aria-expanded (rotation vérifiée par check:map)', async () => {
+    const { user, button } = setup();
+    const chevron = button.querySelector('.header-menu__chevron');
+    expect(button).toHaveClass('header-menu__btn');
+    expect(chevron).toHaveClass('fr-icon-arrow-down-s-line');
+    expect(chevron).toHaveAttribute('aria-hidden', 'true');
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    await user.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(button.querySelector('.header-menu__chevron')).toBe(chevron);
+  });
+
   it('connaît les icônes des menus de la marque', () => {
     for (const tool of [BRAND.header.tools.help, BRAND.header.tools.services]) {
       expect(HEADER_MENU_ICONS).toContain(tool.icon);

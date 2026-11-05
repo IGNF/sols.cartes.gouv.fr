@@ -51,9 +51,9 @@ export default function HeaderMenu({ menu }: HeaderMenuProps) {
       <button
         ref={button}
         type="button"
-        className={
+        className={`${
           isMenuIcon(menu.icon) ? fr.cx('fr-btn', menu.icon, 'fr-btn--icon-left') : fr.cx('fr-btn')
-        }
+        } header-menu__btn`}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
