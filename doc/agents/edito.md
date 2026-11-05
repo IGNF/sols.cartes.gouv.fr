@@ -52,7 +52,7 @@ apps/accueil/
   traduit (« Sélectionner une langue » / « Select a language », comme l'exemple DSFR 1.14.2) ; chaque lien porte
   `hreflang` et `lang` et pointe vers la traduction de la page courante (accueil de la langue à défaut).
 - Erreur DSFR amont connue : en enchaînant très vite Échap, Entrée et Tab sur le bouton du sélecteur, le JS DSFR
-  1.14.2 lève `Cannot read properties of null (reading 'node')` dans `dsfr.module.min.js` (constatée lors des tests
+  1.14.2 lève `Cannot read properties of null (reading 'node')` dans `dsfr.module.min.js` (relevée en revue lors de tests
   clavier automatisés). Elle vient du bundle DSFR, pas du balisage du site, ne bloque pas le menu et n'est pas
   reproductible en usage normal ; à signaler en amont (https://github.com/GouvernementFR/dsfr) si elle réapparaît.
 - Pages de renvoi (`src/reroute.njk`, pagination sur la collection `fr`) : chaque page française a une page à son
