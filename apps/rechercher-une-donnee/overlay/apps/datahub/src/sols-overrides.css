@@ -26,6 +26,14 @@ datahub-home-header .badge-btn {
 datahub-home-header .badge-btn:hover {
   background-color: var(--background-action-low-blue-france-hover, #c1c1fb);
 }
+/* Puce sélectionnée (patch 0007, aria-pressed) : aspect « tag sélectionnable » DSFR coché. */
+datahub-home-header .badge-btn[aria-pressed='true'] {
+  background-color: var(--background-active-blue-france, #000091);
+  color: var(--text-inverted-blue-france, #f5f5fe);
+}
+datahub-home-header .badge-btn[aria-pressed='true']::before {
+  content: '✓\00a0';
+}
 datahub-home-header > header > div > .py-8 {
   padding-bottom: 0;
 }
