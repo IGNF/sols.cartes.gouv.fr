@@ -7,16 +7,8 @@
     "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
-    "lib": [
-      "ES2022",
-      "DOM"
-    ]
+    "types": ["node"],
+    "lib": ["ES2022", "DOM"]
   },
-  "include": [
-    "tests",
-    "playwright.config.ts"
-  ]
+  "include": ["tests", "playwright.config.ts"]
 }
