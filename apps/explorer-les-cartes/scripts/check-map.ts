@@ -6,8 +6,9 @@
  * the search engine never overlaps the zoom column, the attribution/rotate buttons and the search input
  * have accessible names, and no console error or warning is logged.
  * Sols layers (M4): a layer added from the "Données sols" tab with the keyboard is drawn (GetMap answered
- * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links add their layer
- * (WMS, and the Lambert-93 WMTS reprojected), or show "Couche introuvable" / "Format non pris en charge".
+ * with image/png) and listed in the layer switcher; the "Voir sur la carte" deep links (`l=` cartes.gouv.fr
+ * permalink, and the `layer/type/url` alias) add their layer or show the matching notice.
+ * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
  * Exits 1 on failure.
  */
 import { chromium } from 'playwright';
@@ -130,36 +131,64 @@ const switcherTitles = (page: import('playwright').Page) =>
   await page.close();
 }
 
+const twoLayers = async (page: import('playwright').Page) =>
+  (await switcherTitles(page)).length === 2;
+const alertWith = (text: string) => async (page: import('playwright').Page) =>
+  (await page.getByRole('alert').filter({ hasText: text }).count()) === 1;
 const deepLinks: Array<[string, string, (page: import('playwright').Page) => Promise<boolean>]> = [
+  // Primary format: cartes.gouv.fr permalink, values emitted by the catalogue (C6).
   [
-    'lien WMS (couche du fichier généré)',
+    'lien l= WMS (stock_carbone_fao_fr_wmsv)',
+    '?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    twoLayers,
+  ],
+  [
+    'lien l= WMTS Lambert-93 (INRAE_CARTE-SOLS, reprojeté)',
+    '?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no',
+    twoLayers,
+  ],
+  [
+    'lien l= WMS INRAE_CARTE-SOLS (absent du fichier, trouvé sur wms-r)',
+    '?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    twoLayers,
+  ],
+  [
+    'lien l= vers un nom absent des capacités',
+    '?l=INRAE_CARTE-SOLS_WMTS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no',
+    alertWith('Couche introuvable'),
+  ],
+  [
+    'lien l= TMS (style nommé, non pris en charge)',
+    '?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no',
+    async (page) =>
+      (await page
+        .getByRole('status')
+        .filter({ hasText: 'c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde' })
+        .count()) === 1,
+  ],
+  [
+    'lien l= WMS du RRP du Loiret (erreur serveur M-4)',
+    '?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    alertWith('Couche indisponible'),
+  ],
+  // Secondary alias: layer/type/url.
+  [
+    'alias layer/type/url WMS',
     '?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v',
-    async (page) => (await switcherTitles(page)).length === 2,
+    twoLayers,
   ],
   [
-    'lien WMTS Lambert-93 (INRAE_CARTE-SOLS, reprojeté)',
-    '?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts',
-    async (page) => (await switcherTitles(page)).length === 2,
-  ],
-  [
-    'lien vers un nom absent des capacités',
-    '?layer=INRAE_CARTE-SOLS_WMTS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts',
-    async (page) =>
-      (await page.getByRole('alert').filter({ hasText: 'Couche introuvable' }).count()) === 1,
-  ],
-  [
-    'lien TMS (style MapLibre)',
-    '?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json',
-    async (page) =>
-      (await page.getByRole('status').filter({ hasText: 'Format non pris en charge' }).count()) ===
-      1,
+    'alias vers un hôte refusé',
+    '?layer=x&type=WMS&url=https%3A%2F%2Fexemple.fr%2Fwms-v',
+    alertWith('Lien invalide'),
   ],
 ];
 for (const [label, query, assertion] of deepLinks) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleReport = watchConsole(page);
-  await page.goto(`${url}${query}`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1500);
+  // `load` + a fixed wait: a slow GPF request must not block the check (no reliance on network idle).
+  await page.goto(`${url}${query}`, { waitUntil: 'load' });
+  await page.waitForTimeout(4000);
   check(await assertion(page), label);
   check(
     (await page.getByRole('tab', { name: 'Données sols' }).getAttribute('aria-selected')) ===
@@ -168,6 +197,83 @@ for (const [label, query, assertion] of deepLinks) {
   );
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `${label} : console vide${notes} ${messages.join(' | ')}`);
+  await page.close();
+}
+
+// Keyboard: tabs with arrows, add/remove with Enter/Space keeps focus, Escape closes the layer list.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const focused = () =>
+    page.evaluate(() => {
+      const element = document.activeElement;
+      return `${element?.getAttribute('role') ?? element?.tagName}:${(element?.textContent ?? '').trim()}`;
+    });
+  await page.getByRole('tab', { name: 'Fonds de carte' }).focus();
+  await page.keyboard.press('ArrowRight');
+  check(
+    (await focused()) === 'tab:Données sols' &&
+      (await page.getByRole('heading', { level: 2, name: 'Données sols' }).count()) === 1,
+    'clavier : flèche droite sélectionne l’onglet « Données sols »',
+  );
+  const add = page.getByRole('button', {
+    name: /^Ajouter à la carte\s*: Carte nationale des stocks/,
+  });
+  await add.focus();
+  await page.keyboard.press('Enter');
+  check(
+    (await focused()).startsWith('BUTTON:Retirer de la carte'),
+    'clavier : Entrée ajoute la couche, le focus reste sur le bouton (« Retirer de la carte »)',
+  );
+  await page.keyboard.press(' ');
+  check(
+    (await focused()).startsWith('BUTTON:Ajouter à la carte'),
+    'clavier : Espace retire la couche, le focus reste sur le bouton (« Ajouter à la carte »)',
+  );
+  const toggle = page.getByRole('button', { name: 'Ma sélection de cartes' });
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  check(
+    (await toggle.getAttribute('aria-pressed')) === 'false' &&
+      (await page.evaluate(() => document.activeElement?.id ?? '')).startsWith(
+        'GPshowLayersListPicto-',
+      ),
+    'clavier : Échap ferme la liste des couches et rend le focus à « Ma sélection de cartes »',
+  );
+  await page.close();
+}
+
+// Non-map alternative (?vue=liste): no map, every dataset, links to services and catalogue records.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page
+    .getByRole('link', { name: 'Version accessible de la liste des données' })
+    .first()
+    .click();
+  await page.waitForLoadState('networkidle');
+  check(
+    new URL(page.url()).search === '?vue=liste',
+    'liste : lien « Version accessible » depuis la carte',
+  );
+  check(
+    (await page.getByRole('heading', { level: 1, name: 'Liste des données sols' }).count()) === 1,
+    'liste : titre de niveau 1',
+  );
+  check((await page.locator('canvas').count()) === 0, 'liste : aucune carte chargée');
+  check((await page.getByRole('article').count()) === 7, 'liste : 7 données');
+  check(
+    (await page.getByRole('link', { name: /^Fiche de la donnée dans le catalogue/ }).count()) === 7,
+    'liste : un lien vers la fiche du catalogue par donnée',
+  );
+  check(
+    (await page.getByRole('link', { name: /^point d’accès/ }).count()) >= 12,
+    'liste : un lien vers le point d’accès de chaque service validé',
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `liste : console vide${notes} ${messages.join(' | ')}`);
   await page.close();
 }
 
