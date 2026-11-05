@@ -115,3 +115,10 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : `https://data.geopf.fr/wms-v/ows` répond HTTP 200 avec un `ServiceExceptionReport` (`java.lang.NullPointerException: Cannot invoke "String.length()" because "expression" is null`) à tout GetMap sur `rrp_loiret_gpkg_11-09-2026_wmsv` et `rrp_dept_loiret_gpkg_11-09-2026_wmsv` (style vide ou nommé, EPSG:3857 ou 4326, toute emprise), alors que les deux noms sont dans les capacités. Les autres couches wms-v (`stock_carbone_fao_fr_wmsv`, `vibrisses_...`, `etude_30110_...`) répondent en PNG. Le lien d'exemple WMS du contrat C4 porte sur cette couche : la carte l'ajoute, mais rien ne s'affiche.
 - Options : (a) signaler à l'équipe Géoplateforme / INRAE (style ou données de la couche) ; (b) masquer ces couches dans le panneau ; (c) détecter l'erreur et l'indiquer.
 - Défaut appliqué : (a) à faire par un humain et (c) : après 3 tuiles en erreur sans aucune tuile chargée, le panneau affiche « La Géoplateforme ne renvoie pas d'image pour cette couche pour le moment. ». Pas de masquage : la couche est publiée et pourra être réparée côté serveur.
+
+## C-4. Autocomplétion et filtres hors périmètre, et bascule des puces (catalogue-dev, C9)
+
+- Constat : sur le build de `main` (`45fe939`), l'autocomplétion et toutes les agrégations des filtres portent déjà `groupPublished:gissol-osf_g` (patch 0005, C5) ; « route » ne propose rien et les décomptes sont ≤ 7. Le défaut signalé (« Agriculture (34) », suggestions hors périmètre) n'est pas reproduit.
+- Questions : (1) sur quel build ou quelle URL l'observation a-t-elle été faite (version antérieure à C5, `.upstream` non reconstruit, cartes.gouv.fr) ? (2) faut-il le patch « puce sélectionnée et retrait au second clic » (environ 15 lignes dans `home-header`) ?
+- Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
+- Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.
