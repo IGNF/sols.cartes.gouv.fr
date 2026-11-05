@@ -25,8 +25,13 @@ async function openMap(page: Page, url: string = PAGES.carto): Promise<void> {
 /** Ouvre le panneau latéral s'il est masqué. */
 async function ensurePanel(page: Page): Promise<void> {
   const show = page.getByRole('button', { name: 'Afficher le panneau' });
-  if (await show.isVisible().catch(() => false)) await show.click();
-  await expect(page.getByRole('button', { name: 'Masquer le panneau' })).toBeVisible();
+  if (await show.isVisible().catch(() => false)) {
+    await expect(show).toHaveAttribute('aria-expanded', 'false');
+    await show.click();
+  }
+  const hide = page.getByRole('button', { name: 'Masquer le panneau' });
+  await expect(hide).toBeVisible();
+  await expect(hide).toHaveAttribute('aria-expanded', 'true');
 }
 
 async function openLayerList(page: Page): Promise<void> {
