@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
 import { I18nPlugin } from '@11ty/eleventy';
@@ -9,6 +9,14 @@ import site from './src/_data/site.js';
 const require = createRequire(import.meta.url);
 const DSFR_DIST = join(dirname(require.resolve('@gouvfr/dsfr/package.json')), 'dist');
 const DSFR_OUTPUT = 'dsfr';
+const BRAND_DIR = dirname(require.resolve('@sols/brand/brand.json'));
+/** Generated files (not committed): the reduced DSFR icon stylesheet. */
+const CACHE_DIR = join(import.meta.dirname, 'node_modules', '.cache', 'sols-accueil');
+
+/** DSFR utility icons used by the site; only their rules and SVGs are published (/dsfr/icons.css). */
+const DSFR_ICONS = [
+  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill']),
+];
 
 /** DSFR stylesheets served by the site; every file they reference through url() is copied too. */
 const DSFR_STYLESHEETS = ['dsfr.min.css'];
@@ -23,6 +31,7 @@ const DSFR_FILES = [
   'favicon/favicon.svg',
   'favicon/manifest.webmanifest',
   ...accueil.service.map((item) => `artwork/pictograms/${item.pictogram}`),
+  ...site.display.themes.map((theme) => `artwork/pictograms/${theme.pictogram}`),
 ];
 
 /** Relative paths (from the DSFR dist folder) of the local files referenced by a stylesheet. */
@@ -37,8 +46,40 @@ function referencedAssets(stylesheet) {
   return [...assets];
 }
 
+/**
+ * Extracts the mask-image rule of each icon from the DSFR utility stylesheets (one per category)
+ * and writes a small icons.css; returns the SVG files it references. Fails if an icon is unknown.
+ */
+function buildIconStylesheet() {
+  const iconsDir = join(DSFR_DIST, 'utility', 'icons');
+  const categories = readdirSync(iconsDir).filter((name) => name.startsWith('icons-'));
+  const rules = [];
+  const svgs = [];
+  for (const icon of DSFR_ICONS) {
+    const rule = new RegExp(
+      `\\.${icon}:after,\\.${icon}:before\\{-webkit-mask-image:url\\(([^)]+)\\);mask-image:url\\([^)]+\\)\\}`,
+    );
+    const category = categories.find((name) =>
+      rule.test(readFileSync(join(iconsDir, name, `${name}.min.css`), 'utf8')),
+    );
+    if (!category) throw new Error(`Icône DSFR inconnue : ${icon}`);
+    const css = readFileSync(join(iconsDir, category, `${category}.min.css`), 'utf8');
+    const svg = posix.normalize(posix.join('utility/icons', category, css.match(rule)[1]));
+    svgs.push(svg);
+    rules.push(`.${icon}::before,.${icon}::after{-webkit-mask-image:url(${svg});mask-image:url(${svg})}`);
+  }
+  mkdirSync(CACHE_DIR, { recursive: true });
+  writeFileSync(join(CACHE_DIR, 'icons.css'), `${rules.join('\n')}\n`);
+  return svgs;
+}
+
 export function dsfrPassthrough() {
-  const files = [...DSFR_STYLESHEETS, ...DSFR_STYLESHEETS.flatMap(referencedAssets), ...DSFR_FILES];
+  const files = [
+    ...DSFR_STYLESHEETS,
+    ...DSFR_STYLESHEETS.flatMap(referencedAssets),
+    ...DSFR_FILES,
+    ...buildIconStylesheet(),
+  ];
   return Object.fromEntries(
     files.map((file) => [join(DSFR_DIST, file), posix.join(DSFR_OUTPUT, file)]),
   );
@@ -55,12 +96,26 @@ const REFRESH = /<meta http-equiv="refresh" content="0; url=([^"]+)">/;
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
+  eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
+  eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });
 
   // Pages live in src/<locale>/; locale_url and locale_links come from the plugin. errorMode "never":
   // a link without a translation falls back to the given URL (the link checker still runs on dist).
   eleventyConfig.addPlugin(I18nPlugin, {
     defaultLanguage: site.defaultLanguage,
     errorMode: 'never',
+  });
+  // Localizes an internal link (path + optional #anchor). Shared markup (empty locale) keeps
+  // language-independent paths, except anchored links: a rerouting page cannot keep the anchor.
+  eleventyConfig.addFilter('localize', function (href, locale) {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || site.crossBrick.some((path) => href.startsWith(path))) {
+      return href;
+    }
+    const [path, anchor] = href.split('#');
+    const hash = anchor ? `#${anchor}` : '';
+    if (!locale) return anchor ? `/${site.defaultLanguage}${stripLocale(path)}${hash}` : path;
+    // The plugin registers locale_url when plugins are processed, after this function runs.
+    return `${eleventyConfig.getFilter('locale_url').call(this, path, locale)}${hash}`;
   });
   eleventyConfig.addFilter('localeOf', localeOf);
   eleventyConfig.addFilter('stripLocale', stripLocale);
