@@ -57,10 +57,10 @@
   }
 }
 
-/* Dark theme: the brand images are drawn for a white background (white plate, as for partner logos). */
-[data-fr-theme='dark'] .sols-operator__logo,
-[data-fr-theme='dark'] .sols-operator__mark {
-  padding: 0.25rem;
+/* Dark theme: the brand images are drawn for a white background: one white plate behind the
+   whole operator group, so the separator between the two images stays visible. */
+[data-fr-theme='dark'] .sols-operator {
+  padding: 0.25rem 0.5rem;
   background-color: #fff;
 }
 
@@ -108,4 +108,9 @@
 .fr-footer__partners .fr-footer__logo.sols-partner-logo {
   height: 4.5rem;
   padding: 0.5rem;
+}
+
+/* Dark theme: keep a white plate behind each partner logo (drawn for a light background). */
+[data-fr-theme='dark'] .fr-footer__partners .fr-footer__logo.sols-partner-logo {
+  background-color: #fff;
 }
