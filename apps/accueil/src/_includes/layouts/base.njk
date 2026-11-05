@@ -13,11 +13,12 @@
     <link rel="shortcut icon" href="{{ site.assets.dsfr }}/favicon/favicon.ico" type="image/x-icon">
     <link rel="manifest" href="{{ site.assets.dsfr }}/favicon/manifest.webmanifest" crossorigin="use-credentials">
     <link rel="stylesheet" href="{{ site.assets.dsfr }}/dsfr.min.css">
+    <link rel="stylesheet" href="{{ site.assets.css }}/site.css">
   </head>
   <body>
     {% include "partials/skiplinks.njk" %}
     {% include "partials/header.njk" %}
-    <main id="contenu" class="fr-container fr-py-6w" tabindex="-1">
+    <main id="contenu" tabindex="-1">
       {{ content | safe }}
     </main>
     {% include "partials/footer.njk" %}
