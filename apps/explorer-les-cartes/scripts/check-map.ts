@@ -595,9 +595,11 @@ const TOOL_BUTTONS = [
   await page
     .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
     .click();
-  // Click inside the sols layer, away from the measure line drawn above. The GeoServer answer lands in
-  // a collapsed accordion: wait for its text (textContent, not innerText).
-  await page.mouse.click(640, 620);
+  // Let the control register its map listener before the (single) click it waits for.
+  await page.waitForTimeout(500);
+  // Click on central France (inside the sols layer, north of the measure line drawn above). The GeoServer
+  // answer lands in a collapsed accordion: wait for its text (textContent, not innerText).
+  await page.mouse.click(820, 430);
   const gfiPanel = page.locator('[id^="GPgetFeatureInfoPanel-"]');
   const gfiContent = await page
     .waitForFunction(
