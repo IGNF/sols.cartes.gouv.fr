@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "source": "https://data.geopf.fr/csw/gissol-osf_c?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0",
+  "datasets": [
+    {
+      "id": "osff858525a-9fea-5ae3-93ab-43afab78483f",
+      "title": "Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO",
+      "abstract": "La carte de la France métropolitaine (hors Corse) des stocks de carbone dans les sols a été préparée par l’INRA dans le cadre d’un exercice mondial piloté par le Partenariat Mondial sur les Sols hébergé par l’Organisation des Nations-Unies pour l’alimentation et l’agriculture, la FAO.\n\n La carte ainsi produite, en suivant les spécifications décidées par cette instance, a été intégrée à la carte mondiale des stocks de carbone. Elle exploite une précédente production réalisée dans le cadre du programme Global Soil Map (Mulder et al. 2016) et résulte d’un travail de cartographie numérique par modélisation réalisé à partir des données ponctuelles issues des deux programmes nationaux IGCS et RMQS du GIS Sol.\n\n La carte transmise à la FAO estime sur une grille de 1km de résolution les stocks de carbone sur 30 cm. Elle fournit des indications précieuses quant à la distribution spatiale et la variabilité des stocks de carbone dans les sols français, avec toutefois des zones où les estimations présentent de forts niveaux d’incertitude, notamment en région montagneuse. Conformément aux spécifications du programme Global Soil Map (Arrouays et al., 2014), ces incertitudes sont symbolisées par des cartes du stock de carbone prenant en compte la borne inférieure et supérieure de l'intervalle de confiance. \n\nCes cartes comprenant les intervalles de confiance, ainsi que la carte des stocks de carbone intégrée à la FAO sont disponibles en visualisation et en téléchargement ci-dessous. IMPORTANT : en cas d’utilisation de ce jeu de données, il est fortement recommandé de prendre en compte les incertitudes fournies (cartes d’intervalles de confiance). \n\nCe travail confirme les précédentes publications nationales puisque les stocks les plus faibles sont observés en Languedoc-Roussillon (région fortement viticole et caractérisée par un climat chaud et des sols peu épais) et dans quelques zones de culture très intensive (Beauce Chartraine, Nord). Les stocks de carbone faibles à moyens (40-50 t/ha) sont caractéristiques des sols des grandes plaines de culture intensive de France ainsi que des sols limoneux comme par exemple le grand Bassin parisien, une partie du Bassin aquitain, le Toulousain et le sillon rhodanien.\n\n Les stocks de carbone moyennement élevés (50-70 t/ha) sont caractéristiques des grandes régions forestières ou fourragères de France (Bretagne, Est, Massif central, Normandie) et les stocks de carbone les plus élevés correspondent à des situations climatiques (sols situés en altitude), minéralogiques (sols volcaniques du Massif central) ou hydriques extrêmes (marais de l’Ouest, delta du Rhône).",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "stock_carbone_fao_fr_wmsv",
+          "title": "Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        },
+        {
+          "service": "wfs",
+          "name": "stock_carbone_fao_fr_gpkg_13-08-2026_wfs:stock_de_carbone_fao",
+          "title": "stock_de_carbone_fao",
+          "endpoint": "https://data.geopf.fr/wfs/ows"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "id": "osfde26f53e-5c29-5320-b53c-e38abea75fb5",
+      "title": "Cartogrammes des teneurs ponctuelles des 49 variables mesurées sur la première campagne RMQS (2001 - 2009)",
+      "abstract": "Le Réseau de Mesures de la Qualité des Sols (RMQS) est un programme national d’évaluation et de suivi à long terme de la qualité des sols français. Ce réseau repose sur le suivi de 2240 sites représentatifs des sols français et de leurs occupations, répartis sur l’ensemble du territoire français (métropole et outre-mer) selon une grille systématique de 16 km de côté. Les sites recouvrent diverses occupations (grandes cultures, prairies permanentes, forêts, vignes et vergers, milieux peu anthropisés, parcs urbains).  \nDes propriétés physiques, chimiques et biologiques des sols sont mesurées sur chaque site avec une périodicité d’une quinzaine d’années. Ces analyses sont associées à la recherche des facteurs explicatifs de la variabilité spatiale et temporelle des propriétés des sols (variables biophysiques, sources de contamination, historique de l’occupation et des pratiques de gestion de chaque site). La première campagne de prélèvement en métropole s'est déroulée de 2000 à 2009.  \nCette campagne, axée sur la contamination des sols, a permis de cartographier les principaux paramètres pédologiques (28 variables) ainsi que les teneurs en 12 éléments traces métalliques (ETM) en extraction totale ou partielle et 70 polluants organiques persistants. L’ensemble des protocoles de prélèvements, mesures et observations réalisés sur chaque site durant cette campagne est détaillé dans le Manuel du Réseau de Mesures de la Qualité des Sols datant de 2006.  \nObtention des valeurs : Les cartogrammes produits sont issus des résultats d’analyses de 2146 sites de métropole, répartis sur 2146 cellules, mis en œuvre lors de la première campagne RMQS (2000-2009).  \nLes analyses ont été réalisées sur des échantillons composites prélevés à la tarière selon 2 couches de prélèvements (0-30 cm ou épaisseur de la couche travaillée en sol cultivé appelée composite de surface ou composite 1 et la couche sous-jacente jusqu’à 50 cm, appelée composite de sub-surface ou composite 2). Chaque échantillon composite a été constitué à partir du mélange de 25 prélèvements individuels prélevés sur une surface d’échantillonnage de 400 m² selon un plan d’échantillonnage aléatoire stratifié (voir description dans le manuel du RMQS, 2006). Une troisième couche de prélèvement issue d’échantillons composites a pu être constituée en forêt ou en prairie, à partir des horizons holorganiques (correspondant aux horizons pédologiques OF et OH) lorsque ces horizons étaient suffisamment épais (au moins 1 cm) et continus sur la surface d’échantillonnage.   \n\nLes cartogrammes sont une représentation géographique des teneurs réelles (concentration en unité de mesure par masse de sol séché à l’air) mesurées pour le paramètre cité, en chaque point du Réseau de Mesures de la Qualité des Sols (RMQS), lors de la première campagne (2000-2009). Les analyses de sol ont été réalisées par le Laboratoire d’Analyses des Sols de l’INRA d’Arras au fil de la campagne, de 2002 à 2011, au fur et à mesure du déploiement du réseau, et pour certains paramètres, a posteriori, sur les échantillons stockés au Conservatoire Européen des Sols.   \n\nLes cartogrammes n’ont pas été constitués avec les coordonnées réelles des dispositifs de prélèvement, conformément au cadre juridique actuellement en vigueur et pour répondre à notre engagement d’anonymisation des données. Le jeu de données fournies associé à ces cartogrammes comportera les coordonnées du centre de la maille, appelées coordonnées du centroïde ou encore coordonnées théoriques.   \n\nUn tableau de métadonnées associé au jeu de données (accessible via les liens ci-dessous) détaille pour chaque paramètre représenté, la méthode d’analyse, l’unité, le seuil de détection et l’incertitude analytique associée à l’analyse fournie par le LAS.\n\n Le jeu présenté ici à titre d’exemple correspond à celui du plomb extractible (EDTA, méthode BCR) dans la couche 0-30cm en mg/kg. Pour accéder aux autres variables, il est recommandé d’utiliser le flux wfs dans un SIG ou de télécharger le géopackage disponible dans les documents liés à cette ressource.",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "cartogrammes_gpkg_11-09-2026_wmsv",
+          "title": "Cartogrammes des teneurs ponctuelles des 49 variables mesurées sur la première campagne RMQS (2001 - 2009)",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        },
+        {
+          "service": "tms",
+          "name": "cartogrammes_gpkg_11-09-2026_tms",
+          "title": "Cartogrammes des teneurs ponctuelles des 49 variables mesurées sur la première campagne RMQS (2001 - 2009)",
+          "endpoint": "https://data.geopf.fr/tms/1.0.0"
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "cartogrammes_gpkg_11-09-2026_wfs:all",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        }
+      ]
+    },
+    {
+      "id": "osfd95caa37-436b-431c-9391-643164f010bb",
+      "title": "Les sols dominants de France métropolitaine – Carte harmonisée",
+      "abstract": "Les Référentiels Régionaux Pédologiques (RRP) sont une représentation des sols à l’échelle du 1/250 000, réalisés par département ou par région dans le cadre du programme Inventaire, Gestion et Conservation des Sols (IGCS) coordonné par le Groupement d’intérêt scientifique sur les Sols ou Gis Sol. Il s’agit de l’information pédologique cartographique la plus précise actuellement disponible sur la totalité du territoire de France métropolitaine.\n\nCartographier les sols à l’échelle du 1/250 000 consiste à délimiter la portion de la couverture pédologique qui présente des caractéristiques communes en termes de paysage et de répartition des sols. Ces ensembles cohérents sont alors appelés Unités Cartographiques de Sols (UCS). A cette échelle de représentation, chacune des plages cartographiques ou UCS est caractérisée par un ou plusieurs types de sol différents, nommés Unités Typologiques de Sol (UTS). Le pourcentage surfacique de chaque UTS a été estimé au sein de chaque UCS, et les noms de sols ont été décrits suivant le Référentiel Pédologique français (Baize et al., 2008 - [https://www.afes.fr/referentiel-pedologique](https://www.afes.fr/referentiel-pedologique)). Les RRP sont constitués d’une carte associée à une base de données sémantiques décrivant de manière exhaustive les UCS et les UTS du territoire concerné. Cette base de données est structurée selon un format national : Donesol. La présente carte est issue de l’harmonisation de l’ensemble des RRP au niveau des limites administratives pour aboutir au RRP harmonisé national par l’unité Info&amp;Sols d’INRAE.\n\nLes données par territoire (régional ou départemental) peuvent être obtenues auprès des gestionnaires locaux des RRP.\n\nCette carte des sols a été produite avec le soutien du [RMT Sols et Territoires.](https://sols-et-territoires.org/)\n\n**Avertissement important : La fiabilité attendue de la carte est liée à l’échelle des données représentées (1 : 250 000).**  \n**Toute interprétation des données à une plus grande échelle (échelle cadastrale en particulier) est déconseillée sans observation complémentaire de terrain.**",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wmts",
+          "name": "INRAE_CARTE-SOLS",
+          "title": "Les sols dominants de France métropolitaine – Carte harmonisée",
+          "endpoint": "https://data.geopf.fr/wmts",
+          "crs": ["EPSG:2154"]
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "etude_34015_gpkg_04-09-2026_wfs:sols_dominants",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        },
+        {
+          "protocol": "OGC:WFS",
+          "name": "INRAE_CARTE-SOLS:sols_dominants",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        },
+        {
+          "protocol": "OGC:WMS",
+          "name": "etude_34015_gpkg_04-09-2026_wmsv",
+          "linkage": "https://data.geopf.fr/wms-v",
+          "reason": "absent des capacités WMS vecteur (wms-v)"
+        },
+        {
+          "protocol": "OGC:WMS",
+          "name": "inrae_carte_sols_wmsr",
+          "linkage": "https://data.geopf.fr/wms-r/wms",
+          "reason": "absent des capacités WMS raster (wms-r)"
+        },
+        {
+          "protocol": "OGC:WMS",
+          "name": "INRAE_CARTE-SOLS",
+          "linkage": "https://data.geopf.fr/wms-v",
+          "reason": "absent des capacités WMS vecteur (wms-v) ; publié sur WMS raster (wms-r)"
+        },
+        {
+          "protocol": "OGC:WMTS",
+          "name": "INRAE_CARTE-SOLS_WMTS",
+          "linkage": "https://data.geopf.fr/wmts",
+          "reason": "absent des capacités WMTS"
+        }
+      ]
+    },
+    {
+      "id": "1b464210-8702-5296-b738-25978d5d4806",
+      "title": "Référentiel Régional Pédologique du département de la Gironde",
+      "abstract": "Le Référentiel Régional Pédologique (RRP) est une représentation cartographique de la répartition spatiale des sols, sous forme d’unités cartographiques de sols, associée à une base de données sous un format unique national, DoneSol. Le Référentiel Régional Pédologique vise à produire une information sur la connaissance des sols restituée à une échelle du 1/250 000. Le RRP est le volet au 1/250 000 du programme Inventaire Gestion et Conservation des Sols (IGCS) piloté par le Groupement d’Intérêt Scientifique sur les Sols (GIS SOL) et coordonné par l’unité INFO&amp;SOLS (INRAE Val-de-Loire) en s’appuyant sur un réseau de partenaires régionaux.",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "etude_30110_gpkg_03-09-2026_wmsv",
+          "title": "Référentiel Régional Pédologique du département de la Gironde",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        },
+        {
+          "service": "tms",
+          "name": "rrp_gironde_gpkg_03-09-2026_tms",
+          "title": "Référentiel Régional Pédologique du département de la Gironde",
+          "endpoint": "https://data.geopf.fr/tms/1.0.0"
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "etude_30110_gpkg_03-09-2026_wfs:geometrie_ucs",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        },
+        {
+          "protocol": "OGC:WFS",
+          "name": "etude_30110_gpkg_03-09-2026_wfs:sols_dominants",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        }
+      ]
+    },
+    {
+      "id": "osfd95b355a-dbb8-52f2-bb54-c99ad98c7bd3",
+      "title": "Référentiel Régional Pédologique du département des Landes",
+      "abstract": "Le Référentiel Régional Pédologique (RRP) est une représentation cartographique de la répartition spatiale des sols, sous forme d’unités cartographiques de sols, associée à une base de données sous un format unique national, DoneSol. Le Référentiel Régional Pédologique vise à produire une information sur la connaissance des sols restituée à une échelle du 1/250 000. Le RRP est le volet au 1/250 000 du programme Inventaire Gestion et Conservation des Sols (IGCS) piloté par le Groupement d’Intérêt Scientifique sur les Sols (GIS SOL) et coordonné par l’unité INFO&amp;SOLS (INRAE Val-de-Loire) en s’appuyant sur un réseau de partenaires régionaux.",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "rrp_landes_gpkg_11-09-2026_wmsv",
+          "title": "Référentiel Régional Pédologique du département des Landes",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        },
+        {
+          "service": "tms",
+          "name": "rrp_landes_gpkg_11-09-2026_tms",
+          "title": "Référentiel Régional Pédologique du département des Landes",
+          "endpoint": "https://data.geopf.fr/tms/1.0.0"
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "rrp_landes_gpkg_11-09-2026_wfs:geometrie_ucs",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        }
+      ]
+    },
+    {
+      "id": "osfc9008138-f56a-5b19-9cd4-25398dcb4d62",
+      "title": "Référentiel Régional Pédologique du département du Loiret",
+      "abstract": "Le Référentiel Régional Pédologique (RRP) est une représentation cartographique de la répartition spatiale des sols, sous forme d’unités cartographiques de sols, associée à une base de données sous un format unique national, DoneSol. Le Référentiel Régional Pédologique vise à produire une information sur la connaissance des sols restituée à une échelle du 1/250 000. Le RRP est le volet au 1/250 000 du programme Inventaire Gestion et Conservation des Sols (IGCS) piloté par le Groupement d’Intérêt Scientifique sur les Sols (GIS SOL) et coordonné par l’unité INFO&amp;SOLS (INRAE Val-de-Loire) en s’appuyant sur un réseau de partenaires régionaux.",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "rrp_dept_loiret_gpkg_11-09-2026_wmsv",
+          "title": "Référentiel Régional Pédologique du département du Loiret",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        },
+        {
+          "service": "wms-vector",
+          "name": "rrp_loiret_gpkg_11-09-2026_wmsv",
+          "title": "Référentiel Régional Pédologique du département du Loiret",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "rrp_loiret_gpkg_11-09-2026_wfs:geometrie_ucs",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        }
+      ]
+    },
+    {
+      "id": "osf63e6c177-455e-5805-b70b-0894ee1c7174",
+      "title": "Seuils de détection des anomalies pour différents éléments traces mesurés sur le le Réseau de Mesure de la Qualité des Sols",
+      "abstract": "Ce jeu de données rassemble les résultats du calcul d'indicateurs pouvant\n                    servir de seuils de détection pour les anomalies d'éléments traces (arsenic, cadmium, cobalt,\n                    chrome, cuivre, mercure, nickel, plomb, thallium, zinc) dans les sols de surface.\n                    Ces indicateurs correspondent à des vibrisses calculées à partir d'un ensemble de mesures\n                    situées dans un rayon de 50 km autour du point considéré.\n                    Les mesures correspondent aux teneurs totales en éléments traces et proviennent des sites du Réseau\n                    de Mesure de la Qualité des Sols (RMQS) pour les horizons 0-30 cm (tous les éléments) et 30-50 cm\n                    (excepté pour l'arsenic et le mercure).\n                    Nous considérons ici que ces calculs régionalisés de vibrisses jouent un rôle d'indicateur de\n                    tendance régionale, prenant en compte à la fois les valeurs des fonds pédo-géochimiques et les\n                    contributions d'origine anthropique. Ils correspondent à la teneur limite au-delà de laquelle\n                    une valeur peut être considérée comme anormale. Ils permettent ainsi de détecter des anomalies\n                    ponctuelles tout en évitant la valeur du bruit de fond local.\n\n```\n                Le jeu présenté ici correspond à celui du cadmium total dans la couche 0-30cm en mg/kg. Pour accéder\n                aux autres éléments, il est recommandé d'utiliser le flux wfs dans un SIG ou de télécharger le\n                géopackage disponible dans les documents liés à cette ressource.\n\n                 **Contraintes** :\n                Les valeurs fournies pour les seuils de détection d'anomalies doivent être manipulées avec\n                prudence. Les interprétations qui en découlent doivent tenir compte de la nature assez frustrante de\n                ces indicateurs. En effet, il est important de noter que les calculs ne prennent pas en compte les\n                processus pédologiques locaux.\n```",
+      "organisation": "INRAE - Info&Sols",
+      "layers": [
+        {
+          "service": "wms-vector",
+          "name": "vibrisses_rmqs_gpkg_03-09-2026_wmsv",
+          "title": "Seuils de détection des anomalies pour différents éléments traces",
+          "endpoint": "https://data.geopf.fr/wms-v/ows"
+        }
+      ],
+      "rejected": [
+        {
+          "protocol": "OGC:WFS",
+          "name": "vibrisses_rmqs_gpkg_03-09-2026_wfs:cd_0_30",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        },
+        {
+          "protocol": "OGC:WFS",
+          "name": "vibrisses_rmqs_gpkg_03-09-2026_wfs:cd_30_50",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        },
+        {
+          "protocol": "OGC:WFS",
+          "name": "vibrisses_rmqs_gpkg_03-09-2026_wfs:vibrisses",
+          "linkage": "https://data.geopf.fr/wfs",
+          "reason": "absent des capacités WFS"
+        }
+      ]
+    }
+  ]
+}
