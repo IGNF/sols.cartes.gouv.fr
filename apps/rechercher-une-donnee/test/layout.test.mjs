@@ -54,7 +54,7 @@ test('extractBlock reads the html block after its label', () => {
 test('addBadge puts the brick badge in the service title', () => {
   assert.match(
     addBadge(header, 'Rechercher'),
-    /sols.cartes.gouv.fr<span class="fr-badge fr-badge--sm fr-badge--green-menthe">Rechercher<\/span><\/p>/
+    /sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe">Rechercher<\/span><\/p>/
   )
   assert.equal(addBadge(header, null), header)
   assert.throws(() => addBadge('<header></header>', 'x'), /service title/)
@@ -95,7 +95,7 @@ test('extractSharedCss keeps only the shared header/footer rules', () => {
 
 test('the real edito reference produces the v1 catalogue header and footer', () => {
   const layout = readLayout(readUpstream().baseHref)
-  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr<span class="fr-badge[^"]*">Rechercher<\/span><\/p>/)
+  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge[^"]*">Rechercher<\/span><\/p>/)
   assert.match(layout.header, /Observatoire des sols de France/)
   assert.match(layout.header, /id="menu-services-mobile"/)
   assert.match(layout.header, /src="\/rechercher-une-donnee\/assets\/brand\/logo-gissol.png"/)

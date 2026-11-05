@@ -39,7 +39,7 @@ export function addBadge(header, badge) {
   if (!badge) return header
   return header.replace(
     title,
-    `<p class="fr-header__service-title">sols.cartes.gouv.fr<span class="fr-badge fr-badge--sm fr-badge--green-menthe">${badge}</span></p>`
+    `<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe">${badge}</span></p>`
   )
 }
 
