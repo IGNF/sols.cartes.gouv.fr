@@ -26,7 +26,7 @@ import {
   readUpstream,
   run,
 } from './lib.mjs'
-import { readLayout } from './layout.mjs'
+import { BRAND_DIR, readLayout, readSharedCss } from './layout.mjs'
 
 const INSTALL_STAMP = join(UPSTREAM_DIR, 'node_modules', '.sols-install-stamp')
 
@@ -95,7 +95,16 @@ function applyOverlay(upstream) {
   for (const [name, html] of Object.entries(readLayout(upstream.baseHref))) {
     writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${html}\n`)
   }
-  log('overlay/ copied, header/footer generated from doc/agents/edito.md')
+  const appSrc = join(UPSTREAM_DIR, 'apps', upstream.app, 'src')
+  writeFileSync(join(appSrc, 'sols-shared.css'), readSharedCss(upstream.baseHref))
+  // Brand images of @sols/brand (logos), served under <baseHref>assets/brand/
+  const brandAssets = join(BRAND_DIR, 'assets')
+  for (const file of readdirSync(brandAssets, { withFileTypes: true }).filter((e) => e.isFile())) {
+    const target = join(appSrc, 'assets', 'brand', file.name)
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(join(brandAssets, file.name), target, constants.COPYFILE_EXCL)
+  }
+  log('overlay/ copied, header/footer and shared CSS generated from the edito reference, brand images copied')
 }
 
 export function prepare({ install = true } = {}) {
