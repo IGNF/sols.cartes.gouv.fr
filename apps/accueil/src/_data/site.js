@@ -74,12 +74,11 @@ export default {
       logo: brandAsset(partner.logo),
     })),
     contentLinks: brand.footer.contentLinks,
-    bottomLinks: [
-      { key: 'accessibilite', href: sections.accessibilite },
-      { key: 'mentionsLegales', href: sections.mentionsLegales },
-      { key: 'donneesPersonnelles', href: sections.donneesPersonnelles },
-      { key: 'planDuSite', href: sections.planDuSite },
-    ],
+    /** brand.json bottom links; `key` (section name) indexes the English labels in i18n/en.js. */
+    bottomLinks: brand.footer.bottomLinks.map(({ href }) => ({
+      key: Object.keys(sections).find((key) => sections[key] === href),
+      href,
+    })),
     licenceHref: external.licenceEtalab,
   },
   /** Themes of the DSFR display settings modal (footer « Paramètres d'affichage »). */

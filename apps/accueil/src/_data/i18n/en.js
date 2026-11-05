@@ -27,7 +27,7 @@ export default {
         label: 'Help',
         items: {
           '/aide/': { label: 'Help centre' },
-          '/aide/#contact': { label: 'Contact us' },
+          '/fr/aide/#contact': { label: 'Contact us' },
         },
       },
       services: {

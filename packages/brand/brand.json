@@ -9,7 +9,8 @@
     "catalogue": "/rechercher-une-donnee/",
     "carto": "/explorer-les-cartes/",
     "help": "/aide/",
-    "articles": "/fr/articles/"
+    "articles": "/fr/articles/",
+    "helpContact": "/fr/aide/#contact"
   },
   "badges": {
     "edito": null,
@@ -35,7 +36,7 @@
           },
           {
             "label": "Nous contacter",
-            "href": "/aide/#contact"
+            "href": "/fr/aide/#contact"
           }
         ]
       },
