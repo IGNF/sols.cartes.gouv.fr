@@ -22,6 +22,8 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       'no-console': 'error',
+      // The map container is a focusable region: OpenLayers keyboard pan/zoom need focus on it.
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { tags: [], roles: ['tabpanel', 'region'] }],
     },
   },
 );

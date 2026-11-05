@@ -1,12 +1,8 @@
 ---
 layout: layouts/page.njk
-title: Articles
-description: Articles de l’Observatoire des sols (texte provisoire).
-permalink: "{{ site.sections.articles }}"
 ---
-<p>Articles publiés par l’Observatoire des sols (texte provisoire).</p>
 <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
-  {%- for article in collections.articles %}
+  {%- for article in collections.articles | byLocale(locale) %}
   <li class="fr-col-12 fr-col-md-6 fr-col-lg-4">
     {%- set headingLevel = "h2" %}
     {% include "partials/article-card.njk" %}

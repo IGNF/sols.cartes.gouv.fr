@@ -1,39 +1,27 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import accueil from '../src/_data/accueil.js';
+import i18n from './i18n.js';
 import site from '../src/_data/site.js';
+import {
+  APP_DIR,
+  DIST,
+  FOOTER_PATHS,
+  LOCALES,
+  SHARED_PAGE,
+  articleSlugs,
+  build,
+  escape,
+  read,
+} from './helpers.js';
 
-const APP_DIR = join(import.meta.dir, '..');
-const DIST = join(APP_DIR, 'dist');
 const EDITO_DOC = join(APP_DIR, '..', '..', 'doc', 'agents', 'edito.md');
-const FOOTER_PAGES = [
-  site.sections.accessibilite,
-  site.sections.mentionsLegales,
-  site.sections.donneesPersonnelles,
-  site.sections.planDuSite,
-];
 
-const ARTICLE_SLUGS = readdirSync(join(APP_DIR, 'src', 'articles'))
-  .filter((file) => file.endsWith('.md'))
-  .map((file) => file.replace(/\.md$/, ''));
+beforeAll(build);
 
-const read = (url) => readFileSync(join(DIST, url, 'index.html'), 'utf8');
-const escape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-let home = '';
-
-beforeAll(() => {
-  const build = Bun.spawnSync(['bun', 'run', 'build'], {
-    cwd: APP_DIR,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-  if (build.exitCode !== 0) throw new Error(build.stderr.toString());
-  home = read('/');
-});
-
-function expectPageBasics(html) {
-  expect(html).toMatch(/<html lang="fr"/);
+function expectPageBasics(html, locale) {
+  expect(html).toContain(`<html lang="${locale}"`);
   expect(html).toMatch(/<title>[^<]+<\/title>/);
   expect(html).toMatch(/<meta name="description" content="[^"]+">/);
   expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
@@ -41,102 +29,140 @@ function expectPageBasics(html) {
   expect(html).toMatch(/<main id="contenu"/);
 }
 
-describe('page d’accueil générée', () => {
-  test('respecte le gabarit de base', () => {
-    expectPageBasics(home);
+describe.each(LOCALES)('accueil /%s/', (locale) => {
+  const t = i18n[locale];
+  const home = () => read(`/${locale}/`);
+
+  test('respecte le gabarit de base dans la bonne langue', () => {
+    expectPageBasics(home(), locale);
   });
 
-  test('affiche le titre de service et la devise de l’en-tête', () => {
-    expect(home).toContain(`<p class="fr-header__service-title">${site.header.serviceTitle}</p>`);
-    expect(home).toContain(`<p class="fr-header__service-tagline">${site.header.tagline}</p>`);
+  test('affiche le titre de service et la devise', () => {
+    expect(home()).toContain(`<p class="fr-header__service-title">${site.header.serviceTitle}</p>`);
+    expect(home()).toContain(`<p class="fr-header__service-tagline">${t.tagline}</p>`);
   });
 
-  test('contient les trois liens de navigation, Accueil étant la page courante', () => {
-    for (const item of site.header.nav) {
-      expect(home).toMatch(
-        new RegExp(`class="fr-nav__link" href="${escape(item.href)}"[^>]*>${escape(item.label)}<`),
+  test('navigation : Accueil localisé et courant, briques catalogue et carto sans langue', () => {
+    expect(home()).toContain(
+      `class="fr-nav__link" href="/${locale}/" target="_self" aria-current="page">${t.header.nav.accueil}<`,
+    );
+    for (const path of site.crossBrick) {
+      expect(home()).toMatch(new RegExp(`class="fr-nav__link" href="${escape(path)}"`));
+    }
+  });
+
+  test('sélecteur de langue DSFR avec chaque langue', () => {
+    expect(home()).toContain('class="fr-translate fr-nav"');
+    expect(home()).toContain(
+      `title="${t.header.translateTitle}" type="button" class="fr-translate__btn fr-btn"`,
+    );
+    for (const code of LOCALES) {
+      const current = code === locale ? ' aria-current="true"' : '';
+      expect(home()).toContain(`hreflang="${code}" lang="${code}" href="/${code}/"${current}>`);
+    }
+  });
+
+  test('boutons vers le catalogue et la carto, sections et lien GIS Sol', () => {
+    for (const action of accueil.actions) {
+      expect(home()).toContain(`href="${action.href}"`);
+      expect(home()).toContain(`>${t.accueil.hero.actions[action.key]}</a>`);
+    }
+    expect(home().match(/class="fr-tile"/g)).toHaveLength(accueil.service.length);
+    expect(
+      home().match(
+        new RegExp(`<h3 class="fr-card__title"><a href="${escape(accueil.donnees.href)}"`, 'g'),
+      ),
+    ).toHaveLength(accueil.donnees.items.length);
+    expect(home()).toContain('class="fr-callout');
+    expect(home()).toMatch(new RegExp(`class="fr-btn" href="${escape(site.external.gissol)}"`));
+    expect(home()).toContain(`href="/${locale}${site.sections.articles}"`);
+  });
+});
+
+describe.each(LOCALES)('pages du pied de page /%s/', (locale) => {
+  test.each(FOOTER_PATHS)(`/${locale}%s existe, avec fil d’Ariane`, (path) => {
+    const html = read(`/${locale}${path}`);
+    expectPageBasics(html, locale);
+    expect(html).toContain('class="fr-breadcrumb"');
+    expect(html).toContain(
+      `<a class="fr-footer__bottom-link" href="/${locale}${path}" aria-current="page">`,
+    );
+  });
+
+  test('le plan du site lie les pages du pied de page, la navigation et les articles', () => {
+    const html = read(`/${locale}${site.sections.planDuSite}`);
+    for (const path of [...FOOTER_PATHS, site.sections.articles, site.sections.accueil]) {
+      expect(html).toContain(`<li><a href="/${locale}${path}"`);
+    }
+    for (const path of site.crossBrick) expect(html).toContain(`<li><a href="${path}"`);
+  });
+});
+
+describe.each(LOCALES)('articles /%s/', (locale) => {
+  const slugs = articleSlugs(locale);
+
+  test('la liste contient une carte datée par article de la langue', () => {
+    expect(slugs.length).toBeGreaterThan(0);
+    const html = read(`/${locale}${site.sections.articles}`);
+    expectPageBasics(html, locale);
+    for (const slug of slugs) {
+      expect(html).toContain(`<a href="/${locale}${site.sections.articles}${slug}/">`);
+    }
+    expect(html.match(/class="fr-card fr-enlarge-link"/g)).toHaveLength(slugs.length);
+    expect(html.match(/<time datetime="\d{4}-\d{2}-\d{2}">/g)).toHaveLength(slugs.length);
+  });
+
+  test.each(slugs)('l’article %s a un h1, le fil d’Ariane et sa date', (slug) => {
+    const html = read(`/${locale}${site.sections.articles}${slug}/`);
+    expectPageBasics(html, locale);
+    expect(html).toContain(
+      `<a class="fr-breadcrumb__link" href="/${locale}${site.sections.articles}">${i18n[locale].breadcrumb.articles}</a>`,
+    );
+    expect(html).toMatch(/<time datetime="\d{4}-\d{2}-\d{2}">[^<]+<\/time>/);
+  });
+});
+
+describe('pages de renvoi sans langue', () => {
+  const paths = [site.sections.accueil, ...FOOTER_PATHS, site.sections.articles];
+
+  test.each(paths)('%s renvoie vers la version française, sans JS', (path) => {
+    const html = read(path);
+    expect(html).toContain(`<html lang="${site.defaultLanguage}">`);
+    expect(html).toContain(
+      `<meta http-equiv="refresh" content="0; url=/${site.defaultLanguage}${path}">`,
+    );
+    expect(html).not.toContain('<script');
+    for (const code of LOCALES) {
+      expect(html).toContain(
+        `<a href="/${code}${path}" hreflang="${code}" lang="${code}">${i18n[code].reroute.link}</a>`,
       );
     }
-    expect(home).toMatch(/href="\/" target="_self" aria-current="page">Accueil</);
   });
+});
 
-  test('propose les boutons vers le catalogue et la carto', () => {
-    expect(home).toContain(`href="${site.sections.rechercherUneDonnee}">Rechercher une donnée</a>`);
-    expect(home).toContain(`href="${site.sections.explorerLesCartes}">Explorer les cartes</a>`);
-  });
-
-  test('contient les sections Le service, Données disponibles et GIS Sol', () => {
-    expect(home.match(/class="fr-tile"/g)).toHaveLength(accueil.service.items.length);
-    expect(
-      home.match(/<h3 class="fr-card__title"><a href="\/rechercher-une-donnee\/">/g),
-    ).toHaveLength(accueil.donnees.items.length);
-    expect(home).toContain('class="fr-callout');
-    expect(home).toMatch(new RegExp(`class="fr-btn" href="${escape(site.external.gissol)}"`));
-  });
-
-  test('copie les ressources DSFR et les pictogrammes référencés', () => {
+describe('ressources', () => {
+  test('ressources DSFR, pictogrammes et feuille du site copiés', () => {
     const assets = ['dsfr.min.css', 'dsfr.module.min.js', 'fonts/Marianne-Regular.woff2'];
-    for (const item of accueil.service.items) assets.push(`artwork/pictograms/${item.pictogram}`);
+    for (const item of accueil.service) assets.push(`artwork/pictograms/${item.pictogram}`);
     for (const asset of assets) expect(existsSync(join(DIST, 'dsfr', asset))).toBe(true);
     expect(existsSync(join(DIST, 'css', 'site.css'))).toBe(true);
   });
 });
 
-describe('pages du pied de page', () => {
-  test.each(FOOTER_PAGES)('%s existe et respecte le gabarit', (url) => {
-    const html = read(url);
-    expectPageBasics(html);
-    expect(html).toContain('class="fr-breadcrumb"');
+describe('page de référence partagée et doc/agents/edito.md', () => {
+  test('liens sans langue, sans sélecteur de langue, noindex', () => {
+    const html = read(SHARED_PAGE);
+    expect(html).toContain('<meta name="robots" content="noindex">');
+    expect(html).not.toContain('fr-translate');
+    expect(html).toContain(`class="fr-nav__link" href="${site.sections.accueil}" target="_self">`);
+    for (const path of FOOTER_PATHS)
+      expect(html).toContain(`class="fr-footer__bottom-link" href="${path}"`);
   });
 
-  test('le plan du site lie les pages du pied de page', () => {
-    const html = read(site.sections.planDuSite);
-    for (const url of FOOTER_PAGES) expect(html).toContain(`<li><a href="${url}"`);
-  });
-
-  test('le plan du site liste toutes les sections', () => {
-    const html = read(site.sections.planDuSite);
-    for (const link of [...site.header.nav, ...site.footer.bottomLinks]) {
-      expect(html).toContain(`<li><a href="${link.href}"`);
-    }
-  });
-});
-
-describe('articles', () => {
-  test('au moins un article existe', () => {
-    expect(ARTICLE_SLUGS.length).toBeGreaterThan(0);
-  });
-
-  test('la liste contient une carte datée par article', () => {
-    const html = read(site.sections.articles);
-    expectPageBasics(html);
-    for (const slug of ARTICLE_SLUGS) {
-      expect(html).toContain(`<a href="${site.sections.articles}${slug}/">`);
-    }
-    expect(html.match(/class="fr-card fr-enlarge-link"/g)).toHaveLength(ARTICLE_SLUGS.length);
-    expect(html.match(/<time datetime="\d{4}-\d{2}-\d{2}">/g)).toHaveLength(ARTICLE_SLUGS.length);
-  });
-
-  test.each(ARTICLE_SLUGS)('l’article %s a un h1, le fil d’Ariane et sa date', (slug) => {
-    const html = read(`${site.sections.articles}${slug}/`);
-    expectPageBasics(html);
-    expect(html).toContain('class="fr-breadcrumb"');
-    expect(html).toContain(
-      `<a class="fr-breadcrumb__link" href="${site.sections.articles}">Articles</a>`,
-    );
-    expect(html).toMatch(/<time datetime="\d{4}-\d{2}-\d{2}">[^<]+<\/time>/);
-  });
-
-  test('l’accueil et le plan du site lient la liste des articles', () => {
-    expect(home).toContain(`href="${site.sections.articles}"`);
-    expect(read(site.sections.planDuSite)).toContain(`<li><a href="${site.sections.articles}">`);
-  });
-});
-
-describe('documentation doc/agents/edito.md', () => {
-  test('chaque bloc HTML est identique octet pour octet à dist/index.html', () => {
+  test('chaque bloc HTML de la doc est identique octet pour octet à la page de référence', () => {
+    const html = read(SHARED_PAGE);
     const blocks = [...readFileSync(EDITO_DOC, 'utf8').matchAll(/```html\n([\s\S]*?)\n```/g)];
     expect(blocks.length).toBeGreaterThanOrEqual(3);
-    for (const [, block] of blocks) expect(home.includes(block)).toBe(true);
+    for (const [, block] of blocks) expect(html.includes(block)).toBe(true);
   });
 });

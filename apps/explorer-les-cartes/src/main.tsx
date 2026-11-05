@@ -1,8 +1,10 @@
 import { startReactDsfr } from '@codegouvfr/react-dsfr/spa';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { createQueryClient } from './query/queryClient';
 
 startReactDsfr({ defaultColorScheme: 'system' });
 
@@ -13,6 +15,8 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <QueryClientProvider client={createQueryClient()}>
+      <App />
+    </QueryClientProvider>
   </StrictMode>,
 );
