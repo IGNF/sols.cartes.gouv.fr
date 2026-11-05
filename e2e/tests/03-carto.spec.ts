@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { collectConsole } from './helpers';
+import { collectConsole, GPF_WMTS, DEEP_LINK_LAYER, DEEP_LINK_URL } from './helpers';
 
 test.describe('Carto', () => {
   test('la carte affiche un canvas, les tuiles GPF répondent 200 et le sélecteur de couches fonctionne', async ({ page }, testInfo) => {
     const c = collectConsole(page);
     const tiles: { url: string; status: number }[] = [];
     page.on('response', (r) => {
-      if (r.url().includes('data.geopf.fr/wmts')) tiles.push({ url: r.url(), status: r.status() });
+      if (r.url().includes(GPF_WMTS)) tiles.push({ url: r.url(), status: r.status() });
     });
     await page.goto('/explorer-les-cartes/');
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });
@@ -31,7 +31,7 @@ test.describe('Carto', () => {
   test('le panneau « Fonds de carte » bascule sur les orthophotos', async ({ page }) => {
     const tiles: { url: string; status: number }[] = [];
     page.on('response', (r) => {
-      if (r.url().includes('data.geopf.fr/wmts')) tiles.push({ url: r.url(), status: r.status() });
+      if (r.url().includes(GPF_WMTS)) tiles.push({ url: r.url(), status: r.status() });
     });
     await page.goto('/explorer-les-cartes/');
     await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });
@@ -49,6 +49,6 @@ test.describe('Carto', () => {
 
   test.skip('PENDING (M4) : le lien profond ajoute la couche sols au sélecteur', async ({ page }) => {
     // Passe 2 : attendre une requête WMS réussie sur data.geopf.fr/wms-v et la couche dans le sélecteur.
-    await page.goto('/explorer-les-cartes/?layer=rrp_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v');
+    await page.goto(`/explorer-les-cartes/?layer=${DEEP_LINK_LAYER}&type=WMS&url=${encodeURIComponent(DEEP_LINK_URL)}`);
   });
 });

@@ -2,7 +2,7 @@
 
 Date : 2026-11-05. Base : `origin/main` (carto M1/M2 seulement ; M3, M4, M5 non fusionnés). Les trois briques ont été construites (`bun run build:all`) sans erreur et servies sur `:8102`. Chromium headless, projets `desktop` (1280x900) et `mobile` (375x812). Aucun appel réseau n'est simulé : les tuiles viennent de `data.geopf.fr`, le catalogue interroge son API réelle.
 
-Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all`, `dist/` doit exister). Réduire les captures : `bun run shots:shrink`.
+Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all`, `dist/` doit exister). Les captures JPEG (< 300 kB, vérifié par le test) et les JSON axe sont écrits directement dans `doc/e2e/`. Attention : `reuseExistingServer` est actif, la suite teste donc le serveur déjà présent sur le port (`PORT`, 8102 par défaut), pas forcément le `dist/` courant ; arrêter tout serveur existant avant de tester un nouveau build.
 
 ## Synthèse
 
@@ -13,7 +13,7 @@ Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all
 | 1c | Lien d'en-tête vers `/rechercher-une-donnee/` : 200 et `h1` | PASS | desktop + mobile |
 | 1d | Lien d'en-tête vers `/explorer-les-cartes/` : 200 et un seul `h1` visible | PASS | `h1:visible` = 1 ; note : un `h1.fr-modal__title` masqué (modale react-dsfr « Paramètres d'affichage ») existe, toléré |
 | 1e | Sélecteur de langue atteint `/en/` | PASS | desktop + mobile |
-| 2a | Catalogue : « 7 résultats », requêtes de résultats (`size` > 0) filtrées `gissol-osf_g` | PASS | 7 résultats, filtre présent sur toutes les requêtes de résultats |
+| 2a | Catalogue : au moins 1 résultat (nombre annoncé noté, 7 attendus), requêtes de résultats (`size` > 0) filtrées `gissol-osf_g` | PASS | 7 résultats observés, filtre présent sur toutes les requêtes de résultats |
 | 2a' | Requêtes d'agrégation (`size` 0) sans le filtre | KNOWN LIMIT | voir D-cat-1 et `doc/catalogue-patches.md` « Limites connues » |
 | 2b | Fiche : ouverture et titre | PASS | erreurs console limitées aux deux documentées (légende invalide, 400 WMTS/légende) |
 | 3a | Carto : `canvas`, tuiles WMTS 200, sélecteur de couches s'ouvre | PASS (flake M-2 observé) | une exécution sur ~30 a loggé 404 sur `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` TileMatrix=6 ; toléré et compté (<= 10 %) |
@@ -22,7 +22,7 @@ Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all
 | 4a | axe `/fr/` | PASS | 0 violation |
 | 4b | axe `/rechercher-une-donnee/` | FAIL | 2 critical, 1 serious (détail ci-dessous) |
 | 4c | axe `/explorer-les-cartes/` | FAIL | 1 serious |
-| 5 | Captures desktop + mobile des 3 pages | PASS | `doc/e2e/*.png`, toutes < 300 kB |
+| 5 | Captures desktop + mobile des 3 pages | PASS | `doc/e2e/*.jpg` (JPEG q70 produits par le test, qui échoue au-delà de 300 kB) |
 
 BLOCKED : aucun (tous les appels réseau ont abouti).
 
@@ -70,7 +70,7 @@ Les trois règles `landmark-*` du catalogue viennent d'un second `main` (`#home-
 
 ## Captures
 
-Fichiers : `doc/e2e/{home,catalogue,carto}-{desktop,mobile}.png` (home en pleine page, les autres en fenêtre).
+Fichiers : `doc/e2e/{home,catalogue,carto}-{desktop,mobile}.jpg` (home en pleine page, les autres en fenêtre).
 
 - Home : en-tête, hero, sections, pied de page présents ; pas de débordement. Mobile OK.
 - Catalogue : en-tête/menu OK ; vide sous la recherche (D-cat-5), vignette blanche ; sur mobile le bloc « Affiner votre recherche » est bleu foncé (thème geonetwork-ui, hors DSFR), texte « Agrandir » peu contrasté.

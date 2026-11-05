@@ -6,8 +6,7 @@
   "description": "Suite Playwright de bout en bout sur le site assemblé (dist).",
   "scripts": {
     "test": "playwright test",
-    "report": "playwright show-report",
-    "shots:shrink": "python3 scripts/shrink-screenshots.py"
+    "report": "playwright show-report"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
