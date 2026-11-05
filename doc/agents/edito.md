@@ -173,8 +173,8 @@ Source du contenu : le paquet `@sols/brand` (`packages/brand/brand.json`, spéci
 
 Les briques catalogue et carto sont en français et utilisent les **chemins sans langue** (`/`, `/aide/`,
 `/accessibilite/`, ...) : ce sont des pages de renvoi vers `/fr/...`. Exception : un lien avec ancre ne peut pas passer
-par une page de renvoi (le meta refresh perd l'ancre), d'où `/fr/aide/#contact` dans le balisage partagé (à reporter
-dans `brand.json`, qui indique `/aide/#contact`). Elles n'affichent pas le sélecteur de langue.
+par une page de renvoi (le meta refresh perd l'ancre), d'où `/fr/aide/#contact` dans `brand.json` et dans le
+balisage partagé (QUESTIONS E-3). Elles n'affichent pas le sélecteur de langue.
 
 ### Ce qui change pour catalogue et carto (v0 → v1)
 
