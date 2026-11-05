@@ -43,6 +43,12 @@ export const DEFAULT_BASE_LAYER_ID: BaseLayerId = 'plan-ign';
 /** Attribution shown for every GPF base layer (the WMTS capabilities carry no attribution). */
 export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_blank" rel="noopener noreferrer">IGN – Géoplateforme</a>`;
 
+/**
+ * Delay before the single retry of a tile that failed to load: the GPF intermittently answers 400/404
+ * on valid tiles (doc/agents/QUESTIONS.md M-2).
+ */
+export const TILE_RETRY_DELAY_MS = 500;
+
 /** Initial view: metropolitan France, Web Mercator. */
 export const INITIAL_VIEW = {
   centerLonLat: [2.5, 46.6],

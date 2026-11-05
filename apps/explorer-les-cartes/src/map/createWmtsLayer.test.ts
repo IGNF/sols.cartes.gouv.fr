@@ -1,6 +1,7 @@
 import WMTS from 'ol/source/WMTS';
-import { describe, expect, it } from 'vitest';
-import { BASE_LAYER_CANDIDATES, GPF_ATTRIBUTION } from '../config/map';
+import BaseEvent from 'ol/events/Event';
+import { describe, expect, it, vi } from 'vitest';
+import { BASE_LAYER_CANDIDATES, GPF_ATTRIBUTION, TILE_RETRY_DELAY_MS } from '../config/map';
 import { GPF_ENDPOINTS } from '../config/urls';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import createWmtsLayer from './createWmtsLayer';
@@ -32,6 +33,16 @@ describe('createWmtsLayer', () => {
     expect(typeof attributions).toBe('function');
     const value = typeof attributions === 'function' ? attributions({} as never) : attributions;
     expect(value).toEqual([GPF_ATTRIBUTION]);
+  });
+
+  it('réessaie une fois une tuile en erreur', () => {
+    vi.useFakeTimers();
+    const source = createWmtsLayer(capabilities, planIgn)?.getSource();
+    const tile = { load: vi.fn() };
+    source?.dispatchEvent(Object.assign(new BaseEvent('tileloaderror'), { tile }));
+    vi.advanceTimersByTime(TILE_RETRY_DELAY_MS);
+    expect(tile.load).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
   });
 
   it('ne devine pas une couche absente des capacités', () => {
