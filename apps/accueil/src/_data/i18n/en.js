@@ -13,6 +13,7 @@ export default {
     menu: 'Menu',
     close: 'Close',
     navLabel: 'Main menu',
+    translateTitle: 'Select a language',
     nav: {
       accueil: 'Home',
       rechercherUneDonnee: 'Find data (in French)',

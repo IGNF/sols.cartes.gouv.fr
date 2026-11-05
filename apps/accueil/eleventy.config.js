@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
 import { I18nPlugin } from '@11ty/eleventy';
-import { localeOf, stripLocale } from './lib/i18n.js';
+import { defaultLocaleUrl, localeOf, stripLocale } from './lib/i18n.js';
 import accueil from './src/_data/accueil.js';
 import site from './src/_data/site.js';
 
@@ -64,6 +64,7 @@ export default function (eleventyConfig) {
   });
   eleventyConfig.addFilter('localeOf', localeOf);
   eleventyConfig.addFilter('stripLocale', stripLocale);
+  eleventyConfig.addFilter('defaultLocaleUrl', defaultLocaleUrl);
   eleventyConfig.addFilter('language', (code) => site.languages.find((item) => item.code === code));
   eleventyConfig.addFilter('byLocale', (items, locale) =>
     items.filter((item) => localeOf(item.url) === locale),
