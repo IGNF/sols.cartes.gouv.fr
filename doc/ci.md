@@ -1,6 +1,6 @@
 # Intégration continue
 
-Quatre workflows GitHub Actions, filtrés par chemin pour ne lancer que ce qui est touché. Les versions d'outils viennent de `.bun-version` (bun) et `.nvmrc` (Node), lues par `bun-version-file` et `node-version-file`.
+Quatre workflows GitHub Actions, filtrés par chemin pour ne lancer que ce qui est touché ; tous se déclenchent aussi sur `packages/**` (paquet partagé `@sols/brand`). Les versions d'outils viennent de `.bun-version` (bun) et `.nvmrc` (Node), lues par `bun-version-file` et `node-version-file`.
 
 | Workflow | Déclencheurs (`paths`) | Étapes |
 |---|---|---|

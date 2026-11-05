@@ -248,8 +248,8 @@ d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. 
    inclus, c'est-à-dire `footer#pied-de-page` puis `dialog#fr-theme-modal`, frères, à insérer tels quels à la fin du
    `body` (avant les scripts).
 
-Ressources requises par ces blocs : `/assets/brand/*` (images de `@sols/brand`, à republier sous le chemin public de
-la brique), pictogrammes DSFR `artwork/pictograms/environment/{sun,moon}.svg` et `system/system.svg`, icônes
+Ressources requises par ces blocs : `/assets/brand/*` (images de `@sols/brand`, copiées telles quelles depuis
+`packages/brand/assets/`, sans transformation, et republiées sous le chemin public de la brique), pictogrammes DSFR `artwork/pictograms/environment/{sun,moon}.svg` et `system/system.svg`, icônes
 utilitaires `fr-icon-question-fill`, `fr-icon-grid-fill`, `fr-icon-theme-fill`, et les règles `.sols-operator*`,
 `.sols-tool-menu*`, `.sols-partner-logo` de `apps/accueil/src/css/site.css`.
 

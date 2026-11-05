@@ -35,6 +35,6 @@ Variante compacte (carto, `footer.compactOnCarto`) : uniquement `fr-footer__bott
 | `assets/osf-carotte.png` (240×240)                     | marque Observatoire dans l'en-tête                                                                                                 | maquette Figma (export)    |
 | `assets/logo-ign.png`                                  | partenaire pied de page                                                                                                            | ign.fr                     |
 | `assets/logo-inrae.svg`                                | partenaire pied de page                                                                                                            | inrae.fr                   |
-| `assets/illustrations/cas-usage-{1,2,3}.jpg` (1200 px) | section « Cas d'usage » de l'accueil (1 : chambres d'agriculture, 2 : bureaux d'études, 3 : collectivités ; vérifier visuellement) | maquette Figma (export)    |
+| `assets/illustrations/cas-usage-{1,2,3}.jpg` (1200 px) | section « Cas d'usage » de l'accueil (1 : chambres d'agriculture, 2 : collectivités territoriales, 3 : bureaux d'études ; vérifié visuellement en E8) | maquette Figma (export)    |
 
 Les logos IGN et INRAE sont des marques de leurs titulaires, utilisés comme logos partenaires.
