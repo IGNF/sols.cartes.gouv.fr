@@ -15,7 +15,7 @@ export const WMTS_CAPABILITIES_URL = buildCapabilitiesUrl(GPF_ENDPOINTS.wmts, 'W
 
 export function parseWmtsCapabilities(xml: string): WmtsCapabilities {
   const parsed: unknown = new WMTSCapabilities().read(xml);
-  if (!parsed || typeof parsed !== 'object') {
+  if (!parsed || typeof parsed !== 'object' || !('Contents' in parsed)) {
     throw new Error('Capacités WMTS illisibles');
   }
   return parsed as WmtsCapabilities;
