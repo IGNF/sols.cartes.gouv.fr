@@ -18,6 +18,15 @@ describe('labelGeopfDialogs', () => {
     );
   });
 
+  it('nomme aussi une fenêtre DSFR qui n’est pas un élément dialog', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div id="GPautoCompleteList-3" class="fr-modal"></div>';
+    labelGeopfDialogs(root);
+    const list = root.querySelector('#GPautoCompleteList-3');
+    expect(list).toHaveAttribute('role', 'group');
+    expect(list).toHaveAttribute('aria-label', GEOPF_DIALOG_LABELS['GPautoCompleteList']);
+  });
+
   it('conserve un nom existant et ignore les fenêtres inconnues', () => {
     const root = document.createElement('div');
     root.innerHTML =
