@@ -559,3 +559,24 @@ résultats, `false`. Clavier : RMQS (Entrée) → 2 ; pédologie (Espace) → `k
 
 Captures : `doc/screenshots/C11/`.
 
+## 17. Échap dans le menu mobile (C12)
+
+Même correctif que l'edito (E9, défaut D-edito-2) : en dessous du point de rupture LG, Échap dans un sous-menu ouvert
+(« Aide », « Services ») de la modale `#menu-principal` ne referme que ce sous-menu et rend le focus à son bouton ; un
+second Échap ferme la modale. DSFR ne le fait qu'en LG (`doc/agents/edito.md`, « Échap dans le menu mobile »).
+
+- Source unique : le bloc `js` de `doc/agents/edito.md` qui suit « Échap dans le menu mobile » (copie de
+  `apps/accueil/src/js/header.js`, vérifiée par le test edito). `scripts/layout.mjs` (`extractHeaderScript`) le lit et
+  échoue si le bloc manque ; `prepare.mjs` l'écrit dans `.upstream/apps/datahub/src/assets/sols/header.js`, publié en
+  `/rechercher-une-donnee/assets/sols/header.js`.
+- Chargement : `index.html` (patch 0003) ajoute `<script type="module" src="assets/sols/header.js">` juste après
+  `dsfr.module.min.js`. L'écouteur est posé sur `document` en phase de capture : il voit les en-têtes rendus plus tard
+  par Angular.
+- `npm test` vérifie l'extraction, l'échec sans bloc, l'égalité avec `apps/accueil/src/js/header.js` et la ligne de
+  `index.html` du patch.
+
+Vérification (Playwright, 375×812) : bouton « Menu » (Entrée) → modale ouverte ; « Services » (Entrée) → sous-menu
+ouvert ; Tab → focus sur « Rechercher une donnée » ; Échap → sous-menu fermé, modale ouverte, focus sur « Services » ;
+Échap → modale fermée, focus sur « Menu ». Bureau inchangé (Échap ferme le menu « Services » et rend le focus au bouton).
+Aucune erreur console. Captures : `doc/screenshots/C12/`.
+
