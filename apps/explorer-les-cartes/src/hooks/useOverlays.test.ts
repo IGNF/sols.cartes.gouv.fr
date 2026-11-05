@@ -8,15 +8,19 @@ import { initialMapState, useMapStore } from '../store/useMapStore';
 import useOverlays from './useOverlays';
 
 const created = vi.hoisted(() => [] as Array<{ key: string; source: Observable }>);
+const wmts = vi.hoisted(() => ({
+  current: { data: undefined, isError: false } as Record<string, unknown>,
+}));
 vi.mock('../map/overlays', () => ({
   createOverlayLayer: (overlay: OverlayRef) => {
+    if (overlay.name === 'inconstructible') return Promise.resolve(null);
     const source = new Observable();
     const layer = { getSource: () => source, key: overlay.key };
     created.push({ key: overlay.key, source });
     return Promise.resolve(layer);
   },
 }));
-vi.mock('./useWmtsCapabilities', () => ({ default: () => ({ data: undefined }) }));
+vi.mock('./useWmtsCapabilities', () => ({ default: () => wmts.current }));
 
 const ref = (key: string): OverlayRef => ({
   key,
@@ -35,6 +39,7 @@ function fakeMap() {
 
 describe('useOverlays', () => {
   beforeEach(() => {
+    wmts.current = { data: undefined, isError: false };
     created.length = 0;
     useMapStore.setState(initialMapState);
   });
@@ -87,5 +92,28 @@ describe('useOverlays', () => {
     await waitFor(() => expect(addLayer).toHaveBeenCalled());
     unmount();
     expect(removeLayer).toHaveBeenCalledTimes(1);
+  });
+
+  it('attend les capacités WMTS, et marque la couche indisponible si elles échouent', async () => {
+    const { map, addLayer } = fakeMap();
+    useMapStore.setState({ map });
+    const { rerender } = renderHook(() => useOverlays(map));
+    act(() => useMapStore.getState().addOverlay({ ...ref('w'), service: 'wmts' }));
+    expect(addLayer).not.toHaveBeenCalled();
+    expect(useMapStore.getState().unavailableOverlays).toEqual([]);
+    wmts.current = { data: undefined, isError: true };
+    rerender();
+    expect(useMapStore.getState().unavailableOverlays).toEqual(['w']);
+  });
+
+  it('marque indisponible une couche impossible à construire', async () => {
+    const { map, addLayer } = fakeMap();
+    useMapStore.setState({ map });
+    renderHook(() => useOverlays(map));
+    act(() => useMapStore.getState().addOverlay(ref('inconstructible')));
+    await waitFor(() =>
+      expect(useMapStore.getState().unavailableOverlays).toEqual(['inconstructible']),
+    );
+    expect(addLayer).not.toHaveBeenCalled();
   });
 });
