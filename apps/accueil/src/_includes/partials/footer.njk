@@ -1,17 +1,18 @@
+{%- set homeHref = site.sections.accueil if shared else (site.sections.accueil | locale_url) -%}
 <footer class="fr-footer" role="contentinfo" id="pied-de-page">
   <div class="fr-container">
     <div class="fr-footer__body">
       <div class="fr-footer__brand fr-enlarge-link">
-        <a href="{{ site.sections.accueil }}" title="Retour à l'accueil du site - {{ site.header.serviceTitle }} - {{ site.header.brand | join(' ') }}">
+        <a href="{{ homeHref }}" title="{{ t.footer.homeTitle }} - {{ site.header.serviceTitle }} - {{ site.header.brand | join(' ') }}">
           <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
         </a>
       </div>
       <div class="fr-footer__content">
-        <p class="fr-footer__content-desc">{{ site.footer.description }}</p>
+        <p class="fr-footer__content-desc">{{ t.footer.description }}</p>
         <ul class="fr-footer__content-list">
           {%- for link in site.footer.contentLinks %}
           <li class="fr-footer__content-item">
-            <a class="fr-footer__content-link" href="{{ link.href }}" target="_blank" rel="noopener external" title="{{ link.label }} - nouvelle fenêtre">{{ link.label }}</a>
+            <a class="fr-footer__content-link" href="{{ link.href }}" target="_blank" rel="noopener external" title="{{ t.footer.contentLinks[link.key] }} - {{ t.newWindow }}">{{ t.footer.contentLinks[link.key] }}</a>
           </li>
           {%- endfor %}
         </ul>
@@ -20,13 +21,14 @@
     <div class="fr-footer__bottom">
       <ul class="fr-footer__bottom-list">
         {%- for link in site.footer.bottomLinks %}
+        {%- set href = link.href if shared else (link.href | locale_url) %}
         <li class="fr-footer__bottom-item">
-          <a class="fr-footer__bottom-link" href="{{ link.href }}"{% if page.url == link.href %} aria-current="page"{% endif %}>{{ link.label }}</a>
+          <a class="fr-footer__bottom-link" href="{{ href }}"{% if page.url == href %} aria-current="page"{% endif %}>{{ t.footer.bottomLinks[link.key] }}</a>
         </li>
         {%- endfor %}
       </ul>
       <div class="fr-footer__bottom-copy">
-        <p>{{ site.footer.licence.text }} <a href="{{ site.footer.licence.href }}" target="_blank" rel="noopener external" title="{{ site.footer.licence.label }} - nouvelle fenêtre">{{ site.footer.licence.label }}</a></p>
+        <p>{{ t.footer.licence.text }} <a href="{{ site.footer.licenceHref }}" target="_blank" rel="noopener external" title="{{ t.footer.licence.label }} - {{ t.newWindow }}">{{ t.footer.licence.label }}</a></p>
       </div>
     </div>
   </div>

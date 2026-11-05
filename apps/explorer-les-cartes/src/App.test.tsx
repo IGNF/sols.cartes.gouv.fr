@@ -1,8 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
 import { SECTION_PATHS } from './config/urls';
 import App from './App';
+
+vi.mock('./components/map/MapView', () => ({
+  default: function MapViewStub() {
+    return <div data-testid="map-view" />;
+  },
+}));
 
 describe('App', () => {
   it('expose un contenu principal avec le titre de la page', () => {
@@ -12,6 +18,12 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Explorer les cartes' }),
     ).toBeInTheDocument();
+  });
+
+  it('charge la carte dans le contenu principal', async () => {
+    render(<App />);
+    const map = await screen.findByTestId('map-view');
+    expect(screen.getByRole('main')).toContainElement(map);
   });
 
   it('affiche les liens obligatoires du pied de page', () => {

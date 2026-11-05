@@ -1,0 +1,33 @@
+import WMTS from 'ol/source/WMTS';
+import { describe, expect, it } from 'vitest';
+import { BASE_LAYERS } from '../config/map';
+import { GPF_ENDPOINTS } from '../config/urls';
+import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
+import createWmtsLayer from './createWmtsLayer';
+import { parseWmtsCapabilities } from './wmtsCapabilities';
+
+const capabilities = parseWmtsCapabilities(capabilitiesXml);
+const planIgn = BASE_LAYERS[0].layerName;
+
+describe('createWmtsLayer', () => {
+  it('crée une couche WMTS Plan IGN servie par la Géoplateforme', () => {
+    const layer = createWmtsLayer(capabilities, planIgn);
+    expect(layer).not.toBeNull();
+    const source = layer?.getSource();
+    expect(source).toBeInstanceOf(WMTS);
+    expect(source?.getLayer()).toBe(planIgn);
+    expect(source?.getMatrixSet()).toBe('PM_0_19');
+    expect(source?.getUrls()?.[0]).toContain(GPF_ENDPOINTS.wmts);
+  });
+
+  it('expose le titre et la description pour le gestionnaire de couches', () => {
+    const layer = createWmtsLayer(capabilities, planIgn);
+    expect(layer?.get('name')).toBe(planIgn);
+    expect(layer?.get('title')).toBe('Plan IGN');
+    expect(layer?.get('description')).toMatch(/^Cartographie multi-échelles/);
+  });
+
+  it('ne devine pas une couche absente des capacités', () => {
+    expect(createWmtsLayer(capabilities, 'COUCHE.INEXISTANTE')).toBeNull();
+  });
+});

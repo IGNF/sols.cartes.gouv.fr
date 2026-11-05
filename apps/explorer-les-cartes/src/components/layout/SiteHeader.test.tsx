@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { HEADER_HOME_TITLE, SITE } from '../../config/site';
 import { EXTERNAL_LINKS, SECTION_PATHS } from '../../config/urls';
 import SiteHeader from './SiteHeader';
 
@@ -23,7 +24,9 @@ describe('SiteHeader', () => {
 
   it('affiche le nom du service et le lien vers le GIS Sol', () => {
     render(<SiteHeader />);
-    expect(screen.getAllByText('Observatoire des sols').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(SITE.serviceTitle).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(SITE.serviceTagline).length).toBeGreaterThan(0);
+    expect(screen.getAllByTitle(HEADER_HOME_TITLE)[0]).toHaveAttribute('href', SECTION_PATHS.home);
     const gisSolLinks = screen.getAllByRole('link', { name: /site du gis sol/i });
     expect(gisSolLinks[0]).toHaveAttribute('href', EXTERNAL_LINKS.gisSol);
   });

@@ -1,8 +1,17 @@
 // Prepares .upstream/: pinned shallow clone of IGNF/geonetwork-ui, npm ci,
 // our patches and our configuration on top. Idempotent.
 import { createHash } from 'node:crypto'
-import { copyFileSync, cpSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import {
+  constants,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { dirname, join, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
   APP_DIR,
@@ -63,11 +72,25 @@ function applyPatches() {
   }
 }
 
+/** All files under dir, recursively. */
+export function listFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    return entry.isDirectory() ? listFiles(path) : [path]
+  })
+}
+
 function applyOverlay(upstream) {
   copyFileSync(CONFIG_FILE, join(UPSTREAM_DIR, 'conf', 'default.toml'))
   log('config/default.toml copied to .upstream/conf/default.toml')
-  // New files of ours (no upstream file is overwritten: patches handle those).
-  cpSync(join(APP_DIR, 'overlay'), UPSTREAM_DIR, { recursive: true, force: false, errorOnExist: true })
+  // New files of ours, copied one by one; COPYFILE_EXCL fails if an upstream file
+  // already exists at that path (modifying upstream files is the job of patches).
+  const overlayDir = join(APP_DIR, 'overlay')
+  for (const file of listFiles(overlayDir)) {
+    const target = join(UPSTREAM_DIR, relative(overlayDir, file))
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(file, target, constants.COPYFILE_EXCL)
+  }
   const layoutDir = join(UPSTREAM_DIR, 'apps', upstream.app, 'src', 'app', 'sols-layout')
   for (const [name, html] of Object.entries(readLayout(upstream.baseHref))) {
     writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${html}\n`)

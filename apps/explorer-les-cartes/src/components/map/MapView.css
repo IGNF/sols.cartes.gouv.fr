@@ -1,0 +1,7 @@
+.map-view {
+  position: relative;
+  width: 100%;
+  height: min(70vh, 40rem);
+  min-height: 25rem;
+  background-color: var(--background-alt-grey);
+}

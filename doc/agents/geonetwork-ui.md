@@ -206,7 +206,10 @@ Mesures (Node 26.5.0, npm 12.0.2, 22 cœurs, 30 Go) : premier `npm run build` (c
 
 Versions et options npm :
 
-- Node >= 24 (`engines`, contrôlé par `prepare.mjs`), npm >= 10.
+- Node >= 24 (`engines`, contrôlé par `prepare.mjs`), npm >= 10. Construire et tester avec le **majeur de `.nvmrc`
+  (24)**, celui de la CI : `npm run lint` avertit (sans échouer) si le Node courant a un autre majeur. Exemple : avant
+  la correction, `cpSync(..., { errorOnExist: true })` passait en Node 26 et échouait en Node 24 (`ERR_FS_CP_EEXIST`) ;
+  l'overlay est désormais copié fichier par fichier avec `COPYFILE_EXCL`. Vérifié en Node 24.18.0 / npm 11.16.0.
 - `npm ci --allow-remote=all` est passé par `prepare.mjs` : npm 12 refuse par défaut le tarball distant `xlsx` du lockfile
   amont (`EALLOWREMOTE`). npm 10 et 11 autorisent déjà ces tarballs et signalent seulement l'option inconnue.
 - npm 12 bloque aussi les scripts d'installation (`allow-scripts`) : on ne les autorise pas, le build n'en a pas besoin.

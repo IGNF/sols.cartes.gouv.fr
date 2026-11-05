@@ -10,7 +10,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import site from '../src/_data/site.js';
 
-const CROSS_BRICK_ROOTS = [site.sections.rechercherUneDonnee, site.sections.explorerLesCartes];
+const CROSS_BRICK_ROOTS = site.crossBrick;
 const ATTRIBUTE = /\s(?:href|src)="([^"]*)"/g;
 const ID = /\sid="([^"]+)"/g;
 

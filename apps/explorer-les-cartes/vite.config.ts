@@ -16,7 +16,12 @@ export default defineConfig({
       errorRecovery: true,
     },
   },
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    // The lazily loaded map chunk (OpenLayers + geopf-extensions) is about 0.9 MB minified.
+    chunkSizeWarningLimit: 1000,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

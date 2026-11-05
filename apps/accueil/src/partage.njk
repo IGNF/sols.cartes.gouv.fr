@@ -1,0 +1,30 @@
+---
+permalink: /partage/en-tete-pied-de-page/
+eleventyExcludeFromCollections: true
+shared: true
+---
+{#- Reference page for the catalogue and carto bricks: shared skip links, header and footer with
+    language-independent links (no language switcher). doc/agents/edito.md copies its markup byte for byte. -#}
+<!DOCTYPE html>
+<html lang="{{ site.defaultLanguage }}" data-fr-scheme="system">
+  <head>
+{% include "partials/head-common.njk" %}
+    <meta name="robots" content="noindex">
+    <title>{{ t.partage.title }} - {{ t.name }}</title>
+    <meta name="description" content="{{ t.partage.description }}">
+    <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+  </head>
+  <body>
+    {% include "partials/skiplinks.njk" %}
+    {% include "partials/header.njk" %}
+    <main id="contenu" tabindex="-1">
+      <div class="fr-container fr-py-6w">
+        <h1>{{ t.partage.title }}</h1>
+        <p>{{ t.partage.body }}</p>
+      </div>
+    </main>
+    {% include "partials/footer.njk" %}
+    <script type="module" src="{{ site.assets.dsfr }}/dsfr.module.min.js"></script>
+    <script nomodule src="{{ site.assets.dsfr }}/dsfr.nomodule.min.js"></script>
+  </body>
+</html>
