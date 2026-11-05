@@ -1,0 +1,5 @@
+/* The side panel scrolls on its own, next to a map of the same height (see MapView.css). */
+.side-panel-tabs .fr-tabs__panel {
+  max-height: min(70vh, 40rem);
+  overflow-y: auto;
+}
