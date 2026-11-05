@@ -10,14 +10,18 @@ export interface ConsoleIssues {
 export function collectConsole(page: Page): ConsoleIssues {
   const issues: ConsoleIssues = { errors: [] };
   page.on('console', (msg) => {
-    if (msg.type() === 'error') issues.errors.push(`console: ${msg.text()} @ ${msg.location().url}`);
+    if (msg.type() === 'error')
+      issues.errors.push(`console: ${msg.text()} @ ${msg.location().url}`);
   });
   page.on('pageerror', (err) => issues.errors.push(`pageerror: ${err.message}`));
   return issues;
 }
 
 /** Retire les erreurs tolérées (motif + raison documentée) et renvoie le reste. */
-export function untolerated(errors: string[], tolerated: { pattern: RegExp; reason: string }[]): string[] {
+export function untolerated(
+  errors: string[],
+  tolerated: { pattern: RegExp; reason: string }[],
+): string[] {
   return errors.filter((e) => !tolerated.some((t) => t.pattern.test(e)));
 }
 
@@ -40,7 +44,10 @@ export const OUT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../d
 export async function waitForCatalogueResults(page: Page): Promise<number> {
   const count = page.getByText(/\d+ résultats?/).first();
   await count.waitFor({ timeout: 60_000 });
-  await page.locator('gn-ui-record-preview-row, gn-ui-record-preview-list').first().waitFor({ timeout: 60_000 });
+  await page
+    .locator('gn-ui-record-preview-row, gn-ui-record-preview-list')
+    .first()
+    .waitFor({ timeout: 60_000 });
   const n = Number(/(\d+)/.exec(await count.innerText())?.[1] ?? 0);
   if (n < 1) throw new Error(`aucun résultat dans le catalogue (« ${await count.innerText()} »)`);
   return n;
