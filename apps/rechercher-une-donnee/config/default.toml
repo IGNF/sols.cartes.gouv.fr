@@ -37,7 +37,12 @@ enabled = false
 [map]
 max_feature_count = 5000
 do_not_use_default_basemap = true
-# external_viewer_url_template : configuré en C4 (lien vers /explorer-les-cartes/).
+# Bouton « Voir sur la carte » de l'aperçu carte d'une fiche (format décidé, question C-3).
+# Variables remplacées par le datahub IGN : ${layer_name} (non encodé), ${service_type} (WMS, WMTS, TMS ; WFS désactivé),
+# ${service_url} (encodé). Chemin relatif : même origine, pas de domaine en dur.
+external_viewer_url_template = '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+# Même onglet : navigation interne au site.
+external_viewer_open_new_tab = false
 
 [[map_layer]]
 type = 'wms'
@@ -50,6 +55,8 @@ datahub.pageTitle.home = "Rechercher une donnée"
 datahub.pageTitle.recordSearch = "Rechercher une donnée"
 datahub.header.title.html = '<h1 class="fr-h2 fr-mb-0">Rechercher une donnée sur les sols</h1>'
 search.filters.title = "Affiner votre recherche"
+# Nom accessible (title) du bouton icône « Voir sur la carte » de l'aperçu carte (C4).
+record.externalViewer.open = "Voir sur la carte"
 datahub.header.datasets = "Données"
 ogc.unreachable.unknown = "Le service associé à cette donnée est en accès restreint, veuillez contacter le producteur de la donnée pour en obtenir l'accès"
 wfs.unreachable.unknown = "Le service associé à cette donnée est en accès restreint, veuillez contacter le producteur de la donnée pour en obtenir l'accès"
