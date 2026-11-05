@@ -14,6 +14,8 @@
  * M8: the geopf-extensions tool set (every button named and operable, a distance measured, a WMS import of
  * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the share permalink reopened
  * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
+ * M11: axe at 375 px in the dark theme with the page idle (pointer off the header); with the pointer on the
+ * header brand block, only the known DSFR hover contrast on the « Menu » button (QUESTIONS M-5) is tolerated.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -841,6 +843,49 @@ const TOOL_BUTTONS = [
     `375px : Entrée sur « Itinéraire » ferme la liste, rend le focus à « Mes outils » et ouvre le panneau sur la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
   );
   await page.close();
+}
+
+// M11: axe at 375 px, dark theme, page idle. Headless Chromium starts with the pointer at (0, 0), on the header
+// brand block: DSFR `.fr-enlarge-link:hover` then paints it `--background-lifted-grey-hover` (#3f3f3f) under the
+// « Menu » button (#8585f6, 3.35:1). Upstream DSFR, same on the edito (doc/agents/geopf-ext.md §9.7, QUESTIONS M-5).
+{
+  const context = await browser.newContext({
+    viewport: { width: 375, height: 812 },
+    colorScheme: 'dark',
+  });
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('.ol-viewport canvas').first().waitFor({ timeout: 30_000 });
+  const seriousViolations = async () =>
+    (await new AxeBuilder({ page }).analyze()).violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    );
+  const describe = (violations: Awaited<ReturnType<typeof seriousViolations>>) =>
+    violations
+      .map((v) => `${v.id} [${v.impact}] ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)
+      .join(' | ');
+  await page.mouse.move(370, 806);
+  await page.waitForTimeout(800);
+  const idle = await seriousViolations();
+  check(
+    idle.length === 0,
+    `a11y 375px sombre, page au repos : axe sans violation grave${idle.length ? ` : ${describe(idle)}` : ''}`,
+  );
+  await page.mouse.move(8, 8);
+  await page.waitForTimeout(400);
+  const hovered = await seriousViolations();
+  const onlyKnownDsfr = hovered.every(
+    (v) =>
+      v.id === 'color-contrast' &&
+      v.nodes.every((n) => n.target.join(' ') === '#en-tete-menu-button'),
+  );
+  check(
+    onlyKnownDsfr,
+    `a11y 375px sombre, pointeur sur la marque : seul le contraste DSFR connu du bouton « Menu » (M-5)${
+      onlyKnownDsfr ? '' : ` : ${describe(hovered)}`
+    }`,
+  );
+  await context.close();
 }
 
 await browser.close();
