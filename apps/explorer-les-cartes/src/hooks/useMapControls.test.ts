@@ -2,7 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import ScaleLine from 'ol/control/ScaleLine';
 import type OlMap from 'ol/Map';
 import { describe, expect, it, vi } from 'vitest';
-import { GEOPF_DIALOG_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
+import { CONTROL_LABELS, GEOPF_DIALOG_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
 import useMapControls from './useMapControls';
 
 const geopf = vi.hoisted(() => {
@@ -14,7 +14,10 @@ const geopf = vi.hoisted(() => {
       constructor(options: unknown) {
         this.options = options;
         this.element = document.createElement('div');
-        if (withDialog) this.element.innerHTML = '<dialog id="GPautoCompleteList-1"></dialog>';
+        if (withDialog)
+          this.element.innerHTML =
+            '<dialog id="GPautoCompleteList-1"></dialog><input id="GPsearchInputText-1" />';
+        if (kind === 'attribution') this.element.innerHTML = '<button title="Sources">›</button>';
         created.push({ kind, options, element: this.element });
       }
     };
@@ -45,11 +48,20 @@ describe('useMapControls', () => {
     geopf.created.length = 0;
     const { map, addControl } = createFakeMap();
     renderHook(() => useMapControls(map));
-    expect(geopf.created.map((c) => c.kind)).toEqual(['zoom', 'fullScreen', 'attribution']);
+    expect(geopf.created.map((c) => c.kind).sort()).toEqual(['attribution', 'fullScreen', 'zoom']);
     expect(addControl.mock.calls.some(([c]) => c instanceof ScaleLine)).toBe(true);
     await waitFor(() => expect(addControl).toHaveBeenCalledTimes(5));
     const search = geopf.created.find((c) => c.kind === 'search');
     expect(search?.options).toEqual(MAP_TOOLS_OPTIONS.search);
+    expect(search?.element.querySelector('input')).toHaveAttribute(
+      'aria-label',
+      CONTROL_LABELS.searchInput,
+    );
+    const attribution = geopf.created.find((c) => c.kind === 'attribution');
+    expect(attribution?.element.querySelector('button')).toHaveAttribute(
+      'aria-label',
+      CONTROL_LABELS.attribution,
+    );
     expect(search?.element.querySelector('dialog')).toHaveAttribute(
       'aria-label',
       GEOPF_DIALOG_LABELS['GPautoCompleteList'],
