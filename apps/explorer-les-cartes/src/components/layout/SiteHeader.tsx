@@ -17,7 +17,7 @@ export default function SiteHeader() {
       serviceTagline={SITE.serviceTagline}
       quickAccessItems={[
         {
-          iconId: 'fr-icon-external-link-line',
+          iconId: 'fr-icon-earth-line',
           text: 'Site du GIS Sol',
           linkProps: {
             href: EXTERNAL_LINKS.gisSol,

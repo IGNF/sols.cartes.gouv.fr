@@ -34,4 +34,11 @@ describe('App', () => {
       SECTION_PATHS.siteMap,
     );
   });
+
+  it('propose les paramètres d’affichage dans le pied de page', () => {
+    render(<App />);
+    expect(
+      screen.getByRole('button', { name: /paramètres d’affichage|paramètres d'affichage/i }),
+    ).toBeInTheDocument();
+  });
 });

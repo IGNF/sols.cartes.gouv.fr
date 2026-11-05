@@ -1,3 +1,4 @@
+import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
 import { SITE } from '../../config/site';
 import { SECTION_PATHS } from '../../config/urls';
@@ -12,6 +13,7 @@ export default function SiteFooter() {
       bottomItems={[
         { text: 'Données personnelles', linkProps: { href: SECTION_PATHS.personalData } },
         { text: 'Plan du site', linkProps: { href: SECTION_PATHS.siteMap } },
+        headerFooterDisplayItem,
       ]}
       contentDescription={SITE.footerDescription}
       brandTop={
