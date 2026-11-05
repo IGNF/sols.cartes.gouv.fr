@@ -22,3 +22,83 @@
   height: 2px;
   background-color: currentColor;
 }
+
+/* Header operator block (v1): GIS Sol logo, separator, Observatoire mark. */
+.sols-operator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sols-operator__logo {
+  width: auto;
+  height: 1.75rem;
+}
+
+.sols-operator__mark {
+  width: auto;
+  height: 2.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid var(--border-default-grey);
+}
+
+@media (min-width: 62em) {
+  .sols-operator {
+    gap: 1rem;
+  }
+
+  .sols-operator__logo {
+    height: 2.5rem;
+  }
+
+  .sols-operator__mark {
+    height: 3.5rem;
+    padding-left: 1rem;
+  }
+}
+
+/* Header tool menus (Aide, Services): DSFR collapse menus placed like the translate menu. */
+.sols-tool-menu .fr-nav__link {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sols-tool-menu .fr-nav__link .fr-hint-text {
+  margin-top: 0.25rem;
+}
+
+/* Dropdown chevron, as on the translate button (core DSFR icon). */
+.sols-tool-menu__btn::after {
+  content: '';
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+  background-color: currentColor;
+  -webkit-mask-image: url(../dsfr/icons/arrows/arrow-down-s-line.svg);
+  mask-image: url(../dsfr/icons/arrows/arrow-down-s-line.svg);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  transition: transform 0.3s;
+}
+
+.sols-tool-menu__btn[aria-expanded='true']::after {
+  transform: rotate(-180deg);
+}
+
+@media (min-width: 62em) {
+  .sols-tool-menu {
+    position: relative;
+  }
+
+  .sols-tool-menu__menu {
+    right: 0;
+    left: auto;
+  }
+}
+
+/* Footer partner logos: same height (DSFR sets height: auto on .fr-footer__partners .fr-footer__logo). */
+.fr-footer__partners .fr-footer__logo.sols-partner-logo {
+  height: 4.5rem;
+  padding: 0.5rem;
+}
