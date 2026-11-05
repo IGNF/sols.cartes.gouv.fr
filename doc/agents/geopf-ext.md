@@ -122,6 +122,7 @@ L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL 
 - Clavier : le conteneur de carte a `tabIndex=0` (interactions clavier OL : flèches, `+`/`-`) ; règle jsx-a11y
   `no-noninteractive-tabindex` autorisée pour le rôle `region`. Le bouton du gestionnaire de couches s'atteint en 3 Tab depuis la carte
   et s'ouvre avec Entrée.
+- GPF WMTS : réponses `400 Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown` intermittentes sur des `GetTile` valides (environ 3 %, reproduit en `curl`) ; tuile vide et « Failed to load resource » en console. Côté serveur, voir `QUESTIONS.md` M-2.
 - `ol/format/WMTSCapabilities.read` renvoie un objet même pour un document invalide : `parseWmtsCapabilities` exige `Contents`.
 - Tests : `ol/Map` et le module `LayerSwitcher` sont simulés (`vi.mock`) ; `createWmtsLayer` et le parseur utilisent un extrait réel
   des capacités (`src/test/fixtures/wmts-capabilities.xml`, importé avec `?raw`).

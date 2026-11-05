@@ -44,3 +44,9 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : le `Footer` de react-dsfr 1.36.0 ne propose que `domains` pour la liste de liens de contenu ; chaque entrée est rendue avec le domaine comme libellé et `https://<domaine>` comme cible. La brique edito affiche « Site du GIS Sol » → `https://www.gissol.fr/` (et des cibles en `www.`).
 - Options : (a) garder `domains` : le lien se lit « gissol.fr » → `https://gissol.fr` (redirige vers le site) ; (b) l'edito renomme son libellé en « gissol.fr » pour une parité exacte ; (c) balisage personnalisé côté carto (contraire à « utiliser les props react-dsfr »).
 - Défaut appliqué : (a) côté carto ; (b) proposé à l'edito. Même liste, même ordre, même phrase de licence et même titre du lien d'accueil.
+
+## M-2. Tuiles WMTS Plan IGN en erreur 400 intermittente (carto-dev, M2)
+
+- Constat : `https://data.geopf.fr/wmts` répond parfois `400` avec `<Exception exceptionCode="InvalidParameterValue">Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown</Exception>` à une requête `GetTile` valide (même URL : 2 réponses 400 sur 60 en `curl`, sans le navigateur ; environ 1 tuile sur 15 à 1 chargement de page sur 2 dans Playwright). La tuile reste vide et le navigateur journalise « Failed to load resource » : ce n'est pas une erreur du code de l'application.
+- Options : (a) accepter et signaler l'incident à l'équipe Géoplateforme ; (b) ajouter un nouvel essai unique des tuiles en échec (`tileLoadFunction` personnalisée) ; (c) les deux.
+- Défaut appliqué : (a) en M2 (aucun contournement, signalement à faire par un humain, l'agent n'ayant pas de canal vers la GPF) ; (b) à décider en M3 si le problème persiste.
