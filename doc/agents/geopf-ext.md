@@ -581,8 +581,8 @@ dans `src/composables/controls.js`) ; plan `doc/plans/M9.md`.
 
 `position: 'top-right'` (élément **préposé** dans la colonne après `addControl`, le gestionnaire ayant été ajouté avant), `gutter: true`,
 `collapsed: true`, `titlePrimary: 'Catalogue des données sols'`, `layerLabel: 'title'`, `layerThumbnail: true`, `size: 'lg'`,
-`tabHeightAuto: false`, `addToMap: false`, `auto: false`, `optimisation: 'none'`, `search: { display, label, criteria: ['title',
-'description', 'producer', 'name'] }` (sous-chaîne normalisée, sans accents), `categories: [{ title: 'Données sols', id: 'sols',
+`tabHeightAuto: false`, `addToMap: false`, `auto: false`, `optimisation: 'none'`, `search: { display, label, criteria: ['search',
+'name'] }` (sous-chaîne normalisée, sans accents, sur les textes bruts du champ `search`, §11.3 point 14), `categories: [{ title: 'Données sols', id: 'sols',
 producer: true, order: true, filter: null }]` (le type `Categories` déclare `field`, `value`, `clusterOptions` obligatoires : cast).
 Bouton « Catalogue de cartes » renommé « Catalogue des données sols » (`labelToggleButton`), bouton primaire (`.map-catalog`, comme
 l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogStyles.ts`).
@@ -603,8 +603,14 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
 12. Le `<label for>` vide recouvre la case : au clic souris c'est le label qui reçoit l'évènement (il coche la case) ; au clavier, Espace.
 13. Sous 576px geopf garde `min-width: 450px` sur le panneau (`DSFRcatalogStyle.css`) : `MapView.css` force `100vw` (le panneau est ancré
     à droite de l'écran, `right: -4px`).
-14. `CatalogDOM.tmplElement` insère `title`, `description` et `producer` en **`innerHTML`** : échappés (`src/text/escapeHtml.ts`) dans
-    `buildCatalogData` ; `name`, `thumbnail` et `metadata_urls` sont posés en attributs. Les vignettes sont **décoratives à dessein**
+14. `CatalogDOM.tmplElement` insère `title`, `description` et `producer` en **`innerHTML`** (et `title`/producteur dans des attributs
+    `title="…"`) : échappés (`src/text/escapeHtml.ts`) dans `buildCatalogData`. Deux fuites à contourner : la **recherche** du
+    contrôle lit `layer[critère]` sur les objets de configuration (chaînes échappées : « Info&Sols » ne trouverait pas
+    « Info&amp;Sols »), d'où un champ supplémentaire `search: [titre, résumé, producteur]` **bruts** et
+    `search.criteria: ['search', 'name']` (les critères sont de simples noms de propriétés, les tableaux sont joints) ; et
+    `createCatalogProducerLinks` reçoit le producteur échappé : `patchProducerLinks` construit l'URL sur `unescapeHtml(name)` et rend le
+    `name` tel quel (il repart dans le gabarit). `name`, `thumbnail` et `metadata_urls` sont posés en attributs. Les vignettes sont
+    **décoratives à dessein**
     (`<img>` sans texte alternatif porteur : le titre est le libellé de la case) ; le générateur ne garde une vignette que si son URL est
     `https:` sur un hôte de confiance (`TRUSTED_IMAGE_HOSTS` : `data.geopf.fr`, site GIS Sol ; `isTrustedImageUrl`, `src/config/urls.ts`).
 
@@ -632,5 +638,10 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
 - **Catalogue indisponible** : si le chunk `loadCatalog` échoue, `setCatalogueUnavailable(true)` (store) et `CatalogueUnavailableNotice`
   renvoie à « Version accessible de la liste des données ».
 - Échappement HTML et vignettes de confiance : §11.3 point 14. Patch du prototype appliqué une fois : §11.3 point 10.
+- **Revue 2** : l'échappement fuyait dans l'URL de l'étiquette producteur (`organization=INRAE%20-%20Info%26amp%3BSols`) et dans la
+  recherche du widget : URL sur le nom brut (`unescapeHtml`), recherche sur le champ brut `search` (§11.3 point 14) ; `check:map`
+  vérifie l'`href` exact, le texte « INRAE - Info&Sols » et la recherche « Info&Sols » (7 données). Avis « Couche indisponible »
+  **masquable** (`closable`, « Masquer le message ») : il reste au-dessus de la carte (le panneau du catalogue est ancré dans la carte,
+  un avis par-dessus la carte recouvrirait ses widgets) et revient si la couche est retirée puis remise.
 - `check:map` : donnée Loiret ajoutée depuis le catalogue → avis « Couche indisponible » puis retrait ; lien `l=` vers `rrp_loiret_…` →
   entrée `rrp_dept_loiret_…` cochée, décocher retire la couche et l'avis.
