@@ -3,6 +3,7 @@
  * Header and footer labels come from @sols/brand, the content shared by the three bricks.
  */
 import brand from '@sols/brand';
+import site from '../site.js';
 
 const description =
   'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).';
@@ -13,7 +14,7 @@ const menuItems = (items) =>
 
 export default {
   name: 'Observatoire des sols',
-  tagline: 'Observatoire des sols de France',
+  tagline: brand.service.tagline,
   description,
   newWindow: 'nouvelle fenêtre',
   skiplinks: {
@@ -48,17 +49,17 @@ export default {
     description: brand.footer.description,
     homeLinkTitle: brand.service.homeLinkTitle,
     partnersTitle: 'Nos partenaires',
-    bottomLinks: {
-      accessibilite: 'Accessibilité : non conforme',
-      mentionsLegales: 'Mentions légales',
-      donneesPersonnelles: 'Données personnelles',
-      planDuSite: 'Plan du site',
-    },
+    bottomLinks: Object.fromEntries(
+      brand.footer.bottomLinks.map(({ href, label }, index) => [
+        site.footer.bottomLinks[index].key,
+        label,
+      ]),
+    ),
     licence: { text: brand.footer.licence.text, label: brand.footer.licence.label },
   },
   display: {
     button: brand.footer.displaySettings.label,
-    title: 'Paramètres d’affichage',
+    title: brand.footer.displaySettings.label,
     legend: 'Choisissez un thème pour personnaliser l’apparence du site.',
     light: 'Thème clair',
     dark: 'Thème sombre',
