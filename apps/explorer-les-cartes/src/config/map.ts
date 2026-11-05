@@ -77,7 +77,7 @@ export const MAP_LABEL = 'Carte interactive des données sols';
 export const DEFAULT_CONTROLS_OPTIONS: DefaultsOptions = {
   zoom: false,
   attribution: false,
-  rotateOptions: { tipLabel: 'Réinitialiser l’orientation' },
+  rotateOptions: { tipLabel: 'Réinitialiser l’orientation' }, // same text as CONTROL_LABELS.rotate
 };
 
 /** Position of a geopf-extensions control (values listed in Controls/Control.js). */
@@ -93,7 +93,7 @@ export const MAP_TOOLS_OPTIONS = {
   attribution: {
     collapsible: true,
     collapsed: false,
-    tipLabel: 'Sources des données',
+    tipLabel: 'Sources des données', // same text as CONTROL_LABELS.attribution
   } satisfies AttributionOptions,
   scaleLine: { units: 'metric', minWidth: 80 } satisfies ScaleLineOptions,
   search: {
@@ -120,4 +120,14 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
 };
 
 /** Id of the base layer side panel (target of the toggle button). */
+/**
+ * Accessible names of map controls whose visible content is a glyph (OL attribution "›", rotate "⇧") or
+ * which have no label (geopf search input). Set as aria-label before the control is added (RGAA 11.1).
+ */
+export const CONTROL_LABELS = {
+  attribution: 'Sources des données',
+  rotate: 'Réinitialiser l’orientation',
+  searchInput: 'Rechercher un lieu ou une adresse',
+} as const;
+
 export const BASE_LAYER_PANEL_ID = 'panneau-fonds-de-carte';

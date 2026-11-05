@@ -2,22 +2,25 @@ import type Control from 'ol/control/Control';
 import ScaleLine from 'ol/control/ScaleLine';
 import type OlMap from 'ol/Map';
 import { useEffect } from 'react';
-import { MAP_TOOLS_OPTIONS } from '../config/map';
+import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
 import {
   GeoportalAttribution,
   GeoportalFullScreen,
   GeoportalZoom,
   loadSearchEngine,
 } from '../map/geopf';
+import { labelControlButtons, labelSearchInput } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 
 /** Map tools available immediately: geopf-extensions zoom, full screen, attribution; OL scale line. */
 export function createMapControls(): Control[] {
+  const attribution = new GeoportalAttribution({ ...MAP_TOOLS_OPTIONS.attribution });
+  labelControlButtons(attribution, CONTROL_LABELS.attribution);
   return [
     new GeoportalZoom({ ...MAP_TOOLS_OPTIONS.zoom }),
     new GeoportalFullScreen({ ...MAP_TOOLS_OPTIONS.fullScreen }),
     new ScaleLine({ ...MAP_TOOLS_OPTIONS.scaleLine }),
-    new GeoportalAttribution({ ...MAP_TOOLS_OPTIONS.attribution }),
+    attribution,
   ];
 }
 
@@ -37,6 +40,7 @@ export default function useMapControls(map: OlMap | null): void {
         if (!active) return;
         const control = new SearchEngine({ ...MAP_TOOLS_OPTIONS.search });
         labelGeopfDialogs(control.element);
+        labelSearchInput(control.element);
         map.addControl(control);
         search = control;
       })

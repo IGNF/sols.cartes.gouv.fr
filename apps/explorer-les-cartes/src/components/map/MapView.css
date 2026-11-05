@@ -5,3 +5,26 @@
   min-height: 25rem;
   background-color: var(--background-alt-grey);
 }
+
+/*
+ * geopf-extensions search engine: its own slot, right of the zoom column and left of the layer
+ * switcher, at every width (geopf puts it at left: 46px above 576px and at 0 below, over the zoom).
+ * Offsets follow the DSFR spacing scale (1w = 0.5rem): zoom column = 1w offset + 5w buttons, plus 1w gap.
+ */
+.map-view [id^='GPsearchEngine-'] {
+  top: 0.5rem;
+  left: 3.5rem;
+  max-width: calc(100% - 7rem);
+}
+
+/* Keep the typed text clear of the reset button that geopf overlays on the input. */
+.map-view input[id^='GPsearchInputText-'] {
+  padding-right: 2.5rem;
+}
+
+/* Desktop (DSFR lg breakpoint): wide enough for the whole placeholder. */
+@media (min-width: 62em) {
+  .map-view input[id^='GPsearchInputText-'] {
+    width: 18rem;
+  }
+}
