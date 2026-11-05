@@ -184,7 +184,7 @@ Construite selon l'option A du §5 : rien du dépôt amont n'est copié dans not
 | `config/default.toml` | Notre configuration, copiée sur `.upstream/conf/default.toml` (que le build publie en `assets/configuration/default.toml`). |
 | `patches/*.patch` | Patchs rejoués dans l'ordre lexical, listés dans `doc/catalogue-patches.md` (le lint échoue sinon). |
 | `scripts/prepare.mjs` | Clone superficiel (`git clone --depth 1 --branch <ref>`) dans `.upstream/`, contrôle du SHA, remise à zéro (`git checkout -- .` puis `git clean -fd`, sans toucher `node_modules`), `npm ci` seulement si `package-lock.json` amont a changé (empreinte dans `node_modules/.sols-install-stamp`), patchs (`git apply --check` puis `git apply`), copie de la config. Idempotent. |
-| `scripts/build.mjs`, `scripts/dev.mjs` | `nx build datahub --configuration=production --base-href=/rechercher-une-donnee/` puis copie vers `dist/` ; `nx serve datahub --port=4200`. |
+| `scripts/build.mjs`, `scripts/dev.mjs` | `nx build datahub --configuration=production` puis copie vers `dist/` ; `nx serve datahub --port=4200`. Le base href `/rechercher-une-donnee/` vient de `project.json` (patch 0002), commun au build et au serveur de dev. |
 | `scripts/lint.mjs`, `scripts/checks.mjs`, `test/` | Vérifications hors ligne de ce que la brique possède : syntaxe des scripts, `upstream.json`, config (clés obligatoires, `datahub_url`, `config_filters`, guillemets), patchs documentés, `baseHref` du patch 0002 égal à `upstream.json`. Le code amont n'est ni linté ni testé ici. |
 | `.gitignore` | `.upstream/` (~2 Go avec `node_modules`) et `dist/`. |
 | `package-lock.json` | Lockfile vide (aucune dépendance propre), commité pour activer le job `ci-catalogue.yml`. |
@@ -216,7 +216,8 @@ Configuration retenue (`config/default.toml`) :
 - `[global]` : `geonetwork4_api_url = "https://data.geopf.fr/catalog"`, `datahub_url = "/rechercher-une-donnee"`. `sso_url`
   et `client_id` sont retirés, mais le code IGN initialise Keycloak avec ses valeurs par défaut (§2.3) : C3 retire ce bloc.
 - `[search]` : `config_filters.groupPublished = ['gissol-osf_g']` (patch 0001, décision C-1), `advanced_filters` sans
-  `organization` (§2.2).
+  `organization` (§2.2). Les recherches `mainSearch` et `organization-page` sont filtrées ; la liste `/organisations`
+  (agrégation) ne l'est pas, voir `doc/catalogue-patches.md`.
 - `[map]` : pas encore de `external_viewer_url_template` (C4, décision C-3) ; fond `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2`.
 - `[translations.fr]` : libellés IGN repris. La langue de l'interface suit encore le navigateur (repli `en`,
   `libs/util/i18n/src/lib/i18n.providers.ts:35`) : le forçage du français est traité en C3.
