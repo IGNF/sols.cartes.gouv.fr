@@ -18,7 +18,7 @@
       </div>
     </div>
     <div class="fr-card__footer">
-      <a class="fr-btn fr-btn--sm" href="{{ event.href | localize(locale) }}"{% if frLang %} lang="{{ locale }}"{% endif %}>{{ eventStrings.actions[event.action] }}</a>
+      <a class="fr-btn fr-btn--sm" href="{{ (event.href or accueil.agenda.defaultHref) | localize(locale) }}"{% if frLang %} lang="{{ locale }}"{% endif %}>{{ eventStrings.actions[event.action] }}</a>
     </div>
   </div>
 </div>

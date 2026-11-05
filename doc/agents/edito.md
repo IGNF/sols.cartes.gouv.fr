@@ -109,7 +109,8 @@ provisoire dans `en.js` ; structure (clés, liens, icônes, pictogrammes, illust
    (module, ~30 lignes) affiche les boutons « précédent / suivant » (cachés par défaut, `hidden`), les désactive aux
    extrémités et fait défiler d'environ une largeur. Événements passés masqués **au build** (filtre `upcoming`, date du
    build en UTC) : le site doit être reconstruit pour retirer un événement passé ; phrase de repli si aucun.
-   Liens d'inscription provisoires vers `/<langue>/aide/#contact` (E-4).
+   Un événement sans `href` dans `agenda.json` renvoie vers `accueil.agenda.defaultHref` (provisoire :
+   `/<langue>/aide/#contact`, E-4).
 6. « Derniers articles » (articles du site, conservés).
 7. « Partenaires & sponsors » : titre et introduction, « Acteurs du réseau » avec les logos disponibles (IGN, INRAE,
    GIS Sol), lien « Site du GIS Sol », encadré vert « Vous produisez des données… » avec « Soumettre des données »
