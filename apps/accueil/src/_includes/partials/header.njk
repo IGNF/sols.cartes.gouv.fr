@@ -33,7 +33,7 @@
             {%- set currentLanguage = locale | language %}
             <div class="fr-translate fr-nav" id="selecteur-langue">
               <div class="fr-nav__item">
-                <button aria-controls="menu-langues" aria-expanded="false" type="button" class="fr-translate__btn fr-btn">{{ locale | upper }}<span class="fr-hidden-lg">&nbsp;- {{ currentLanguage.label }}</span>
+                <button aria-controls="menu-langues" aria-expanded="false" title="{{ t.header.translateTitle }}" type="button" class="fr-translate__btn fr-btn">{{ locale | upper }}<span class="fr-hidden-lg">&nbsp;- {{ currentLanguage.label }}</span>
                 </button>
                 <div class="fr-collapse fr-translate__menu fr-menu" id="menu-langues">
                   <ul class="fr-menu__list">

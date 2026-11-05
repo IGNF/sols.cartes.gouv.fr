@@ -18,6 +18,7 @@ export default {
     menu: 'Menu',
     close: 'Fermer',
     navLabel: 'Menu principal',
+    translateTitle: 'Sélectionner une langue',
     nav: {
       accueil: 'Accueil',
       rechercherUneDonnee: 'Rechercher une donnée',

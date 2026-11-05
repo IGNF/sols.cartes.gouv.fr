@@ -53,6 +53,9 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
 
   test('sélecteur de langue DSFR avec chaque langue', () => {
     expect(home()).toContain('class="fr-translate fr-nav"');
+    expect(home()).toContain(
+      `title="${t.header.translateTitle}" type="button" class="fr-translate__btn fr-btn"`,
+    );
     for (const code of LOCALES) {
       const current = code === locale ? ' aria-current="true"' : '';
       expect(home()).toContain(`hreflang="${code}" lang="${code}" href="/${code}/"${current}>`);
