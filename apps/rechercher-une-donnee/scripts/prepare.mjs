@@ -1,10 +1,20 @@
 // Prepares .upstream/: pinned shallow clone of IGNF/geonetwork-ui, npm ci,
 // our patches and our configuration on top. Idempotent.
 import { createHash } from 'node:crypto'
-import { copyFileSync, existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import {
+  constants,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
+import { dirname, join, relative } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
+  APP_DIR,
   CONFIG_FILE,
   MIN_NODE_MAJOR,
   PATCHES_DIR,
@@ -16,6 +26,7 @@ import {
   readUpstream,
   run,
 } from './lib.mjs'
+import { readLayout } from './layout.mjs'
 
 const INSTALL_STAMP = join(UPSTREAM_DIR, 'node_modules', '.sols-install-stamp')
 
@@ -36,8 +47,8 @@ function ensureClone(upstream) {
 }
 
 function resetWorkingTree() {
-  // Tracked files back to the pinned commit; ignored files (node_modules, dist) are kept.
-  run('git', ['-C', UPSTREAM_DIR, 'checkout', '--quiet', '--', '.'])
+  // Index and tracked files back to the pinned commit; ignored files (node_modules, dist) are kept.
+  run('git', ['-C', UPSTREAM_DIR, 'reset', '--quiet', '--hard', 'HEAD'])
   run('git', ['-C', UPSTREAM_DIR, 'clean', '--quiet', '-fd'])
 }
 
@@ -61,9 +72,30 @@ function applyPatches() {
   }
 }
 
-function applyOverlay() {
+/** All files under dir, recursively. */
+export function listFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    return entry.isDirectory() ? listFiles(path) : [path]
+  })
+}
+
+function applyOverlay(upstream) {
   copyFileSync(CONFIG_FILE, join(UPSTREAM_DIR, 'conf', 'default.toml'))
   log('config/default.toml copied to .upstream/conf/default.toml')
+  // New files of ours, copied one by one; COPYFILE_EXCL fails if an upstream file
+  // already exists at that path (modifying upstream files is the job of patches).
+  const overlayDir = join(APP_DIR, 'overlay')
+  for (const file of listFiles(overlayDir)) {
+    const target = join(UPSTREAM_DIR, relative(overlayDir, file))
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(file, target, constants.COPYFILE_EXCL)
+  }
+  const layoutDir = join(UPSTREAM_DIR, 'apps', upstream.app, 'src', 'app', 'sols-layout')
+  for (const [name, html] of Object.entries(readLayout(upstream.baseHref))) {
+    writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${html}\n`)
+  }
+  log('overlay/ copied, header/footer generated from doc/agents/edito.md')
 }
 
 export function prepare({ install = true } = {}) {
@@ -75,7 +107,7 @@ export function prepare({ install = true } = {}) {
   resetWorkingTree()
   if (install) ensureInstall()
   applyPatches()
-  applyOverlay()
+  applyOverlay(upstream)
   return upstream
 }
 

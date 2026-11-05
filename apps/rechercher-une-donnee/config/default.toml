@@ -15,9 +15,14 @@ main_color = "#212029"
 background_color = "#fdfbff"
 header_background = "var(--color-white)"
 header_foreground_color = '#212029'
-favicon = "/rechercher-une-donnee/assets/img/favicon.ico"
+favicon = "/rechercher-une-donnee/assets/dsfr/favicon/favicon.ico"
+# Police du DSFR (Marianne, fournie par le CSS DSFR du build) au lieu de Rubik/Readex Pro par défaut
+main_font = "Marianne, arial, sans-serif"
+title_font = "Marianne, arial, sans-serif"
 
 [search]
+# Toutes les fiches du périmètre sont des jeux de données : pas de filtre rapide par type.
+record_kind_quick_filter = false
 # Le filtre « organization » est retiré : ses valeurs proviennent d'agrégations non filtrées
 # (tout le catalogue cartes.gouv.fr), cf. doc/agents/geonetwork-ui.md §2.2.
 advanced_filters = ['topic', 'publicationYear', 'format', 'license']
@@ -26,7 +31,8 @@ advanced_filters = ['topic', 'publicationYear', 'format', 'license']
 config_filters.groupPublished = ['gissol-osf_g']
 
 [metadata-quality]
-enabled = true
+# Désactivé : les fiches GPF n'ont pas l'indicateur (avertissement console sinon).
+enabled = false
 
 [map]
 max_feature_count = 5000
@@ -39,6 +45,10 @@ url = 'https://data.geopf.fr/wms-r'
 name = 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2'
 
 [translations.fr]
+# Titres d'onglet (« <titre> - Observatoire des sols », motif du patch 0003) et titre de la page de recherche (h1 unique).
+datahub.pageTitle.home = "Rechercher une donnée"
+datahub.pageTitle.recordSearch = "Rechercher une donnée"
+datahub.header.title.html = '<h1 class="fr-h2 fr-mb-0">Rechercher une donnée sur les sols</h1>'
 search.filters.title = "Affiner votre recherche"
 datahub.header.datasets = "Données"
 ogc.unreachable.unknown = "Le service associé à cette donnée est en accès restreint, veuillez contacter le producteur de la donnée pour en obtenir l'accès"
