@@ -2,7 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { BRAND } from '../../config/site';
-import HeaderMenu, { HEADER_MENU_ICONS } from './HeaderMenu';
+import { HEADER_MENU_ICONS } from '../../config/site';
+import HeaderMenu from './HeaderMenu';
 
 const menu = BRAND.header.tools.services;
 
