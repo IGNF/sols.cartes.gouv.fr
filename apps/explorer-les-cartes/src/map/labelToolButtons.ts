@@ -4,7 +4,10 @@ import { TOOL_BUTTON_LABELS } from '../config/map';
  * Names the controls the Legends, Territories and Catalog widgets render without any accessible name
  * (geopf-extensions 1.0.0-beta.16, upstream gap): the "show legend" toggle of each legend entry, the
  * "remove territory" button of each entry of the territory views, and the checkbox of each catalogue
- * entry (its `<label for>` is empty, the visible title is another label). Returns the number fixed.
+ * entry (its `<label for>` is empty, the visible title is another label). Also gives the « Mes outils »
+ * list menu semantics: its `<li>` carry `role="button"` (not allowed on a list item, and the `<ul>` then
+ * has no list item: axe `list` and `aria-allowed-role`), so the `<ul>` becomes a `menu` of `menuitem`s
+ * (Enter and Space are handled by the control). Returns the number of elements fixed.
  */
 export function fixToolButtons(root: HTMLElement): number {
   let fixed = 0;
@@ -20,6 +23,18 @@ export function fixToolButtons(root: HTMLElement): number {
         'aria-label',
         `${TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
       );
+      fixed += 1;
+    });
+  root
+    .querySelectorAll<HTMLElement>('[id^="GPcontrolListPanel-"] ul:not([role="menu"])')
+    .forEach((list) => {
+      list.setAttribute('role', 'menu');
+      fixed += 1;
+    });
+  root
+    .querySelectorAll<HTMLElement>('[id^="GPcontrolListPanel-"] li[role="button"]')
+    .forEach((item) => {
+      item.setAttribute('role', 'menuitem');
       fixed += 1;
     });
   root

@@ -40,6 +40,16 @@ describe('fixToolButtons', () => {
     expect(fixToolButtons(root)).toBe(0);
   });
 
+  it('donne à « Mes outils » la sémantique d’un menu (ses li étaient des boutons)', () => {
+    const root = document.createElement('div');
+    root.innerHTML =
+      '<dialog id="GPcontrolListPanel-1"><ul class="fr-m-0"><li role="button">A</li><li role="button">B</li></ul></dialog>';
+    expect(fixToolButtons(root)).toBe(3);
+    expect(root.querySelector('ul')).toHaveAttribute('role', 'menu');
+    expect(root.querySelectorAll('li[role="menuitem"]')).toHaveLength(2);
+    expect(fixToolButtons(root)).toBe(0);
+  });
+
   it('se passe du titre quand l’entrée n’en a pas', () => {
     const root = document.createElement('div');
     root.innerHTML = '<button id="GPcollapseLegend_ID_y" type="button"></button>';

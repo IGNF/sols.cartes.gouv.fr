@@ -7,7 +7,12 @@ import {
   GEOPF_DIALOG_LABELS,
   MAP_TOOLS_OPTIONS,
 } from '../config/map';
-import useMapTools, { createMapTools, LISTABLE_TOOL_CLASS, TOOL_CLASS } from './useMapTools';
+import useMapTools, {
+  createMapTools,
+  LISTABLE_TOOL_CLASS,
+  returnFocusOnCollapse,
+  TOOL_CLASS,
+} from './useMapTools';
 
 interface Created {
   kind: string;
@@ -23,14 +28,20 @@ const geopf = vi.hoisted(() => {
       options: Record<string, unknown>;
       element: HTMLElement;
       listable: boolean;
+      listeners = new Map<string, (event: unknown) => void>();
       constructor(options: Record<string, unknown>) {
         this.options = options;
         this.listable = options['listable'] === true;
         this.element = document.createElement('div');
-        this.element.innerHTML = `<button type="button" aria-label="Afficher plus">+</button>${
-          dialogPrefix ? `<dialog id="${dialogPrefix}-1"></dialog>` : ''
+        this.element.innerHTML = `<button type="button" aria-label="Afficher plus" aria-pressed="false">+</button>${
+          dialogPrefix
+            ? `<dialog id="${dialogPrefix}-1">${kind === 'controlList' ? '<ul class="fr-m-0"></ul>' : ''}</dialog>`
+            : ''
         }`;
         created.push({ kind, options, element: this.element });
+      }
+      on(type: string, listener: (event: unknown) => void) {
+        this.listeners.set(type, listener);
       }
     };
   const territories = [
@@ -148,6 +159,30 @@ describe('createMapTools', () => {
     const legends = geopf.created.find((c) => c.kind === 'legends');
     expect(legends?.element).toHaveClass(TOOL_CLASS);
     expect(legends?.element).not.toHaveClass(LISTABLE_TOOL_CLASS);
+    // The list of « Mes outils » is a menu (its items are rendered as role="button" li upstream).
+    expect(controlList?.element.querySelector('ul')).toHaveAttribute('role', 'menu');
+  });
+});
+
+describe('returnFocusOnCollapse', () => {
+  it('rend le focus au bouton « Mes outils » quand la liste se replie après un choix', () => {
+    const element = document.createElement('div');
+    element.innerHTML = '<button type="button" aria-pressed="false">Mes outils</button>';
+    document.body.append(element);
+    const listeners = new Map<string, (event: unknown) => void>();
+    returnFocusOnCollapse(
+      { on: (type: string, l: (e: unknown) => void) => listeners.set(type, l) },
+      element,
+    );
+    (document.activeElement as HTMLElement | null)?.blur();
+    listeners.get('change:collapsed')?.({});
+    expect(document.activeElement).toBe(element.querySelector('button'));
+    // Open list (aria-pressed true): nothing to do.
+    element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    (document.activeElement as HTMLElement | null)?.blur();
+    listeners.get('change:collapsed')?.({});
+    expect(document.activeElement).toBe(document.body);
+    element.remove();
   });
 });
 
