@@ -2,7 +2,7 @@
   <div class="fr-container">
     <div class="fr-footer__body">
       <div class="fr-footer__brand fr-enlarge-link">
-        <a href="{{ site.sections.accueil }}" title="Retour à l'accueil du site - {{ site.name }} - {{ site.header.brand | join(' ') }}">
+        <a href="{{ site.sections.accueil }}" title="Retour à l'accueil du site - {{ site.header.serviceTitle }} - {{ site.header.brand | join(' ') }}">
           <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
         </a>
       </div>
@@ -11,7 +11,7 @@
         <ul class="fr-footer__content-list">
           {%- for link in site.footer.contentLinks %}
           <li class="fr-footer__content-item">
-            <a class="fr-footer__content-link" href="{{ link.href }}" target="_blank" rel="noopener" title="{{ link.label }} - nouvelle fenêtre">{{ link.label }}</a>
+            <a class="fr-footer__content-link" href="{{ link.href }}" target="_blank" rel="noopener external" title="{{ link.label }} - nouvelle fenêtre">{{ link.label }}</a>
           </li>
           {%- endfor %}
         </ul>
@@ -26,7 +26,7 @@
         {%- endfor %}
       </ul>
       <div class="fr-footer__bottom-copy">
-        <p>{{ site.footer.licence.text }} <a href="{{ site.footer.licence.href }}" target="_blank" rel="noopener" title="{{ site.footer.licence.label }} - nouvelle fenêtre">{{ site.footer.licence.label }}</a></p>
+        <p>{{ site.footer.licence.text }} <a href="{{ site.footer.licence.href }}" target="_blank" rel="noopener external" title="{{ site.footer.licence.label }} - nouvelle fenêtre">{{ site.footer.licence.label }}</a></p>
       </div>
     </div>
   </div>
