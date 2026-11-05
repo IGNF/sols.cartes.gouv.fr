@@ -10,7 +10,28 @@ import {
 import { loadCrs, loadMapTools, type MapToolsModule } from '../map/geopf';
 import { controlElement, labelToggleButton } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
-import { labelDialogsOnInit, watchToolButtons } from '../map/labelToolButtons';
+import { fixToolButtons, labelDialogsOnInit, watchToolButtons } from '../map/labelToolButtons';
+
+/** OpenLayers types `on` with its own event names: the controls' custom events need a looser view. */
+interface CustomEventSource {
+  on(type: string, listener: (event: unknown) => void): unknown;
+}
+
+/**
+ * Choosing an entry of « Mes outils » empties the list (the focused `<li>` disappears, focus lands on
+ * the body): give it back to the « Mes outils » button, the only way to reach the tools below 48em.
+ */
+export function returnFocusOnCollapse(controlList: object, element: HTMLElement): void {
+  const toggle = element.querySelector('button');
+  (controlList as CustomEventSource).on('change:collapsed', () => {
+    if (
+      toggle?.getAttribute('aria-pressed') === 'false' &&
+      document.activeElement === document.body
+    ) {
+      toggle.focus();
+    }
+  });
+}
 
 /** CSS hooks on the tool widgets (layout rules in MapView.css). */
 export const TOOL_CLASS = 'map-tool';
@@ -27,6 +48,8 @@ export function createMapTools(tools: MapToolsModule): Control[] {
   const options = MAP_TOOLS_OPTIONS;
   const controlList = new tools.ControlList({ ...options.controlList });
   labelToggleButton(controlElement(controlList), CONTROL_LABELS.controlList);
+  fixToolButtons(controlElement(controlList));
+  returnFocusOnCollapse(controlList, controlElement(controlList));
   const territories = tools.TERRITORIES.filter(
     (territory) => !EXCLUDED_TERRITORY_IDS.includes(territory.id),
   );

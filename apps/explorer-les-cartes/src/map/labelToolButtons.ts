@@ -3,10 +3,25 @@ import { TOOL_BUTTON_LABELS } from '../config/map';
 /**
  * Names the icon-only buttons the Legends and Territories controls render without any accessible name
  * (geopf-extensions 1.0.0-beta.16, upstream gap): the "show legend" toggle of each legend entry and the
- * "remove territory" button of each entry of the territory views. Returns the number of buttons named.
+ * "remove territory" button of each entry of the territory views. Also gives the « Mes outils » list menu
+ * semantics: its `<li>` carry `role="button"` (not allowed on a list item, and the `<ul>` then has no
+ * list item: axe `list` and `aria-allowed-role`), so the `<ul>` becomes a `menu` of `menuitem`s (Enter and
+ * Space are handled by the control). Returns the number of elements fixed.
  */
 export function fixToolButtons(root: HTMLElement): number {
   let fixed = 0;
+  root
+    .querySelectorAll<HTMLElement>('[id^="GPcontrolListPanel-"] ul:not([role="menu"])')
+    .forEach((list) => {
+      list.setAttribute('role', 'menu');
+      fixed += 1;
+    });
+  root
+    .querySelectorAll<HTMLElement>('[id^="GPcontrolListPanel-"] li[role="button"]')
+    .forEach((item) => {
+      item.setAttribute('role', 'menuitem');
+      fixed += 1;
+    });
   root
     .querySelectorAll<HTMLButtonElement>('button[id^="GPcollapseLegend_ID_"]:not([aria-label])')
     .forEach((button) => {

@@ -16,6 +16,7 @@
  * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
  * Exits 1 on failure.
  */
+import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 import brand from '@sols/brand/brand.json';
 import { CONTROL_LABELS, PRINT_LABELS, SHARE_LABELS } from '../src/config/map';
@@ -37,6 +38,13 @@ const UPSTREAM_WARNINGS = [
 ];
 
 /**
+ * GPF requests the geopf controls send on their own and the service refuses (HTTP 4xx logged by the
+ * browser as "Failed to load resource"): the Route/Isocurve forms call the geocoding completion with a
+ * blank text (`geocodage/completion?text=73%20`, 400). Counted in the notes, like the tile errors.
+ */
+const UPSTREAM_REQUEST_ERRORS = [/\/geocodage\/completion\?/];
+
+/**
  * Console messages of a page, minus the "Failed to load resource" lines caused by GPF tiles, as long as
  * failed tiles stay within TILE_ERROR_TOLERANCE of the tile requests (doc/agents/QUESTIONS.md M-2, same
  * tolerance as the e2e suite). Other messages always count.
@@ -44,6 +52,7 @@ const UPSTREAM_WARNINGS = [
 function watchConsole(page: import('playwright').Page) {
   const messages: string[] = [];
   const tiles = new Map<string, number[]>();
+  let upstreamRequests = 0;
   page.on('console', (m) => {
     if (m.type() === 'error' || m.type() === 'warning') messages.push(m.text());
   });
@@ -51,6 +60,8 @@ function watchConsole(page: import('playwright').Page) {
   page.on('response', (r) => {
     if (/REQUEST=Get(Tile|Map)/i.test(r.url()))
       tiles.set(r.url(), [...(tiles.get(r.url()) ?? []), r.status()]);
+    else if (r.status() >= 400 && UPSTREAM_REQUEST_ERRORS.some((p) => p.test(r.url())))
+      upstreamRequests += 1;
   });
   return () => {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
@@ -61,9 +72,12 @@ function watchConsole(page: import('playwright').Page) {
     );
     const loadErrors = messages.length - unexplained.length - upstream;
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
-    if (loadErrors > 0 && (!withinTolerance || failed.length === 0)) {
+    const explainedByTiles = failed.length > 0 && withinTolerance;
+    const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
+    if (loadErrors > 0 && !explainedByTiles && !explainedByRequests) {
       unexplained.push(...lost.map(([u, c]) => `${c.join('→')} ${u}`));
-      if (failed.length === 0) unexplained.push(`${loadErrors} ressource(s) en erreur hors tuiles`);
+      if (failed.length === 0)
+        unexplained.push(`${loadErrors - upstreamRequests} ressource(s) en erreur hors tuiles`);
     }
     const noted = [
       ...(failed.length
@@ -72,6 +86,9 @@ function watchConsole(page: import('playwright').Page) {
           ]
         : []),
       ...(upstream ? [`${upstream} avertissement(s) amont geopf-ext (niveaux de gris)`] : []),
+      ...(upstreamRequests
+        ? [`${upstreamRequests} requête(s) de complétion refusée(s) par la GPF (amont)`]
+        : []),
     ];
     const notes = noted.length ? ` (${noted.join(' ; ')})` : '';
     return { messages: unexplained, notes };
@@ -690,6 +707,24 @@ const TOOL_BUTTONS = [
       `outils : « ${name} » s’ouvre et se ferme`,
     );
   }
+  // Accessibility with « Mes outils » open (axe-core, default rule set, as the e2e suite).
+  await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
+  await page.waitForTimeout(500);
+  const axe = await new AxeBuilder({ page }).analyze();
+  check(
+    axe.violations.length === 0,
+    `a11y : axe sans violation avec « Mes outils » ouvert${
+      axe.violations.length
+        ? ` : ${axe.violations
+            .map(
+              (v) => `${v.id} [${v.impact}] ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+            )
+            .join(' | ')}`
+        : ''
+    }`,
+  );
+  await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
+  await page.waitForTimeout(300);
   // WMS import of GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 ("Plan IGN" on wms-r).
   await page.getByRole('button', { name: "Ouvrir l'import de couches", exact: true }).click();
   await page.locator('[id^="GPimportTypeSelect-"]').selectOption('WMS');
