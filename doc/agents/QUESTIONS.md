@@ -148,3 +148,10 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Question : la page d'aide demande une section « Nous contacter » avec un lien mailto ; aucune adresse de contact du service n'est connue. Par ailleurs `brand.json` donne `/aide/#contact` : ce chemin sans langue passe par une page de renvoi (meta refresh) qui perd l'ancre.
 - Options : (a) adresse réelle fournie par l'équipe (INRAE / GIS Sol / IGN) ; (b) formulaire hébergé ailleurs ; pour l'ancre : (c) `brand.json` passe à `/fr/aide/#contact` ; (d) garder `/aide/#contact` (arrivée en haut de la page d'aide).
 - Défaut appliqué : adresse provisoire `contact@example.org` (domaine réservé, marquée « (adresse provisoire) ») dans `apps/accueil/src/_data/site.js` (`contactEmail`) ; le balisage partagé de l'edito utilise `/fr/aide/#contact` ; (c) proposé pour `brand.json`.
+
+## C-6. Mode sombre dans le catalogue (catalogue-dev, C8)
+
+- Constat : la modale DSFR « Paramètres d'affichage » fonctionne dans le datahub, mais le mode sombre ne s'applique qu'aux éléments DSFR ; les gabarits amont (couleurs Tailwind fixes) restent clairs et deviennent illisibles sur fond sombre.
+- Options : (a) masquer le bouton dans le catalogue, catalogue toujours clair ; (b) feuille de surcharge des couleurs amont pour le sombre (travail important, à maintenir à chaque montée de version) ; (c) laisser le bouton sans effet.
+- Défaut appliqué : (a). Détails : `doc/agents/geonetwork-ui.md` §15.
+
