@@ -142,3 +142,10 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Questions : (1) sur quel build ou quelle URL l'observation a-t-elle été faite (version antérieure à C5, `.upstream` non reconstruit, cartes.gouv.fr) ? (2) faut-il le patch « puce sélectionnée et retrait au second clic » (environ 15 lignes dans `home-header`) ?
 - Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
 - Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.
+
+## C-5. Boucle de l'aperçu sur un lien WFS introuvable (catalogue-dev, C10)
+
+- Constat : sur notre build (`main`, `10fa84a`) et sur cartes.gouv.fr, la sélection d'un lien WFS introuvable (`wfs.featuretype.notfound`) affiche le message d'erreur et n'émet plus aucune requête (mesures sur 40 s, 7 fiches, onglets Carte, Tableau, Graphique et formulaires d'API ; `doc/agents/geonetwork-ui.md` §14).
+- Question : sur quelle fiche, quel lien, quel onglet et quel navigateur la boucle a-t-elle été observée (une capture de l'onglet Réseau aiderait) ?
+- Défaut appliqué : pas de patch tant que la boucle n'est pas reproduite.
+
