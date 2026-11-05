@@ -1,6 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
+import {
+  GPF_REQUEST_RETRIES,
+  GPF_REQUEST_RETRY_DELAY_MS,
+  GPF_REQUEST_TIMEOUT_MS,
+} from '../config/map';
 import { buildCapabilitiesUrl, GPF_ENDPOINTS } from '../config/urls';
 import { indexWmsLayers, type CapabilitiesIndex } from '../data/capabilitiesIndex';
+import { fetchWithTimeout } from '../map/fetchWithTimeout';
 
 export type WmsFlavour = 'wms-raster' | 'wms-vector';
 
@@ -14,7 +20,10 @@ export function wmsCapabilitiesUrl(flavour: WmsFlavour): string {
 }
 
 async function fetchWmsIndex(flavour: WmsFlavour, signal: AbortSignal): Promise<CapabilitiesIndex> {
-  const response = await fetch(wmsCapabilitiesUrl(flavour), { signal });
+  const response = await fetchWithTimeout(wmsCapabilitiesUrl(flavour), {
+    signal,
+    timeoutMs: GPF_REQUEST_TIMEOUT_MS,
+  });
   if (!response.ok) throw new Error(`Capacités WMS indisponibles (HTTP ${response.status})`);
   const doc = new DOMParser().parseFromString(await response.text(), 'text/xml');
   return indexWmsLayers(doc);
@@ -28,5 +37,7 @@ export default function useWmsCapabilities(flavour: WmsFlavour | null) {
     enabled: flavour !== null,
     staleTime: Infinity,
     gcTime: Infinity,
+    retry: GPF_REQUEST_RETRIES,
+    retryDelay: GPF_REQUEST_RETRY_DELAY_MS,
   });
 }

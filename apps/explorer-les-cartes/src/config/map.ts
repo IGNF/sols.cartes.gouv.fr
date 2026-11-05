@@ -58,6 +58,18 @@ export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_
  */
 export const TILE_RETRY_DELAY_MS = 500;
 
+/**
+ * GPF capabilities requests: per-attempt timeout, then retries. The GPF intermittently accepts a request
+ * and never answers (D-carto-1: about 1 in 5 GetCapabilities in curl, 2026-11-05); a normal answer
+ * takes under 1 s.
+ */
+export const GPF_REQUEST_TIMEOUT_MS = 5_000;
+export const GPF_REQUEST_RETRIES = 3;
+export const GPF_REQUEST_RETRY_DELAY_MS = 300;
+
+/** DSFR `md` breakpoint: below it the side panel starts closed so the map stays above the fold. */
+export const SIDE_PANEL_OPEN_MEDIA_QUERY = '(min-width: 48em)';
+
 /** Initial view: metropolitan France, Web Mercator. */
 export const INITIAL_VIEW = {
   centerLonLat: [2.5, 46.6],
