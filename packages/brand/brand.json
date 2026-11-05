@@ -1,0 +1,137 @@
+{
+  "service": {
+    "title": "sols.cartes.gouv.fr",
+    "tagline": "Observatoire des sols de France",
+    "homeLinkTitle": "Retour à l'accueil de l'Observatoire des sols de France - République Française"
+  },
+  "sections": {
+    "home": "/",
+    "catalogue": "/rechercher-une-donnee/",
+    "carto": "/explorer-les-cartes/",
+    "help": "/aide/",
+    "articles": "/fr/articles/"
+  },
+  "badges": {
+    "edito": null,
+    "catalogue": "Rechercher",
+    "carto": "Explorer"
+  },
+  "header": {
+    "brandLink": "/",
+    "operator": {
+      "logo": "assets/logo-gissol.png",
+      "logoAlt": "GIS Sol, groupement d'intérêt scientifique Sol",
+      "mark": "assets/osf-carotte.png",
+      "markAlt": ""
+    },
+    "tools": {
+      "help": {
+        "label": "Aide",
+        "icon": "fr-icon-question-fill",
+        "items": [
+          {
+            "label": "Centre d'aide",
+            "href": "/aide/"
+          },
+          {
+            "label": "Nous contacter",
+            "href": "/aide/#contact"
+          }
+        ]
+      },
+      "services": {
+        "label": "Services",
+        "icon": "fr-icon-grid-fill",
+        "items": [
+          {
+            "label": "Rechercher une donnée",
+            "href": "/rechercher-une-donnee/",
+            "description": "Le catalogue des données sols"
+          },
+          {
+            "label": "Explorer les cartes",
+            "href": "/explorer-les-cartes/",
+            "description": "Le visualiseur cartographique"
+          },
+          {
+            "label": "Découvrir",
+            "href": "/fr/",
+            "description": "L'Observatoire des sols de France"
+          }
+        ]
+      },
+      "login": false
+    }
+  },
+  "footer": {
+    "description": "Observatoire des sols de France : le portail d'accès aux données des sols pour les territoires, piloté par INRAE avec le GIS Sol et servi par la Géoplateforme (texte provisoire).",
+    "partners": [
+      {
+        "name": "IGN",
+        "logo": "assets/logo-ign.png",
+        "href": "https://www.ign.fr/"
+      },
+      {
+        "name": "INRAE",
+        "logo": "assets/logo-inrae.svg",
+        "href": "https://www.inrae.fr/"
+      },
+      {
+        "name": "GIS Sol",
+        "logo": "assets/logo-gissol.png",
+        "href": "https://www.gissol.fr/observatoire-des-sols-de-france/"
+      }
+    ],
+    "contentLinks": [
+      {
+        "label": "legifrance.gouv.fr",
+        "href": "https://legifrance.gouv.fr"
+      },
+      {
+        "label": "info.gouv.fr",
+        "href": "https://info.gouv.fr"
+      },
+      {
+        "label": "service-public.gouv.fr",
+        "href": "https://service-public.gouv.fr"
+      },
+      {
+        "label": "data.gouv.fr",
+        "href": "https://data.gouv.fr"
+      }
+    ],
+    "bottomLinks": [
+      {
+        "label": "Accessibilité : non conforme",
+        "href": "/accessibilite/"
+      },
+      {
+        "label": "Mentions légales",
+        "href": "/mentions-legales/"
+      },
+      {
+        "label": "Données personnelles",
+        "href": "/donnees-personnelles/"
+      },
+      {
+        "label": "Plan du site",
+        "href": "/plan-du-site/"
+      }
+    ],
+    "displaySettings": {
+      "label": "Paramètres d'affichage"
+    },
+    "licence": {
+      "text": "Sauf mention contraire, tous les contenus de ce site sont sous",
+      "label": "licence etalab-2.0",
+      "href": "https://github.com/etalab/licence-ouverte/blob/master/LO.md"
+    },
+    "compactOnCarto": true
+  },
+  "external": {
+    "gissol": "https://www.gissol.fr/observatoire-des-sols-de-france/",
+    "gissolLabel": "Site du GIS Sol",
+    "cartesGouv": "https://cartes.gouv.fr",
+    "geopf": "https://data.geopf.fr"
+  }
+}

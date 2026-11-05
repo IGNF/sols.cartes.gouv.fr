@@ -31,3 +31,13 @@
 | X8   | root      | done               | #38      | doc/v0/REPORT.md, final status (merged without agent review at the usage cut; superseded by X9).                                               |
 | C7   | catalogue | done               | #40      | Record page: 0 critical/serious axe (patch 0004 + overlay CSS), search gap collapsed, preview base map on Plan IGN WMTS.                       |
 | X9   | root      | done               | #41      | Closing update of STATUS and REPORT after M6, C7 and T2.                                                                                       |
+| X11  | root      | in review          | #43      | v1: shared `@sols/brand` package (header/footer spec, logos, illustrations), refine.md and figma skill committed.                              |
+| E7   | edito     | todo               |          | v1 header/footer (brand package), help page, no nav bar, display settings.                                                                     |
+| E8   | edito     | todo               |          | v1 home content from Figma: texts, use-case illustrations, data cards, agenda carousel, partners.                                              |
+| C8   | catalogue | todo               |          | v1 header/footer from the edito reference, badge « Rechercher ».                                                                               |
+| C9   | catalogue | todo               |          | Autocomplete and filters scoped to sols, keyword chips under the search bar.                                                                   |
+| C10  | catalogue | todo               |          | Mini-map infinite retry loop bounded; record-level « Voir sur la carte » link; light/dark check.                                               |
+| M7   | carto     | todo               |          | v1 layout (map fills the viewport, compact footer), header v1, zoom control theme fix.                                                         |
+| M8   | carto     | todo               |          | geopf-ext tool set as cartes.gouv.fr entrée carto.                                                                                             |
+| M9   | carto     | todo               |          | Add data from our catalogue like entrée carto (geopf-ext Catalog widget).                                                                      |
+| T3   | e2e       | todo               |          | Third pass after v1.                                                                                                                           |

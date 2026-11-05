@@ -6,7 +6,8 @@
   "description": "Observatoire des sols : portail des données sols (GIS Sol / INRAE) servies par la Géoplateforme.",
   "workspaces": [
     "apps/accueil",
-    "apps/explorer-les-cartes"
+    "apps/explorer-les-cartes",
+    "packages/*"
   ],
   "config": {
     "dsfrVersion": "1.14.2",

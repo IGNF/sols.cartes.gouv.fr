@@ -109,12 +109,31 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : la consigne M4 valide un nom TMS s'il figure dans l'annexe `https://data.geopf.fr/annexes/gissol-osf/gpf-rok4-server-wmts-tms/capabilities.xml`. Ce fichier est un GetCapabilities **WMTS** (raster ROK4) : il ne contient aucune couche vecteur TMS ; les trois noms TMS du CSW (`cartogrammes_gpkg_11-09-2026_tms`, `rrp_landes_gpkg_11-09-2026_tms`, `rrp_gironde_gpkg_03-09-2026_tms`) y sont absents et seraient tous rejetés. La racine du service, `https://data.geopf.fr/tms/1.0.0` (document `TileMapService`, 849 `TileMap`), les liste tous les trois (`metadata.json` de chacun en 200).
 - Options : (a) appliquer la consigne : tous les TMS rejetés ; (b) valider contre la racine `TileMapService`, qui est la liste de capacités du service TMS.
 - Défaut appliqué : (b) dans `scripts/build-sols-layers.ts` ; les TMS validés ne sont de toute façon pas affichés en v0 (styles MapLibre, voir `doc/agents/geopf-ext.md` §6).
+  -> ok
 
 ## M-4. Couches WMS du RRP du Loiret en erreur côté serveur (carto-dev, M4)
 
 - Constat : `https://data.geopf.fr/wms-v/ows` répond HTTP 200 avec un `ServiceExceptionReport` (`java.lang.NullPointerException: Cannot invoke "String.length()" because "expression" is null`) à tout GetMap sur `rrp_loiret_gpkg_11-09-2026_wmsv` et `rrp_dept_loiret_gpkg_11-09-2026_wmsv` (style vide ou nommé, EPSG:3857 ou 4326, toute emprise), alors que les deux noms sont dans les capacités. Les autres couches wms-v (`stock_carbone_fao_fr_wmsv`, `vibrisses_...`, `etude_30110_...`) répondent en PNG. Le lien d'exemple WMS du contrat C4 porte sur cette couche : la carte l'ajoute, mais rien ne s'affiche.
 - Options : (a) signaler à l'équipe Géoplateforme / INRAE (style ou données de la couche) ; (b) masquer ces couches dans le panneau ; (c) détecter l'erreur et l'indiquer.
 - Défaut appliqué : (a) à faire par un humain et (c) : après 3 tuiles en erreur sans aucune tuile chargée, le panneau affiche « La Géoplateforme ne renvoie pas d'image pour cette couche pour le moment. ». Pas de masquage : la couche est publiée et pourra être réparée côté serveur.
+
+-> nOui est à l'avenir, si sur de la donné tuilé / data.geopf. Si ta requête et bonne, documentée et que le serveur te renvoie une erreur cohérente ne passe pas plus de temps de raissonnement dessus. Documente là et poursuit.
+
+## G-1. « Logged in the web browser » et authentification (v1, orchestrateur)
+
+- Question : `refine.md` dit « They should be logged in the web browser in the final product, for security reasons » puis « The 'Connect' button should never be visible since we do not have authentication/login (confirm this) ».
+- Lecture retenue : aucune authentification n'existe aujourd'hui (confirmé : le Keycloak de cartes.gouv.fr a été retiré du catalogue par le patch 0003 ; la carto et l'edito n'ont aucun compte) ; la connexion des utilisateurs est un besoin du produit final, hors périmètre v1. Le bouton « Se connecter » est retiré de toutes les briques (`header.tools.login = false` dans `@sols/brand`).
+- Si « logged » voulait dire « journalisés » (erreurs consignées dans la console du navigateur), préciser : aujourd'hui aucune brique n'écrit en console (`no-console`), les erreurs sont affichées à l'utilisateur (alertes DSFR).
+
+## G-2. Commentaires Figma au-dessus de la barre de recherche (v1, catalogue)
+
+- Constat : l'API MCP Figma n'expose pas les commentaires du fichier ; l'orchestrateur ne peut pas les lire. Les cadres « recherche mots clés » (`8:3980`) et « recherche millésime » (`8:4057`) de la page Prototype montrent des puces de mots-clés sous la barre de recherche (ajout/retrait, champ « Rechercher des mots clés… »).
+- Défaut appliqué : la tâche C9 propose une barre de mots-clés sous la recherche à partir des mots-clés réels des 7 fiches (préréglages `[[search_preset]]` du datahub si cela suffit, sinon patch documenté). Si les commentaires disent autre chose, les coller dans ce fichier.
+
+## G-3. Sections de l'accueil non reprises (v1, edito)
+
+- Constat : la maquette contient un bloc « Le portail … arrive bientôt » (CTA lancement, `8:4896`) avec inscription et la mention « Incubé par beta.gouv.fr · Ministère de l'Agriculture », ainsi que des chiffres (60 ans, 12+, 100 %).
+- Défaut appliqué : E8 reprend les textes de la maquette (demande v1), y compris les chiffres ; le bloc « arrive bientôt » n'est pas repris sur un site en ligne (contradictoire) et la mention d'incubation reste à valider ; la vidéo de la section « Le service » est ignorée (demande v1).
 
 ## C-4. Autocomplétion et filtres hors périmètre, et bascule des puces (catalogue-dev, C9)
 
