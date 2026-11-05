@@ -142,3 +142,30 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Questions : (1) sur quel build ou quelle URL l'observation a-t-elle été faite (version antérieure à C5, `.upstream` non reconstruit, cartes.gouv.fr) ? (2) faut-il le patch « puce sélectionnée et retrait au second clic » (environ 15 lignes dans `home-header`) ?
 - Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
 - Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.
+- Décision (orchestrateur) : (2) oui, patch fait en C11 (`0007-keyword-chips-toggle.patch`, `doc/agents/geonetwork-ui.md` §16) ; (1) reste ouverte, en attente du lieu d'observation.
+
+## C-5. Boucle de l'aperçu sur un lien WFS introuvable (catalogue-dev, C10)
+
+- Constat : sur notre build (`main`, `10fa84a`) et sur cartes.gouv.fr, la sélection d'un lien WFS introuvable (`wfs.featuretype.notfound`) affiche le message d'erreur et n'émet plus aucune requête (mesures sur 40 s, 7 fiches, onglets Carte, Tableau, Graphique et formulaires d'API ; `doc/agents/geonetwork-ui.md` §14).
+- Question : sur quelle fiche, quel lien, quel onglet et quel navigateur la boucle a-t-elle été observée (une capture de l'onglet Réseau aiderait) ?
+- Défaut appliqué : pas de patch tant que la boucle n'est pas reproduite.
+
+## E-3. Adresse de contact et lien « Nous contacter » (edito, E7)
+
+- Question : la page d'aide demande une section « Nous contacter » avec un lien mailto ; aucune adresse de contact du service n'est connue. Par ailleurs `brand.json` donne `/aide/#contact` : ce chemin sans langue passe par une page de renvoi (meta refresh) qui perd l'ancre.
+- Options : (a) adresse réelle fournie par l'équipe (INRAE / GIS Sol / IGN) ; (b) formulaire hébergé ailleurs ; pour l'ancre : (c) `brand.json` passe à `/fr/aide/#contact` ; (d) garder `/aide/#contact` (arrivée en haut de la page d'aide).
+- Défaut appliqué : adresse provisoire `contact@example.org` (domaine réservé, marquée « (adresse provisoire) ») dans `apps/accueil/src/_data/site.js` (`contactEmail`) ; le balisage partagé de l'edito utilise `/fr/aide/#contact` ; (c) proposé pour `brand.json`.
+
+## C-6. Mode sombre dans le catalogue (catalogue-dev, C8)
+
+- Constat : la modale DSFR « Paramètres d'affichage » fonctionne dans le datahub, mais le mode sombre ne s'applique qu'aux éléments DSFR ; les gabarits amont (couleurs Tailwind fixes) restent clairs et deviennent illisibles sur fond sombre.
+- Options : (a) masquer le bouton dans le catalogue, catalogue toujours clair ; (b) feuille de surcharge des couleurs amont pour le sombre (travail important, à maintenir à chaque montée de version) ; (c) laisser le bouton sans effet.
+- Défaut appliqué : (a). Détails : `doc/agents/geonetwork-ui.md` §15.
+
+## E-4. Accueil v1 : agenda, étiquettes de données, illustrations (edito, E8)
+
+- Agenda : les six événements de la maquette sont repris en 2026 avec des liens d'inscription provisoires vers `/fr/aide/#contact` ; les événements passés sont masqués au build (reconstruction nécessaire pour les retirer). Question : où publier les vrais liens d'inscription, et qui tient `apps/accueil/src/_data/agenda.json` à jour ?
+- Étiquettes « Données disponibles » (RPG, BDAT…) : non cliquables. Options : (a) en rester là ; (b) les lier à une recherche du catalogue (`/rechercher-une-donnee/search?q=…`) une fois les mots-clés du périmètre sols stabilisés (C9). Défaut : (a).
+- Illustrations : `cas-usage-2.jpg` représente une mairie (collectivités) et `cas-usage-3.jpg` un bureau (bureaux d'études), l'inverse de `packages/brand/README.md`. L'accueil utilise la correspondance visuelle ; corriger le README (ou renommer les fichiers) côté racine.
+
+- Décision (orchestrateur, propriétaire) : (a) confirmée pour la v1, faute de solution simple ; défaut appliqué.

@@ -2,7 +2,9 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import accueil from '../src/_data/accueil.js';
+import agenda from '../src/_data/agenda.json';
 import i18n from './i18n.js';
+import brand from '@sols/brand';
 import site from '../src/_data/site.js';
 import {
   APP_DIR,
@@ -13,10 +15,12 @@ import {
   articleSlugs,
   build,
   escape,
+  html,
   read,
 } from './helpers.js';
 
 const EDITO_DOC = join(APP_DIR, '..', '..', 'doc', 'agents', 'edito.md');
+const headerOf = (html) => html.slice(html.indexOf('<header'), html.indexOf('</header>'));
 
 beforeAll(build);
 
@@ -42,12 +46,50 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     expect(home()).toContain(`<p class="fr-header__service-tagline">${t.tagline}</p>`);
   });
 
-  test('navigation : Accueil localisé et courant, briques catalogue et carto sans langue', () => {
-    expect(home()).toContain(
-      `class="fr-nav__link" href="/${locale}/" target="_self" aria-current="page">${t.header.nav.accueil}<`,
+  test('en-tête v1 : pas de barre de navigation, marque et logos vers l’accueil', () => {
+    const header = headerOf(home());
+    expect(header).not.toContain('fr-nav__list');
+    expect(header).not.toContain('navigation-principale');
+    expect(header).not.toMatch(/Se connecter|Log in/);
+    expect(header).toContain(`<a class="sols-operator" href="/${locale}/"`);
+    expect(header).toContain(
+      `src="${site.header.operator.logo}" alt="${html(t.header.operatorLogoAlt)}"`,
     );
-    for (const path of site.crossBrick) {
-      expect(home()).toMatch(new RegExp(`class="fr-nav__link" href="${escape(path)}"`));
+    expect(header).toContain(`src="${site.header.operator.mark}" alt=""`);
+    expect(header).not.toContain('class="fr-badge');
+  });
+
+  test('menus Aide et Services avec leurs entrées', () => {
+    const header = headerOf(home());
+    for (const tool of site.header.tools) {
+      expect(header).toContain(
+        `class="fr-btn ${tool.icon} fr-btn--icon-left sols-tool-menu__btn" aria-expanded="false" aria-controls="${tool.id}">${t.header.tools[tool.key].label}</button>`,
+      );
+      expect(header).toContain(
+        `<div class="fr-collapse fr-menu sols-tool-menu__menu" id="${tool.id}">`,
+      );
+      for (const href of tool.items) {
+        expect(t.header.tools[tool.key].items[href]).toBeDefined();
+        expect(header).toContain(`>${html(t.header.tools[tool.key].items[href].label)}`);
+      }
+    }
+    expect(header).toContain(`href="/${locale}${site.sections.aide}"`);
+    expect(header).toContain(`href="/${locale}${site.sections.aide}#contact"`);
+    for (const path of site.crossBrick) expect(header).toContain(`href="${path}"`);
+  });
+
+  test('pied de page v1 : partenaires, paramètres d’affichage', () => {
+    const html = home();
+    expect(html).toContain('class="fr-footer__partners"');
+    for (const partner of site.footer.partners) {
+      expect(html).toContain(`href="${partner.href}"`);
+      expect(html).toContain(`src="${partner.logo}" alt="${partner.name}"`);
+      expect(existsSync(join(DIST, partner.logo))).toBe(true);
+    }
+    expect(html).toContain('aria-controls="fr-theme-modal" data-fr-opened="false">');
+    expect(html).toContain('<dialog id="fr-theme-modal" class="fr-modal"');
+    for (const theme of site.display.themes) {
+      expect(html).toContain(`id="fr-radios-theme-${theme.value}" name="fr-radios-theme"`);
     }
   });
 
@@ -62,19 +104,91 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     }
   });
 
-  test('boutons vers le catalogue et la carto, sections et lien GIS Sol', () => {
+  test('héros : textes de la maquette, deux boutons réels, trois chiffres clés', () => {
+    expect(home()).toContain(`<h1>${html(t.accueil.hero.title)}</h1>`);
     for (const action of accueil.actions) {
       expect(home()).toContain(`href="${action.href}"`);
-      expect(home()).toContain(`>${t.accueil.hero.actions[action.key]}</a>`);
+      expect(home()).toContain(`>${html(t.accueil.hero.actions[action.key])}</a>`);
     }
+    for (const key of accueil.figures) {
+      expect(home()).toContain(`>${html(t.accueil.hero.figures[key].value)}</span>`);
+    }
+  });
+
+  test('plan des titres : un h1, un h2 par section dans l’ordre de la maquette', () => {
+    const h2 = [...home().matchAll(/<h2[^>]*id="(titre-[a-z]+)"/g)].map(([, id]) => id);
+    expect(h2).toEqual([
+      'titre-service',
+      'titre-usages',
+      'titre-donnees',
+      'titre-agenda',
+      'titre-articles',
+      'titre-partenaires',
+    ]);
+    const main = home().slice(home().indexOf('<main'), home().indexOf('</main>'));
+    const levels = [...main.matchAll(/<h([1-6])[\s>]/g)].map(([, level]) => Number(level));
+    expect(levels[0]).toBe(1);
+    for (let index = 1; index < levels.length; index += 1) {
+      expect(levels[index] - levels[index - 1]).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('« Le service » : frise Sans / Avec et trois tuiles', () => {
+    for (const side of ['without', 'with']) {
+      const column = t.accueil.service.frieze[side];
+      expect(home()).toContain(
+        `<h3 class="sols-frieze__title fr-text--sm">${html(column.title)}</h3>`,
+      );
+      for (const item of column.items) expect(home()).toContain(html(item));
+    }
+    expect(home().match(/class="sols-frieze__item"/g)).toHaveLength(8);
     expect(home().match(/class="fr-tile"/g)).toHaveLength(accueil.service.length);
-    expect(
-      home().match(
-        new RegExp(`<h3 class="fr-card__title"><a href="${escape(accueil.donnees.href)}"`, 'g'),
-      ),
-    ).toHaveLength(accueil.donnees.items.length);
-    expect(home()).toContain('class="fr-callout');
-    expect(home()).toMatch(new RegExp(`class="fr-btn" href="${escape(site.external.gissol)}"`));
+  });
+
+  test('« Cas d’usage » : trois cartes illustrées avec trois puces chacune', () => {
+    for (const usage of accueil.usages) {
+      expect(home()).toContain(
+        `src="${usage.image}" alt="" width="${usage.width}" height="${usage.height}"`,
+      );
+      expect(existsSync(join(DIST, usage.image))).toBe(true);
+      expect(home()).toContain(html(t.accueil.usages.items[usage.key].title));
+    }
+    expect(home().match(/<ul class="sols-usage__points">/g)).toHaveLength(accueil.usages.length);
+  });
+
+  test('« Données disponibles » : étiquettes, ligne Usage et bandeau vers le catalogue', () => {
+    const tags = accueil.donnees.items.reduce((total, item) => total + item.tags.length, 0);
+    expect(home().match(/<p class="fr-tag fr-tag--sm">/g)).toHaveLength(tags);
+    expect(home().match(/class="fr-tags-group sols-data-tags"/g)).toHaveLength(3);
+    expect(home()).toMatch(
+      new RegExp(`class="fr-btn sols-banner__btn" href="${escape(accueil.donnees.href)}"`),
+    );
+  });
+
+  test('« Agenda » : événements à venir seulement, carrousel avec boutons et script', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = agenda.events.filter((event) => event.date >= today);
+    const cards = home().match(/class="fr-card sols-event"/g) ?? [];
+    expect(cards).toHaveLength(upcoming.length);
+    for (const event of agenda.events) {
+      const shown = home().includes(`datetime="${event.date}T${event.time}"`);
+      expect(shown).toBe(event.date >= today);
+    }
+    if (upcoming.length > 0) {
+      expect(home()).toContain('data-sols-carousel-previous');
+      expect(home()).toContain('data-sols-carousel-next');
+      expect(home()).toContain(`src="${site.assets.js}/carousel.js"`);
+      expect(home()).toContain(`href="/${locale}${site.sections.aide}#contact"`);
+    } else {
+      expect(home()).toContain(html(t.accueil.agenda.empty));
+    }
+  });
+
+  test('« Partenaires » : logos, lien GIS Sol et encadré vers le contact', () => {
+    for (const partner of accueil.partners)
+      expect(home()).toContain(`src="${partner.logo}" alt="${partner.name}"`);
+    expect(home()).toContain(`href="${site.external.gissol}"`);
+    expect(home()).toContain('class="fr-callout fr-callout--green-emeraude');
     expect(home()).toContain(`href="/${locale}${site.sections.articles}"`);
   });
 });
@@ -91,10 +205,25 @@ describe.each(LOCALES)('pages du pied de page /%s/', (locale) => {
 
   test('le plan du site lie les pages du pied de page, la navigation et les articles', () => {
     const html = read(`/${locale}${site.sections.planDuSite}`);
-    for (const path of [...FOOTER_PATHS, site.sections.articles, site.sections.accueil]) {
+    for (const path of [
+      ...FOOTER_PATHS,
+      site.sections.articles,
+      site.sections.accueil,
+      site.sections.aide,
+    ]) {
       expect(html).toContain(`<li><a href="/${locale}${path}"`);
     }
     for (const path of site.crossBrick) expect(html).toContain(`<li><a href="${path}"`);
+  });
+});
+
+describe.each(LOCALES)('aide /%s/', (locale) => {
+  test('centre d’aide : trois accordéons et section #contact avec mailto', () => {
+    const html = read(`/${locale}${site.sections.aide}`);
+    expectPageBasics(html, locale);
+    expect(html.match(/class="fr-accordion"/g)).toHaveLength(i18n[locale].pages.aide.faq.length);
+    expect(html).toContain(`<h2 id="contact"`);
+    expect(html).toContain(`href="mailto:${site.contactEmail}"`);
   });
 });
 
@@ -123,7 +252,12 @@ describe.each(LOCALES)('articles /%s/', (locale) => {
 });
 
 describe('pages de renvoi sans langue', () => {
-  const paths = [site.sections.accueil, ...FOOTER_PATHS, site.sections.articles];
+  const paths = [
+    site.sections.accueil,
+    ...FOOTER_PATHS,
+    site.sections.articles,
+    site.sections.aide,
+  ];
 
   test.each(paths)('%s renvoie vers la version française, sans JS', (path) => {
     const html = read(path);
@@ -136,6 +270,30 @@ describe('pages de renvoi sans langue', () => {
       expect(html).toContain(
         `<a href="/${code}${path}" hreflang="${code}" lang="${code}">${i18n[code].reroute.link}</a>`,
       );
+    }
+  });
+});
+
+describe('@sols/brand', () => {
+  test('les liens bas du pied de page sont ceux de brand.json', () => {
+    expect(site.footer.bottomLinks.map((link) => link.href)).toEqual(
+      brand.footer.bottomLinks.map((link) => link.href),
+    );
+  });
+
+  test.each(LOCALES)('chaque entrée des menus a un libellé en %s', (locale) => {
+    for (const tool of site.header.tools) {
+      expect(Object.keys(i18n[locale].header.tools[tool.key].items).sort()).toEqual(
+        [...tool.items].sort(),
+      );
+    }
+  });
+
+  test('icônes DSFR des menus publiées dans /dsfr/icons.css', () => {
+    const css = readFileSync(join(DIST, 'dsfr', 'icons.css'), 'utf8');
+    for (const tool of site.header.tools) expect(css).toContain(`.${tool.icon}::before`);
+    for (const [, svg] of css.matchAll(/url\(([^)]+)\)/g)) {
+      expect(existsSync(join(DIST, 'dsfr', svg))).toBe(true);
     }
   });
 });
@@ -154,9 +312,13 @@ describe('page de référence partagée et doc/agents/edito.md', () => {
     const html = read(SHARED_PAGE);
     expect(html).toContain('<meta name="robots" content="noindex">');
     expect(html).not.toContain('fr-translate');
-    expect(html).toContain(`class="fr-nav__link" href="${site.sections.accueil}" target="_self">`);
+    expect(html).toContain(`<a class="sols-operator" href="${site.header.brandLink}"`);
+    expect(html).toContain(`href="${site.sections.aide}"`);
+    // A rerouting page cannot keep an anchor: anchored links point to the default language.
+    expect(html).toContain(`href="/${site.defaultLanguage}${site.sections.aide}#contact"`);
     for (const path of FOOTER_PATHS)
       expect(html).toContain(`class="fr-footer__bottom-link" href="${path}"`);
+    expect(html).toContain('<dialog id="fr-theme-modal"');
   });
 
   test('chaque bloc HTML de la doc est identique octet pour octet à la page de référence', () => {

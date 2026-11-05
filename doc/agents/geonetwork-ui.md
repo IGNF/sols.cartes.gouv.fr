@@ -474,3 +474,88 @@ Mesures sur le build de `main` (`45fe939`, patchs 0001 à 0005), Playwright, tou
 
 axe sur la recherche (bureau et mobile) : 0 violation critique ou sérieuse ; `heading-order` (modérée) inchangée.
 Captures : `doc/screenshots/C9/`.
+
+## 14. Boucle WFS, lien de fiche « Voir sur la carte », mode sombre (C10)
+
+**(a) Boucle sur un lien WFS introuvable : non reproduite.** Mesures Playwright sur le build de `main` (`10fa84a`), puis
+sur cartes.gouv.fr (v1.6.2, même code), en comptant toutes les requêtes et les erreurs console par tranches de 5 s :
+
+- Aperçu carte, sélection d'un lien WFS sur les 7 fiches : de 0 à 16 requêtes juste après la sélection, puis 0 nouvelle
+  requête sur 40 s. Sur `osf63e6c177-…` (`…_wfs:cd_0_30`) et `osfd95b355a-…` (`…_wfs:geometrie_ucs`), noms absents des
+  capacités WFS : message « La classe d'objets n'a pas été trouvée dans le service » (`wfs.featuretype.notfound`), quelques
+  erreurs console une seule fois, puis plus rien.
+- Onglets « Tableau » et « Graphique » et formulaires d'API des liens WFS : 0 requête et 0 erreur après les 5 premières
+  secondes.
+- cartes.gouv.fr, même fiche et même lien : 0 requête après la sélection.
+
+Pas de patch sans reproduction (question C-5 : fiche, lien, onglet et navigateur où la boucle a été vue).
+
+**(b) Lien « Voir sur la carte » au niveau de la fiche** (patch 0006). Sous les cartes « Téléchargements et flux », un
+lien texte DSFR par lien WMS ou WMTS de la fiche, libellé « Voir sur la carte : <nom> (<TYPE>) », `href` relatif au format
+`l=` décidé en C6, même onglet (`external_viewer_open_new_tab = false`). L'URL est calculée par le composant amont
+(`ExternalViewerButtonComponent`, accesseur `ignExternalViewerUrl` extrait de `openInIgnExternalViewer`), donc identique à
+celle du bouton de l'aperçu carte. Exemple (`osff858525a-…`) :
+`/explorer-les-cartes/?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`. Le navigateur affiche
+la version encodée (`%24GEOPORTAIL%3AOGC%3AWMS%281%3B1%3B1%3B0%29`), comme le lien du catalogue cartes.gouv.fr cité par
+le propriétaire ; les deux se décodent à l'identique. Les liens TMS restent dans l'aperçu carte seulement (le format `l=`
+d'un TMS ne porte pas de nom de couche, §10).
+
+**(c) Mode clair/sombre : non fait, coût élevé.** Le build du datahub ne charge que `core` et quelques composants DSFR
+(`apps/datahub/project.json`, cible `build`, `styles`) : la feuille `scheme` (jetons sombres, `data-fr-theme`) n'y est pas,
+et poser `data-fr-theme="dark"` ne change rien (vérifié). L'ajouter ne suffirait pas : les gabarits amont utilisent 194
+classes Tailwind de couleur fixe (`bg-white`, `bg-gray-*`, `text-gray-*`) et la palette de `tailwind.base.css`, qui
+resteraient claires sous un en-tête sombre. Un mode sombre cohérent demande une surcharge de ces couleurs (feuille dédiée
+importante) ; à traiter avec C8 (paramètres d'affichage du pied de page v1) si le propriétaire le confirme.
+
+Captures : `doc/screenshots/C10/`.
+
+## 15. En-tête et pied de page v1 (C8)
+
+Référence : `doc/agents/edito.md`, section « En-tête et pied de page partagés v1 », sur la branche E7
+(`feat/E7-header-footer-v1`, `b49dadb`), et `packages/brand/brand.json`.
+
+Génération (`scripts/layout.mjs`, appelé par `prepare.mjs`) :
+
+- Trois blocs extraits tels quels : liens d'évitement (`#contenu`, `#pied-de-page`), en-tête, pied de page suivi de la
+  modale `dialog#fr-theme-modal`.
+- Badge de la brique : `brand.json` `badges.catalogue` (« Rechercher ») ajouté dans `p.fr-header__service-title`, en
+  `fr-badge fr-badge--sm fr-badge--green-menthe`.
+- Menu mobile : en mode `angular`, le JS DSFR ne recopie pas les outils dans `fr-header__menu-links` ; la copie est faite
+  à la génération, `id` et `aria-controls` suffixés `-mobile` (`menu-help-mobile`, `menu-services-mobile`). Le JS DSFR
+  compare ensuite les deux copies et ajoute `fr-nav__item--align-right` aux menus visibles : cette classe est posée
+  d'avance dans les deux copies, sinon il signale une différence en console.
+- Chemins : `/assets/brand/*` devient `/rechercher-une-donnee/assets/brand/*` (images copiées depuis
+  `packages/brand/assets/` par `prepare.mjs`) ; `/dsfr/artwork/...` devient `/rechercher-une-donnee/assets/dsfr/artwork/...`
+  (pictogrammes copiés par le patch 0003).
+- CSS : les règles `.sols-operator*`, `.sols-tool-menu*`, `.sols-partner-logo` de `apps/accueil/src/css/site.css` sont
+  extraites (y compris dans `@media`) vers `apps/datahub/src/sols-shared.css`, `url(../dsfr/...)` réécrit.
+
+Vérifications (Playwright, bureau 1280×900 et mobile 393×851) : menus « Aide » et « Services » ouverts à la souris et au
+clavier (Entrée), fermés par Échap et par clic extérieur ; menu mobile avec les deux menus (`-mobile`) ; lien de marque
+→ `/` (page de renvoi vers `/fr/`) ; aucune erreur ni avertissement console sur la recherche ; axe : 0 violation
+critique ou sérieuse sur la recherche et la fiche `osff858525a-…` (seule `heading-order`, modérée, amont).
+
+**Paramètres d'affichage : masqués dans le catalogue.** La modale DSFR fonctionne dans l'application Angular (ouverture,
+choix enregistré, `data-fr-theme="dark"` posé par le JS DSFR, vérifié). Mais avec la feuille `scheme` DSFR, seul ce qui
+utilise les jetons DSFR passe en sombre : les gabarits amont gardent leurs couleurs Tailwind claires (194 classes,
+`tailwind.base.css`), d'où des titres et textes sombres sur fond sombre (fiche illisible, capture de test). Sans la
+feuille `scheme`, le choix n'a aucun effet. Le bouton « Paramètres d'affichage » est donc masqué dans le catalogue
+(`sols-overrides.css`, règle `:has()`), la modale reste dans le balisage (identique à l'edito), et un choix « sombre »
+fait sur l'edito n'a pas d'effet ici. Question C-6.
+
+Captures : `doc/screenshots/C8/`.
+
+## 16. Puces de mots-clés à bascule (C11)
+
+Décision sur C-4 : les puces de C9 deviennent des boutons à bascule (patch 0007, `home-header`). État `aria-pressed`
+calculé depuis le paramètre d'URL `keyword` ; clic ou Entrée/Espace : ajoute le mot-clé au filtre « Mot-clé » s'il n'y
+est pas, le retire sinon, sans toucher à la recherche ni aux autres filtres ; plusieurs puces se cumulent (OU). Rangée
+`role="group"` nommée « Mots-clés suggérés ». Aspect sélectionné : fond `--background-active-blue-france`, texte
+`--text-inverted-blue-france`, coche (`sols-overrides.css`).
+
+Vérification (Playwright, bureau) : RRP → 4 résultats, `aria-pressed="true"`, `?keyword=RRP` ; second clic → 7
+résultats, `false`. Clavier : RMQS (Entrée) → 2 ; pédologie (Espace) → `keyword=RMQS,pédologie`, 6 résultats, les deux
+`true` ; RMQS (Espace) → 4, pédologie seule ; pédologie (Entrée) → 7. Aucune erreur console.
+
+Captures : `doc/screenshots/C11/`.
+
