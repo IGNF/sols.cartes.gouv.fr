@@ -66,7 +66,9 @@ function buildIconStylesheet() {
     const css = readFileSync(join(iconsDir, category, `${category}.min.css`), 'utf8');
     const svg = posix.normalize(posix.join('utility/icons', category, css.match(rule)[1]));
     svgs.push(svg);
-    rules.push(`.${icon}::before,.${icon}::after{-webkit-mask-image:url(${svg});mask-image:url(${svg})}`);
+    rules.push(
+      `.${icon}::before,.${icon}::after{-webkit-mask-image:url(${svg});mask-image:url(${svg})}`,
+    );
   }
   mkdirSync(CACHE_DIR, { recursive: true });
   writeFileSync(join(CACHE_DIR, 'icons.css'), `${rules.join('\n')}\n`);
@@ -108,7 +110,10 @@ export default function (eleventyConfig) {
   // Localizes an internal link (path + optional #anchor). Shared markup (empty locale) keeps
   // language-independent paths, except anchored links: a rerouting page cannot keep the anchor.
   eleventyConfig.addFilter('localize', function (href, locale) {
-    if (/^[a-z][a-z0-9+.-]*:/i.test(href) || site.crossBrick.some((path) => href.startsWith(path))) {
+    if (
+      /^[a-z][a-z0-9+.-]*:/i.test(href) ||
+      site.crossBrick.some((path) => href.startsWith(path))
+    ) {
       return href;
     }
     const [path, anchor] = href.split('#');
