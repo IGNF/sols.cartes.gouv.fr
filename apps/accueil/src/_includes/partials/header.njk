@@ -1,0 +1,51 @@
+<header role="banner" class="fr-header">
+  <div class="fr-header__body">
+    <div class="fr-container">
+      <div class="fr-header__body-row">
+        <div class="fr-header__brand fr-enlarge-link">
+          <div class="fr-header__brand-top">
+            <div class="fr-header__logo">
+              <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
+            </div>
+            <div class="fr-header__navbar">
+              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" aria-haspopup="dialog" id="bouton-menu-principal" title="Menu">Menu</button>
+            </div>
+          </div>
+          <div class="fr-header__service">
+            <a href="{{ site.sections.accueil }}" title="Accueil - {{ site.name }}">
+              <p class="fr-header__service-title">{{ site.name }}</p>
+            </a>
+            <p class="fr-header__service-tagline">{{ site.tagline }}</p>
+          </div>
+        </div>
+        <div class="fr-header__tools">
+          <div class="fr-header__tools-links">
+            <ul class="fr-btns-group">
+              {%- for link in site.header.tools %}
+              <li>
+                <a class="fr-btn" href="{{ link.href }}"{% if link.external %} target="_blank" rel="noopener" title="{{ link.label }} - nouvelle fenêtre"{% endif %}>{{ link.label }}</a>
+              </li>
+              {%- endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fr-header__menu fr-modal" id="menu-principal" aria-labelledby="bouton-menu-principal">
+    <div class="fr-container">
+      <button type="button" class="fr-btn--close fr-btn" aria-controls="menu-principal" title="Fermer">Fermer</button>
+      <div class="fr-header__menu-links"></div>
+      <nav class="fr-nav" id="navigation-principale" role="navigation" aria-label="Menu principal">
+        <ul class="fr-nav__list">
+          {%- for item in site.header.nav %}
+          {%- set current = (page.url == item.href) if item.href == site.sections.accueil else (page.url and page.url.startsWith(item.href)) %}
+          <li class="fr-nav__item">
+            <a class="fr-nav__link" href="{{ item.href }}" target="_self"{% if current %} aria-current="page"{% endif %}>{{ item.label }}</a>
+          </li>
+          {%- endfor %}
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>

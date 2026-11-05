@@ -20,6 +20,9 @@ config_*.ini
 config-*.ini
 test.ini
 
+# Git worktrees used by the agents (one per brick)
+.worktrees/
+
 # Tooling
 .DS_Store
 *.log

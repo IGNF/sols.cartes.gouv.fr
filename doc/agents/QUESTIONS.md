@@ -29,20 +29,27 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 
 - Constat : le fichier était modifié (non commité) au démarrage. L'orchestrateur ne le commite pas ; c'est à l'humain de valider ce changement.
 
-## Q6. Sous-portail GeoNetwork `gissol-osf_c` pour le catalogue (catalogue-dev, C1)
+## Q6. Lien « gouvernement.fr » du pied de page (edito, E1)
 
-- Question : le sous-portail `gissol-osf_c` (filtre serveur `groupPublished:gissol-osf_g`, les 7 fiches du CSW) existe sur le GeoNetwork GPF, mais son API (`https://data.geopf.fr/geonetwork/gissol-osf_c/api/...`) répond `404 no Route matched` sur la passerelle ; seul `srv` est routé (`/catalog`). L'équipe GPF peut-elle exposer cette route (avec CORS) ?
+- Question : la consigne cite gouvernement.fr parmi les liens obligatoires du pied de page ; le DSFR 1.14 utilise désormais `info.gouv.fr` (gouvernement.fr y redirige).
+- Options : (a) `https://www.gouvernement.fr` ; (b) `https://www.info.gouv.fr` comme le gabarit DSFR 1.14.
+- Défaut appliqué : (b). Modifiable en une ligne dans `apps/accueil/src/_data/site.js` (`external.gouvernement`).
+
+## C-1. Sous-portail GeoNetwork `gissol-osf_c` pour le catalogue (catalogue-dev, C1)
+
+- Question : le sous-portail `gissol-osf_c` (filtre serveur `groupPublished:gissol-osf_g`, les 7 fiches du CSW) existe sur le GeoNetwork GPF, mais son API n'est pas joignable : `https://data.geopf.fr/geonetwork/gissol-osf_c/api/...` répond `404 no Route matched` (passerelle) et `https://data.geopf.fr/catalog/gissol-osf_c/api/...` répond 403 (réécrit en `/geonetwork/srv/api/gissol-osf_c/api/...`). Seul `srv` est routé, via `/catalog`, qui répond déjà `access-control-allow-origin: *`.
+- Demande à l'équipe GPF : router le chemin du sous-portail (`/geonetwork/gissol-osf_c/api`) avec la même politique CORS que `/catalog`.
 - Options : (a) route exposée : `geonetwork4_api_url` pointe vers le sous-portail, périmètre garanti par le serveur, sans patch ; (b) pas de route : patch minimal `setConfigFilters({ groupPublished: { 'gissol-osf_g': true } })` dans le datahub (agrégations non filtrées).
-- Défaut appliqué : (b) en v0, à remplacer par (a) dès que la route existe. Détails : `doc/agents/geonetwork-ui.md` §2.
+- Défaut appliqué : (b) en v0 (validé par l'orchestrateur), à remplacer par (a) dès que la route existe. Détails : `doc/agents/geonetwork-ui.md` §2.
 
-## Q7. Version DSFR du catalogue (catalogue-dev, C1)
+## C-2. Version DSFR du catalogue (catalogue-dev, C1)
 
 - Question : le fork IGNF/geonetwork-ui `v1.6.2` embarque `@gouvfr/dsfr` 1.15.3 et `@edugouvfr/ngx-dsfr` 1.20.0 (peer `~1.15.0`) ; le projet épingle 1.14.2.
 - Options : (a) forcer 1.14.2 (override npm, risque de casse de ngx-dsfr) ; (b) garder 1.15.3 dans le catalogue seulement.
 - Défaut appliqué : (b), écart documenté dans `doc/agents/geonetwork-ui.md` §2.3.
 
-## Q8. Format du lien « Voir sur la carte » (catalogue-dev, C1, pour C4)
+## C-3. Format du lien « Voir sur la carte » (catalogue-dev, C1, pour C4)
 
-- Question : le datahub ouvre `external_viewer_url_template` avec `${layer_name}`, `${service_url}`, `${service_type}` (WMS/WMTS/TMS/GEOJSON), `${geop_type}`, `${tms_style}` ; quel paramètre d'URL la brique carto `/explorer-les-cartes/` acceptera-t-elle ?
-- Options : (a) reprendre le format cartes.gouv.fr `?l=<couche>$GEOPORTAIL:<geop_type>:<type>(...)` ; (b) format simple `?layer=${layer_name}&type=${service_type}&url=${service_url}`.
-- Défaut proposé : (b), à confirmer avec l'agent carto avant C4.
+- Question : le datahub ouvre `external_viewer_url_template` avec `${layer_name}`, `${service_url}`, `${service_type}`, `${geop_type}`, `${tms_style}` ; quel paramètre d'URL la brique carto `/explorer-les-cartes/` accepte-t-elle ?
+- Options : (a) reprendre le format cartes.gouv.fr `?l=<couche>$GEOPORTAIL:<geop_type>:<type>(...)` ; (b) format simple.
+- Décision appliquée (orchestrateur) : (b) `/explorer-les-cartes/?layer=<nom de couche>&type=<wms|wmts|wfs|tms>&url=<URL du service>`, valeurs encodées. Template C4 : `external_viewer_url_template = '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'`. Attention pour le lecteur carto : le datahub IGN envoie `type` en **majuscules** (`WMS`, `WMTS`, `TMS`, `GEOJSON` ; WFS est désactivé dans le bouton) et n'encode que `url` (`layer` est inséré tel quel). Lecture insensible à la casse et `decodeURIComponent` tolérant attendus côté carto.
