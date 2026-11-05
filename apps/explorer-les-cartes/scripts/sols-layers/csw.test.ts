@@ -46,4 +46,11 @@ describe('parseCswRecords', () => {
       parseCswRecords('<csw:GetRecordsResponse xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"/>'),
     ).toEqual([]);
   });
+
+  it('signale une exception OGC renvoyée avec un HTTP 200', () => {
+    const exception = `<ows:ExceptionReport xmlns:ows="http://www.opengis.net/ows/1.1" version="1.2.0">
+      <ows:Exception exceptionCode="NoApplicableCode"><ows:ExceptionText>Service indisponible</ows:ExceptionText></ows:Exception>
+      </ows:ExceptionReport>`;
+    expect(() => parseCswRecords(exception)).toThrow(/exception OGC : Service indisponible/);
+  });
 });

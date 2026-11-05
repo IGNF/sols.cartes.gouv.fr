@@ -3,3 +3,8 @@
   max-height: min(70vh, 40rem);
   overflow-y: auto;
 }
+
+/* Separator between the datasets of the "Données sols" panel (DSFR default border token). */
+.sols-dataset {
+  border-bottom: 1px solid var(--border-default-grey);
+}

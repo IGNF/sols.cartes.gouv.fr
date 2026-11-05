@@ -218,6 +218,11 @@ bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --wri
 - Sortie déterministe (`normaliseSolsLayersFile` : fiches par titre, couches par service puis nom, sans horodatage), point d'accès
   canonique de `GPF_ENDPOINTS`, puis résumé en console. Résultat du 2026-11-05 : 7 fiches, 12 couches validées, 14 rejets
   (les 4 de `gpf-sols-data.md` §5 et les 10 noms WFS courts).
+- **Jamais de fichier partiel** (revue M4) : la GPF répond parfois par un document d'exception OGC (`ows:ExceptionReport`,
+  `ServiceExceptionReport`) avec un HTTP 200. Le script échoue (code de sortie non nul, fichier inchangé) si le CSW ou des capacités
+  sont une exception (`exceptionReportText`), si le CSW ne renvoie aucune fiche, si une fiche n'a pas d'identifiant ou de titre,
+  ou si les capacités d'un service ne listent aucune couche (`assertCompleteInputs`). Chaque requête a un délai de 60 s
+  (`AbortSignal.timeout`).
 - Contrôle sans réseau : `src/data/solsLayers.test.ts` (schéma partagé `src/data/solsLayersSchema.ts`, source = requête configurée,
   ordre identique à celui du script, pas de doublon) ; l'analyseur et le validateur sont testés sur un extrait du CSW
   (`scripts/sols-layers/fixtures/csw-extract.xml`) et des capacités simulées.
@@ -247,7 +252,10 @@ bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --wri
   `https://data.geopf.fr` sont acceptés ; WMS sous ses deux formes (`/wms-v` sans chemin, `/wms-r/wms`).
 - Couche connue de `sols-layers.json` (service + nom) : ajoutée directement. Inconnue : vérifiée contre les capacités en direct
   (WMTS déjà en cache, WMS wms-v ou wms-r par TanStack Query) et ajoutée si publiée. Sinon alerte DSFR « Couche introuvable »
-  nommant la couche (`role="alert"`, titre `h2`).
+  nommant la couche (`role="alert"`, titre `h2`). Lien mal formé ou point d'accès hors `data.geopf.fr` : alerte distincte
+  « Lien invalide ». Couche ajoutée par lien mais dont le service ne renvoie pas d'image : alerte « Couche indisponible » dans
+  l'avis du lien (même détection que le panneau). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée
+  indisponible plutôt que laissée en attente.
 - `type=TMS` (le catalogue envoie `layer=style` et l'URL d'un style MapLibre JSON) : avis DSFR « Format non pris en charge »
   (`role="status"`). Charger ce style demanderait `ol-mapbox-style` en dépendance directe (13.9, déjà présent via geopf-ext) et
   `MapboxVectorLayer({ styleUrl })` : styles de 217 couches sans `glyphs`, à valider ; reporté.

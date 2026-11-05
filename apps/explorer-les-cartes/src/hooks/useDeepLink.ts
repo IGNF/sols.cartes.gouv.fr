@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GPF_ENDPOINTS } from '../config/urls';
 import { findSolsLayer } from '../data/solsLayers';
-import type { SolsService } from '../data/solsLayersSchema';
+import { solsLayerKey, type SolsService } from '../data/solsLayersSchema';
 import { readDeepLink } from '../map/deepLink';
 import { toOverlayRef } from '../map/overlays';
 import { findWmtsLayer } from '../map/wmtsCapabilities';
@@ -12,8 +12,9 @@ import useWmtsCapabilities from './useWmtsCapabilities';
 export type DeepLinkStatus =
   | { state: 'none' }
   | { state: 'checking'; name: string }
-  | { state: 'added'; name: string; title: string }
+  | { state: 'added'; name: string; title: string; key: string }
   | { state: 'not-found'; name: string }
+  | { state: 'invalid'; name: string }
   | { state: 'unsupported'; name: string; type: string };
 
 const ENDPOINTS: Record<SolsService, string> = {
@@ -66,7 +67,7 @@ export default function useDeepLink(search: string = window.location.search): De
   let status: DeepLinkStatus = { state: 'none' };
   let found: { service: SolsService; title: string } | null = null;
   if (request?.kind === 'unsupported') status = { state: 'unsupported', name, type: request.type };
-  else if (request?.kind === 'invalid') status = { state: 'not-found', name };
+  else if (request?.kind === 'invalid') status = { state: 'invalid', name };
   else if (known?.match) found = { service: known.service, title: known.match.layer.title };
   else if (layerRequest) {
     status = { state: 'not-found', name };
@@ -82,7 +83,14 @@ export default function useDeepLink(search: string = window.location.search): De
       }
     }
   }
-  if (found) status = { state: 'added', name, title: found.title };
+  if (found) {
+    status = {
+      state: 'added',
+      name,
+      title: found.title,
+      key: solsLayerKey({ service: found.service, name }),
+    };
+  }
 
   const foundService = found?.service ?? null;
   const foundTitle = found?.title ?? '';

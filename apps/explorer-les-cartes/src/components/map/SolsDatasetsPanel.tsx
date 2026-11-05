@@ -51,11 +51,7 @@ export default function SolsDatasetsPanel() {
           const onMapKeys = overlays.map((o) => o.key).filter((key) => datasetKeys.includes(key));
           const isOnMap = onMapKeys.length > 0;
           return (
-            <li
-              key={dataset.id}
-              className={fr.cx('fr-pb-3w', 'fr-mb-3w')}
-              style={{ borderBottom: '1px solid var(--border-default-grey)' }}
-            >
+            <li key={dataset.id} className={`${fr.cx('fr-pb-3w', 'fr-mb-3w')} sols-dataset`}>
               <h3 className={fr.cx('fr-text--md', 'fr-text--bold', 'fr-mb-1w')}>{dataset.title}</h3>
               <p className={fr.cx('fr-text--sm', 'fr-mb-1w')}>{excerpt(dataset.abstract)}</p>
               <p className={fr.cx('fr-text--xs', 'fr-mb-1w')}>

@@ -23,6 +23,20 @@ interface XmlElement {
 
 export interface XmlDocument {
   getElementsByTagName(name: string): ArrayLike<XmlElement>;
+  documentElement?: XmlElement | null;
+}
+
+/** Root element names of the OGC exception documents the GPF returns with HTTP 200. */
+const EXCEPTION_ROOTS = ['ExceptionReport', 'ServiceExceptionReport'];
+
+/**
+ * Text of an OGC exception document (`ows:ExceptionReport`, `ServiceExceptionReport`), or null when
+ * the document is not one. The GPF answers some failures with such a body and HTTP 200.
+ */
+export function exceptionReportText(doc: XmlDocument): string | null {
+  const root = doc.documentElement;
+  if (!root || !EXCEPTION_ROOTS.includes(root.localName ?? '')) return null;
+  return (root.textContent ?? '').replace(/\s+/g, ' ').trim() || (root.localName ?? 'exception');
 }
 
 function isElement(node: unknown): node is XmlElement {

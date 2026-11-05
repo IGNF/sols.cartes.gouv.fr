@@ -61,11 +61,20 @@ function descendants(node: Node, ns: string, localName: string): Node[] {
   return out;
 }
 
-/** Parses a CSW GetRecords response in ISO 19115-3 (outputSchema mdb/2.0). */
+/**
+ * Parses a CSW GetRecords response in ISO 19115-3 (outputSchema mdb/2.0).
+ * Throws when the response is an OGC exception document (sent by the GPF with HTTP 200).
+ */
 export function parseCswRecords(xml: string): CswRecord[] {
   const doc = new DOMParser().parseFromString(xml, 'text/xml') as unknown as {
     getElementsByTagNameNS(ns: string, name: string): ArrayLike<Node>;
+    documentElement: Node | null;
   };
+  const root = doc.documentElement;
+  if (root && ['ExceptionReport', 'ServiceExceptionReport'].includes(root.localName ?? '')) {
+    const text = (root.textContent ?? '').replace(/\s+/g, ' ').trim();
+    throw new Error(`Le CSW a répondu par une exception OGC : ${text || root.localName}`);
+  }
   return Array.from(doc.getElementsByTagNameNS(NS.mdb, 'MD_Metadata')).map((record) => {
     const identification = child(
       child(record, NS.mdb, 'identificationInfo'),

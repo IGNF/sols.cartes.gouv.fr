@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DeepLinkStatus } from '../../hooks/useDeepLink';
+import { initialMapState, useMapStore } from '../../store/useMapStore';
 import DeepLinkNotice from './DeepLinkNotice';
 
 const status = vi.hoisted(() => ({ current: { state: 'none' } as DeepLinkStatus }));
@@ -38,7 +39,7 @@ describe('DeepLinkNotice', () => {
   });
 
   it('annonce la couche ajoutée et la recherche en cours', () => {
-    status.current = { state: 'added', name: 'n', title: 'Stocks de carbone' };
+    status.current = { state: 'added', name: 'n', title: 'Stocks de carbone', key: 'wms-vector:n' };
     const { rerender } = render(<DeepLinkNotice />);
     expect(screen.getByRole('status')).toHaveTextContent(
       'Couche « Stocks de carbone » ajoutée à la carte.',
@@ -46,5 +47,26 @@ describe('DeepLinkNotice', () => {
     status.current = { state: 'checking', name: 'n' };
     rerender(<DeepLinkNotice />);
     expect(screen.getByRole('status')).toHaveTextContent('Recherche de la couche « n »');
+  });
+
+  it('distingue un lien invalide (hôte refusé ou lien mal formé)', () => {
+    status.current = { state: 'invalid', name: 'x' };
+    render(<DeepLinkNotice />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Lien invalide');
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Couche introuvable');
+  });
+
+  it('signale une couche ajoutée par lien qui ne renvoie pas d’image', () => {
+    useMapStore.setState({ ...initialMapState, unavailableOverlays: ['wms-vector:rrp_loiret'] });
+    status.current = {
+      state: 'added',
+      name: 'rrp_loiret',
+      title: 'RRP du Loiret',
+      key: 'wms-vector:rrp_loiret',
+    };
+    render(<DeepLinkNotice />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Couche indisponible');
+    expect(screen.getByRole('alert')).toHaveTextContent('ne renvoie pas d’image');
+    useMapStore.setState(initialMapState);
   });
 });

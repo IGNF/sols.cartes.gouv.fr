@@ -20,7 +20,7 @@ interface Mounted {
  */
 export default function useOverlays(map: OlMap | null): void {
   const overlays = useMapStore((state) => state.overlays);
-  const { data: capabilities } = useWmtsCapabilities();
+  const { data: capabilities, isError: capabilitiesFailed } = useWmtsCapabilities();
   const mounted = useRef(new Map<string, Mounted>());
   const pending = useRef(new Set<string>());
 
@@ -33,13 +33,23 @@ export default function useOverlays(map: OlMap | null): void {
       detach();
       mounted.current.delete(key);
     }
+    const { markOverlayUnavailable } = useMapStore.getState();
     for (const overlay of overlays) {
       if (mounted.current.has(overlay.key) || pending.current.has(overlay.key)) continue;
+      if (overlay.service === 'wmts' && !capabilities) {
+        // WMTS layers are built from the capabilities: wait for them, or report the failure.
+        if (capabilitiesFailed) markOverlayUnavailable(overlay.key);
+        continue;
+      }
       pending.current.add(overlay.key);
       void createOverlayLayer(overlay, capabilities)
         .then((layer) => {
           const stillWanted = useMapStore.getState().overlays.some((o) => o.key === overlay.key);
-          if (!layer || !stillWanted || useMapStore.getState().map !== map) return;
+          if (!stillWanted || useMapStore.getState().map !== map) return;
+          if (!layer) {
+            markOverlayUnavailable(overlay.key);
+            return;
+          }
           const source = layer.getSource() as TileSource | null;
           const detachers = source
             ? [
@@ -55,7 +65,7 @@ export default function useOverlays(map: OlMap | null): void {
         })
         .finally(() => pending.current.delete(overlay.key));
     }
-  }, [map, overlays, capabilities]);
+  }, [map, overlays, capabilities, capabilitiesFailed]);
 
   useEffect(() => {
     const current = mounted.current;

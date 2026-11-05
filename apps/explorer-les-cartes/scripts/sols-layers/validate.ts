@@ -119,6 +119,28 @@ export function buildSolsLayersFile(
   return normaliseSolsLayersFile({ schemaVersion: SOLS_LAYERS_SCHEMA_VERSION, source, datasets });
 }
 
+/**
+ * Refuses inputs that would produce a partial file: no record, a record without identifier or title,
+ * or a service whose capabilities list no name (failed or truncated response). Throws with the reasons.
+ */
+export function assertCompleteInputs(
+  records: readonly CswRecord[],
+  capabilities: CapabilitiesByService,
+): void {
+  const problems: string[] = [];
+  if (records.length === 0) problems.push('le CSW ne renvoie aucune fiche');
+  records.forEach((record, index) => {
+    if (!record.id) problems.push(`la fiche n° ${index + 1} n’a pas d’identifiant`);
+    if (!record.title) problems.push(`la fiche ${record.id || `n° ${index + 1}`} n’a pas de titre`);
+  });
+  for (const [service, index] of Object.entries(capabilities)) {
+    if (index.size === 0) problems.push(`les capacités ${service} ne listent aucune couche`);
+  }
+  if (problems.length > 0) {
+    throw new Error(`Fichier non écrit : ${problems.join(' ; ')}.`);
+  }
+}
+
 /** One line per dataset, then the rejected names. */
 export function summarise(file: SolsLayersFile): string {
   const lines = [`${file.datasets.length} fiches`];
