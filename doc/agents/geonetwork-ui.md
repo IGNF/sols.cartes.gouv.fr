@@ -410,3 +410,38 @@ propose plus que des fiches « sols ». Les §2.2, §8 et §9 décrivent l'état
 à jour est `doc/catalogue-patches.md`, « Limites connues ».
 
 Captures : `doc/screenshots/C5/`.
+
+## 12. Fiche : accessibilité, vide sous la recherche, aperçu (C7)
+
+Source : `doc/e2e/REPORT.md` (branche `feat/T2-e2e-pass-2`), D-cat-1 et D-cat-3. Mesures sur l'aperçu complet
+(`PORT=8103`), Playwright + `@axe-core/playwright`, fiche `osff858525a-9fea-5ae3-93ab-43afab78483f` (bureau 1280×900).
+
+| Règle axe | Avant (nœuds) | Après | Nœuds et gabarit amont | Correction |
+| --- | --- | --- | --- | --- |
+| `button-name` (critique) | 9 | 0 | bouton retour (`navigation-bar`), zoom de vignette (`image-overlay-preview`), « Voir sur la carte » (`external-viewer-button`, `title` sur l'hôte seulement), fermeture de légende (`map-view`), 4 boutons de copie (`copy-text-button`, dont ceux des cartes d'API), bouton de formulaire d'API (`api-card`) | 0004 |
+| `label` (critique) | 5 | 0 | champ et zone de texte de copie (`copy-text-button`), 2 champs et une case du formulaire d'API (`record-api-form`) | 0004 |
+| `color-contrast` (sérieuse) | 11 | 0 | détails de cartes `#b4b3b7`, badges de format semi-opaques, zone de copie à 50 %, badge `bg-primary/50` | `sols-overrides.css` |
+| `aria-tab-name` (sérieuse) | 1 | 0 | onglet vide de configuration d'aperçu (`record-data-preview`) | 0004 |
+| `heading-order` (modérée) | 1 | 1 | `h4` de la légende (`@geospatial-sdk/legend`) | non traité |
+
+Le rapport T2 comptait 6, 4, 10 et 1 nœuds ; l'écart vient du contenu chargé au moment de l'analyse. Sur les autres
+fiches, des nœuds supplémentaires sont apparus et ont été corrigés de même : boutons précédent/suivant
+(`previous-next-buttons`), points de pagination (`pagination-dots`), menu mobile de la fiche (`navigation-bar`), badge de
+format clair (`json`). Résultat sur les 7 fiches, bureau et mobile : 0 violation critique ou sérieuse.
+
+Feuille `overlay/apps/datahub/src/sols-overrides.css`, chargée après `styles.css` (une ligne dans 0003) :
+
+- Vide sous la recherche : `gn-ui-sticky-header` impose sa hauteur en style en ligne ; `height: auto !important` sur ses
+  deux conteneurs, plus la rangée de badges vide masquée. Écart champ de recherche / filtres : 114 → 52 px ; l'en-tête
+  reste collant au défilement (sans l'animation de réduction).
+- Contrastes : couleurs DSFR (`--text-mention-grey`, `--background-action-high-blue-france`) ; les badges de format
+  perdent leur couleur par format au profit d'un bleu France uniforme.
+
+Aperçu carte de `stock_carbone` : il s'affiche bien (canvas 990×524 peint, 27 tuiles de fond et 16 GetMap `wms-v` en 200)
+dès que la section est visible. Le rendu est différé jusqu'au défilement, d'où le bloc vide des captures e2e. Le bloc vide
+sous le titre de la fiche est la hauteur fixe de l'en-tête amont (`sm:h-[344px]`), pas la carte. Fond : le `[[map_layer]]`
+WMS `wms-r` hérité de la config IGN renvoyait des 400 sur certaines tuiles et un 502 dans les passes e2e. Il est remplacé
+par Plan IGN v2 en tuiles WMTS (`type = 'xyz'`, `TILEMATRIXSET=PM`), comme la brique carto : 3 chargements sur 3 sans
+erreur ; un premier essai a reçu 4 réponses 502 du WMTS (instabilité côté GPF, non corrigeable ici).
+
+Captures : `doc/screenshots/C7/`.
