@@ -7,12 +7,14 @@ on:
       - 'apps/explorer-les-cartes/**'
       - 'package.json'
       - 'bun.lock'
+      - '.bun-version'
       - '.github/workflows/ci-carto.yml'
   pull_request:
     paths:
       - 'apps/explorer-les-cartes/**'
       - 'package.json'
       - 'bun.lock'
+      - '.bun-version'
       - '.github/workflows/ci-carto.yml'
 
 jobs:
@@ -23,13 +25,14 @@ jobs:
       run:
         working-directory: apps/explorer-les-cartes
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.4.3'
+          bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
         working-directory: .
-      - run: bun run lint
-      - run: bun run typecheck
-      - run: bun run test
-      - run: bun run build
+      # --if-present: a brick without the script yet is skipped, like scripts/run-all.ts does
+      - run: bun run --if-present lint
+      - run: bun run --if-present typecheck
+      - run: bun run --if-present test
+      - run: bun run --if-present build

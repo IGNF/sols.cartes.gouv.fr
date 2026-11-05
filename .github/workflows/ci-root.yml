@@ -7,12 +7,14 @@ on:
       - 'scripts/**'
       - 'package.json'
       - 'bun.lock'
+      - '.bun-version'
       - '.github/workflows/ci-root.yml'
   pull_request:
     paths:
       - 'scripts/**'
       - 'package.json'
       - 'bun.lock'
+      - '.bun-version'
       - '.github/workflows/ci-root.yml'
 
 jobs:
@@ -20,10 +22,10 @@ jobs:
     name: Root scripts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.4.3'
+          bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
       - run: bunx prettier --check .
       - run: bunx tsc --noEmit --strict --module preserve --moduleResolution bundler --target esnext --types bun scripts/*.ts

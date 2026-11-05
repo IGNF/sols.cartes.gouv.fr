@@ -19,5 +19,5 @@
 | M4 | carto | todo | | |
 | M5 | carto | todo | | |
 | X3 | root | todo | | |
-| X4 | root | in progress | | GitHub Actions per brick, path-filtered. |
-| X5 | root | todo | | Docker workflow PR, must stay unmerged. |
+| X4 | root | done | #13 | GitHub Actions per brick, path-filtered. |
+| X5 | root | open, do not merge | #15 | Draft Docker image workflow, kept unmerged on purpose. |
