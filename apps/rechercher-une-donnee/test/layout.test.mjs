@@ -169,3 +169,15 @@ test('patch 0006 adds record-level map links on the expected files (C10)', () =>
   ])
   assert.match(patch, /\['wms', 'wmts'\]/)
 })
+
+test('patch 0007 turns keyword presets into toggle chips (C11)', () => {
+  const patch = readFileSync(join(PATCHES_DIR, '0007-keyword-chips-toggle.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(patch).sort(), [
+    'apps/datahub/src/app/home/home-header/home-header.component.html',
+    'apps/datahub/src/app/home/home-header/home-header.component.ts',
+  ])
+  assert.match(patch, /aria-pressed/)
+  assert.match(patch, /aria-label="Mots-clés suggérés"/)
+  const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
+  assert.match(css, /\.badge-btn\[aria-pressed='true'\]/)
+})
