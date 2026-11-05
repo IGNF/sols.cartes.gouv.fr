@@ -10,6 +10,42 @@ index ab88f95..83a484d 100644
            data-cy="filters-expand"
          >
            <ng-icon name="matMoreHorizOutline"></ng-icon>
+diff --git a/apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html b/apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html
+index cbe0782..276295e 100644
+--- a/apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html
++++ b/apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html
+@@ -20,7 +20,10 @@
+             mat-align-tabs="start"
+             disableRipple
+           >
+-            <mat-tab [disabled]="(displayDatavizConfig$ | async) === false">
++            <mat-tab
++              [disabled]="(displayDatavizConfig$ | async) === false"
++              aria-label="Configuration de l'aperçu"
++            >
+               <ng-template mat-tab-label>
+                 @if (displayDatavizConfig$ | async) {
+                   <gn-ui-button
+diff --git a/apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html b/apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html
+index d10f155..e282a8e 100644
+--- a/apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html
++++ b/apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html
+@@ -17,6 +17,7 @@
+       <gn-ui-button
+         class="z-50"
+         data-cy="backButton"
++        aria-label="Retour"
+         (buttonClick)="back()"
+         type="outline"
+       >
+@@ -47,6 +48,7 @@
+         <button
+           type="button"
+           class="h-[60px] z-50 inline-flex items-center justify-center p-2 rounded-md shrink-0"
++          aria-label="Menu de la fiche"
+         >
+           <ng-icon name="iconoirMenu" size="24px"></ng-icon>
+         </button>
 diff --git a/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html b/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html
 index d9b641d..44e054a 100644
 --- a/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html
@@ -23,6 +59,83 @@ index d9b641d..44e054a 100644
          >
            <ng-icon
              class="text-[22px] !w-[21px] !h-[21px]"
+diff --git a/libs/feature/record/src/lib/map-view/map-view.component.html b/libs/feature/record/src/lib/map-view/map-view.component.html
+index e4838db..3695472 100644
+--- a/libs/feature/record/src/lib/map-view/map-view.component.html
++++ b/libs/feature/record/src/lib/map-view/map-view.component.html
+@@ -57,6 +57,7 @@
+         <gn-ui-button
+           type="light"
+           (buttonClick)="resetSelection()"
++          aria-label="Fermer"
+           style="
+             --gn-ui-button-padding: 0px;
+             --gn-ui-button-width: 24px;
+@@ -81,6 +82,7 @@
+           <gn-ui-button
+             type="light"
+             (buttonClick)="toggleLegend()"
++            aria-label="Fermer la légende"
+             style="
+               --gn-ui-button-padding: 0px;
+               --gn-ui-button-width: 24px;
+diff --git a/libs/ui/elements/src/lib/api-card/api-card.component.html b/libs/ui/elements/src/lib/api-card/api-card.component.html
+index 1835c87..cb9af0b 100644
+--- a/libs/ui/elements/src/lib/api-card/api-card.component.html
++++ b/libs/ui/elements/src/lib/api-card/api-card.component.html
+@@ -36,6 +36,11 @@
+             ? ('record.metadata.api.form.openForm' | translate)
+             : ('record.metadata.api.form.closeForm' | translate)
+         "
++        [attr.aria-label]="
++          !currentlyActive
++            ? ('record.metadata.api.form.openForm' | translate)
++            : ('record.metadata.api.form.closeForm' | translate)
++        "
+         matTooltipPosition="above"
+         (click)="openRecordApiFormPanel(link)"
+       >
+diff --git a/libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html b/libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html
+index 4bf6115..1820ae9 100644
+--- a/libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html
++++ b/libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html
+@@ -18,6 +18,7 @@
+           class="absolute bottom-0 right-0 z-10 mr-2 mb-2"
+           [type]="'outline'"
+           [extraClass]="'!py-2 !px-0'"
++          aria-label="Agrandir l'aperçu"
+           (buttonClick)="openLightbox()"
+         >
+           <ng-icon name="matZoomOutMap"></ng-icon>
+diff --git a/libs/ui/elements/src/lib/record-api-form/record-api-form.component.html b/libs/ui/elements/src/lib/record-api-form/record-api-form.component.html
+index 290aa5c..16bfea3 100644
+--- a/libs/ui/elements/src/lib/record-api-form/record-api-form.component.html
++++ b/libs/ui/elements/src/lib/record-api-form/record-api-form.component.html
+@@ -21,13 +21,14 @@
+             class="mr-2 w-20"
+             (valueChange)="setLimit($event)"
+             [value]="displayLimit$ | async"
+-            placeholder=""
++            placeholder="Nombre d'enregistrements"
+           >
+           </gn-ui-text-input>
+           <div class="flex items-center">
+             <input
+               class="mr-2 cursor-pointer"
+               type="checkbox"
++              aria-label="Tous les enregistrements"
+               [checked]="noLimitChecked$ | async"
+               (change)="setLimit('-1')"
+             />
+@@ -47,7 +48,7 @@
+             [value]="offset$ | async"
+             [disabled]="!supportOffset"
+             (valueChange)="supportOffset ? setOffset($event) : null"
+-            placeholder=""
++            placeholder="Numéro du 1er enregistrement"
+           >
+           </gn-ui-text-input>
+           @if (!supportOffset) {
 diff --git a/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html b/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html
 index d5c63c9..d84bd85 100644
 --- a/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html
@@ -46,29 +159,59 @@ index d5c63c9..d84bd85 100644
        (buttonClick)="handleSearch()"
      >
 diff --git a/libs/ui/inputs/src/lib/button/button.component.html b/libs/ui/inputs/src/lib/button/button.component.html
-index f8ba6bd..7ea1093 100644
+index f8ba6bd..693025a 100644
 --- a/libs/ui/inputs/src/lib/button/button.component.html
 +++ b/libs/ui/inputs/src/lib/button/button.component.html
-@@ -2,6 +2,7 @@
+@@ -2,6 +2,8 @@
    type="button"
    [class]="classList"
    [disabled]="disabled"
 +  [attr.aria-label]="ariaLabel"
++  [attr.title]="title"
    (click)="handleClick($event)"
  >
    <ng-content></ng-content>
 diff --git a/libs/ui/inputs/src/lib/button/button.component.ts b/libs/ui/inputs/src/lib/button/button.component.ts
-index 91f8f4c..6914bcb 100644
+index 91f8f4c..2e71a5e 100644
 --- a/libs/ui/inputs/src/lib/button/button.component.ts
 +++ b/libs/ui/inputs/src/lib/button/button.component.ts
-@@ -64,6 +64,7 @@ export class ButtonComponent {
+@@ -64,6 +64,9 @@ export class ButtonComponent {
  
    @Input() disabled = false
    @Input() extraClass = ''
 +  @Input('aria-label') ariaLabel: string | null = null
++  // Moved from the host to the inner <button>, where it names icon-only buttons
++  @Input() title: string | null = null
    @Output() buttonClick = new EventEmitter<Event>()
  
    get classList() {
+diff --git a/libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html b/libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html
+index bfc880a..36a97c6 100644
+--- a/libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html
++++ b/libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html
+@@ -4,12 +4,14 @@
+       type="text"
+       class="grow py-2 px-4 bg-gray-200 opacity-50 rounded-l-md border border-gray-300 truncate"
+       value="{{ text }}"
++      aria-label="Texte à copier"
+       readonly
+     />
+   }
+   @if (displayText && rows > 1) {
+     <textarea
+       [rows]="rows"
++      aria-label="Texte à copier"
+       class="grow py-2 px-4 bg-gray-200 opacity-50 rounded-l-md border border-gray-300 overflow-y-auto h-max"
+       readonly
+       >{{ text }}</textarea
+@@ -23,6 +25,7 @@
+         displayText,
+     }"
+     [matTooltip]="tooltipText"
++    [attr.aria-label]="tooltipText || 'Copier'"
+     matTooltipPosition="above"
+   >
+     <ng-icon
 diff --git a/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html b/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html
 index 811cd81..7d97060 100644
 --- a/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html
@@ -113,3 +256,35 @@ index ffd896f..9037983 100644
      (buttonClick)="openOverlay()"
      cdkOverlayOrigin
      #overlayOrigin="cdkOverlayOrigin"
+diff --git a/libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html b/libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html
+index 126ba68..e0db913 100644
+--- a/libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html
++++ b/libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html
+@@ -7,6 +7,7 @@
+       <button
+         type="button"
+         class="pagination-dot"
++        [attr.aria-label]="'Page ' + step"
+         (click)="listComponent.goToPage(step)"
+         [ngClass]="
+           listComponent.currentPage === step ? 'bg-primary' : 'bg-gray-400'
+diff --git a/libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html b/libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html
+index 5147c4f..e73e1f9 100644
+--- a/libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html
++++ b/libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html
+@@ -1,6 +1,7 @@
+ <div class="flex flex-row gap-x-1 items-center">
+   <gn-ui-button
+     data-test="previousButton"
++    aria-label="Page précédente"
+     type="light"
+     [extraClass]="
+       'w-auto min-w-10 h-8 px-2 py-1 rounded-lg ' +
+@@ -18,6 +19,7 @@
+   </gn-ui-button>
+   <gn-ui-button
+     data-test="nextButton"
++    aria-label="Page suivante"
+     type="light"
+     [extraClass]="
+       'w-auto min-w-10 h-8 px-2 py-1 rounded-lg ' +
