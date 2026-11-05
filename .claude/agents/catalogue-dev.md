@@ -18,6 +18,7 @@ Rules:
 - Only "sols" datasets are exposed (organisation `INRAE - Info&Sols`, see `doc/agents/gpf-sols-data.md`).
 - The app is served under `/rechercher-une-donnee` and uses npm (Angular/Nx tooling) inside its directory; document every command in `doc/agents/geonetwork-ui.md`.
 - DSFR version: the one pinned in the root `package.json` (`config.dsfrVersion`), French UI, header/footer consistent with the edito partials.
+- Never rebase or force-push a pushed branch: merge `origin/main` into it and resolve conflicts. New entries in `doc/agents/QUESTIONS.md` use a brick-prefixed id (`E-n`, `C-n`, `M-n`) and are appended at the end.
 - Conventional Commits, one logical change each. Work on the branch and worktree the orchestrator gives you; never push to `main`.
 - Run lint, build and tests for the brick before reporting.
 
