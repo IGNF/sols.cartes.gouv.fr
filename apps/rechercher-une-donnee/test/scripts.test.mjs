@@ -3,7 +3,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
 import { APP_DIR, CONFIG_FILE, PATCHES_DIR, listPatches, nodeMajor, patchedFiles, readUpstream } from '../scripts/lib.mjs'
-import { checkBaseHrefPatch, checkConfig, checkPatchesDocumented, quotesBalanced } from '../scripts/checks.mjs'
+import {
+  checkBaseHrefPatch,
+  checkConfig,
+  checkNodeMajor,
+  checkPatchesDocumented,
+  quotesBalanced,
+} from '../scripts/checks.mjs'
 
 const valid = {
   repository: 'https://github.com/IGNF/geonetwork-ui.git',
@@ -75,4 +81,10 @@ test('quotesBalanced ignores # inside strings and catches open strings', () => {
   assert.equal(quotesBalanced('primary_color = "#000091" # comment'), true)
   assert.equal(quotesBalanced("x = \"l'accès\""), true)
   assert.equal(quotesBalanced('x = "open'), false)
+})
+
+test('checkNodeMajor compares the running major with .nvmrc', () => {
+  assert.deepEqual(checkNodeMajor('24\n', '24.18.0'), [])
+  assert.deepEqual(checkNodeMajor('v24', '24.1.0'), [])
+  assert.match(checkNodeMajor('24', '26.5.0')[0], /differs from .nvmrc \(24\)/)
 })

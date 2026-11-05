@@ -3,7 +3,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { APP_DIR, CONFIG_FILE, PATCHES_DIR, capture, listPatches, log, readUpstream } from './lib.mjs'
-import { checkBaseHrefPatch, checkConfig, checkPatchesDocumented } from './checks.mjs'
+import { checkBaseHrefPatch, checkConfig, checkNodeMajor, checkPatchesDocumented } from './checks.mjs'
 
 const problems = []
 
@@ -30,6 +30,12 @@ if (upstream) {
 
 const patchesDoc = readFileSync(join(APP_DIR, '..', '..', 'doc', 'catalogue-patches.md'), 'utf8')
 problems.push(...checkPatchesDocumented(listPatches(PATCHES_DIR), patchesDoc))
+
+// Warning only: a different local major may build, but CI and production use .nvmrc.
+const nvmrc = readFileSync(join(APP_DIR, '..', '..', '.nvmrc'), 'utf8')
+for (const warning of checkNodeMajor(nvmrc, process.versions.node)) {
+  process.stderr.write(`[catalogue] lint warning: ${warning}\n`)
+}
 
 if (problems.length) {
   for (const problem of problems) process.stderr.write(`[catalogue] lint: ${problem}\n`)

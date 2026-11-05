@@ -48,3 +48,12 @@ export function checkBaseHrefPatch(patchText, upstream) {
     ? []
     : [`patch 0002: baseHref "${match[1]}" differs from upstream.json "${upstream.baseHref}"`]
 }
+
+/** The brick is built and tested in CI with the Node major of the root .nvmrc. */
+export function checkNodeMajor(nvmrc, version) {
+  const expected = Number(String(nvmrc).trim().replace(/^v/, '').split('.')[0])
+  const actual = Number(version.split('.')[0])
+  return actual === expected
+    ? []
+    : [`Node ${version} differs from .nvmrc (${expected}): CI builds with Node ${expected}`]
+}
