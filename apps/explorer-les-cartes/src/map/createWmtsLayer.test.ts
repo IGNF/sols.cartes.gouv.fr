@@ -38,7 +38,7 @@ describe('createWmtsLayer', () => {
   it('réessaie une fois une tuile en erreur', () => {
     vi.useFakeTimers();
     const source = createWmtsLayer(capabilities, planIgn)?.getSource();
-    const tile = { load: vi.fn() };
+    const tile = { load: vi.fn(), getKey: () => 'tuile' };
     source?.dispatchEvent(Object.assign(new BaseEvent('tileloaderror'), { tile }));
     vi.advanceTimersByTime(TILE_RETRY_DELAY_MS);
     expect(tile.load).toHaveBeenCalledTimes(1);
