@@ -520,6 +520,16 @@ for (const width of [1024, 1440]) {
       (await servicesPanel.getByRole('link').count()) === brand.header.tools.services.items.length,
     'en-tête : « Services » s’ouvre au clavier avec les liens de la marque',
   );
+  const chevronTransform = async () => {
+    await page.waitForTimeout(400);
+    return services
+      .locator('.header-menu__chevron')
+      .evaluate((el) => getComputedStyle(el).transform);
+  };
+  check(
+    (await chevronTransform()).startsWith('matrix(-1,'),
+    'en-tête : chevron de « Services » tourné vers le haut menu ouvert',
+  );
   await page.keyboard.press('Tab');
   await page.keyboard.press('Escape');
   check(
@@ -528,6 +538,10 @@ for (const width of [1024, 1440]) {
         brand.header.tools.services.label,
       ),
     'en-tête : Échap ferme « Services » et rend le focus au bouton',
+  );
+  check(
+    ['none', 'matrix(1, 0, 0, 1, 0, 0)'].includes(await chevronTransform()),
+    'en-tête : chevron de « Services » vers le bas menu fermé',
   );
   const footer = page.getByRole('contentinfo');
   check(

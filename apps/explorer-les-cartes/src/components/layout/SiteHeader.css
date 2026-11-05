@@ -26,8 +26,20 @@
   position: relative;
 }
 
+/* Dropdown chevron (core DSFR icon), turned up while the menu is open, as on the edito header. */
 .header-menu__chevron {
   margin-left: 0.25rem;
+  transition: transform 0.3s;
+}
+
+.header-menu__btn[aria-expanded='true'] .header-menu__chevron {
+  transform: rotate(-180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header-menu__chevron {
+    transition: none;
+  }
 }
 
 .header-menu__panel {

@@ -441,7 +441,7 @@ index d9e31d8..b9c1fc1 100644
  
      // Workaround: when DSFR runs in `mode: 'angular'` (set in index.html), it
 diff --git a/apps/datahub/src/app/home/home-header/home-header.component.html b/apps/datahub/src/app/home/home-header/home-header.component.html
-index 91f4cc6..f9d789c 100644
+index fde490f..79d8b94 100644
 --- a/apps/datahub/src/app/home/home-header/home-header.component.html
 +++ b/apps/datahub/src/app/home/home-header/home-header.component.html
 @@ -26,14 +26,6 @@
@@ -511,7 +511,7 @@ index 086b850..4c08739 100644
          ],
        },
 diff --git a/apps/datahub/src/index.html b/apps/datahub/src/index.html
-index d5adeee..7bf0627 100644
+index d5adeee..107053d 100644
 --- a/apps/datahub/src/index.html
 +++ b/apps/datahub/src/index.html
 @@ -1,8 +1,12 @@
@@ -529,7 +529,7 @@ index d5adeee..7bf0627 100644
      <base href="/" />
      <meta name="viewport" content="width=device-width, initial-scale=1" />
      <link
-@@ -15,36 +19,12 @@
+@@ -15,36 +19,13 @@
        window.dsfr = window.dsfr || {
          mode: 'angular',
        }
@@ -567,6 +567,7 @@ index d5adeee..7bf0627 100644
 -        s.parentNode.insertBefore(g, s)
 -      })()
 -    </script>
++    <script type="module" src="assets/sols/header.js"></script>
      <!--
        Add more preload links here to reduce the time to initial page render!
        Example:
