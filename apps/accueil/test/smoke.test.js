@@ -298,6 +298,23 @@ describe('@sols/brand', () => {
   });
 });
 
+describe('menu mobile : Échap dans un sous-menu', () => {
+  test('le script header.js est publié et chargé par chaque page HTML', () => {
+    expect(existsSync(join(DIST, 'js', 'header.js'))).toBe(true);
+    for (const path of [`/${site.defaultLanguage}/`, '/en/aide/', SHARED_PAGE]) {
+      expect(read(path)).toContain(
+        `<script type="module" src="${site.assets.js}/header.js"></script>`,
+      );
+    }
+  });
+
+  test('le code reproduit dans doc/agents/edito.md est celui de header.js', () => {
+    const [, snippet] = readFileSync(EDITO_DOC, 'utf8').match(/```js\n([\s\S]*?)\n```/);
+    const source = readFileSync(join(APP_DIR, 'src', 'js', 'header.js'), 'utf8');
+    expect(source).toContain(snippet);
+  });
+});
+
 describe('ressources', () => {
   test('ressources DSFR, pictogrammes et feuille du site copiés', () => {
     const assets = ['dsfr.min.css', 'dsfr.module.min.js', 'fonts/Marianne-Regular.woff2'];
