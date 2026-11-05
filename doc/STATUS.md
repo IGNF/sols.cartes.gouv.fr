@@ -24,11 +24,10 @@
 | X5   | root      | open, do not merge | #15      | Draft Docker image workflow, kept unmerged on purpose.                                                                                         |
 | C5   | catalogue | done               | #31      | e2e fixes: upstream a11y patch 0004, one main, header alignment, ES scope patch 0005.                                                          |
 | C6   | catalogue | done               | #35      | Link format switched to cartes.gouv.fr `l=` (human decision C-3).                                                                              |
-| E6   | edito     | done               | #25      | i18n follow-ups.                                                                                                                               |
 | T1   | e2e       | done               | #30      | Playwright suite, first pass.                                                                                                                  |
 | T2   | e2e       | done               | #37      | Second pass on final main: 49 passed, 5 skipped (axe mobile), 0 failed in the isolated review run; D-carto-1 residual (~1/20) documented.      |
 | M6   | carto     | done               | #39      | Capabilities fetch timeout + retries (hanging GPF requests caused the missing canvas); side panel closed by default below md.                  |
 | X7   | root      | done               | #34      | Human answers to QUESTIONS.md, init.md committed.                                                                                              |
 | X8   | root      | done               | #38      | doc/v0/REPORT.md, final status (merged without agent review at the usage cut; superseded by X9).                                               |
 | C7   | catalogue | done               | #40      | Record page: 0 critical/serious axe (patch 0004 + overlay CSS), search gap collapsed, preview base map on Plan IGN WMTS.                       |
-| X9   | root      | done               |          | Closing update of STATUS and REPORT after M6, C7 and T2.                                                                                       |
+| X9   | root      | done               | #41      | Closing update of STATUS and REPORT after M6, C7 and T2.                                                                                       |
