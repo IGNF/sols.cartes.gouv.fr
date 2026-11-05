@@ -26,7 +26,7 @@ import {
   readUpstream,
   run,
 } from './lib.mjs'
-import { BRAND_DIR, readLayout, readSharedCss } from './layout.mjs'
+import { BRAND_DIR, readHeaderScript, readLayout, readSharedCss } from './layout.mjs'
 
 const INSTALL_STAMP = join(UPSTREAM_DIR, 'node_modules', '.sols-install-stamp')
 
@@ -97,6 +97,9 @@ function applyOverlay(upstream) {
   }
   const appSrc = join(UPSTREAM_DIR, 'apps', upstream.app, 'src')
   writeFileSync(join(appSrc, 'sols-shared.css'), readSharedCss(upstream.baseHref))
+  // Mobile header Escape handler, loaded by index.html after the DSFR module (patch 0003)
+  mkdirSync(join(appSrc, 'assets', 'sols'), { recursive: true })
+  writeFileSync(join(appSrc, 'assets', 'sols', 'header.js'), readHeaderScript())
   // Brand images of @sols/brand (logos), served under <baseHref>assets/brand/
   const brandAssets = join(BRAND_DIR, 'assets')
   for (const file of readdirSync(brandAssets, { withFileTypes: true }).filter((e) => e.isFile())) {
