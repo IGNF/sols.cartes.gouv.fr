@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { PATCHES_DIR, patchedFiles, readUpstream } from '../scripts/lib.mjs'
+import { APP_DIR, CONFIG_FILE, PATCHES_DIR, patchedFiles, readUpstream } from '../scripts/lib.mjs'
 import {
   assertStaticTemplate,
   buildLayout,
@@ -80,9 +80,32 @@ test('patch 0003 only touches the expected upstream files', () => {
     'apps/datahub/src/app/app.component.html',
     'apps/datahub/src/app/app.component.ts',
     'apps/datahub/src/app/home/home-header/home-header.component.html',
-    'apps/datahub/src/app/record/record-metadata/record-metadata.component.ts',
+    'apps/datahub/src/app/home/home-page/home-page.component.html',
     'apps/datahub/src/app/router/datahub-page-title-strategy.service.ts',
     'apps/datahub/src/app/router/datahub-router.service.ts',
     'apps/datahub/src/index.html',
+    'apps/datahub/src/styles.css',
   ])
+})
+
+test('patches 0004 and 0005 stay small and on the expected files', () => {
+  const a11y = readFileSync(join(PATCHES_DIR, '0004-upstream-a11y.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(a11y).sort(), [
+    'apps/datahub/src/app/home/search/search-filters/search-filters.component.html',
+    'libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html',
+    'libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html',
+    'libs/ui/inputs/src/lib/button/button.component.html',
+    'libs/ui/inputs/src/lib/button/button.component.ts',
+    'libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html',
+    'libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html',
+  ])
+  const scope = readFileSync(join(PATCHES_DIR, '0005-elasticsearch-scope.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(scope), ['libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts'])
+  assert.ok(scope.split('\n').filter((l) => /^[+-][^+-]/.test(l)).length < 30)
+})
+
+test('the thumbnail placeholder ships in overlay/ and is configured', () => {
+  const svg = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/assets/img/sols-placeholder.svg'), 'utf8')
+  assert.ok(svg.length < 50_000)
+  assert.match(readFileSync(CONFIG_FILE, 'utf8'), /^thumbnail_placeholder = 'assets\/img\/sols-placeholder.svg'$/m)
 })

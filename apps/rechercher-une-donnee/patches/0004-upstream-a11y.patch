@@ -1,0 +1,115 @@
+diff --git a/apps/datahub/src/app/home/search/search-filters/search-filters.component.html b/apps/datahub/src/app/home/search/search-filters/search-filters.component.html
+index ab88f95..83a484d 100644
+--- a/apps/datahub/src/app/home/search/search-filters/search-filters.component.html
++++ b/apps/datahub/src/app/home/search/search-filters/search-filters.component.html
+@@ -112,6 +112,7 @@
+           (buttonClick)="open()"
+           type="outline"
+           extraClass="!px-[8px]"
++          aria-label="Afficher plus de filtres"
+           data-cy="filters-expand"
+         >
+           <ng-icon name="matMoreHorizOutline"></ng-icon>
+diff --git a/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html b/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html
+index d9b641d..44e054a 100644
+--- a/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html
++++ b/libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html
+@@ -23,7 +23,7 @@
+           [style.--gn-ui-button-padding]="0"
+           [style.--gn-ui-button-width]="'21px'"
+           [style.--gn-ui-button-height]="'21px'"
+-          aria-label="Close"
++          aria-label="Fermer"
+         >
+           <ng-icon
+             class="text-[22px] !w-[21px] !h-[21px]"
+diff --git a/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html b/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html
+index d5c63c9..d84bd85 100644
+--- a/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html
++++ b/libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html
+@@ -45,7 +45,7 @@
+       type="primary"
+       [extraClass]="getExtraClass()"
+       data-test="clear-btn"
+-      aria-label="Clear"
++      aria-label="Effacer la recherche"
+       (buttonClick)="clear()"
+     >
+       <ng-icon class="text-white" name="matClose"></ng-icon>
+@@ -55,7 +55,7 @@
+     <gn-ui-button
+       type="light"
+       extraClass="border-0 border-l-[1px] border-gray-300 hover:border-gray-500 text-primary hover:text-primary-darkest focus:text-primary-darkest absolute inset-y-[--icon-padding] right-[--icon-padding]"
+-      aria-label="Trigger search"
++      aria-label="Lancer la recherche"
+       data-test="autocomplete-submit-btn"
+       (buttonClick)="handleSearch()"
+     >
+diff --git a/libs/ui/inputs/src/lib/button/button.component.html b/libs/ui/inputs/src/lib/button/button.component.html
+index f8ba6bd..7ea1093 100644
+--- a/libs/ui/inputs/src/lib/button/button.component.html
++++ b/libs/ui/inputs/src/lib/button/button.component.html
+@@ -2,6 +2,7 @@
+   type="button"
+   [class]="classList"
+   [disabled]="disabled"
++  [attr.aria-label]="ariaLabel"
+   (click)="handleClick($event)"
+ >
+   <ng-content></ng-content>
+diff --git a/libs/ui/inputs/src/lib/button/button.component.ts b/libs/ui/inputs/src/lib/button/button.component.ts
+index 91f8f4c..6914bcb 100644
+--- a/libs/ui/inputs/src/lib/button/button.component.ts
++++ b/libs/ui/inputs/src/lib/button/button.component.ts
+@@ -64,6 +64,7 @@ export class ButtonComponent {
+ 
+   @Input() disabled = false
+   @Input() extraClass = ''
++  @Input('aria-label') ariaLabel: string | null = null
+   @Output() buttonClick = new EventEmitter<Event>()
+ 
+   get classList() {
+diff --git a/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html b/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html
+index 811cd81..7d97060 100644
+--- a/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html
++++ b/libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html
+@@ -2,7 +2,7 @@
+   type="outline"
+   extraClass="bg-background w-full !p-[8px] !pl-[16px]"
+   [title]="title"
+-  [attr.aria-owns]="id"
++  [attr.aria-owns]="overlayOpen ? id : null"
+   (buttonClick)="openOverlay()"
+   (keydown)="handleTriggerKeydown($event)"
+   cdkOverlayOrigin
+@@ -20,7 +20,7 @@
+       </div>
+     }
+   </div>
+-  <button
++  <span
+     class="h-6 w-6 flex items-center justify-center"
+     data-test="dropdown-clear"
+   >
+@@ -31,7 +31,7 @@
+         name="matClose"
+       ></ng-icon>
+     }
+-  </button>
++  </span>
+   <ng-icon
+     [name]="overlayOpen ? 'matExpandLess' : 'matExpandMore'"
+     class="shrink-0 opacity-40"
+diff --git a/libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html b/libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html
+index ffd896f..9037983 100644
+--- a/libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html
++++ b/libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html
+@@ -13,7 +13,7 @@
+     [style.--gn-ui-button-padding]="'8px 8px 8px 16px'"
+     extraClass="bg-background flex flex-row w-full {{ extraBtnClass }}"
+     [title]="title"
+-    [attr.aria-owns]="id"
++    [attr.aria-owns]="overlayOpen ? id : null"
+     (buttonClick)="openOverlay()"
+     cdkOverlayOrigin
+     #overlayOrigin="cdkOverlayOrigin"

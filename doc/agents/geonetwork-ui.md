@@ -377,3 +377,33 @@ Console sur les fiches (hors C4, déjà présent avant) : `Invalid layer for leg
 carte `[[map_layer]]` hérité de la config IGN. Piste non traitée : un fond `xyz` sur le WMTS GPF.
 
 Capture : `doc/screenshots/C4/fiche-voir-sur-la-carte.png` (fiche RRP Loiret, bouton à droite des listes).
+
+## 11. Corrections de la passe e2e (C5)
+
+Source : `doc/e2e/REPORT.md` (branche `feat/T1-e2e-playwright`), défauts D-cat-1 à D-cat-6. Mesures sur l'aperçu complet
+(`PORT=8103 bun run preview:all`), Playwright + `@axe-core/playwright`, bureau 1280×900 et mobile 393×851.
+
+| Défaut | Cause | Correction | Résultat |
+| --- | --- | --- | --- |
+| D-cat-2 `aria-valid-attr-value` (3) | amont : `aria-owns` vers la liste d'un menu déroulant fermé (Thèmes, Année, Trier par) | patch 0004 | 0 |
+| D-cat-3 `button-name` (4) | amont : 2 boutons « effacer » vides dans les filtres, loupe de la recherche et bouton « … » (`gn-ui-button` ignorait `aria-label`) | patch 0004 | 0 |
+| D-cat-4 `nested-interactive` (2) | amont : bouton « effacer » dans le bouton du filtre | patch 0004 (`span`) | 0 |
+| 3 violations de repères (`main`) | notre `<main id="contenu">` (0003) + `<main>` de `home-page.component.html` | 0003 : le `main` amont devient `div` | 1 `main` partout |
+| D-cat-6 menu décalé (x = 148 contre 24) | `apps/datahub/src/styles.css` IGN : `.fr-modal > .fr-container { max-width: 1000px !important }` (pour la modale d'accueil) touche aussi le menu de l'en-tête | 0003 : règle restreinte à `#welcomeModal` | premier lien à x = 24, comme `/fr/` |
+| D-cat-5 vide sous la recherche | `gn-ui-sticky-header` de 260 px pour un contenu de ~110 px | 0003 : 160 px | 214 → 114 px entre recherche et filtres |
+| D-cat-5 vignette vide | pas reproduit (les 7 vignettes se chargent ; probablement capturées avant chargement) | `thumbnail_placeholder` + SVG DSFR | repli prêt |
+| D-cat-1 agrégations non filtrées | `aggregate()` ne reçoit aucun filtre (`gn4-repository.ts` l. 294-303) | patch 0005 (service Elasticsearch) | toutes les requêtes `_search` filtrées |
+
+Aucun des 9 nœuds critiques ou sérieux ne venait de notre en-tête, pied de page ou configuration : tous sont dans
+`libs/ui/inputs` ou `apps/datahub` amont. Reste une violation modérée `heading-order` (titres de résultats en `h4`).
+
+Vignette par défaut : `overlay/apps/datahub/src/assets/img/sols-placeholder.svg` (4,7 kB, fond `--background-alt-grey`,
+icône DSFR `fr-icon-france-line` en `--text-mention-grey`), publiée en `assets/img/sols-placeholder.svg` (`overlay/` reflète
+l'arborescence amont, d'où ce chemin plutôt que `overlay/assets/`).
+
+Effet de 0005 : une fiche hors périmètre saisie à la main n'est plus affichée (« La ressource ... n'a pas pu être
+trouvée »), et la section « Explorez le catalogue » (fiches similaires), masquée en C3, est rétablie puisqu'elle ne
+propose plus que des fiches « sols ». Les §2.2, §8 et §9 décrivent l'état avant C5 pour ces limites ; la référence
+à jour est `doc/catalogue-patches.md`, « Limites connues ».
+
+Captures : `doc/screenshots/C5/`.
