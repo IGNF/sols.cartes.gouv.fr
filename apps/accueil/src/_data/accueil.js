@@ -25,9 +25,9 @@ export default {
   ],
   /** Illustrations from @sols/brand (checked visually: 2 is the town hall, 3 the design office). */
   usages: [
-    { key: 'chambres', image: illustration('cas-usage-1.jpg') },
-    { key: 'bureaux', image: illustration('cas-usage-3.jpg') },
-    { key: 'collectivites', image: illustration('cas-usage-2.jpg') },
+    { key: 'chambres', image: illustration('cas-usage-1.jpg'), width: 1200, height: 418 },
+    { key: 'bureaux', image: illustration('cas-usage-3.jpg'), width: 1200, height: 418 },
+    { key: 'collectivites', image: illustration('cas-usage-2.jpg'), width: 1200, height: 417 },
   ],
   donnees: {
     items: [
@@ -50,6 +50,8 @@ export default {
     href: site.sections.rechercherUneDonnee,
   },
   agenda: {
+    /** Registration link of an event without `href` (provisional: the contact section, QUESTIONS E-4). */
+    defaultHref: `${site.sections.aide}#contact`,
     icons: {
       place: 'fr-icon-map-pin-2-line',
       previous: 'fr-icon-arrow-left-line',

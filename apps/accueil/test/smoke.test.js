@@ -147,7 +147,9 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
 
   test('« Cas d’usage » : trois cartes illustrées avec trois puces chacune', () => {
     for (const usage of accueil.usages) {
-      expect(home()).toContain(`src="${usage.image}" alt=""`);
+      expect(home()).toContain(
+        `src="${usage.image}" alt="" width="${usage.width}" height="${usage.height}"`,
+      );
       expect(existsSync(join(DIST, usage.image))).toBe(true);
       expect(home()).toContain(html(t.accueil.usages.items[usage.key].title));
     }
