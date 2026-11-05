@@ -152,6 +152,7 @@ test.describe('Catalogue', () => {
     await page.keyboard.press('Space');
     await expect(pedo).toHaveAttribute('aria-pressed', 'true');
     await expect(rmqs).toHaveAttribute('aria-pressed', 'true');
+    expect(decodeURIComponent(page.url())).toContain('keyword=RMQS,pédologie');
   });
 
   test('seuls les filtres Thèmes et Mot-clé sont proposés', async ({ page, isMobile }) => {
@@ -175,9 +176,9 @@ test.describe('Catalogue', () => {
     const link = page.getByRole('link', { name: /^Voir sur la carte/ }).first();
     await expect(link).toBeVisible({ timeout: 30_000 });
     const href = await link.getAttribute('href');
-    expect(href).toMatch(
-      /^\/explorer-les-cartes\/\?l=[^$]+\$GEOPORTAIL:OGC:(WMS|WMTS)\(1;1;1;0\)&permalink=no$/,
-    );
+    expect(href).toMatch(/^\/explorer-les-cartes\/\?l=/);
+    expect(decodeURIComponent(href ?? '')).toContain(`l=${SOLS_LAYER}$GEOPORTAIL:OGC:WMS(1;1;1;0)`);
+    expect(href).toContain('permalink=no');
     await link.click();
     await page.waitForURL(/\/explorer-les-cartes\/\?l=/, { timeout: 30_000 });
     expect(popups, 'aucun nouvel onglet').toHaveLength(0);

@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import {
   collectConsole,
   openServicesMenu,
+  waitForDsfr,
   MAP_STABILITY_RUNS,
   trackResponses,
   expectFlakeWithin,
@@ -240,6 +241,25 @@ test.describe('Carto', () => {
       .first()
       .click();
     await page.waitForURL(/\/rechercher-une-donnee\//, { waitUntil: 'commit' });
+  });
+
+  test('Échap ferme seulement le sous-menu « Services » (mobile compris)', async ({
+    page,
+    isMobile,
+  }) => {
+    await openMap(page);
+    if (isMobile) await page.locator('header .fr-btn--menu').click();
+    const button = page
+      .locator('header')
+      .getByRole('button', { name: 'Services' })
+      .locator('visible=true');
+    await waitForDsfr(page);
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { collectConsole, openServicesMenu, GISSOL_URL } from './helpers';
+import { waitForDsfr, collectConsole, openServicesMenu, GISSOL_URL } from './helpers';
 
 test.describe('Accueil et en-tête v1', () => {
   test('/ redirige vers /fr/', async ({ page }) => {
@@ -66,6 +66,7 @@ test.describe('Accueil et en-tête v1', () => {
       .locator('header')
       .getByRole('button', { name: 'Services' })
       .locator('visible=true');
+    await waitForDsfr(page);
     await button.focus();
     await page.keyboard.press('Enter');
     await expect(button).toHaveAttribute('aria-expanded', 'true');

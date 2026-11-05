@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { statSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,7 +28,15 @@ export function untolerated(
 
 export const RECORD_STOCK_CARBONE = 'osff858525a-9fea-5ae3-93ab-43afab78483f';
 
-export const GISSOL_URL = 'https://www.gissol.fr/observatoire-des-sols-de-france/';
+/** Lu depuis @sols/brand pour rester aligné avec le pied de page. */
+export const GISSOL_URL: string = (
+  JSON.parse(
+    readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), '../../packages/brand/brand.json'),
+      'utf8',
+    ),
+  ) as { external: { gissol: string } }
+).external.gissol;
 
 export const PAGES = {
   home: '/fr/',
@@ -122,6 +130,7 @@ export function isResultQuery(body: string): boolean {
 
 /** Ouvre le menu « Services » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
 export async function openServicesMenu(page: Page, isMobile: boolean) {
+  await waitForDsfr(page);
   if (isMobile) await page.locator('header .fr-btn--menu').click();
   const button = page
     .locator('header')
@@ -146,4 +155,9 @@ export async function shootJpeg(
     if (statSync(file).size < MAX_SCREENSHOT_BYTES) return;
   }
   throw new Error(`${file} dépasse 300 kB même à qualité 20`);
+}
+
+/** Attend l'initialisation du JS DSFR (les menus ne répondent pas avant). */
+export async function waitForDsfr(page: Page): Promise<void> {
+  await expect(page.locator('html')).toHaveAttribute('data-fr-js', 'true');
 }
