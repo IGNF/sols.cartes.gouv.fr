@@ -295,7 +295,7 @@ Issue commune :
 
 - `bun run test` : Vitest + Testing Library (jsdom), OpenLayers et `../map/geopf` simulés là où il faut un rendu ou un réseau.
 - `bun run test:coverage` (`@vitest/coverage-v8` 5.1.0, configuration dans `vite.config.ts`, dossier `coverage/` ignoré par git).
-  Mesure du 2026-11-05 : instructions 96,8 %, branches 88,1 %, fonctions 99,0 %, lignes 98,4 % (`src/**` et `scripts/sols-layers/**`,
+  Mesure du 2026-11-05 : instructions 97,0 %, branches 87,8 %, fonctions 99,0 %, lignes 98,6 % (`src/**` et `scripts/sols-layers/**`,
   hors `main.tsx` et tests).
 - `bun run check:map` (Playwright, aperçu `PORT=8101 bun run preview:all`) : disposition et noms à 375/768/1280 px, couche sols au
   clavier, liens `l=` et alias, clavier, vue liste (55 vérifications).
