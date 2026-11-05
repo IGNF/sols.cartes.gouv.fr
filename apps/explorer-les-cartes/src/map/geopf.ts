@@ -58,7 +58,7 @@ export type CatalogControl = Catalog;
 export async function loadCatalog() {
   const [module] = await Promise.all([
     import('geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog'),
-    import('geopf-extensions-openlayers/src/packages/CSS/Controls/Catalog/DSFRcatalogStyle.css'),
+    import('./geopfCatalogStyles'),
   ]);
   return module.default;
 }

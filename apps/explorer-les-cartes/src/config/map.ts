@@ -441,6 +441,8 @@ export const TOOL_BUTTON_LABELS = {
   removeTerritory: 'Retirer le territoire',
   /** Checkbox of a catalogue entry (its visible label is not associated with the input). */
   addToMap: 'Ajouter à la carte',
+  /** Name of the catalogue's category tab list (rendered with `aria-label="presentation"`). */
+  catalogCategories: 'Catégories du catalogue',
 } as const;
 
 /**

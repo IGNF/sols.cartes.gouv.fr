@@ -30,20 +30,25 @@ interface CustomEventSource {
  * Instantiates the geopf Catalog control on the GIS Sol datasets (src/map/catalogConfig.ts). The control
  * does not add layers itself (`addToMap: false`): its events drive the store, which draws the overlays
  * (legend, retry, availability as for every sols layer). Producer tags link to our catalogue rather than
- * to cartes.gouv.fr (the control's `createCatalogProducerLinks` is replaced on the instance).
+ * to cartes.gouv.fr.
  */
 export function createCatalog(
   Catalog: CatalogClass,
   onAdd: (event: CatalogLayerEvent) => void,
   onRemove: (event: CatalogLayerEvent) => void,
 ): CatalogControl {
+  // The producer tags are built while the control loads its configuration, in the constructor, by a
+  // method that is public at runtime but declared private in Catalog.d.ts: patched on the class.
+  const prototype = Catalog.prototype as unknown as {
+    createCatalogProducerLinks: (
+      producers: string[] | null,
+    ) => Array<{ name: string; url: string }> | null;
+  };
+  prototype.createCatalogProducerLinks = (producers) =>
+    producers?.map((name) => ({ name, url: catalogueSearchByOrganisationPath(name) })) ?? null;
   const control = new Catalog({
     ...CATALOG_OPTIONS,
     configuration: { type: 'json', data: buildCatalogData(SOLS_DATASETS) },
-  });
-  Object.assign(control, {
-    createCatalogProducerLinks: (producers: string[] | null) =>
-      producers?.map((name) => ({ name, url: catalogueSearchByOrganisationPath(name) })) ?? null,
   });
   const element = controlElement(control);
   labelGeopfDialogs(element);
