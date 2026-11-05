@@ -42,10 +42,14 @@ describe('SolsDatasetsPanel', () => {
       `« ${withLayer.title} » ajoutée à la carte.`,
     );
     const remove = screen.getByRole('button', { name: buttonName('Retirer de la carte') });
-    remove.focus();
+    expect(document.activeElement).toBe(remove);
     await user.keyboard(' ');
     expect(useMapStore.getState().overlays).toEqual([]);
     expect(screen.getByRole('status')).toHaveTextContent('retirée de la carte');
+    // Focus stays on the same button, now labelled for the opposite action.
+    expect(document.activeElement).toBe(
+      screen.getByRole('button', { name: buttonName('Ajouter à la carte') }),
+    );
   });
 
   it('signale une couche ajoutée dont le service ne renvoie pas d’image', () => {
@@ -72,5 +76,12 @@ describe('SolsDatasetsPanel', () => {
     });
     await user.click(remove);
     expect(useMapStore.getState().overlays).toEqual([]);
+  });
+
+  it('renvoie vers la version accessible de la liste des données', () => {
+    render(<SolsDatasetsPanel />);
+    expect(
+      screen.getByRole('link', { name: 'Version accessible de la liste des données' }),
+    ).toHaveAttribute('href', '/explorer-les-cartes/?vue=liste');
   });
 });
