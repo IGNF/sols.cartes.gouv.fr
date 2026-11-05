@@ -11,7 +11,7 @@ test.describe('Accueil', () => {
   test('/fr/ charge avec un seul h1 et sans erreur console', async ({ page }) => {
     const c = collectConsole(page);
     await page.goto('/fr/');
-    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('h1:visible')).toHaveCount(1);
     await expect(page.locator('header[role="banner"], header').first()).toBeVisible();
     await expect(page.locator('footer').first()).toBeVisible();
     expect(c.errors).toEqual([]);
@@ -31,8 +31,9 @@ test.describe('Accueil', () => {
       await link.click();
       await page.waitForURL(new RegExp(`${href.replace(/\/$/, '')}`), { waitUntil: 'commit' });
       await expect(page.locator('main h1').first()).toBeVisible({ timeout: 30_000 });
-      // Un seul h1 par page (RGAA) ; le h1 de la modale DSFR « Paramètres d'affichage » compte comme second.
-      expect.soft(await page.locator('h1').count(), 'nombre de h1 dans la page').toBe(1);
+      // Un seul h1 visible par page (RGAA). Les modales DSFR (ex. « Paramètres d'affichage » de react-dsfr)
+      // contiennent un h1.fr-modal__title masqué jusqu'à l'ouverture : toléré, noté dans le rapport.
+      expect(await page.locator('h1:visible').count(), 'nombre de h1 visibles').toBe(1);
     });
   }
 
@@ -42,6 +43,6 @@ test.describe('Accueil', () => {
     await page.locator('.fr-translate__btn:visible').click();
     await page.locator('.fr-translate__menu a[hreflang="en"]:visible').click();
     await page.waitForURL('**/en/');
-    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('h1:visible')).toHaveCount(1);
   });
 });

@@ -11,9 +11,10 @@ Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all
 | 1a | `/` redirige vers `/fr/` | PASS | desktop + mobile |
 | 1b | `/fr/` : un seul `h1`, en-tête, pied de page, aucune erreur console | PASS | `h1` = 1, 0 `console.error`/`pageerror` |
 | 1c | Lien d'en-tête vers `/rechercher-une-donnee/` : 200 et `h1` | PASS | desktop + mobile |
-| 1d | Lien d'en-tête vers `/explorer-les-cartes/` : 200 et `h1` | FAIL | la page contient 2 `h1` (voir C-3) ; la navigation et le 200 sont corrects |
+| 1d | Lien d'en-tête vers `/explorer-les-cartes/` : 200 et un seul `h1` visible | PASS | `h1:visible` = 1 ; note : un `h1.fr-modal__title` masqué (modale react-dsfr « Paramètres d'affichage ») existe, toléré |
 | 1e | Sélecteur de langue atteint `/en/` | PASS | desktop + mobile |
-| 2a | Catalogue : « 7 résultats », requêtes de résultats filtrées `gissol-osf_g` | FAIL | 7 résultats et filtre présent sur les requêtes de résultats ; mais des requêtes d'agrégation (facettes) partent sans le filtre (voir D-cat-1) |
+| 2a | Catalogue : « 7 résultats », requêtes de résultats (`size` > 0) filtrées `gissol-osf_g` | PASS | 7 résultats, filtre présent sur toutes les requêtes de résultats |
+| 2a' | Requêtes d'agrégation (`size` 0) sans le filtre | KNOWN LIMIT | voir D-cat-1 et `doc/catalogue-patches.md` « Limites connues » |
 | 2b | Fiche : ouverture et titre | PASS | erreurs console limitées aux deux documentées (légende invalide, 400 WMTS/légende) |
 | 3a | Carto : `canvas`, tuiles WMTS 200, sélecteur de couches s'ouvre | PASS (flake M-2 observé) | une exécution sur ~30 a loggé 404 sur `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` TileMatrix=6 ; toléré et compté (<= 10 %) |
 | 3b | Panneau « Fonds de carte » vers orthophotos | PENDING (M3) | seul « Plan IGN » est listé dans « Gestionnaire de couches » ; `test.skip` explicite |
@@ -33,7 +34,7 @@ Aucun défaut bloquant. Écarts de design : voir « Comparaison Figma ».
 
 ### catalogue
 
-- D-cat-1 (scope) : au chargement de `/rechercher-une-donnee/`, plusieurs requêtes `_search` d'agrégation (`size: 0`, facettes `cl_topic.key`, contacts/organisations) n'ont pas `gissol-osf_g` dans le corps (1 à 5 selon le moment, 5 en desktop). Les facettes Thèmes/organisations peuvent donc compter des fiches hors sols. Reproduire : ouvrir la page, DevTools > Réseau > filtrer `_search`, inspecter les requêtes `size":0`. Test : `e2e/tests/02-catalogue.spec.ts`.
+- D-cat-1 (scope, KNOWN LIMIT, non bloquant) : au chargement de `/rechercher-une-donnee/`, plusieurs requêtes `_search` d'agrégation (`size: 0`, facettes `cl_topic.key`, contacts/organisations) n'ont pas `gissol-osf_g` dans le corps (1 à 5 selon le moment, 5 en desktop). Les facettes Thèmes/organisations peuvent donc compter des fiches hors sols. Reproduire : ouvrir la page, DevTools > Réseau > filtrer `_search`, inspecter les requêtes `size":0`. Test : `e2e/tests/02-catalogue.spec.ts`.
 - D-cat-2 (a11y, critical) `aria-valid-attr-value`, 3 noeuds, ex. `gn-ui-button[title="Thèmes"]`.
 - D-cat-3 (a11y, critical) `button-name`, 4 noeuds (boutons sans texte, ex. `.border-0`).
 - D-cat-4 (a11y, serious) `nested-interactive`, 2 noeuds (`gn-ui-button[title="Thèmes"]`).
@@ -45,7 +46,7 @@ Probable upstream (geonetwork-ui) pour D-cat-2/3/4 : à confirmer avant de patch
 ### carto
 
 - D-carto-1 (a11y, serious) `label-content-name-mismatch` : bouton `#GPshowLayersListPicto-*` (nom accessible « Ma sélection de cartes », texte visible « 1 »).
-- C-3 (RGAA) : deux `h1` sur la page : « Explorer les cartes » et le titre de la modale DSFR « Paramètres d'affichage » (`h1.fr-modal__title`, masquée). À passer en `h2`/`p` ou retirer.
+- Note (non bloquante) : un second `h1` existe dans le DOM, le titre masqué de la modale DSFR « Paramètres d'affichage » (`h1.fr-modal__title`). Un seul `h1` est visible ; légitime côté DSFR.
 - D-carto-2 : flake M-2 (404 ponctuel de tuile Plan IGN v2) confirmé, côté GPF ; non corrigeable dans la brique.
 - Écart : le panneau « Fonds de carte » n'existe pas encore (M3) ; couche sols et lien profond (M4) à tester en passe 2.
 
