@@ -3,13 +3,18 @@ import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Tabs } from '@codegouvfr/react-dsfr/Tabs';
 import { SIDE_PANEL_ID, SIDE_PANEL_TABS, type SidePanelTab } from '../../config/map';
 import { useMapStore } from '../../store/useMapStore';
+import ListViewLink from '../list/ListViewLink';
 import BaseLayerPanel from './BaseLayerPanel';
 import DeepLinkNotice from './DeepLinkNotice';
 import MapView from './MapView';
 import SolsDatasetsPanel from './SolsDatasetsPanel';
 import './MapExplorer.css';
 
-/** Map page body: side panel (base layers, sols datasets), toggleable, next to the map. */
+/**
+ * Map page body: a slim toolbar (panel toggle, link to the list view), deep-link notices, then the side
+ * panel docked left of the map. The panel width is bounded so the map keeps most of the width on
+ * desktop; on small screens the map comes first and the panel below it.
+ */
 export default function MapExplorer() {
   const isPanelOpen = useMapStore((state) => state.isPanelOpen);
   const togglePanel = useMapStore((state) => state.togglePanel);
@@ -17,25 +22,25 @@ export default function MapExplorer() {
   const setActiveTab = useMapStore((state) => state.setActiveTab);
 
   return (
-    <>
-      <DeepLinkNotice />
-      <Button
-        className={fr.cx('fr-mb-2w')}
-        priority="secondary"
-        size="small"
-        iconId="ri-layout-left-line"
-        aria-expanded={isPanelOpen}
-        aria-controls={SIDE_PANEL_ID}
-        onClick={togglePanel}
-      >
-        {isPanelOpen ? 'Masquer le panneau' : 'Afficher le panneau'}
-      </Button>
-      <div className={fr.cx('fr-grid-row', 'fr-grid-row--gutters')}>
-        <div
-          id={SIDE_PANEL_ID}
-          hidden={!isPanelOpen}
-          className={fr.cx('fr-col-12', 'fr-col-md-5', 'fr-col-lg-4')}
+    <div className="map-explorer">
+      <div className="map-explorer__toolbar">
+        <Button
+          priority="tertiary"
+          size="small"
+          iconId="ri-layout-left-line"
+          aria-expanded={isPanelOpen}
+          aria-controls={SIDE_PANEL_ID}
+          onClick={togglePanel}
         >
+          {isPanelOpen ? 'Masquer le panneau' : 'Afficher le panneau'}
+        </Button>
+        <span className={fr.cx('fr-text--sm', 'fr-mb-0')}>
+          <ListViewLink />
+        </span>
+      </div>
+      <DeepLinkNotice />
+      <div className="map-explorer__body">
+        <div id={SIDE_PANEL_ID} hidden={!isPanelOpen} className="map-explorer__panel">
           <Tabs
             className="side-panel-tabs"
             label="Panneau de la carte"
@@ -46,10 +51,10 @@ export default function MapExplorer() {
             {activeTab === 'fonds' ? <BaseLayerPanel /> : <SolsDatasetsPanel />}
           </Tabs>
         </div>
-        <div className={fr.cx('fr-col-12', 'fr-col-md')}>
+        <div className="map-explorer__map">
           <MapView />
         </div>
       </div>
-    </>
+    </div>
   );
 }
