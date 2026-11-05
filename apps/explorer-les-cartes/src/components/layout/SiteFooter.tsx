@@ -1,39 +1,40 @@
+import { fr } from '@codegouvfr/react-dsfr';
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
-import { Footer } from '@codegouvfr/react-dsfr/Footer';
-import { FOOTER_ID } from '../../config/landmarks';
-import { FOOTER_HOME_TITLE, SITE } from '../../config/site';
-import { EXTERNAL_LINKS, FOOTER_DOMAINS, SECTION_PATHS } from '../../config/urls';
-import BrandTop from './BrandTop';
+import { FooterBottomItem } from '@codegouvfr/react-dsfr/Footer';
+import { BRAND } from '../../config/site';
+import { FOOTER_ID, HEADER_ID } from '../../config/landmarks';
+import './SiteFooter.css';
 
+/**
+ * Compact footer of the carto brick (`footer.compactOnCarto`, maquette 1:10562): only `fr-footer__bottom`
+ * with the bottom links, « Paramètres d'affichage » (DSFR display modal, mounted by the Header) and a
+ * « Haut de page » link. The full footer (partners, content links, licence) lives on the other bricks.
+ */
 export default function SiteFooter() {
   return (
-    <Footer
-      id={FOOTER_ID}
-      accessibility="non compliant"
-      accessibilityLinkProps={{ href: SECTION_PATHS.accessibility }}
-      termsLinkProps={{ href: SECTION_PATHS.legalNotice }}
-      bottomItems={[
-        { text: 'Données personnelles', linkProps: { href: SECTION_PATHS.personalData } },
-        { text: 'Plan du site', linkProps: { href: SECTION_PATHS.siteMap } },
-        headerFooterDisplayItem,
-      ]}
-      contentDescription={SITE.footerDescription}
-      domains={FOOTER_DOMAINS}
-      license={
-        <>
-          {SITE.licenceText}{' '}
+    <footer className={`${fr.cx('fr-footer')} compact-footer`} id={FOOTER_ID}>
+      <div className={fr.cx('fr-container')}>
+        <div className={`${fr.cx('fr-footer__bottom')} compact-footer__bottom`}>
+          <ul className={fr.cx('fr-footer__bottom-list')}>
+            {BRAND.footer.bottomLinks.map((link) => (
+              <li key={link.href} className={fr.cx('fr-footer__bottom-item')}>
+                <a className={fr.cx('fr-footer__bottom-link')} href={link.href}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+            <li className={fr.cx('fr-footer__bottom-item')}>
+              <FooterBottomItem bottomItem={headerFooterDisplayItem} />
+            </li>
+          </ul>
           <a
-            href={EXTERNAL_LINKS.licenceEtalab}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`${SITE.licenceLabel} - nouvelle fenêtre`}
+            className={`${fr.cx('fr-link', 'fr-icon-arrow-up-line', 'fr-link--icon-left')} compact-footer__top`}
+            href={`#${HEADER_ID}`}
           >
-            {SITE.licenceLabel}
+            Haut de page
           </a>
-        </>
-      }
-      brandTop={<BrandTop />}
-      homeLinkProps={{ href: SECTION_PATHS.home, title: FOOTER_HOME_TITLE }}
-    />
+        </div>
+      </div>
+    </footer>
   );
 }

@@ -1,0 +1,29 @@
+/* Compact footer: the DSFR bottom bar only, on one line, as on cartes.gouv.fr map pages. */
+.fr-footer.compact-footer {
+  padding-top: 0;
+}
+
+.compact-footer .fr-footer__bottom {
+  flex-wrap: nowrap;
+  align-items: center;
+  margin-top: 0;
+  box-shadow: none;
+}
+
+.compact-footer .fr-footer__bottom-list {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+.compact-footer .compact-footer__top {
+  flex: 0 0 auto;
+  margin-left: 1rem;
+  font-size: 0.75rem;
+}
+
+/* Small screens: the links wrap, « Haut de page » goes below them. */
+@media (max-width: 47.99em) {
+  .compact-footer .fr-footer__bottom {
+    flex-wrap: wrap;
+  }
+}
