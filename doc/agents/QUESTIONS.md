@@ -129,6 +129,7 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 
 - Constat : l'API MCP Figma n'expose pas les commentaires du fichier ; l'orchestrateur ne peut pas les lire. Les cadres « recherche mots clés » (`8:3980`) et « recherche millésime » (`8:4057`) de la page Prototype montrent des puces de mots-clés sous la barre de recherche (ajout/retrait, champ « Rechercher des mots clés… »).
 - Défaut appliqué : la tâche C9 propose une barre de mots-clés sous la recherche à partir des mots-clés réels des 7 fiches (préréglages `[[search_preset]]` du datahub si cela suffit, sinon patch documenté). Si les commentaires disent autre chose, les coller dans ce fichier.
+- Suite C9 : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels), filtre « Mot-clé » avec champ de recherche ; pas d'état sélectionné ni de retrait au second clic (patch proposé, non fait, voir C-4). Détails : `doc/agents/geonetwork-ui.md` §13.
 
 ## G-3. Sections de l'accueil non reprises (v1, edito)
 
