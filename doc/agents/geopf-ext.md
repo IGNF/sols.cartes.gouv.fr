@@ -143,6 +143,19 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 | Recherche + géolocalisation | `SearchEngine` | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
 | Rotation | `ol/control/Rotate` (via `defaults`) | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults` |
 
+Disposition (revue M3) : geopf place la recherche à `left: 46px` au-dessus de 576 px et à `0` en dessous, donc **sur** la colonne
+de zoom (bouton « Zoomer » non cliquable à 375 px, 4 px de recouvrement ailleurs). `MapView.css` lui donne son propre emplacement à
+toutes les largeurs : `top: 0.5rem`, `left: 3.5rem` (colonne de zoom 1w + 5w, puis 1w d'écart, échelle DSFR), `max-width: calc(100% - 7rem)`
+(laisse libre le gestionnaire de couches), champ `padding-right: 2.5rem` (bouton ✕ superposé par geopf) et `width: 18rem` dès 62em
+(texte indicatif entier). Vérification navigateur : `bun run check:map` (`scripts/check-map.ts`, Playwright, aperçu lancé avec
+`PORT=8101 bun run preview:all`) : bouton « Zoomer » cliquable et aucun recouvrement à 375, 768 et 1280 px, noms accessibles,
+console vide.
+
+Noms accessibles (RGAA 11.1, revue M3) : OpenLayers ne pose que `title` ; le nom calculé serait le glyphe (« › » attributions,
+« ⇧ » rotation). `src/map/labelControls.ts` pose un `aria-label` (`CONTROL_LABELS` dans `src/config/map.ts`) **avant** `addControl` :
+bouton des attributions, bouton de rotation (masqué tant que la carte n'est pas tournée, `autoHide`), et champ de recherche geopf
+`GPsearchInputText-*` qui n'a pas de libellé.
+
 Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/geocodage/search`). Les suggestions sont des `<p>`
 (`GPautoCompleteProposal`) dans un `div.fr-modal` (`GPautoCompleteList-*`), sans rôle de liste : limite amont.
 
@@ -153,6 +166,17 @@ Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/
   `GPgeocodeResultsList-*` (`<dialog>`) et `GPautoCompleteList-*` (un **`div`**, SearchEngine). Contournement :
   `src/map/labelGeopfDialogs.ts` pose un `aria-label` (et `role="group"` sur un `div`) sur `control.element` **avant**
   `map.addControl` (libellés `GEOPF_DIALOG_LABELS` dans `src/config/map.ts`).
+- **Lacunes d'accessibilité amont à signaler** (ticket à ouvrir sur IGNF/geopf-extensions-openlayers, version 1.0.0-beta.16 ;
+  contournées ici, à retirer quand elles seront corrigées) :
+  1. modales DSFR sans nom accessible (`GPlayersList`, `GPlayerInfoPanel`, `GPlayerStylePanel`, `GPgeocodeResultsList`,
+     `GPautoCompleteList`) ;
+  2. suggestions de recherche rendues en `<p class="GPautoCompleteProposal">` dans un `div.fr-modal` (ici `role="group"`) au lieu d'un
+     `listbox`/`option` avec `aria-activedescendant` sur le champ : la sélection au clavier (flèche bas, Entrée) n'est pas annoncée ;
+  3. champ de recherche sans `<label>` ;
+  4. boutons hérités d'OpenLayers (attributions, rotation) nommés par leur glyphe.
+- Suggestions possiblement **dans le désordre** : chaque frappe appelle `Gp.Services.autoComplete` sans annuler ni séquencer la
+  requête précédente (`SearchEngine.js`, pas d'`abort` ni de numéro de requête) ; une réponse lente à « Orl » peut remplacer celle à
+  « Orléans ». Non observé dans nos essais ; à inclure dans le ticket amont.
 - Les conteneurs de position des widgets ont des id globaux (`position-container-top-right`...) : **une seule carte geopf-ext par page**.
 - Les contrôles OL par défaut sont en anglais : zoom et attributions remplacés par leurs versions geopf (en français), rotation avec `rotateOptions.tipLabel`.
 - Clavier : le conteneur de carte a `tabIndex=0` (interactions clavier OL : flèches, `+`/`-`) ; règle jsx-a11y
