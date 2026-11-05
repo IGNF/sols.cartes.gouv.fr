@@ -57,6 +57,13 @@
   }
 }
 
+/* Dark theme: the brand images are drawn for a white background (white plate, as for partner logos). */
+[data-fr-theme='dark'] .sols-operator__logo,
+[data-fr-theme='dark'] .sols-operator__mark {
+  padding: 0.25rem;
+  background-color: #fff;
+}
+
 /* Header tool menus (Aide, Services): DSFR collapse menus placed like the translate menu. */
 .sols-tool-menu .fr-nav__link {
   flex-direction: column;
