@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   collectConsole,
+  openServicesMenu,
+  waitForDsfr,
   MAP_STABILITY_RUNS,
   trackResponses,
   expectFlakeWithin,
@@ -192,6 +194,72 @@ test.describe('Carto', () => {
       requests.filter((u) => /data\.geopf\.fr\/(wmts|wms-v)/.test(u) && /GetTile|GetMap/i.test(u)),
     ).toEqual([]);
     expect(await page.locator('canvas').count()).toBe(0);
+  });
+
+  test('mise en page v1 : carte plein viewport, h1 sr-only, badge « Explorer », pied de page compact', async ({
+    page,
+    isMobile,
+  }) => {
+    await openMap(page);
+    await expect(page.locator('header .fr-badge')).toHaveText('Explorer');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Explorer les cartes' }),
+    ).toBeAttached();
+    // Pied de page compact : liens bas, paramètres d'affichage, « Haut de page » ; ni partenaires ni liens de contenu.
+    const footer = page.locator('footer');
+    await expect(footer.getByRole('button', { name: "Paramètres d'affichage" })).toBeAttached();
+    await expect(footer.getByRole('link', { name: 'Mentions légales' })).toBeAttached();
+    await expect(footer.locator('.fr-footer__partners, .fr-footer__content')).toHaveCount(0);
+    await expect(footer.getByRole('link', { name: 'legifrance.gouv.fr' })).toHaveCount(0);
+    // Barre d'outils au-dessus de la carte : bouton du panneau et lien vers la liste.
+    const region = await page.getByRole('region', MAP_REGION).boundingBox();
+    const toggle = await page
+      .getByRole('button', { name: /(Afficher|Masquer) le panneau/ })
+      .boundingBox();
+    const list = await page
+      .getByRole('link', { name: 'Version accessible de la liste des données' })
+      .first()
+      .boundingBox();
+    expect(toggle!.y + toggle!.height).toBeLessThanOrEqual(region!.y + 1);
+    expect(list!.y + list!.height).toBeLessThanOrEqual(region!.y + 1);
+    if (!isMobile) {
+      // Carte plein viewport : pas de défilement de page (1280x900, desktop).
+      const [scrollH, innerH] = await page.evaluate(() => [
+        document.documentElement.scrollHeight,
+        window.innerHeight,
+      ]);
+      expect(scrollH, 'hauteur de la page vs viewport').toBeLessThanOrEqual(innerH + 1);
+    }
+  });
+
+  test('le menu « Services » de la carte mène au catalogue', async ({ page, isMobile }) => {
+    await openMap(page);
+    await openServicesMenu(page, isMobile);
+    await page
+      .locator('header a[href="/rechercher-une-donnee/"]')
+      .locator('visible=true')
+      .first()
+      .click();
+    await page.waitForURL(/\/rechercher-une-donnee\//, { waitUntil: 'commit' });
+  });
+
+  test('Échap ferme seulement le sous-menu « Services » (mobile compris)', async ({
+    page,
+    isMobile,
+  }) => {
+    await openMap(page);
+    if (isMobile) await page.locator('header .fr-btn--menu').click();
+    const button = page
+      .locator('header')
+      .getByRole('button', { name: 'Services' })
+      .locator('visible=true');
+    await waitForDsfr(page);
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6
