@@ -1,0 +1,7 @@
+{
+  "name": "@sols/explorer-les-cartes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Brique carto : React + TypeScript + react-dsfr + geopf-extensions-openlayers, servie sous /explorer-les-cartes."
+}

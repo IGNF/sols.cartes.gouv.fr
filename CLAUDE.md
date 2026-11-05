@@ -13,16 +13,27 @@ Project board: https://github.com/orgs/IGNF/projects/104/
 
 All data comes from `https://data.geopf.fr` (WMS / WFS / WMTS) and the INRAE datastore in this geojson. There is no backend and no database.
 
-Layout (e.g. `apps/acceuil`, `apps/rechercher-une-donnee`, `apps/explorer-les-cartes`) and package manager commands.
+## Layout
+
+| Path | Brick | Directory | Package manager |
+|---|---|---|---|
+| `/` | edito | `apps/accueil` | bun (workspace) |
+| `/rechercher-une-donnee` | catalogue | `apps/rechercher-une-donnee` | npm (Angular/Nx tooling, outside the bun workspace) |
+| `/explorer-les-cartes` | carto | `apps/explorer-les-cartes` | bun (workspace) |
+
+Root scripts live in `scripts/` and read the app registry in `scripts/apps.ts`. The DSFR version shared by all bricks is pinned in the root `package.json` (`config.dsfrVersion`). Documentation lives in `doc/` (`doc/agents/` for agent notes, `doc/plans/` for task plans, `doc/STATUS.md`, `doc/agents/QUESTIONS.md`).
 
 ## Commands
 
 ```bash
-bun i            # install
-bun dev             # dev server
-bun lint     # lint
-bun run build    # production build
-bun test     # tests
+bun i                   # install root + bun workspaces (edito, carto)
+bun run dev:accueil     # edito dev server, http://localhost:8081
+bun run dev:catalogue   # catalogue dev server, http://localhost:4200 (npm inside the app)
+bun run dev:carto       # carto dev server, http://localhost:5173
+bun run lint            # lint every brick that defines a lint script
+bun run test            # tests, same rule
+bun run build:all       # builds the three bricks and assembles ./dist
+bun run preview:all     # serves ./dist on http://localhost:8080
 ```
 
 Run lint + type-check + tests on the touched brick before every PR. 

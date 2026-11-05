@@ -1,0 +1,7 @@
+{
+  "name": "@sols/accueil",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Brique edito : pages statiques (Eleventy + DSFR), servie sous /."
+}

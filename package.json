@@ -1,26 +1,42 @@
 {
-  "name": "bun-react-template",
+  "name": "sols.cartes.gouv.fr",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "bun --hot src/index.ts",
-    "build": "bun build ./src/index.html --outdir=dist --sourcemap --target=browser --minify --define:process.env.NODE_ENV='\"production\"' --env='BUN_PUBLIC_*'",
-    "start": "NODE_ENV=production bun src/index.ts",
-    "typecheck": "bun check"
+  "description": "Observatoire des sols : portail des données sols (GIS Sol / INRAE) servies par la Géoplateforme.",
+  "workspaces": [
+    "apps/accueil",
+    "apps/explorer-les-cartes"
+  ],
+  "config": {
+    "dsfrVersion": "1.14.2",
+    "ports": {
+      "preview": 8080,
+      "accueil": 8081,
+      "catalogue": 4200,
+      "carto": 5173
+    }
   },
-  "dependencies": {
-    "react": "^19",
-    "react-dom": "^19"
+  "scripts": {
+    "dev:accueil": "bun run --filter @sols/accueil dev",
+    "dev:catalogue": "npm --prefix apps/rechercher-une-donnee run dev",
+    "dev:carto": "bun run --filter @sols/explorer-les-cartes dev",
+    "lint": "bun scripts/run-all.ts lint",
+    "test": "bun scripts/run-all.ts test",
+    "build:all": "bun scripts/build-all.ts",
+    "preview:all": "bun scripts/preview-all.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
-    "@types/bun": "latest",
-    "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/bun": "^1.4.3",
+    "prettier": "^3.9.10",
+    "typescript": "^5.9.3"
   },
-  "peerDependencies": {
-    "typescript": "^7"
+  "engines": {
+    "bun": ">=1.4",
+    "node": ">=24"
   }
 }

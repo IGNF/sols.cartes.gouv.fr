@@ -1,0 +1,9 @@
+node_modules
+dist
+_site
+coverage
+bun.lock
+package-lock.json
+doc/agents/gissol-osf_c.xml
+doc/e2e
+apps/rechercher-une-donnee
