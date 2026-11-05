@@ -19,6 +19,8 @@ favicon = "/rechercher-une-donnee/assets/dsfr/favicon/favicon.ico"
 # Police du DSFR (Marianne, fournie par le CSS DSFR du build) au lieu de Rubik/Readex Pro par défaut
 main_font = "Marianne, arial, sans-serif"
 title_font = "Marianne, arial, sans-serif"
+# Vignette par défaut (fiche sans aperçu ou image en erreur) : fichier de overlay/, couleurs DSFR.
+thumbnail_placeholder = 'assets/img/sols-placeholder.svg'
 
 [search]
 # Toutes les fiches du périmètre sont des jeux de données : pas de filtre rapide par type.
