@@ -237,9 +237,10 @@ bun run build:sols-layers   # bun scripts/build-sols-layers.ts && prettier --wri
 
 ### 6.2 Affichage
 
-- Onglet « Données sols » du panneau latéral (`Tabs` DSFR contrôlés, onglet dans le store) : titre, extrait du résumé,
+- **Jusqu'à M9** : onglet « Données sols » du panneau latéral (`Tabs` DSFR contrôlés, onglet dans le store) : titre, extrait du résumé,
   producteur, services en badges, bouton « Ajouter à la carte / Retirer de la carte » (nom accessible complété du titre de la fiche,
-  annonce dans une zone `role="status"`).
+  annonce dans une zone `role="status"`). **Depuis M9 (§11)** : plus d'onglet, les données s'ajoutent depuis le catalogue de la carte ;
+  le panneau ne garde que les fonds.
 - Couche ajoutée : WMTS d'abord, puis WMS raster, puis WMS vecteur (`DISPLAYABLE_SOLS_SERVICES`) ; TMS et WFS ne sont pas dessinés en v0.
   WMS : `TileWMS` (GetMap 256 px, PNG transparent) sur le point d'accès canonique. WMTS publié seulement en EPSG:2154
   (`INRAE_CARTE-SOLS`, grille `2154_10m_0_14`) : `loadCrs('EPSG:2154')` charge à la demande le module CRS de geopf-ext
@@ -279,11 +280,12 @@ WMS sous ses deux formes (`/wms-v` sans chemin, `/wms-r/wms`) ; `type=TMS` (URL 
 
 Issue commune :
 
-- Couche ajoutée : onglet « Données sols » sélectionné dès le premier rendu (`initialTab` du store ; le script DSFR des onglets
-  lit l'onglet sélectionné à son initialisation et en gardait deux sélectionnés si on changeait d'onglet après coup).
+- Couche ajoutée : annonce `role="status"` ; depuis M9 (§11) l'entrée de sa fiche est cochée dans le catalogue de la carte (jusqu'à M9 :
+  onglet « Données sols » sélectionné dès le premier rendu, `initialTab` du store, retiré avec l'onglet).
 - « Couche introuvable » (`role="alert"`, titre `h2`) : nom absent de tous les services candidats. « Lien invalide » : lien mal
-  formé ou point d'accès hors `data.geopf.fr`. « Couche indisponible » : couche ajoutée dont le service ne renvoie pas d'image
-  (même détection que le panneau). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée indisponible.
+  formé ou point d'accès hors `data.geopf.fr`. « Couche indisponible » : couche sur la carte dont le service ne renvoie pas d'image,
+  **quel que soit son mode d'ajout** (lien, permalien, catalogue) : `MapNotices` (`UnavailableOverlaysNotice`, store
+  `unavailableOverlays`, §11.5). Couche WMTS dont les capacités ont échoué ou impossible à construire : marquée indisponible.
 - Charger un style TMS demanderait `ol-mapbox-style` en dépendance directe (13.9, déjà présent via geopf-ext) et
   `MapboxVectorLayer({ styleUrl })` : styles de 217 couches sans `glyphs`, à valider ; reporté.
 
@@ -295,7 +297,8 @@ Issue commune :
   répondent en PNG.
 - Une fois (sur une vingtaine de chargements), les capacités WMTS ont semblé ne contenir aucun fond candidat (alerte « Aucun fond de
   carte prévu »), non reproduit ensuite (6 chargements : 3 Mo, 745 couches). Probablement une réponse partielle de la GPF.
-- `bun run check:map` couvre aussi M4 (onglet « Données sols », ajout d'une couche au clavier avec GetMap `image/png`, liens profonds).
+- `bun run check:map` couvre aussi M4 (ajout d'une couche au clavier, depuis le catalogue de la carte depuis M9, GetMap `image/png`,
+  liens profonds).
 
 ## 7. Tests, clavier, alternative sans carte (M5, 2026-11-05)
 
@@ -311,8 +314,8 @@ Issue commune :
   capacités peut être lente), erreurs de tuiles GPF tolérées jusqu'à 10 % des requêtes de tuiles (comme la suite e2e, M-2) et
   signalées en note ; toute autre erreur console fait échouer.
 - axe (`@axe-core/playwright` du dossier `e2e/`, balises wcag2a/aa, wcag21a/aa, wcag22aa, best-practice) : 0 violation sur la carte,
-  `?vue=liste`, les liens `l=` (WMS, WMTS introuvable, TMS, Loiret) et l'état « onglet Données sols, couche ajoutée, liste des
-  couches ouverte ».
+  `?vue=liste`, les liens `l=` (WMS, WMTS introuvable, TMS, Loiret) et l'état « couche ajoutée, liste des couches ouverte » (depuis
+  M9 : catalogue de la carte ouvert, §11).
 
 ### 7.2 Accessibilité corrigée en M5
 
@@ -335,7 +338,8 @@ Issue commune :
   (`h2` titre, extrait du résumé, producteur, `h3` « Services » : type, nom, lien direct vers le point d'accès — GetCapabilities
   du service ou ressource TileMap TMS — et « voir sur la carte » pour les couches affichables), lien « Fiche de la donnée dans le
   catalogue » (`/rechercher-une-donnee/dataset/<identifiant>`).
-- Liée depuis la page carte (sous le chapeau) et depuis l'onglet « Données sols » : « Version accessible de la liste des données ».
+- Liée depuis la page carte (barre d'outils depuis M7 ; jusqu'à M9 aussi depuis l'onglet « Données sols ») et depuis l'avis
+  « Catalogue indisponible » (M9, §11.5) : « Version accessible de la liste des données ».
 
 ### 7.4 Sélecteurs stables pour la suite e2e
 
@@ -343,9 +347,9 @@ Issue commune :
 | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Carte                       | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas`                                                                                                                                                                                                                                                                 |
 | Bouton du panneau latéral   | dans la barre d'outils au-dessus de la carte (M7) : `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
-| Onglets                     | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })`                                                                                                                                                                                                                                                                     |
+| Onglets                     | **supprimés en M9** (plus d'onglets : panneau « Fonds de carte » seul ; données via le catalogue de la carte, §11.4)                                                                                                                                                                                                                                                                     |
 | Fond orthophotos            | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut                                                                                                                                                                                                 |
-| Ajouter une couche sols     | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre »)                                                                                                                                                                                                                                    |
+| Ajouter une couche sols     | depuis M9 : case du catalogue `input[data-layer="<nom>:<WMS|WMTS>"]` (§11.4) ; jusqu'à M9 : `getByRole('button', { name: /^Ajouter à la carte\s*: <titre>$/ })`                                                                                                                                                                                                                                    |
 | Gestionnaire de couches     | `getByRole('button', { name: 'Ma sélection de cartes' })` ; titres des couches `[id^="GPtitle_ID_"]`                                                                                                                                                                                                                                                             |
 | Lien profond qui fonctionne | `?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` (alias : `?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`) ; éviter `rrp_loiret_*` (M-4)                                                                                                                                                              |
 | Avis du lien                | `getByRole('alert')` « Couche introuvable », « Lien invalide », « Couche indisponible » ; `getByRole('status')` « Format non pris en charge »                                                                                                                                                                                                                    |
@@ -375,7 +379,7 @@ Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lent
 
 - `initialPanelOpen` (store) : ouvert si `matchMedia('(min-width: 48em)')` (DSFR `md`), fermé sinon ; ouvert sans `matchMedia`.
   À 375 px, la carte commence au-dessus du pli (y ≈ 490 px), « Afficher le panneau » reste avant la carte ; clavier inchangé.
-- Impact e2e (projet mobile) : ouvrir le panneau avant de cibler les onglets « Fonds de carte » / « Données sols ».
+- Impact e2e (projet mobile) : ouvrir le panneau avant de cibler les fonds de carte (plus d'onglets depuis M9, §11).
 
 ## 9. Mise en page et en-tête v1 (M7, 2026-11-05)
 
@@ -553,8 +557,9 @@ dans `src/composables/controls.js`) ; plan `doc/plans/M9.md`.
 
 - **Contrôle geopf `Catalog`** (et non un panneau DSFR maison) : même widget que l'entrée carto, `addToMap: false` comme elle (c'est
   l'application qui ajoute les couches à partir des évènements `catalog:layer:add` / `catalog:layer:remove`, payload `{ name, service }`),
-  `auto: true` (le contrôle coche les entrées des couches déjà sur la carte en lisant les propriétés **propres** `name` et `service` des
-  couches OL : `attachLayerInfo` les pose, `service` = `WMS` ou `WMTS`).
+  `auto: false` (le contrôle ne cocherait que l'entrée dont la couche OL porte exactement son `name`/`service` ; l'application coche
+  **par fiche**, `syncCatalogTicks`, §11.5 ; `attachLayerInfo` pose quand même `name` et `service` = `WMS` ou `WMTS` pour `checkLayersOnMap`,
+  les légendes et GetFeatureInfo).
 - **Configuration construite à l'exécution** (`src/map/catalogConfig.ts`, `buildCatalogData`) : `configuration.type: 'json'`,
   `configuration.data.layers[<nom>$GEOPORTAIL:OGC:<WMS|WMTS>] = { name, title, description, producer: [organisation], thumbnail,
   serviceParams: { id: 'OGC:WMS' }, metadata_urls: ['/rechercher-une-donnee/dataset/<id>'] }` ; une entrée par fiche (couche préférée
@@ -576,7 +581,7 @@ dans `src/composables/controls.js`) ; plan `doc/plans/M9.md`.
 
 `position: 'top-right'` (élément **préposé** dans la colonne après `addControl`, le gestionnaire ayant été ajouté avant), `gutter: true`,
 `collapsed: true`, `titlePrimary: 'Catalogue des données sols'`, `layerLabel: 'title'`, `layerThumbnail: true`, `size: 'lg'`,
-`tabHeightAuto: false`, `addToMap: false`, `auto: true`, `optimisation: 'none'`, `search: { display, label, criteria: ['title',
+`tabHeightAuto: false`, `addToMap: false`, `auto: false`, `optimisation: 'none'`, `search: { display, label, criteria: ['title',
 'description', 'producer', 'name'] }` (sous-chaîne normalisée, sans accents), `categories: [{ title: 'Données sols', id: 'sols',
 producer: true, order: true, filter: null }]` (le type `Categories` déclare `field`, `value`, `clusterOptions` obligatoires : cast).
 Bouton « Catalogue de cartes » renommé « Catalogue des données sols » (`labelToggleButton`), bouton primaire (`.map-catalog`, comme
@@ -586,7 +591,8 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
 
 10. `createCatalogProducerLinks` construit les étiquettes de producteur vers `https://cartes.gouv.fr/catalogue/search?organization=…`
     pendant le chargement de la configuration (constructeur) et la méthode est déclarée **privée** dans le `.d.ts` : patchée sur le
-    prototype avant construction (`useCatalog.createCatalog`) pour pointer vers `/rechercher-une-donnee/search?organization=…`.
+    prototype avant construction (`useCatalog.patchProducerLinks`, une seule fois par classe, `WeakSet`) pour pointer vers
+    `/rechercher-une-donnee/search?organization=…`.
 11. Balisage du panneau (`CatalogDOM`) : l'attribut `role` sert de crochet JavaScript (`tabbutton`, `label-collapse-more-<cat>`,
     `button-collapse-more-<cat>`, `section-…`), rôles ARIA invalides (axe `aria-roles`, `aria-required-children` sur la liste d'onglets,
     `aria-allowed-attr` pour `aria-selected`) ; liste d'onglets nommée « presentation » ; `<h5>` vide quand `titleSecondary` est vide ;
@@ -597,6 +603,10 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
 12. Le `<label for>` vide recouvre la case : au clic souris c'est le label qui reçoit l'évènement (il coche la case) ; au clavier, Espace.
 13. Sous 576px geopf garde `min-width: 450px` sur le panneau (`DSFRcatalogStyle.css`) : `MapView.css` force `100vw` (le panneau est ancré
     à droite de l'écran, `right: -4px`).
+14. `CatalogDOM.tmplElement` insère `title`, `description` et `producer` en **`innerHTML`** : échappés (`src/text/escapeHtml.ts`) dans
+    `buildCatalogData` ; `name`, `thumbnail` et `metadata_urls` sont posés en attributs. Les vignettes sont **décoratives à dessein**
+    (`<img>` sans texte alternatif porteur : le titre est le libellé de la case) ; le générateur ne garde une vignette que si son URL est
+    `https:` sur un hôte de confiance (`TRUSTED_IMAGE_HOSTS` : `data.geopf.fr`, site GIS Sol ; `isTrustedImageUrl`, `src/config/urls.ts`).
 
 ### 11.4 Sélecteurs e2e
 
@@ -606,3 +616,21 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
 | Panneau | `[id^="GPcatalogPanel-"]` (nommé « Catalogue des données sols ») ; recherche `#catalog-input-search-global` |
 | Entrée | `[data-layeritem]` ; case `input[data-layer="<nom>:<WMS|WMTS>"]` nommée « Ajouter à la carte : <titre> » (Espace au clavier) ; vignette `img` ; « Voir la fiche détaillée » `a.fr-link` ; producteur `a.fr-tag` |
 | Données sols | plus d'onglet : les couches s'ajoutent depuis le catalogue ; la liste complète reste en `?vue=liste` |
+| Avis « Couche indisponible » | `getByRole('alert').filter({ hasText: 'Couche indisponible' })` (titre `h2`, nomme la donnée) : toute couche de la carte sans image, quel que soit son mode d'ajout |
+| Avis « Catalogue indisponible » | `getByRole('alert').filter({ hasText: 'Catalogue indisponible' })`, avec le lien « Version accessible de la liste des données » (chunk du catalogue en échec) |
+
+### 11.5 Revue M9 (2026-11-05)
+
+- **Couche indisponible, quel que soit l'ajout** : l'avis vivait dans `DeepLinkNotice` (liens seulement) ; `MapNotices`
+  (`src/components/map/MapNotices.tsx`) affiche désormais une `Alert` DSFR `warning` (`role="alert"`, titre `h2`) par couche du store
+  présente dans `unavailableOverlays` (catalogue, lien, permalien), retirée avec la couche. `DeepLinkNotice` ne garde que les issues du lien.
+- **Cochage par fiche** : `auto: false` ; `syncCatalogTicks(element, overlays, datasets)` coche l'entrée d'une fiche dès qu'**une** de ses
+  couches est sur la carte (un lien peut poser une couche autre que la préférée : `rrp_loiret_…` vs entrée `rrp_dept_loiret_…`) et décoche
+  les autres ; appelé à chaque mutation du widget (`watchToolButtons(element, sync)`) et à chaque changement de `overlays`. Cocher une
+  entrée dont la fiche est déjà sur la carte n'ajoute rien (`addCatalogEntry`), la décocher retire **toutes** les couches de la fiche
+  (`removeCatalogEntry`).
+- **Catalogue indisponible** : si le chunk `loadCatalog` échoue, `setCatalogueUnavailable(true)` (store) et `CatalogueUnavailableNotice`
+  renvoie à « Version accessible de la liste des données ».
+- Échappement HTML et vignettes de confiance : §11.3 point 14. Patch du prototype appliqué une fois : §11.3 point 10.
+- `check:map` : donnée Loiret ajoutée depuis le catalogue → avis « Couche indisponible » puis retrait ; lien `l=` vers `rrp_loiret_…` →
+  entrée `rrp_dept_loiret_…` cochée, décocher retire la couche et l'avis.
