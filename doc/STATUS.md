@@ -45,4 +45,4 @@
 | X12  | root      | done               | #48      | Transparent OSF mark; CI workflows watch packages/**.                                                                                          |
 | X13  | root      | done               | #51      | INRAE svg viewBox, illustration mapping.                                                                                                       |
 | X14  | root      | done               | #52      | Tight viewBox for the INRAE logo (measured).                                                                                                   |
-| X15  | root      | done               |          | v1 status update, brand README wording.                                                                                                        |
+| X15  | root      | done               | #55      | v1 status update, brand README wording.                                                                                                        |
