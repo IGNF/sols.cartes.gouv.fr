@@ -43,7 +43,7 @@ Bun utilise le linker isolé : les dépendances de l'app sont dans `apps/explore
 - Un lien `target="_blank"` reçoit déjà l'icône « nouvelle fenêtre » du DSFR : ne pas choisir `fr-icon-external-link-line` comme `iconId` d'un accès rapide (icône doublée).
 - jsdom : les composants `Header` / `Footer` se rendent sans mock de `matchMedia`.
 
-## 5. geopf-extensions-openlayers (M2, 2026-11-05)
+## 5. geopf-extensions-openlayers (M2, mis à jour en M3, 2026-11-05)
 
 ### 5.1 Versions et sources lues
 
@@ -55,30 +55,36 @@ Bun utilise le linker isolé : les dépendances de l'app sont dans `apps/explore
 
 Lu dans `node_modules/geopf-extensions-openlayers` : `README.md`, `DOCUMENTATION.md` (identique à celui du tag), `src/index.d.ts`,
 `src/packages/Layers/LayerWMTS.{js,d.ts}`, `src/packages/Utils/Config.js`, `src/packages/Controls/LayerSwitcher/LayerSwitcher.{js,d.ts}`,
-`src/packages/Controls/Control.js`, la démo `demos/react-project` du tag. JSDoc : https://ignf.github.io/geopf-extensions-openlayers/jsdoc/
+`src/packages/Controls/Control.js`, la démo `demos/react-project` du tag ; en M3 : `Controls/Zoom/GeoportalZoom.{js,d.ts}`,
+`Controls/FullScreen/GeoportalFullScreen.{js,d.ts}`, `Controls/Attribution/GeoportalAttribution.{js,d.ts}`,
+`Controls/SearchEngine/SearchEngine.{js,d.ts}` et `SearchEngineDOM.js`, `geoportal-access-lib/src/Services/Services.js` (URL de géocodage). JSDoc : https://ignf.github.io/geopf-extensions-openlayers/jsdoc/
 (la page n'affiche pas de numéro de version ; se fier aux `.d.ts` installés). Intégration React de référence :
 IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navigation/MainMap.tsx`, `controls/layerSwitcherControl.ts`,
 `src/hooks/navigation/useGpConfig.ts`, `layers/useGetWMTSLayer.tsx`, `capabilities/useGetCapabilitiesWMTS.ts`).
 
-### 5.2 Imports qui marchent avec Vite
+### 5.2 Imports : un seul module, `src/map/geopf.ts`
 
-- Le paquet n'a pas de champ `exports` : les **imports profonds** fonctionnent et ont des types (`.d.ts` à côté de chaque `.js`).
-  `import LayerSwitcher from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';`
-  (type d'options : `LayerSwitcherOptions` exporté du même module).
-- **Fragilité** : ces chemins (`src/packages/...`) ne sont pas une API publique et peuvent changer d'une version bêta à l'autre.
+- Le paquet n'a pas de champ `exports` : les **imports profonds** (`src/packages/...`) fonctionnent avec Vite et ont des types
+  (`.d.ts` à côté de chaque `.js`). **Tous** passent par `src/map/geopf.ts` (contrôles, types d'options, CSS) : une montée de version
+  ne touche que ce fichier. Le reste du code importe `../map/geopf`, et les tests simulent ce module (`vi.mock('../map/geopf')`).
+- **Fragilité** : ces chemins ne sont pas une API publique et peuvent changer d'une version bêta à l'autre.
   La version est donc **épinglée exactement** dans `apps/explorer-les-cartes/package.json` (`"geopf-extensions-openlayers": "1.0.0-beta.16"`,
-  sans `^` ni `~`). Toute montée de version : vérifier chaque import profond, les `.d.ts` utilisés et relancer tests + contrôle Playwright.
+  sans `^` ni `~`). Toute montée de version : vérifier chaque import de `geopf.ts`, les `.d.ts` utilisés et relancer tests + contrôle Playwright.
 - **Ne pas importer l'index racine** (`from 'geopf-extensions-openlayers'`) : il réexporte le contrôle `Panoramax`, qui importe
   `@panoramax/web-viewer` (dépendance pair non installée) et tire tous les widgets.
-- Chaque contrôle importe son propre CSS (`import "../../CSS/Controls/.../*.css"`) : Vite le gère sans configuration.
-- La carte (OpenLayers + geopf-ext) est chargée en différé (`React.lazy` dans `App.tsx`) : morceau `MapView-*.js` ~670 kB
-  (193 kB gzip), `chunkSizeWarningLimit` relevé à 1000 kB dans `vite.config.ts`.
+- Chaque contrôle importe son CSS structurel (`GPF*.css`) : Vite le gère sans configuration.
+- Découpage (`vite build`, M3) : `index` 391 kB (103 kB gzip) ; `MapExplorer` (OpenLayers, LayerSwitcher, zoom, plein écran,
+  attributions) 695 kB (203 kB gzip), chargé par `React.lazy` ; `SearchEngine` 567 kB (161 kB gzip : `geoportal-access-lib`, proj4,
+  classes de couches geopf) chargé à part par `loadSearchEngine()` **après** l'affichage de la carte. `chunkSizeWarningLimit` = 1000 kB.
 
 ### 5.3 CSS
 
-- `ol/ol.css` puis `geopf-extensions-openlayers/css/Dsfr.css` (thème DSFR des widgets, 332 kB ; il **suppose le DSFR déjà chargé**,
-  fourni ici par react-dsfr 1.14.2 ; ne pas charger `@gouvfr/dsfr` 1.14.4 en plus). `css/Classic.css` est le thème non-DSFR : inutile.
-- Importés dans `src/components/map/MapView.tsx`, donc dans le morceau différé.
+- `ol/ol.css` (dans `MapView.tsx`) et, dans `geopf.ts`, **uniquement** les feuilles DSFR utiles : `CSS/DSFRgeneralWidget.css` et
+  `CSS/Controls/{Zoom/DSFRzoomStyle,FullScreen/DSFRfullScreenStyle,LayerSwitcher/DSFRlayerSwitcherStyle,SearchEngine/DSFRsearchEngineStyle}.css`.
+  `Attribution/DSFRattributionStyle.css` est vide (1 octet) : non importé. CSS de la carte : 348 kB (M2, `css/Dsfr.css` complet avec
+  images en ligne et CSS Panoramax) → 154 kB.
+- Rendu identique au bundle complet (comparaison de captures du moteur de recherche avec et sans `css/Dsfr.css`).
+- Ces feuilles **supposent le DSFR déjà chargé**, fourni par react-dsfr 1.14.2 ; ne pas charger `@gouvfr/dsfr` 1.14.4 en plus.
 
 ### 5.4 Configuration et clé d'API
 
@@ -91,7 +97,13 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
   `optionsFromCapabilities`) construite depuis le GetCapabilities WMTS de `data.geopf.fr` (265 kB gzip, CORS `*`), chargé une
   fois par TanStack Query (`staleTime`/`gcTime` infinis). Le nom de couche est ainsi vérifié contre les capacités à l'exécution
   (`createWmtsLayer` renvoie `null` si absent, l'interface affiche une alerte). Le `LayerSwitcher` accepte toute couche OL.
-- À revoir si un widget qui dépend de `Gp.Config` (moteur de recherche, etc.) est ajouté en M3.
+- M3 : le `SearchEngine` n'a pas besoin de `Gp.Config` tant que `resources.search` reste à `false` (recherche de couches, qui
+  ajoute des couches geopf à la carte). Autocomplétion et géocodage passent par `geoportal-access-lib` :
+  `https://data.geopf.fr/geocodage/completion` et `/geocodage/search` (CORS `*`, sans clé ; vérifié en `curl` et dans Playwright).
+- Les capacités WMTS complètes (~265 kB gzip, 3 MB de XML) sont **analysées sur le fil principal** par `ol/format/WMTSCapabilities` :
+  mesure Playwright (Chromium headless, aperçu local, 5 chargements) : réponse des capacités ~490 ms après la navigation, puis **une tâche
+  longue de 173 à 188 ms** (l'analyse), première tuile demandée ~700 ms et reçue **~735 ms** après la navigation. Piste si cela devient
+  gênant : analyser dans un Web Worker, ou générer au build un extrait des capacités limité aux fonds candidats.
 
 ### 5.5 Architecture React (style guichet-collaboratif)
 
@@ -100,11 +112,16 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 | `src/store/useMapStore.ts` (Zustand) | état client : instance `map`, `activeBaseLayerId`, `isPanelOpen` |
 | `src/hooks/useWmtsCapabilities.ts` (TanStack Query) | état serveur : capacités WMTS GPF, jamais recopiées dans le store |
 | `src/hooks/useMap.ts` | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
-| `src/hooks/useBaseLayer.ts` | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage |
+| `src/hooks/useBaseLayerCatalogue.ts` | fonds candidats publiés dans les capacités (`availableBaseLayers`) et fond effectif dérivé (choix du store, sinon le premier disponible) |
+| `src/hooks/useBaseLayer.ts` | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage (changement de fond compris) |
+| `src/hooks/useMapControls.ts` | zoom, plein écran, attributions geopf + échelle OL dans un effet ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée |
+| `src/components/map/BaseLayerPanel.tsx` | panneau DSFR « Fonds de carte » : `RadioButtons` (flèches du clavier) → `setActiveBaseLayer` |
+| `src/components/map/MapExplorer.tsx` | bouton « Masquer/Afficher les fonds de carte » (`aria-expanded`, `aria-controls`, `togglePanel`) + grille panneau/carte |
 | `src/hooks/useLayerSwitcher.ts` | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage |
-| `src/config/map.ts` | fonds (`BASE_LAYERS`), vue initiale, options du `LayerSwitcher` et des contrôles OL, libellés |
+| `src/config/map.ts` | fonds candidats (`BASE_LAYER_CANDIDATES`), vue initiale, options des outils et du `LayerSwitcher`, libellés, attribution, délai de nouvel essai |
 
-L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL : pas de copie dans React.
+L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL : pas de copie dans React. `useMap` observe la taille du
+conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand le panneau est masqué.
 
 ### 5.6 LayerSwitcher : options et comportement
 
@@ -115,17 +132,39 @@ L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL 
   retirer une couche de la carte suffit, inutile d'appeler `addLayer`. Libellé et description lus dans les propriétés OL
   `title` et `description` (réactives via `layer.set`).
 
+### 5.6 bis Outils (M3)
+
+| Outil | Classe | Options (vérifiées dans les `.d.ts` / sources) |
+|---|---|---|
+| Zoom | `GeoportalZoom` (étend `ol/control/Zoom`) | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`) |
+| Plein écran | `GeoportalFullScreen` (étend `ol/control/FullScreen`) | `position`, `tipLabel` |
+| Attributions | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut |
+| Échelle | `ol/control/ScaleLine` | geopf-ext n'en fournit pas ; `units: 'metric'` |
+| Recherche + géolocalisation | `SearchEngine` | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
+| Rotation | `ol/control/Rotate` (via `defaults`) | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults` |
+
+Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/geocodage/search`). Les suggestions sont des `<p>`
+(`GPautoCompleteProposal`) dans un `div.fr-modal` (`GPautoCompleteList-*`), sans rôle de liste : limite amont.
+
 ### 5.7 Pièges
 
-- Les fenêtres du `LayerSwitcher` (`dialog.fr-modal` `GPlayersList-*`, `GPlayerInfoPanel-*`, `GPlayerStylePanel-*`) n'ont pas de nom
-  accessible ; le JS du DSFR l'écrit en avertissement console (`Modal #... missing accessible name`). Contournement :
-  `labelSwitcherDialogs` pose un `aria-label` sur `control.element` **avant** `map.addControl` (libellés dans `src/config/map.ts`).
+- Les fenêtres geopf (`fr-modal`) n'ont pas de nom accessible ; le JS du DSFR l'écrit en avertissement console
+  (`Modal #... missing accessible name`) : `GPlayersList-*`, `GPlayerInfoPanel-*`, `GPlayerStylePanel-*` (LayerSwitcher),
+  `GPgeocodeResultsList-*` (`<dialog>`) et `GPautoCompleteList-*` (un **`div`**, SearchEngine). Contournement :
+  `src/map/labelGeopfDialogs.ts` pose un `aria-label` (et `role="group"` sur un `div`) sur `control.element` **avant**
+  `map.addControl` (libellés `GEOPF_DIALOG_LABELS` dans `src/config/map.ts`).
 - Les conteneurs de position des widgets ont des id globaux (`position-container-top-right`...) : **une seule carte geopf-ext par page**.
-- Les contrôles OL par défaut sont en anglais : libellés français passés à `defaults(...)` (`zoomOptions`, `rotateOptions`, `attributionOptions`).
+- Les contrôles OL par défaut sont en anglais : zoom et attributions remplacés par leurs versions geopf (en français), rotation avec `rotateOptions.tipLabel`.
 - Clavier : le conteneur de carte a `tabIndex=0` (interactions clavier OL : flèches, `+`/`-`) ; règle jsx-a11y
   `no-noninteractive-tabindex` autorisée pour le rôle `region`. Le bouton du gestionnaire de couches s'atteint en 3 Tab depuis la carte
   et s'ouvre avec Entrée.
-- GPF WMTS : réponses `400 Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown` intermittentes sur des `GetTile` valides (environ 3 %, reproduit en `curl`) ; tuile vide et « Failed to load resource » en console. Côté serveur, voir `QUESTIONS.md` M-2.
+- GPF WMTS : réponses `400 Layer GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2 unknown` (M2) ou `404` (M3, orthophotos) intermittentes sur des
+  `GetTile` valides ; la même URL répond 200 juste après. Voir `QUESTIONS.md` M-2. M3 : `src/map/tileRetry.ts` recharge **une fois**
+  une tuile en erreur après `TILE_RETRY_DELAY_MS` (500 ms), compté par URL de tuile (OpenLayers peut créer une nouvelle instance pour
+  la même tuile). Vérifié dans Playwright en forçant un 400 (`page.route`) : la tuile est redemandée une fois puis s'affiche ; une tuile
+  toujours en erreur est demandée 2 ou 3 fois au total (le navigateur/OL la redemande parfois aussitôt), jamais en boucle.
+  Le message « Failed to load resource » du premier échec reste dans la console.
 - `ol/format/WMTSCapabilities.read` renvoie un objet même pour un document invalide : `parseWmtsCapabilities` exige `Contents`.
-- Tests : `ol/Map` et le module `LayerSwitcher` sont simulés (`vi.mock`) ; `createWmtsLayer` et le parseur utilisent un extrait réel
-  des capacités (`src/test/fixtures/wmts-capabilities.xml`, importé avec `?raw`).
+- Panneau DSFR : le `<label>` d'un `RadioButtons` recouvre l'`<input>` ; dans Playwright, cliquer le libellé (pas `check()` sur l'input).
+- Tests : `ol/Map` et `../map/geopf` sont simulés (`vi.mock`) ; le catalogue, `createWmtsLayer` et le parseur utilisent un extrait réel
+  des capacités (`src/test/fixtures/wmts-capabilities.xml` : Plan IGN, orthophotos, relief et leurs TileMatrixSet, importé avec `?raw`).
