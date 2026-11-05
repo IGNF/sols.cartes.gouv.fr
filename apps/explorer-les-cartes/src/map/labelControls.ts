@@ -19,3 +19,24 @@ export function labelSearchInput(root: HTMLElement): void {
     .querySelectorAll('input[id^="GPsearchInputText-"]')
     .forEach((input) => input.setAttribute('aria-label', CONTROL_LABELS.searchInput));
 }
+
+/**
+ * The LayerSwitcher renders its keyboard "move layer" arrows as focusable `<span>`s handling Enter/Space,
+ * with an `aria-label` that a span without role may not carry (axe aria-prohibited-attr). They act as
+ * buttons: give them that role. Returns the number of spans fixed.
+ */
+export function fixLayerMoveArrows(root: HTMLElement): number {
+  const spans = root.querySelectorAll<HTMLElement>(
+    '.keyboard-navigation > span[data-direction]:not([role])',
+  );
+  spans.forEach((span) => span.setAttribute('role', 'button'));
+  return spans.length;
+}
+
+/** Applies `fixLayerMoveArrows` now and to every layer row the control adds later. */
+export function watchLayerMoveArrows(root: HTMLElement): () => void {
+  fixLayerMoveArrows(root);
+  const observer = new MutationObserver(() => fixLayerMoveArrows(root));
+  observer.observe(root, { childList: true, subtree: true });
+  return () => observer.disconnect();
+}

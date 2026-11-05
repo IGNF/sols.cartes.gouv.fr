@@ -2,6 +2,7 @@ import type OlMap from 'ol/Map';
 import { useEffect } from 'react';
 import { LAYER_SWITCHER_OPTIONS } from '../config/map';
 import { LayerSwitcher } from '../map/geopf';
+import { watchLayerMoveArrows } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 
 /**
@@ -28,9 +29,11 @@ export default function useLayerSwitcher(map: OlMap | null): void {
     const control = new LayerSwitcher({ options: { ...LAYER_SWITCHER_OPTIONS } });
     labelGeopfDialogs(control.element);
     const stopEscape = closeOnEscape(control.element);
+    const stopArrows = watchLayerMoveArrows(control.element);
     map.addControl(control);
     return () => {
       stopEscape();
+      stopArrows();
       map.removeControl(control);
     };
   }, [map]);
