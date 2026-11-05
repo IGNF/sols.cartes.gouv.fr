@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
+import accueil from './src/_data/accueil.js';
 
 const require = createRequire(import.meta.url);
 const DSFR_DIST = join(dirname(require.resolve('@gouvfr/dsfr/package.json')), 'dist');
@@ -18,6 +19,7 @@ const DSFR_FILES = [
   'favicon/favicon.ico',
   'favicon/favicon.svg',
   'favicon/manifest.webmanifest',
+  ...accueil.service.items.map((item) => `artwork/pictograms/${item.pictogram}`),
 ];
 
 /** Relative paths (from the DSFR dist folder) of the local files referenced by a stylesheet. */
@@ -41,6 +43,7 @@ export function dsfrPassthrough() {
 
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
+  eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
 
   return {
     dir: { input: 'src', output: 'dist', includes: '_includes', data: '_data' },
