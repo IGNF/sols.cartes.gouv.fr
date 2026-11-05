@@ -10,7 +10,8 @@ alignée sur `config.dsfrVersion` du `package.json` racine).
 | `bun run dev`   | serveur Eleventy avec rechargement, http://localhost:8081                                   |
 | `bun run build` | génère `apps/accueil/dist` (copié tel quel à la racine de `./dist` par `bun run build:all`) |
 | `bun run lint`  | build puis `html-validate` sur `dist/**/*.html` (config `.htmlvalidate.json`)               |
-| `bun run test`  | `bun test` : build puis contrôles de `dist/` et synchronisation de ce document              |
+| `bun run test`  | `bun test` : build puis contrôles de `dist/`, référencement, liens internes, synchro doc    |
+| `bun run check-links` | vérifie seul les liens internes de `dist/` (après un build)                           |
 
 ## Structure
 
@@ -29,7 +30,10 @@ apps/accueil/
   src/_includes/partials/article-card.njk  carte d'article (headingLevel à fixer avant l'include)
   src/articles/*.md           articles (collection « articles »), articles.11tydata.js : gabarit et permalink
   src/pages/*.njk             accessibilité, mentions légales, données personnelles, plan du site, liste des articles
-  test/smoke.test.js
+  src/sitemap.njk, src/robots.njk   /sitemap.xml et /robots.txt
+  scripts/check-links.js      vérificateur de liens internes (module importé par les tests et script CLI)
+  test/smoke.test.js          pages, gabarit, articles, synchronisation de ce document
+  test/seo.test.js            sitemap, robots, canonique, description, liens internes
 ```
 
 ## Accueil
@@ -63,6 +67,22 @@ La collection `articles` (`eleventy.config.js`) est triée par date décroissant
 (`accueil.articles.max`). Filtres de date : `dateIso` (`2026-11-05`, pour `datetime`) et `dateFr`
 (« 5 novembre 2026 »), en UTC. Le fil d'Ariane accepte des niveaux intermédiaires via la variable `breadcrumb`
 (`[{ label, href }]`).
+
+## Référencement et liens
+
+- `/sitemap.xml` (`src/sitemap.njk`) : toutes les pages de `collections.all` triées par URL, plus les racines des
+  briques catalogue et carto (`site.sections`), URL absolues construites avec `site.url`. `lastmod` seulement pour les
+  pages datées en front matter (articles) ; les autres pages n'en ont pas, la date de fichier d'Eleventy n'étant pas
+  fiable.
+- `/robots.txt` (`src/robots.njk`) : tout autorisé, `Sitemap: https://sols.cartes.gouv.fr/sitemap.xml`. Ces deux
+  fichiers sont exclus des collections (`eleventyExcludeFromCollections`).
+- Canonique et description : posées par `layouts/base.njk` (`site.url` + `page.url` ; front matter `description`,
+  sinon `site.description`). Le linter Eleventy `seo-head` (`eleventy.config.js`) fait échouer le build si une page
+  HTML n'a pas de meta description non vide ou de canonique exacte (page sans gabarit de base par exemple).
+- Liens internes (`scripts/check-links.js`, lancé par `bun run test`) : chaque `href` / `src` interne de
+  `dist/**/*.html` doit aboutir à un fichier ou à un dossier contenant `index.html` ; un fragment `#id` doit exister
+  dans la page cible (la page elle-même pour `#id`) ; les chemins sous `/rechercher-une-donnee/` et
+  `/explorer-les-cartes/` (autres briques) sont admis ; les liens externes ne sont pas appelés.
 
 ## Ressources DSFR
 

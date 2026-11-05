@@ -44,3 +44,8 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : le `Footer` de react-dsfr 1.36.0 ne propose que `domains` pour la liste de liens de contenu ; chaque entrée est rendue avec le domaine comme libellé et `https://<domaine>` comme cible. La brique edito affiche « Site du GIS Sol » → `https://www.gissol.fr/` (et des cibles en `www.`).
 - Options : (a) garder `domains` : le lien se lit « gissol.fr » → `https://gissol.fr` (redirige vers le site) ; (b) l'edito renomme son libellé en « gissol.fr » pour une parité exacte ; (c) balisage personnalisé côté carto (contraire à « utiliser les props react-dsfr »).
 - Défaut appliqué : (a) côté carto ; (b) proposé à l'edito. Même liste, même ordre, même phrase de licence et même titre du lien d'accueil.
+
+## E-1. Titres des cartes « Données disponibles » de l'accueil (edito, E2)
+- Question : les trois cartes de la section « Données disponibles » portent les titres de la maquette Figma (« Référentiels territoriaux », « Données agricoles », « Environnement et recherche »). Ces catégories ne sont pas validées par le GIS Sol ni rattachées à un filtre du catalogue.
+- Options : (a) garder les titres de la maquette ; (b) des libellés neutres en attendant la validation ; (c) des catégories issues des mots-clés du catalogue (après C1-C4).
+- Défaut appliqué : (a), décision de l'orchestrateur ; les descriptions portent « (texte provisoire) ». À valider avec le designer et le GIS Sol ; contenu dans `apps/accueil/src/_data/accueil.js` (`donnees.items`).
