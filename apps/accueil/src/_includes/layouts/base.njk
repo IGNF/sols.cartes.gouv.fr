@@ -1,0 +1,27 @@
+{%- set pageTitle = (title + " - " + site.name) if title and title != site.name else site.name -%}
+<!DOCTYPE html>
+<html lang="{{ site.lang }}" data-fr-scheme="system">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ pageTitle }}</title>
+    <meta name="description" content="{{ description or site.defaultDescription }}">
+    <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+    <meta name="theme-color" content="{{ site.themeColor }}">
+    <link rel="apple-touch-icon" href="{{ site.assets.dsfr }}/favicon/apple-touch-icon.png">
+    <link rel="icon" href="{{ site.assets.dsfr }}/favicon/favicon.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="{{ site.assets.dsfr }}/favicon/favicon.ico" type="image/x-icon">
+    <link rel="manifest" href="{{ site.assets.dsfr }}/favicon/manifest.webmanifest" crossorigin="use-credentials">
+    <link rel="stylesheet" href="{{ site.assets.dsfr }}/dsfr.min.css">
+  </head>
+  <body>
+    {% include "partials/skiplinks.njk" %}
+    {% include "partials/header.njk" %}
+    <main id="contenu" class="fr-container fr-py-6w" tabindex="-1">
+      {{ content | safe }}
+    </main>
+    {% include "partials/footer.njk" %}
+    <script type="module" src="{{ site.assets.dsfr }}/dsfr.module.min.js"></script>
+    <script nomodule src="{{ site.assets.dsfr }}/dsfr.nomodule.min.js"></script>
+  </body>
+</html>
