@@ -2,6 +2,8 @@
 layout: layouts/base.njk
 ---
 {%- set strings = t.accueil -%}
+{%- set frLang = ' lang="' + site.defaultLanguage + '"' if locale != site.defaultLanguage else '' -%}
+{%- set crossHreflang = ' hreflang="' + site.defaultLanguage + '"' if locale != site.defaultLanguage else '' -%}
 <div class="sols-hero fr-py-8w">
   <div class="fr-container">
     <div class="fr-grid-row">
@@ -11,7 +13,12 @@ layout: layouts/base.njk
         <p class="fr-text--lead">{{ strings.hero.intro }}</p>
         <ul class="fr-btns-group fr-btns-group--inline-md">
           {%- for action in accueil.actions %}
-          <li><a class="fr-btn{% if not action.primary %} fr-btn--secondary{% endif %}" href="{{ action.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.hero.actions[action.key] }}</a></li>
+          <li><a class="fr-btn{% if not action.primary %} fr-btn--secondary{% endif %}" href="{{ action.href }}"{{ crossHreflang | safe }}>{{ strings.hero.actions[action.key] }}</a></li>
+          {%- endfor %}
+        </ul>
+        <ul class="sols-figures fr-raw-list" aria-label="{{ strings.hero.figuresLabel }}">
+          {%- for key in accueil.figures %}
+          <li><span class="sols-figures__value">{{ strings.hero.figures[key].value }}</span> <span class="sols-figures__label">{{ strings.hero.figures[key].label }}</span></li>
           {%- endfor %}
         </ul>
       </div>
@@ -22,7 +29,23 @@ layout: layouts/base.njk
 <section class="fr-container fr-py-8w" aria-labelledby="titre-service">
   <p class="sols-overline">{{ strings.service.overline }}</p>
   <h2 id="titre-service">{{ strings.service.title }}</h2>
-  <p>{{ strings.service.intro }}</p>
+  <p class="fr-text--lg">{{ strings.service.intro }}</p>
+  <div class="sols-frieze fr-mb-4w">
+    {%- for side in ["without", "with"] %}
+    {%- set column = strings.service.frieze[side] %}
+    <div class="sols-frieze__column sols-frieze__column--{{ side }}">
+      <h3 class="sols-frieze__title fr-text--sm">{{ column.title }}</h3>
+      <ul class="fr-raw-list">
+        {%- for item in column.items %}
+        <li class="sols-frieze__item"><span class="{{ accueil.frieze[side].icon }} fr-icon--sm" aria-hidden="true"></span>{{ item }}</li>
+        {%- endfor %}
+      </ul>
+    </div>
+    {%- if side == "without" %}
+    <span class="sols-frieze__arrow {{ accueil.frieze.arrow }}" aria-hidden="true"></span>
+    {%- endif %}
+    {%- endfor %}
+  </div>
   <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
     {%- for item in accueil.service %}
     <li class="fr-col-12 fr-col-md-4">
@@ -45,28 +68,108 @@ layout: layouts/base.njk
   </ul>
 </section>
 
-<section class="fr-container fr-pb-8w" aria-labelledby="titre-donnees">
+<section class="sols-band sols-band--beige" aria-labelledby="titre-usages">
+  <div class="fr-container fr-py-8w">
+    <p class="sols-overline">{{ strings.usages.overline }}</p>
+    <h2 id="titre-usages">{{ strings.usages.title }}</h2>
+    <p class="fr-text--lg">{{ strings.usages.intro }}</p>
+    <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
+      {%- for usage in accueil.usages %}
+      {%- set card = strings.usages.items[usage.key] %}
+      <li class="fr-col-12 fr-col-md-4">
+        <div class="fr-card">
+          <div class="fr-card__body">
+            <div class="fr-card__content">
+              <h3 class="fr-card__title">{{ card.title }}</h3>
+              <div class="fr-card__desc">
+                <p>{{ card.lead }}</p>
+                <ul class="sols-usage__points">
+                  {%- for point in card.points %}
+                  <li>{{ point }}</li>
+                  {%- endfor %}
+                </ul>
+              </div>
+              <div class="fr-card__start">
+                <p class="fr-badge fr-badge--sm fr-badge--blue-cumulus">{{ strings.usages.profile }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="fr-card__header">
+            <div class="fr-card__img">
+              <img class="fr-responsive-img fr-ratio-16x9" src="{{ usage.image }}" alt="" width="1200" height="800" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="fr-text--sm fr-mt-3w sols-note">{{ strings.usages.note }}</p>
+  </div>
+</section>
+
+<section class="fr-container fr-py-8w" aria-labelledby="titre-donnees">
   <p class="sols-overline">{{ strings.donnees.overline }}</p>
   <h2 id="titre-donnees">{{ strings.donnees.title }}</h2>
-  <p>{{ strings.donnees.intro }}</p>
+  <p class="fr-text--lg">{{ strings.donnees.intro }}</p>
   <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
-    {%- for key in accueil.donnees.items %}
+    {%- for item in accueil.donnees.items %}
+    {%- set card = strings.donnees.items[item.key] %}
     <li class="fr-col-12 fr-col-md-4">
-      <div class="fr-card fr-enlarge-link">
+      <div class="fr-card">
         <div class="fr-card__body">
           <div class="fr-card__content">
-            <h3 class="fr-card__title"><a href="{{ accueil.donnees.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.donnees.items[key].title }}</a></h3>
-            <p class="fr-card__desc">{{ strings.donnees.items[key].desc }}</p>
+            <h3 class="fr-card__title"><span class="{{ item.icon }} sols-card-icon" aria-hidden="true"></span>{{ card.title }}</h3>
+            <ul class="fr-tags-group sols-data-tags" aria-label="{{ strings.donnees.tagsLabel }}"{{ frLang | safe }}>
+              {%- for tag in item.tags %}
+              <li><p class="fr-tag fr-tag--sm">{{ tag }}</p></li>
+              {%- endfor %}
+            </ul>
+            <p class="fr-card__desc"><strong>{{ strings.donnees.usageLabel }}</strong> {{ card.usage }}</p>
           </div>
         </div>
       </div>
     </li>
     {%- endfor %}
   </ul>
-  <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ accueil.donnees.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.donnees.allLabel }}</a></p>
+  <div class="sols-banner fr-mt-4w">
+    <div>
+      <p class="sols-banner__title">{{ strings.donnees.banner.title }}</p>
+      <p class="fr-text--sm fr-mb-0">{{ strings.donnees.banner.text }}</p>
+    </div>
+    <a class="fr-btn sols-banner__btn" href="{{ accueil.donnees.href }}"{{ crossHreflang | safe }}>{{ strings.donnees.banner.button }}</a>
+  </div>
 </section>
 
-<section class="fr-container fr-pb-8w" aria-labelledby="titre-articles">
+{%- set events = agenda.events | upcoming %}
+<section class="sols-band sols-band--green" aria-labelledby="titre-agenda">
+  <div class="fr-container fr-py-8w">
+    <p class="sols-overline">{{ strings.agenda.overline }}</p>
+    <h2 id="titre-agenda">{{ strings.agenda.title }}</h2>
+    <p class="fr-text--lg">{{ strings.agenda.intro }}</p>
+    {%- if events.length %}
+    <div class="sols-carousel" data-sols-carousel>
+      <div class="sols-carousel__controls" hidden>
+        <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm {{ accueil.agenda.icons.previous }}" title="{{ strings.agenda.previous }}" data-sols-carousel-previous>{{ strings.agenda.previous }}</button>
+        <button type="button" class="fr-btn fr-btn--secondary fr-btn--sm {{ accueil.agenda.icons.next }}" title="{{ strings.agenda.next }}" data-sols-carousel-next>{{ strings.agenda.next }}</button>
+      </div>
+      <section class="sols-carousel__viewport" aria-label="{{ strings.agenda.listLabel }}" tabindex="0" data-sols-carousel-viewport>
+        <ul class="sols-carousel__track fr-raw-list">
+          {%- for event in events %}
+          <li class="sols-carousel__item">
+            {% include "partials/event-card.njk" %}
+          </li>
+          {%- endfor %}
+        </ul>
+      </section>
+    </div>
+    <script type="module" src="{{ site.assets.js }}/carousel.js"></script>
+    {%- else %}
+    <p>{{ strings.agenda.empty }}</p>
+    {%- endif %}
+  </div>
+</section>
+
+<section class="fr-container fr-py-8w" aria-labelledby="titre-articles">
   <p class="sols-overline">{{ strings.articles.overline }}</p>
   <h2 id="titre-articles">{{ strings.articles.title }}</h2>
   <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
@@ -80,10 +183,33 @@ layout: layouts/base.njk
   <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ accueil.articles.href | locale_url }}">{{ strings.articles.allLabel }}</a></p>
 </section>
 
-<section class="fr-container fr-pb-8w" aria-labelledby="titre-gissol">
-  <div class="fr-callout fr-callout--green-emeraude">
-    <h2 class="fr-callout__title" id="titre-gissol">{{ strings.gissol.title }}</h2>
-    <p class="fr-callout__text">{{ strings.gissol.text }}</p>
-    <a class="fr-btn" href="{{ accueil.gissolHref }}" target="_blank" rel="noopener external" title="{{ strings.gissol.label }} - {{ t.newWindow }}">{{ strings.gissol.label }}</a>
+<section class="sols-band sols-band--beige" aria-labelledby="titre-partenaires">
+  <div class="fr-container fr-py-8w">
+    <div class="fr-grid-row fr-grid-row--gutters">
+      <div class="fr-col-12 fr-col-lg-6">
+        <p class="sols-overline">{{ strings.partners.overline }}</p>
+        <h2 id="titre-partenaires">{{ strings.partners.title }}</h2>
+      </div>
+      <div class="fr-col-12 fr-col-lg-6">
+        <p class="fr-text--lg">{{ strings.partners.intro }}</p>
+      </div>
+    </div>
+    <p class="sols-partners__overline fr-text--xs fr-mb-1v">{{ strings.partners.networkOverline }}</p>
+    <h3 class="fr-h6">{{ strings.partners.networkTitle }}</h3>
+    <ul class="sols-partners fr-raw-list">
+      {%- for partner in accueil.partners %}
+      <li>
+        <a class="sols-partners__link" href="{{ partner.href }}" target="_blank" rel="noopener external" title="{{ partner.name }} - {{ t.newWindow }}">
+          <img class="sols-partners__logo" src="{{ partner.logo }}" alt="{{ partner.name }}">
+        </a>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="fr-mt-2w"><a class="fr-link" href="{{ accueil.gissolHref }}" target="_blank" rel="noopener external" title="{{ strings.partners.gissolLink }} - {{ t.newWindow }}">{{ strings.partners.gissolLink }}</a></p>
+    <div class="fr-callout fr-callout--green-emeraude fr-mt-4w">
+      <h3 class="fr-callout__title">{{ strings.partners.callout.title }}</h3>
+      <p class="fr-callout__text">{{ strings.partners.callout.text }}</p>
+      <a class="fr-btn" href="{{ accueil.contactHref | localize(locale) }}">{{ strings.partners.callout.button }}</a>
+    </div>
   </div>
 </section>
