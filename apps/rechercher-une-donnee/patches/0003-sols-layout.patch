@@ -355,12 +355,23 @@ index f792cc8..c00f5b7 100644
 +  <sols-footer></sols-footer>
  </div>
 diff --git a/apps/datahub/src/app/app.component.ts b/apps/datahub/src/app/app.component.ts
-index d9e31d8..e348c23 100644
+index d9e31d8..b9c1fc1 100644
 --- a/apps/datahub/src/app/app.component.ts
 +++ b/apps/datahub/src/app/app.component.ts
-@@ -35,6 +35,9 @@ import {
-   DsfrButtonsGroupComponent,
- } from '@edugouvfr/ngx-dsfr'
+@@ -25,16 +25,11 @@ import { Store } from '@ngrx/store'
+ import { Router, RouterOutlet } from '@angular/router'
+ import { CommonModule, ViewportScroller } from '@angular/common'
+ import Keycloak from 'keycloak-js'
+-import {
+-  DsfrHeaderModule,
+-  DsfrFooterModule,
+-  DsfrToolLinkMenuComponent,
+-  DsfrLinkComponent,
+-  DsfrModalComponent,
+-  DsfrButtonComponent,
+-  DsfrButtonsGroupComponent,
+-} from '@edugouvfr/ngx-dsfr'
++import { DsfrModalComponent } from '@edugouvfr/ngx-dsfr'
  import { DsfrAnalyticsService } from './services/dsfr-analytics.service'
 +import { SolsFooterComponent } from './sols-layout/sols-footer.component'
 +import { SolsHeaderComponent } from './sols-layout/sols-header.component'
@@ -368,17 +379,24 @@ index d9e31d8..e348c23 100644
  
  @Component({
    selector: 'datahub-root',
-@@ -52,6 +55,9 @@ import { DsfrAnalyticsService } from './services/dsfr-analytics.service'
-     DsfrModalComponent,
-     DsfrButtonComponent,
-     DsfrButtonsGroupComponent,
+@@ -45,13 +40,9 @@ import { DsfrAnalyticsService } from './services/dsfr-analytics.service'
+     CommonModule,
+     RouterOutlet,
+     SearchRouterContainerDirective,
+-    DsfrHeaderModule,
+-    DsfrFooterModule,
+-    DsfrToolLinkMenuComponent,
+-    DsfrLinkComponent,
+-    DsfrModalComponent,
+-    DsfrButtonComponent,
+-    DsfrButtonsGroupComponent,
 +    SolsFooterComponent,
 +    SolsHeaderComponent,
 +    SolsSkiplinksComponent,
    ],
  })
  export class AppComponent implements OnInit, AfterViewInit {
-@@ -102,22 +108,9 @@ export class AppComponent implements OnInit, AfterViewInit {
+@@ -102,22 +93,9 @@ export class AppComponent implements OnInit, AfterViewInit {
  
      const favicon = getThemeConfig().FAVICON
      if (favicon) ThemeService.setFavicon(favicon)
