@@ -3,16 +3,13 @@
  * (served on the same origin by the other bricks), external links and Géoplateforme endpoints.
  * Nothing else in src/ should hardcode a URL, a path or a layer name.
  */
+import brand from '@sols/brand/brand.json';
 
-/** Section paths of the portal. Absolute on the same origin, rendered as plain anchors. */
+/** Section paths of the portal (same origin, other bricks): from `@sols/brand`, rendered as plain anchors. */
 export const SECTION_PATHS = {
-  home: '/',
-  catalogue: '/rechercher-une-donnee/',
-  carto: '/explorer-les-cartes/',
-  accessibility: '/accessibilite/',
-  legalNotice: '/mentions-legales/',
-  personalData: '/donnees-personnelles/',
-  siteMap: '/plan-du-site/',
+  home: brand.sections.home,
+  catalogue: brand.sections.catalogue,
+  carto: brand.sections.carto,
 } as const;
 
 /** Record page of the catalogue brick for a dataset identifier. */
@@ -41,23 +38,9 @@ export function mapDeepLinkPath(layer: string, type: 'WMS' | 'WMTS', endpoint: s
 
 /** External links. */
 export const EXTERNAL_LINKS = {
-  gisSol: 'https://www.gissol.fr/',
-  cartesGouv: 'https://cartes.gouv.fr/',
-  licenceEtalab: 'https://github.com/etalab/licence-ouverte/blob/master/LO.md',
+  gisSol: brand.external.gissol,
+  cartesGouv: brand.external.cartesGouv,
 } as const;
-
-/**
- * Footer content links, same list and order as the edito brick (apps/accueil/src/_data/site.js).
- * react-dsfr renders each entry as `https://<domain>` with the domain as label.
- */
-export const FOOTER_DOMAINS = [
-  'cartes.gouv.fr',
-  'gissol.fr',
-  'info.gouv.fr',
-  'service-public.gouv.fr',
-  'legifrance.gouv.fr',
-  'data.gouv.fr',
-];
 
 /** Géoplateforme (GPF) service endpoints, see doc/agents/gpf-sols-data.md. */
 export const GPF_ENDPOINTS = {

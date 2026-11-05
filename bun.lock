@@ -28,6 +28,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@codegouvfr/react-dsfr": "^1.36.0",
+        "@sols/brand": "workspace:*",
         "@tanstack/react-query": "^5.106.1",
         "geopf-extensions-openlayers": "1.0.0-beta.16",
         "ol": "^10.11.0",
