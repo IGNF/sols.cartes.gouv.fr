@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "heading-order",
+    "impact": "moderate",
+    "nodes": 1,
+    "help": "Heading levels should only increase by one",
+    "sample": [
+      "h4"
+    ]
+  }
+]

@@ -76,11 +76,7 @@ test.describe('Accueil et en-tête v1', () => {
         .locator('visible=true')
         .first(),
     ).toBeVisible();
-    // Sur mobile, Échap ferme toute la modale du menu burger (comportement DSFR), pas seulement le sous-menu.
-    test.skip(
-      isMobile,
-      'Échap du sous-menu : vérifié sur desktop (la modale mobile se ferme en entier)',
-    );
+    // Depuis E9/C12 : sur mobile aussi, Échap ne ferme que le sous-menu (la modale du menu burger reste ouverte).
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();

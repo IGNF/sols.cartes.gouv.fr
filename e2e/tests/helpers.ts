@@ -57,6 +57,8 @@ export const SOLS_GROUP = 'gissol-osf_g';
 export const SOLS_LAYER = 'stock_carbone_fao_fr_wmsv';
 export const GPF_WMS_V = 'data.geopf.fr/wms-v';
 export const DEEP_LINK_WMS = `/explorer-les-cartes/?l=${SOLS_LAYER}$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`;
+export const DEEP_LINK_LOIRET =
+  '/explorer-les-cartes/?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no';
 export const DEEP_LINK_WMTS =
   '/explorer-les-cartes/?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no';
 export const DEEP_LINK_UNKNOWN =

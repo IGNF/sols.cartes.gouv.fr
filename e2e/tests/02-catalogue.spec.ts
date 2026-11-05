@@ -7,6 +7,7 @@ import {
   SOLS_GROUP,
   GPF_TILE_FLAKE,
   PAGES,
+  waitForDsfr,
   SOLS_LAYER,
 } from './helpers';
 
@@ -188,5 +189,25 @@ test.describe('Catalogue', () => {
         .locator('[id^="GPtitle_ID_"]')
         .filter({ hasText: /Carte nationale des stocks de carbone/ }),
     ).toHaveCount(1, { timeout: 30_000 });
+  });
+
+  test('le menu « Services » du catalogue : Échap ne ferme que le sous-menu (mobile compris)', async ({
+    page,
+    isMobile,
+  }) => {
+    await page.goto(PAGES.catalogue);
+    await waitForCatalogueResults(page);
+    if (isMobile) await page.locator('header .fr-btn--menu').click();
+    await waitForDsfr(page);
+    const button = page
+      .locator('header')
+      .getByRole('button', { name: 'Services' })
+      .locator('visible=true');
+    await button.focus();
+    await page.keyboard.press('Enter');
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
   });
 });
