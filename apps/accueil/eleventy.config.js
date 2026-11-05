@@ -1,4 +1,4 @@
-import { cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
 import { I18nPlugin } from '@11ty/eleventy';
@@ -75,28 +75,6 @@ function buildIconStylesheet() {
   return svgs;
 }
 
-/**
- * SVG logos of @sols/brand exported without a viewBox (fixed canvas, content offset) do not
- * scale with CSS. The published copy gets a viewBox fitted to the drawing; the source file is
- * untouched (to be fixed upstream in packages/brand).
- */
-const BRAND_SVG_VIEWBOX = { 'logo-inrae.svg': '0 52 128 30' };
-
-/** Copies the @sols/brand images to the cache, fixing the SVGs listed above; returns the folder. */
-function prepareBrandAssets() {
-  const target = join(CACHE_DIR, 'brand');
-  cpSync(join(BRAND_DIR, 'assets'), target, { recursive: true });
-  for (const [file, viewBox] of Object.entries(BRAND_SVG_VIEWBOX)) {
-    const [, , width, height] = viewBox.split(' ');
-    const svg = readFileSync(join(target, file), 'utf8').replace(
-      /<svg width="[^"]*" height="[^"]*"/,
-      `<svg viewBox="${viewBox}" width="${width}" height="${height}"`,
-    );
-    writeFileSync(join(target, file), svg);
-  }
-  return target;
-}
-
 export function dsfrPassthrough() {
   const files = [
     ...DSFR_STYLESHEETS,
@@ -121,7 +99,8 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
   eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
-  eleventyConfig.addPassthroughCopy({ [prepareBrandAssets()]: site.assets.brand.slice(1) });
+  // Brand images are published unchanged from packages/brand/assets/.
+  eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });
 
   // Pages live in src/<locale>/; locale_url and locale_links come from the plugin. errorMode "never":
   // a link without a translation falls back to the given URL (the link checker still runs on dist).
