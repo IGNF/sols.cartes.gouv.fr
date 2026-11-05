@@ -1,0 +1,11 @@
+<div class="fr-card fr-enlarge-link">
+  <div class="fr-card__body">
+    <div class="fr-card__content">
+      <{{ headingLevel }} class="fr-card__title"><a href="{{ article.url }}">{{ article.data.title }}</a></{{ headingLevel }}>
+      <p class="fr-card__desc">{{ article.data.description }}</p>
+      <div class="fr-card__end">
+        <p class="fr-card__detail">Publié le&nbsp;<time datetime="{{ article.date | dateIso }}">{{ article.date | dateFr }}</time></p>
+      </div>
+    </div>
+  </div>
+</div>

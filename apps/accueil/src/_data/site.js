@@ -10,32 +10,36 @@ const sections = {
   mentionsLegales: '/mentions-legales/',
   donneesPersonnelles: '/donnees-personnelles/',
   planDuSite: '/plan-du-site/',
+  articles: '/articles/',
 };
 
 const external = {
   gissol: 'https://www.gissol.fr/',
   cartesGouv: 'https://cartes.gouv.fr',
   geoplateformeData: 'https://data.geopf.fr',
-  legifrance: 'https://www.legifrance.gouv.fr',
-  gouvernement: 'https://www.info.gouv.fr',
-  servicePublic: 'https://www.service-public.fr',
-  dataGouv: 'https://www.data.gouv.fr',
+  infoGouv: 'https://info.gouv.fr',
+  servicePublic: 'https://service-public.gouv.fr',
+  legifrance: 'https://legifrance.gouv.fr',
+  dataGouv: 'https://data.gouv.fr',
   licenceEtalab: 'https://github.com/etalab/licence-ouverte/blob/master/LO.md',
 };
+
+const description =
+  'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).';
 
 export default {
   url: 'https://sols.cartes.gouv.fr',
   name: 'Observatoire des sols',
-  tagline: 'Les données sols de la Géoplateforme',
   lang: 'fr',
-  defaultDescription:
-    'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).',
+  description,
   themeColor: '#000091',
-  assets: { dsfr: '/dsfr' },
+  assets: { dsfr: '/dsfr', css: '/css' },
   sections,
   external,
   header: {
     brand: ['République', 'Française'],
+    serviceTitle: 'sols.cartes.gouv.fr',
+    tagline: 'Observatoire des sols de France',
     nav: [
       { label: 'Accueil', href: sections.accueil },
       { label: 'Rechercher une donnée', href: sections.rechercherUneDonnee },
@@ -44,14 +48,13 @@ export default {
     tools: [{ label: 'Site du GIS Sol', href: external.gissol, external: true }],
   },
   footer: {
-    description:
-      'Observatoire des sols : portail des données sols du GIS Sol (INRAE) servies par la Géoplateforme (texte provisoire).',
+    description,
     contentLinks: [
       { label: 'cartes.gouv.fr', href: external.cartesGouv },
       { label: 'Site du GIS Sol', href: external.gissol },
+      { label: 'info.gouv.fr', href: external.infoGouv },
+      { label: 'service-public.gouv.fr', href: external.servicePublic },
       { label: 'legifrance.gouv.fr', href: external.legifrance },
-      { label: 'info.gouv.fr', href: external.gouvernement },
-      { label: 'service-public.fr', href: external.servicePublic },
       { label: 'data.gouv.fr', href: external.dataGouv },
     ],
     bottomLinks: [
