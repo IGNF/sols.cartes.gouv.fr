@@ -134,3 +134,9 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 
 - Constat : la maquette contient un bloc « Le portail … arrive bientôt » (CTA lancement, `8:4896`) avec inscription et la mention « Incubé par beta.gouv.fr · Ministère de l'Agriculture », ainsi que des chiffres (60 ans, 12+, 100 %).
 - Défaut appliqué : E8 reprend les textes de la maquette (demande v1), y compris les chiffres ; le bloc « arrive bientôt » n'est pas repris sur un site en ligne (contradictoire) et la mention d'incubation reste à valider ; la vidéo de la section « Le service » est ignorée (demande v1).
+
+## E-3. Adresse de contact et lien « Nous contacter » (edito, E7)
+
+- Question : la page d'aide demande une section « Nous contacter » avec un lien mailto ; aucune adresse de contact du service n'est connue. Par ailleurs `brand.json` donne `/aide/#contact` : ce chemin sans langue passe par une page de renvoi (meta refresh) qui perd l'ancre.
+- Options : (a) adresse réelle fournie par l'équipe (INRAE / GIS Sol / IGN) ; (b) formulaire hébergé ailleurs ; pour l'ancre : (c) `brand.json` passe à `/fr/aide/#contact` ; (d) garder `/aide/#contact` (arrivée en haut de la page d'aide).
+- Défaut appliqué : adresse provisoire `contact@example.org` (domaine réservé, marquée « (adresse provisoire) ») dans `apps/accueil/src/_data/site.js` (`contactEmail`) ; le balisage partagé de l'edito utilise `/fr/aide/#contact` ; (c) proposé pour `brand.json`.
