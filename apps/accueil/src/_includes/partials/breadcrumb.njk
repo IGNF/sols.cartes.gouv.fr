@@ -3,6 +3,9 @@
   <div class="fr-collapse" id="fil-d-ariane">
     <ol class="fr-breadcrumb__list">
       <li><a class="fr-breadcrumb__link" href="{{ site.sections.accueil }}">Accueil</a></li>
+      {%- for crumb in breadcrumb or [] %}
+      <li><a class="fr-breadcrumb__link" href="{{ crumb.href }}">{{ crumb.label }}</a></li>
+      {%- endfor %}
       <li><a class="fr-breadcrumb__link" aria-current="page">{{ title }}</a></li>
     </ol>
   </div>

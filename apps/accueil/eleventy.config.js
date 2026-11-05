@@ -41,9 +41,17 @@ export function dsfrPassthrough() {
   );
 }
 
+const DATE_FR = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long', timeZone: 'UTC' });
+
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
+
+  eleventyConfig.addCollection('articles', (collectionApi) =>
+    collectionApi.getFilteredByGlob('src/articles/*.md').sort((a, b) => b.date - a.date),
+  );
+  eleventyConfig.addFilter('dateIso', (date) => date.toISOString().slice(0, 10));
+  eleventyConfig.addFilter('dateFr', (date) => DATE_FR.format(date));
 
   return {
     dir: { input: 'src', output: 'dist', includes: '_includes', data: '_data' },

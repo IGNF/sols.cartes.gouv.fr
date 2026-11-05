@@ -10,6 +10,7 @@ const sections = {
   mentionsLegales: '/mentions-legales/',
   donneesPersonnelles: '/donnees-personnelles/',
   planDuSite: '/plan-du-site/',
+  articles: '/articles/',
 };
 
 const external = {
