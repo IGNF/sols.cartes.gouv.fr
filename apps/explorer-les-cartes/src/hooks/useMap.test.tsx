@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { useRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { INITIAL_VIEW } from '../config/map';
+import { CONTROL_LABELS, INITIAL_VIEW } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
 import useMap from './useMap';
 
@@ -48,6 +48,17 @@ describe('useMap', () => {
     render(<Harness />);
     const view = created[0]?.options['view'] as { getZoom: () => number };
     expect(view.getZoom()).toBe(INITIAL_VIEW.zoom);
+  });
+
+  it('nomme le bouton de rotation', () => {
+    render(<Harness />);
+    const controls = created[0]?.options['controls'] as {
+      getArray: () => Array<{ element: HTMLElement }>;
+    };
+    const buttons = controls
+      .getArray()
+      .flatMap((c) => Array.from(c.element.querySelectorAll('button')));
+    expect(buttons.some((b) => b.getAttribute('aria-label') === CONTROL_LABELS.rotate)).toBe(true);
   });
 
   it('détache et libère la carte au démontage', () => {

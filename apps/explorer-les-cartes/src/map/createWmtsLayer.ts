@@ -1,5 +1,6 @@
 import TileLayer from 'ol/layer/Tile';
 import WMTS, { optionsFromCapabilities } from 'ol/source/WMTS';
+import { GPF_ATTRIBUTION } from '../config/map';
 import { findWmtsLayer, type WmtsCapabilities } from './wmtsCapabilities';
 
 /**
@@ -15,8 +16,9 @@ export default function createWmtsLayer(
   if (!info) return null;
   const options = optionsFromCapabilities(capabilities, { layer: layerName });
   if (!options) return null;
+  const source = new WMTS({ ...options, crossOrigin: 'anonymous', attributions: GPF_ATTRIBUTION });
   return new TileLayer({
-    source: new WMTS({ ...options, crossOrigin: 'anonymous' }),
+    source,
     properties: {
       name: layerName,
       title: info.title,

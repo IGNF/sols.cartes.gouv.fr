@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import { describe, expect, it, vi } from 'vitest';
-import { LAYER_SWITCHER_DIALOG_LABELS, LAYER_SWITCHER_OPTIONS } from '../config/map';
-import useLayerSwitcher, { labelSwitcherDialogs } from './useLayerSwitcher';
+import { GEOPF_DIALOG_LABELS, LAYER_SWITCHER_OPTIONS } from '../config/map';
+import useLayerSwitcher from './useLayerSwitcher';
 
 const constructed: Array<{ options: unknown; element: HTMLElement }> = [];
 
@@ -49,17 +49,6 @@ describe('useLayerSwitcher', () => {
     const { map } = createFakeMap();
     renderHook(() => useLayerSwitcher(map));
     const dialog = constructed[0]?.element.querySelector('#GPlayersList-1');
-    expect(dialog).toHaveAttribute('aria-label', LAYER_SWITCHER_DIALOG_LABELS['GPlayersList']);
-  });
-});
-
-describe('labelSwitcherDialogs', () => {
-  it('conserve un nom existant et ignore les fenêtres inconnues', () => {
-    const root = document.createElement('div');
-    root.innerHTML =
-      '<dialog id="GPlayerStylePanel-2" aria-label="Déjà nommée"></dialog><dialog id="Autre-2"></dialog>';
-    labelSwitcherDialogs(root);
-    expect(root.querySelector('#GPlayerStylePanel-2')).toHaveAttribute('aria-label', 'Déjà nommée');
-    expect(root.querySelector('#Autre-2')).not.toHaveAttribute('aria-label');
+    expect(dialog).toHaveAttribute('aria-label', GEOPF_DIALOG_LABELS['GPlayersList']);
   });
 });

@@ -1,9 +1,11 @@
 import OlMap from 'ol/Map';
+import Rotate from 'ol/control/Rotate';
 import { defaults as defaultControls } from 'ol/control/defaults';
 import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import { useEffect, type RefObject } from 'react';
-import { DEFAULT_CONTROLS_OPTIONS, INITIAL_VIEW } from '../config/map';
+import { CONTROL_LABELS, DEFAULT_CONTROLS_OPTIONS, INITIAL_VIEW } from '../config/map';
+import { labelControlButtons } from '../map/labelControls';
 import { useMapStore } from '../store/useMapStore';
 
 /**
@@ -17,9 +19,13 @@ export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap 
   useEffect(() => {
     const target = targetRef.current;
     if (!target) return undefined;
+    const controls = defaultControls(DEFAULT_CONTROLS_OPTIONS);
+    controls.forEach((control) => {
+      if (control instanceof Rotate) labelControlButtons(control, CONTROL_LABELS.rotate);
+    });
     const instance = new OlMap({
       target,
-      controls: defaultControls(DEFAULT_CONTROLS_OPTIONS),
+      controls,
       view: new View({
         center: fromLonLat([...INITIAL_VIEW.centerLonLat]),
         zoom: INITIAL_VIEW.zoom,
@@ -28,7 +34,14 @@ export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap 
       }),
     });
     setMap(instance);
+    // Keep the canvas in sync with its container (side panel toggled, window resized).
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => instance.updateSize());
+    observer?.observe(target);
     return () => {
+      observer?.disconnect();
       instance.setTarget(undefined);
       instance.dispose();
       setMap(null);

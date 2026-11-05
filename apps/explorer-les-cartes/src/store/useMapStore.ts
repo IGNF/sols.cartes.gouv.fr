@@ -13,20 +13,18 @@ export interface MapState {
   isPanelOpen: boolean;
   setMap: (map: OlMap | null) => void;
   setActiveBaseLayer: (id: BaseLayerId) => void;
-  setPanelOpen: (open: boolean) => void;
   togglePanel: () => void;
 }
 
 export const initialMapState = {
   map: null,
   activeBaseLayerId: DEFAULT_BASE_LAYER_ID,
-  isPanelOpen: false,
+  isPanelOpen: true,
 } satisfies Partial<MapState>;
 
 export const useMapStore = create<MapState>()((set) => ({
   ...initialMapState,
   setMap: (map) => set({ map }),
   setActiveBaseLayer: (activeBaseLayerId) => set({ activeBaseLayerId }),
-  setPanelOpen: (isPanelOpen) => set({ isPanelOpen }),
   togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
 }));

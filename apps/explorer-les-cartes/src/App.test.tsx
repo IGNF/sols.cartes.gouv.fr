@@ -4,8 +4,8 @@ import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
 import { SECTION_PATHS } from './config/urls';
 import App from './App';
 
-vi.mock('./components/map/MapView', () => ({
-  default: function MapViewStub() {
+vi.mock('./components/map/MapExplorer', () => ({
+  default: function MapExplorerStub() {
     return <div data-testid="map-view" />;
   },
 }));

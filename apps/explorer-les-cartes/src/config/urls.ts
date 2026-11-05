@@ -18,6 +18,7 @@ export const SECTION_PATHS = {
 /** External links. */
 export const EXTERNAL_LINKS = {
   gisSol: 'https://www.gissol.fr/',
+  cartesGouv: 'https://cartes.gouv.fr/',
   licenceEtalab: 'https://github.com/etalab/licence-ouverte/blob/master/LO.md',
 } as const;
 

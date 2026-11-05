@@ -8,11 +8,11 @@ describe('useMapStore', () => {
     useMapStore.setState(initialMapState);
   });
 
-  it('démarre sans carte, sur le fond par défaut, panneau fermé', () => {
+  it('démarre sans carte, sur le fond par défaut, panneau des fonds ouvert', () => {
     const state = useMapStore.getState();
     expect(state.map).toBeNull();
     expect(state.activeBaseLayerId).toBe(DEFAULT_BASE_LAYER_ID);
-    expect(state.isPanelOpen).toBe(false);
+    expect(state.isPanelOpen).toBe(true);
   });
 
   it('enregistre puis oublie l’instance de carte', () => {
@@ -23,18 +23,15 @@ describe('useMapStore', () => {
     expect(useMapStore.getState().map).toBeNull();
   });
 
-  it('ouvre, ferme et bascule le panneau', () => {
-    const { setPanelOpen, togglePanel } = useMapStore.getState();
-    setPanelOpen(true);
-    expect(useMapStore.getState().isPanelOpen).toBe(true);
-    togglePanel();
+  it('bascule le panneau des fonds de carte', () => {
+    useMapStore.getState().togglePanel();
     expect(useMapStore.getState().isPanelOpen).toBe(false);
-    togglePanel();
+    useMapStore.getState().togglePanel();
     expect(useMapStore.getState().isPanelOpen).toBe(true);
   });
 
   it('change le fond actif', () => {
-    useMapStore.getState().setActiveBaseLayer('plan-ign');
-    expect(useMapStore.getState().activeBaseLayerId).toBe('plan-ign');
+    useMapStore.getState().setActiveBaseLayer('orthophotos');
+    expect(useMapStore.getState().activeBaseLayerId).toBe('orthophotos');
   });
 });
