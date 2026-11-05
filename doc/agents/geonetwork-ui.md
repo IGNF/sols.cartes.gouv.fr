@@ -296,87 +296,90 @@ capabilities`. Le nom WMTS publié dans le CSW n'existe pas (cf. `doc/agents/gpf
 
 Captures : `doc/screenshots/C3/` (recherche bureau et mobile, menu mobile, pied de page, fiche).
 
-## 10. Lien « Voir sur la carte » (C4)
+## 10. Lien « Voir sur la carte » (C4, format cartes.gouv.fr depuis C6)
 
-Configuration seule, aucun patch (`config/default.toml`, section `[map]`, décision C-3) :
+Configuration seule, aucun patch (`config/default.toml`, section `[map]`). Décision humaine sur C-3 (C6) : même format
+que cartes.gouv.fr, pour l'homogénéité ; seul le domaine est retiré (chemin relatif, même origine) :
 
 ```toml
-external_viewer_url_template = '/explorer-les-cartes/?layer=${layer_name}&type=${service_type}&url=${service_url}'
+external_viewer_url_template = '/explorer-les-cartes/?l=${layer_name}$GEOPORTAIL:${geop_type}:${service_type}(1;1;1;0${tms_style})&permalink=no'
 external_viewer_open_new_tab = false
 ```
 
-- Même onglet (`window.open(url, '_self')`) : la carte est une autre page du même site, comme les liens de navigation.
-- Chemin relatif à la racine : résolu sur l'origine courante, pas de domaine en dur.
+- Même onglet (`window.open(url, '_self')`) : la carte est une autre page du même site.
 - `[translations.fr] record.externalViewer.open = "Voir sur la carte"` : nom accessible (`title`) du bouton icône.
 - `npm test` et `npm run lint` vérifient la valeur exacte du template (`EXTERNAL_VIEWER_TEMPLATE` dans
   `scripts/checks.mjs`) et `external_viewer_open_new_tab = false`.
 
-Où et comment le bouton apparaît (`libs/feature/record/src/lib/external-viewer-button/` à v1.6.2) : dans l'onglet
-« Aperçu > Carte » d'une fiche, à droite des listes « couche » et « style ». Il agit sur le lien de service sélectionné
-dans la liste des couches, donc **un bouton par lien de service**, pas un par fiche. C'est un `<button>` qui appelle
-`window.open`, sans `href`.
+Remplacement des variables (`openInIgnExternalViewer`,
+`libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts` l. 95-133 à v1.6.2, appelé par
+le gabarit du bouton ; `String.replace` : première occurrence seulement, aucune valeur encodée) :
 
-URL observées (build C4, aperçu complet, Playwright : interception de `window.open`, chaque entrée de la liste des
-couches sélectionnée tour à tour, 2026-11-05). `type` arrive en majuscules, `layer` n'est pas encodé, `url` l'est
-(`encodeURIComponent`) :
+| Variable | Lien WMS, WMTS (`else`, l. 120-130) | Lien `maplibre-style`, affiché TMS (l. 103-118) |
+| --- | --- | --- |
+| `${layer_name}` | nom du lien (`link.name`), sinon la traduction `externalviewer.dataset.unnamed` | avant-dernier segment de l'URL du lien (`url.href.split('/')`), ici toujours `style` |
+| `${geop_type}` | `OGC` | `GPP` |
+| `${service_type}` | `WMS`, `WMTS` (majuscules) | `TMS` |
+| `${tms_style}` | vide | `;` + la partie après « ` - ` » du nom du lien (`name.split(' - ')[1]`) |
+| `${service_url}`, `${mime_type}` | non utilisés par ce template | non utilisés |
 
-| Fiche                               | Entrée de la liste                           | Bouton    | URL ouverte                                                                                                                                                          |
-| ----------------------------------- | -------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `osf63e6c177-…` (vibrisses RMQS)    | `vibrisses_rmqs_gpkg_03-09-2026_wmsv (WMS)`  | actif     | `/explorer-les-cartes/?layer=vibrisses_rmqs_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                   |
-|                                     | 3 liens WFS                                  | désactivé | —                                                                                                                                                                    |
-| `osff858525a-…` (stock de carbone)  | `stock_carbone_fao_fr_wmsv (WMS)`            | actif     | `/explorer-les-cartes/?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                             |
-|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
-| `osfde26f53e-…` (cartogrammes RMQS) | `cartogrammes_gpkg_11-09-2026_wmsv (WMS)`    | actif     | `/explorer-les-cartes/?layer=cartogrammes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                     |
-|                                     | `cartogrammes_gpkg_11-09-2026_tms (TMS)`     | actif     | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Ffca2b3ec-0d23-4dfd-baa8-15c10db4bc14_pb_ext_1.json`     |
-|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
-| `osfd95b355a-…` (RRP Landes)        | `rrp_landes_gpkg_11-09-2026_tms (TMS)`       | absent    | —                                                                                                                                                                    |
-|                                     | `rrp_landes_gpkg_11-09-2026_wmsv (WMS)`      | actif     | `/explorer-les-cartes/?layer=rrp_landes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                       |
-|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
-| `1b464210-…` (RRP Gironde)          | `rrp_gironde_gpkg_03-09-2026_tms (TMS)`      | actif     | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json` |
-|                                     | `etude_30110_gpkg_03-09-2026_wmsv (WMS)`     | actif     | `/explorer-les-cartes/?layer=etude_30110_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                      |
-|                                     | 2 liens WFS                                  | désactivé | —                                                                                                                                                                    |
-| `osfc9008138-…` (RRP Loiret)        | `rrp_dept_loiret_gpkg_11-09-2026_wmsv (WMS)` | actif     | `/explorer-les-cartes/?layer=rrp_dept_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                  |
-|                                     | `rrp_loiret_gpkg_11-09-2026_wmsv (WMS)`      | actif     | `/explorer-les-cartes/?layer=rrp_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                       |
-|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
-| `osfd95caa37-…` (sols dominants)    | `INRAE_CARTE-SOLS_WMTS (WMTS)`               | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS_WMTS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`                                                                 |
-|                                     | `inrae_carte_sols_wmsr (WMS)`                | actif     | `/explorer-les-cartes/?layer=inrae_carte_sols_wmsr&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-r%2Fwms`                                                           |
-|                                     | `INRAE_CARTE-SOLS (WMTS)`                    | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`                                                                      |
-|                                     | `INRAE_CARTE-SOLS (WMS)`                     | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                                      |
-|                                     | `etude_34015_gpkg_04-09-2026_wmsv (WMS)`     | actif     | `/explorer-les-cartes/?layer=etude_34015_gpkg_04-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                      |
-|                                     | 2 liens WFS                                  | désactivé | —                                                                                                                                                                    |
+WFS : bouton désactivé par le gabarit amont (« Impossible d'ouvrir ce type de service sur le visualiseur externe »),
+aucune URL. GeoJSON : `openInIgnExternalViewer` le traiterait comme `OGC:GEOJSON`, cas absent des 7 fiches.
 
-Trois exemples pour le lecteur carto (M4), un par type émis :
+Grammaire du paramètre `l`, telle que le lecteur de cartes.gouv.fr la décode (dépôt `IGNF/cartes.gouv.fr-entree-carto`,
+`src/stores/mapStore.js` au commit `f291ae69bc`, commentaire l. 58-67 et `getLayerProperty` l. 483-498) :
 
-- WMS : `/explorer-les-cartes/?layer=rrp_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`
-- WMTS : `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`
-- TMS : `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json`
+```
+l=<identifiant>(<position>;<opacité>;<visible>;<niveaux de gris>[;<style>])[,<couche suivante>...]
+<identifiant> = <nom>$GEOPORTAIL:<OGC|GPP>:<WMS|WMTS|TMS>
+```
 
-Écarts avec le format convenu, tous dus au code IGN (`openInIgnExternalViewer`, l. 95-133) et laissés tels quels (pas
-de patch) :
+Avec le template : position `1`, opacité `1`, visible `1`, niveaux de gris `0`, et pour TMS un cinquième champ `style`.
+`permalink=no` (`src/composables/urlParams.js` l. 90-96, valeurs `yes|no|short`) demande de ne pas réécrire l'URL en
+permalien. Le template ne transmet **pas** l'URL du service : le lecteur doit retrouver la couche par son nom et son type
+dans les services GPF (GetCapabilities).
 
-- `type` en majuscules (`WMS`, `WMTS`, `TMS`) : le lecteur carto compare sans tenir compte de la casse.
-- WFS : bouton désactivé par le gabarit amont (« Impossible d'ouvrir ce type de service sur le visualiseur externe ») ;
-  aucune URL `type=wfs` n'est jamais émise.
-- TMS (liens `maplibre-style`) : `layer` vaut l'avant-dernier segment de l'URL du lien, ici toujours `style`, et `url`
-  est l'URL du **style MapLibre JSON** (pas un point d'accès TMS). Le lecteur carto doit charger ce style pour `type=TMS` et
-  ignorer `layer`. Un patch pourrait remplacer `layer` par le nom du lien CSW, mais la carte a de toute façon besoin du
-  style ; non fait.
-- Landes, lien TMS : bouton absent. La fiche n'a pas de style MapLibre JSON (seulement un `.sld`), alors que Gironde et
-  cartogrammes en ont un : le datahub ne peut pas convertir ce lien TMS en couche `maplibre-style`, et le bouton ne
-  s'affiche que pour un type reconnu. La couche reste accessible par le lien WMS de la même fiche.
-- Les noms et URL sont ceux du CSW, sans validation : quatre noms n'existent pas dans les GetCapabilities
-  (`doc/agents/gpf-sols-data.md` §5) : `INRAE_CARTE-SOLS_WMTS` (WMTS), `inrae_carte_sols_wmsr` (wms-r),
-  `INRAE_CARTE-SOLS` sur `wms-v` et `etude_34015_gpkg_04-09-2026_wmsv` sur `wms-v` ; ce dernier a pourtant un bouton
-  actif dans le tableau ci-dessus. Le lecteur carto doit valider la couche contre les capacités et afficher un message
-  si elle est introuvable. Il doit aussi accepter les deux formes de point d'entrée WMS observées (`https://data.geopf.fr/wms-v`
-  sans chemin, `https://data.geopf.fr/wms-r/wms` avec chemin).
-- `url` est le point d'accès tel qu'écrit dans le CSW (`https://data.geopf.fr/wms-v`, sans `/ows`).
+URL observées (build C6, aperçu complet servi localement, Playwright avec interception de `window.open`, chaque entrée de
+la liste des couches de l'aperçu carte sélectionnée tour à tour, 2026-11-05). Les noms viennent du CSW sans validation :
 
-Console sur les fiches (hors C4, déjà présent avant) : `Invalid layer for legend creation` (§9) et des réponses 400 de
-`https://data.geopf.fr/wms-r?REQUEST=GetMap&...&LAYERS=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` pour certaines tuiles du fond de
-carte `[[map_layer]]` hérité de la config IGN. Piste non traitée : un fond `xyz` sur le WMTS GPF.
+| Fiche | Entrée de la liste | URL ouverte |
+| --- | --- | --- |
+| `osf63e6c177-…` | `vibrisses_rmqs_gpkg_03-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=vibrisses_rmqs_gpkg_03-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| `osff858525a-…` | `stock_carbone_fao_fr_wmsv (WMS)` | `/explorer-les-cartes/?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| `osfde26f53e-…` | `cartogrammes_gpkg_11-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=cartogrammes_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| | `cartogrammes_gpkg_11-09-2026_tms (TMS)` | `/explorer-les-cartes/?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;fca2b3ec-0d23-4dfd-baa8-15c10db4bc14_pb_ext_1)&permalink=no` |
+| `osfd95b355a-…` | `rrp_landes_gpkg_11-09-2026_tms (TMS)` | pas de bouton (aucun style MapLibre JSON dans la fiche) |
+| | `rrp_landes_gpkg_11-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=rrp_landes_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| `1b464210-…` | `rrp_gironde_gpkg_03-09-2026_tms (TMS)` | `/explorer-les-cartes/?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no` |
+| | `etude_30110_gpkg_03-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=etude_30110_gpkg_03-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| `osfc9008138-…` | `rrp_dept_loiret_gpkg_11-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=rrp_dept_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| | `rrp_loiret_gpkg_11-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| `osfd95caa37-…` | `INRAE_CARTE-SOLS_WMTS (WMTS)` | `/explorer-les-cartes/?l=INRAE_CARTE-SOLS_WMTS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no` |
+| | `inrae_carte_sols_wmsr (WMS)` | `/explorer-les-cartes/?l=inrae_carte_sols_wmsr$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| | `INRAE_CARTE-SOLS (WMTS)` | `/explorer-les-cartes/?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no` |
+| | `INRAE_CARTE-SOLS (WMS)` | `/explorer-les-cartes/?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
+| | `etude_34015_gpkg_04-09-2026_wmsv (WMS)` | `/explorer-les-cartes/?l=etude_34015_gpkg_04-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` |
 
-Capture : `doc/screenshots/C4/fiche-voir-sur-la-carte.png` (fiche RRP Loiret, bouton à droite des listes).
+Liens WFS (11 au total) : bouton désactivé. 14 URL émises.
+
+Trois exemples pour le lecteur carto (M4), un par type :
+
+- WMS : `/explorer-les-cartes/?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`
+- WMTS : `/explorer-les-cartes/?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no`
+- TMS : `/explorer-les-cartes/?l=style$GEOPORTAIL:GPP:TMS(1;1;1;0;c9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde)&permalink=no`
+
+Points d'attention pour le lecteur carto :
+
+- `$` et `:` ne sont pas encodés ; `URLSearchParams` les rend tels quels. Un nom de couche n'est jamais encodé.
+- WMS : sans URL de service, le même nom peut exister sur `wms-v` et `wms-r`. Exemple réel : `INRAE_CARTE-SOLS (WMS)`, dont
+  le lien CSW pointe sur `wms-v` alors que la couche n'existe que sur `wms-r` (`doc/agents/gpf-sols-data.md` §5). Chercher
+  le nom dans les capacités des deux services.
+- Noms absents des capacités (`INRAE_CARTE-SOLS_WMTS`, `inrae_carte_sols_wmsr`) : afficher un message plutôt qu'une carte vide.
+- TMS : `layer` vaut toujours `style` (avant-dernier segment de `.../annexes/gissol-osf/style/<fichier>.json`) et le
+  cinquième champ (partie après « - » du nom du lien dans la fiche) vaut ici, pour les deux liens, le nom du fichier de style sans `.json`. Le style MapLibre se trouve donc à
+  `https://data.geopf.fr/annexes/gissol-osf/style/<cinquième champ>.json` (vérifié pour les deux liens TMS) ; le nom de
+  couche TMS du CSW (`*_tms`) n'est pas transmis.
+- Landes, lien TMS : pas de bouton, la fiche n'a qu'un style `.sld` ; le lien WMS de la même fiche fonctionne.
 
 ## 11. Corrections de la passe e2e (C5)
 
