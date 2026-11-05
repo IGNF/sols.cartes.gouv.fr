@@ -1,13 +1,13 @@
 ---
 layout: layouts/base.njk
 ---
-{%- set breadcrumb = [{ label: "Articles", href: site.sections.articles }] -%}
+{%- set breadcrumb = [{ label: t.breadcrumb.articles, href: site.sections.articles }] -%}
 <div class="fr-container fr-pb-8w">
   {% include "partials/breadcrumb.njk" %}
   <div class="fr-grid-row">
     <article class="fr-col-12 fr-col-lg-8">
-      <h1>{{ title }}</h1>
-      <p class="fr-text--sm">Publié le <time datetime="{{ page.date | dateIso }}">{{ page.date | dateFr }}</time></p>
+      <h1>{{ heading }}</h1>
+      <p class="fr-text--sm">{{ t.articles.published }} <time datetime="{{ page.date | dateIso }}">{{ page.date | dateLong(locale) }}</time></p>
       {{ content | safe }}
     </article>
   </div>

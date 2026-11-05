@@ -1,0 +1,5 @@
+    <link rel="alternate" hreflang="{{ alternatesUrl | localeOf }}" href="{{ site.url }}{{ alternatesUrl }}">
+    {%- for alternate in alternatesUrl | locale_links %}
+    <link rel="alternate" hreflang="{{ alternate.lang }}" href="{{ site.url }}{{ alternate.url }}">
+    {%- endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site.url }}{{ alternatesUrl | defaultLocaleUrl }}">

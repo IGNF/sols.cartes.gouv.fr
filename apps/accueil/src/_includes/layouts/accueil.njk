@@ -1,0 +1,89 @@
+---
+layout: layouts/base.njk
+---
+{%- set strings = t.accueil -%}
+<div class="sols-hero fr-py-8w">
+  <div class="fr-container">
+    <div class="fr-grid-row">
+      <div class="fr-col-12 fr-col-lg-8">
+        <p class="sols-overline">{{ strings.hero.overline }}</p>
+        <h1>{{ strings.hero.title }}</h1>
+        <p class="fr-text--lead">{{ strings.hero.intro }}</p>
+        <ul class="fr-btns-group fr-btns-group--inline-md">
+          {%- for action in accueil.actions %}
+          <li><a class="fr-btn{% if not action.primary %} fr-btn--secondary{% endif %}" href="{{ action.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.hero.actions[action.key] }}</a></li>
+          {%- endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="fr-container fr-py-8w" aria-labelledby="titre-service">
+  <p class="sols-overline">{{ strings.service.overline }}</p>
+  <h2 id="titre-service">{{ strings.service.title }}</h2>
+  <p>{{ strings.service.intro }}</p>
+  <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
+    {%- for item in accueil.service %}
+    <li class="fr-col-12 fr-col-md-4">
+      <div class="fr-tile">
+        <div class="fr-tile__body">
+          <div class="fr-tile__content">
+            <h3 class="fr-tile__title">{{ strings.service.items[item.key].title }}</h3>
+            <p class="fr-tile__desc">{{ strings.service.items[item.key].desc }}</p>
+          </div>
+        </div>
+        <div class="fr-tile__header">
+          <div class="fr-tile__pictogram">
+            {%- set pictogram = item.pictogram %}
+            {% include "partials/pictogram.njk" %}
+          </div>
+        </div>
+      </div>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+
+<section class="fr-container fr-pb-8w" aria-labelledby="titre-donnees">
+  <p class="sols-overline">{{ strings.donnees.overline }}</p>
+  <h2 id="titre-donnees">{{ strings.donnees.title }}</h2>
+  <p>{{ strings.donnees.intro }}</p>
+  <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
+    {%- for key in accueil.donnees.items %}
+    <li class="fr-col-12 fr-col-md-4">
+      <div class="fr-card fr-enlarge-link">
+        <div class="fr-card__body">
+          <div class="fr-card__content">
+            <h3 class="fr-card__title"><a href="{{ accueil.donnees.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.donnees.items[key].title }}</a></h3>
+            <p class="fr-card__desc">{{ strings.donnees.items[key].desc }}</p>
+          </div>
+        </div>
+      </div>
+    </li>
+    {%- endfor %}
+  </ul>
+  <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ accueil.donnees.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.donnees.allLabel }}</a></p>
+</section>
+
+<section class="fr-container fr-pb-8w" aria-labelledby="titre-articles">
+  <p class="sols-overline">{{ strings.articles.overline }}</p>
+  <h2 id="titre-articles">{{ strings.articles.title }}</h2>
+  <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
+    {%- for article in (collections.articles | byLocale(locale)).slice(0, accueil.articles.max) %}
+    <li class="fr-col-12 fr-col-md-4">
+      {%- set headingLevel = "h3" %}
+      {% include "partials/article-card.njk" %}
+    </li>
+    {%- endfor %}
+  </ul>
+  <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ accueil.articles.href | locale_url }}">{{ strings.articles.allLabel }}</a></p>
+</section>
+
+<section class="fr-container fr-pb-8w" aria-labelledby="titre-gissol">
+  <div class="fr-callout fr-callout--green-emeraude">
+    <h2 class="fr-callout__title" id="titre-gissol">{{ strings.gissol.title }}</h2>
+    <p class="fr-callout__text">{{ strings.gissol.text }}</p>
+    <a class="fr-btn" href="{{ accueil.gissolHref }}" target="_blank" rel="noopener external" title="{{ strings.gissol.label }} - {{ t.newWindow }}">{{ strings.gissol.label }}</a>
+  </div>
+</section>
