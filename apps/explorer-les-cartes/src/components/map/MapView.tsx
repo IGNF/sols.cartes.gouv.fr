@@ -1,23 +1,26 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import 'geopf-extensions-openlayers/css/Dsfr.css';
 import 'ol/ol.css';
 import { useRef } from 'react';
 import { MAP_LABEL } from '../../config/map';
 import useBaseLayer from '../../hooks/useBaseLayer';
+import useBaseLayerCatalogue from '../../hooks/useBaseLayerCatalogue';
 import useLayerSwitcher from '../../hooks/useLayerSwitcher';
 import useMap from '../../hooks/useMap';
+import useMapControls from '../../hooks/useMapControls';
 import useWmtsCapabilities from '../../hooks/useWmtsCapabilities';
-import { useMapStore } from '../../store/useMapStore';
 import './MapView.css';
 
 export default function MapView() {
   const targetRef = useRef<HTMLDivElement>(null);
   const map = useMap(targetRef);
   const capabilities = useWmtsCapabilities();
-  const activeBaseLayerId = useMapStore((state) => state.activeBaseLayerId);
-  const { isMissing } = useBaseLayer(map, capabilities.data, activeBaseLayerId);
+  const { layers, activeLayer } = useBaseLayerCatalogue();
+  useBaseLayer(map, capabilities.data, activeLayer?.layerName);
+  useMapControls(map);
   useLayerSwitcher(map);
+
+  const isEmpty = capabilities.isSuccess && layers.length === 0;
 
   return (
     <>
@@ -26,15 +29,15 @@ export default function MapView() {
           className={fr.cx('fr-mb-2w')}
           severity="error"
           small
-          description="Le fond de carte de la Géoplateforme n’a pas pu être chargé. Réessayez plus tard."
+          description="Les fonds de carte de la Géoplateforme n’ont pas pu être chargés. Réessayez plus tard."
         />
       )}
-      {isMissing && (
+      {isEmpty && (
         <Alert
           className={fr.cx('fr-mb-2w')}
           severity="warning"
           small
-          description="Le fond de carte demandé n’est plus publié par la Géoplateforme."
+          description="Aucun fond de carte prévu n’est publié par la Géoplateforme."
         />
       )}
       <p className={fr.cx('fr-sr-only')} role="status">

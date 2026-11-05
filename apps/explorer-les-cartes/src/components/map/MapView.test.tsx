@@ -4,26 +4,38 @@ import { MAP_LABEL } from '../../config/map';
 import MapView from './MapView';
 
 const state = vi.hoisted(() => ({
-  capabilities: { data: undefined, isPending: true, isError: false } as Record<string, unknown>,
-  isMissing: false,
+  capabilities: {} as Record<string, unknown>,
+  catalogue: { layers: [] as unknown[], activeLayer: undefined as unknown },
+  useBaseLayer: vi.fn(),
+  useMapControls: vi.fn(),
   useLayerSwitcher: vi.fn(),
 }));
 
 vi.mock('../../hooks/useMap', () => ({ default: () => null }));
 vi.mock('../../hooks/useWmtsCapabilities', () => ({ default: () => state.capabilities }));
-vi.mock('../../hooks/useBaseLayer', () => ({ default: () => ({ isMissing: state.isMissing }) }));
+vi.mock('../../hooks/useBaseLayerCatalogue', () => ({ default: () => state.catalogue }));
+vi.mock('../../hooks/useBaseLayer', () => ({ default: state.useBaseLayer }));
+vi.mock('../../hooks/useMapControls', () => ({ default: state.useMapControls }));
 vi.mock('../../hooks/useLayerSwitcher', () => ({ default: state.useLayerSwitcher }));
+
+const PLAN_IGN = {
+  id: 'plan-ign',
+  layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+  title: 'Plan IGN',
+};
 
 describe('MapView', () => {
   beforeEach(() => {
-    state.capabilities = { data: undefined, isPending: true, isError: false };
-    state.isMissing = false;
+    state.capabilities = { data: undefined, isPending: true, isError: false, isSuccess: false };
+    state.catalogue = { layers: [], activeLayer: undefined };
+    vi.clearAllMocks();
   });
 
-  it('expose une zone cartographique nommée et atteignable au clavier', () => {
+  it('expose une zone cartographique nommée et atteignable au clavier, avec ses outils', () => {
     render(<MapView />);
     const region = screen.getByRole('region', { name: MAP_LABEL });
     expect(region).toHaveAttribute('tabindex', '0');
+    expect(state.useMapControls).toHaveBeenCalled();
     expect(state.useLayerSwitcher).toHaveBeenCalled();
   });
 
@@ -33,17 +45,25 @@ describe('MapView', () => {
     expect(screen.getByRole('region', { name: MAP_LABEL })).toHaveAttribute('aria-busy', 'true');
   });
 
-  it('affiche une alerte quand les capacités ne sont pas disponibles', () => {
-    state.capabilities = { data: undefined, isPending: false, isError: true };
+  it('affiche le fond actif du catalogue', () => {
+    const data = {};
+    state.capabilities = { data, isPending: false, isError: false, isSuccess: true };
+    state.catalogue = { layers: [PLAN_IGN], activeLayer: PLAN_IGN };
     render(<MapView />);
-    expect(screen.getByText(/n’a pas pu être chargé/)).toBeInTheDocument();
+    expect(state.useBaseLayer).toHaveBeenCalledWith(null, data, PLAN_IGN.layerName);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('affiche une alerte quand les capacités ne sont pas disponibles', () => {
+    state.capabilities = { data: undefined, isPending: false, isError: true, isSuccess: false };
+    render(<MapView />);
+    expect(screen.getByText(/n’ont pas pu être chargés/)).toBeInTheDocument();
     expect(screen.getByRole('status')).toBeEmptyDOMElement();
   });
 
-  it('affiche une alerte quand le fond n’est plus publié', () => {
-    state.capabilities = { data: {}, isPending: false, isError: false };
-    state.isMissing = true;
+  it('affiche une alerte quand aucun fond prévu n’est publié', () => {
+    state.capabilities = { data: {}, isPending: false, isError: false, isSuccess: true };
     render(<MapView />);
-    expect(screen.getByText(/n’est plus publié/)).toBeInTheDocument();
+    expect(screen.getByText(/Aucun fond de carte prévu/)).toBeInTheDocument();
   });
 });
