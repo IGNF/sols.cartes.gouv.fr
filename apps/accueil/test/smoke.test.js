@@ -89,6 +89,11 @@ describe('pages du pied de page', () => {
     expect(html).toContain('class="fr-breadcrumb"');
   });
 
+  test('le plan du site lie les pages du pied de page', () => {
+    const html = read(site.sections.planDuSite);
+    for (const url of FOOTER_PAGES) expect(html).toContain(`<li><a href="${url}"`);
+  });
+
   test('le plan du site liste toutes les sections', () => {
     const html = read(site.sections.planDuSite);
     for (const link of [...site.header.nav, ...site.footer.bottomLinks]) {
