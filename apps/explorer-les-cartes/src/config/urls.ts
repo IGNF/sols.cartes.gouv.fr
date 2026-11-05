@@ -43,3 +43,12 @@ export const GPF_ENDPOINTS = {
   tms: 'https://data.geopf.fr/tms/1.0.0',
   csw: 'https://data.geopf.fr/csw/gissol-osf_c',
 } as const;
+
+/** Builds an OGC GetCapabilities URL for a GPF endpoint. */
+export function buildCapabilitiesUrl(endpoint: string, service: string, version: string): string {
+  const url = new URL(endpoint);
+  url.searchParams.set('SERVICE', service);
+  url.searchParams.set('VERSION', version);
+  url.searchParams.set('REQUEST', 'GetCapabilities');
+  return url.toString();
+}
