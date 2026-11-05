@@ -49,6 +49,13 @@ export default {
     href: site.sections.rechercherUneDonnee,
     allLabel: 'Voir toutes les données',
   },
+  articles: {
+    overline: 'Articles',
+    title: 'Derniers articles',
+    max: 3,
+    href: site.sections.articles,
+    allLabel: 'Voir tous les articles',
+  },
   gissol: {
     title: 'Le GIS Sol',
     text: 'Présentation courte du groupement d’intérêt scientifique Sol (texte provisoire).',

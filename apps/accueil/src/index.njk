@@ -69,6 +69,21 @@ title: Observatoire des sols
   <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ donnees.href }}">{{ donnees.allLabel }}</a></p>
 </section>
 
+{%- set articles = accueil.articles %}
+<section class="fr-container fr-pb-8w" aria-labelledby="titre-articles">
+  <p class="sols-overline">{{ articles.overline }}</p>
+  <h2 id="titre-articles">{{ articles.title }}</h2>
+  <ul class="fr-grid-row fr-grid-row--gutters fr-raw-list">
+    {%- for article in collections.articles.slice(0, articles.max) %}
+    <li class="fr-col-12 fr-col-md-4">
+      {%- set headingLevel = "h3" %}
+      {% include "partials/article-card.njk" %}
+    </li>
+    {%- endfor %}
+  </ul>
+  <p class="fr-mt-4w"><a class="fr-btn fr-btn--tertiary" href="{{ articles.href }}">{{ articles.allLabel }}</a></p>
+</section>
+
 {%- set gissol = accueil.gissol %}
 <section class="fr-container fr-pb-8w" aria-labelledby="titre-gissol">
   <div class="fr-callout fr-callout--green-emeraude">
