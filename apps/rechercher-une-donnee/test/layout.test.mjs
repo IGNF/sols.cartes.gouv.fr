@@ -4,13 +4,26 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 import { APP_DIR, CONFIG_FILE, PATCHES_DIR, patchedFiles, readUpstream } from '../scripts/lib.mjs'
 import {
+  addBadge,
   assertStaticTemplate,
   buildLayout,
   duplicateToolLinks,
   extractBlock,
+  extractSharedCss,
+  innerOfDiv,
   readLayout,
-  setCurrentSection,
+  readSharedCss,
+  rewriteAssetPaths,
 } from '../scripts/layout.mjs'
+
+const header = [
+  '<header><div class="fr-header__service"><p class="fr-header__service-title">sols.cartes.gouv.fr</p></div>',
+  '<div class="fr-header__tools-links"><div class="fr-nav"><div class="fr-nav__item">',
+  '<button aria-controls="menu-help">Aide</button><div class="fr-collapse" id="menu-help"></div>',
+  '</div></div></div>',
+  '<div class="fr-header__menu-links"></div>',
+  '<img src="/assets/brand/logo.png"></header>',
+].join('')
 
 const doc = [
   "Liens d'évitement (premier enfant de `body`) :",
@@ -23,35 +36,42 @@ const doc = [
   'En-tête :',
   '',
   '```html',
-  '<header><div class="fr-header__tools-links">',
-  '<ul class="fr-btns-group"><li>GIS</li></ul>',
-  '</div><div class="fr-header__menu-links"></div>',
-  '<a class="fr-nav__link" href="/" target="_self" aria-current="page">Accueil</a>',
-  '<a class="fr-nav__link" href="/rechercher-une-donnee/" target="_self">Rechercher</a></header>',
+  header,
   '```',
   '',
-  'Pied de page :',
+  "Pied de page et modale « Paramètres d'affichage » :",
   '',
   '```html',
-  '<footer id="pied-de-page"></footer>',
+  '<footer id="pied-de-page"></footer><dialog id="fr-theme-modal"><use href="/dsfr/artwork/x.svg#a"></use></dialog>',
   '```',
 ].join('\n')
 
 test('extractBlock reads the html block after its label', () => {
-  assert.equal(extractBlock(doc, 'Pied de page'), '<footer id="pied-de-page"></footer>')
+  assert.match(extractBlock(doc, 'Pied de page'), /^<footer id="pied-de-page">/)
   assert.throws(() => extractBlock(doc, 'Absent'), /no html block/)
 })
 
-test('setCurrentSection moves aria-current to the catalogue entry', () => {
-  const header = setCurrentSection(extractBlock(doc, 'En-tête'), '/rechercher-une-donnee/')
-  assert.equal((header.match(/aria-current="page"/g) ?? []).length, 1)
-  assert.match(header, /href="\/rechercher-une-donnee\/" target="_self" aria-current="page">/)
-  assert.throws(() => setCurrentSection(header, '/absent/'), /no nav link/)
+test('addBadge puts the brick badge in the service title', () => {
+  assert.match(
+    addBadge(header, 'Rechercher'),
+    /sols.cartes.gouv.fr<span class="fr-badge fr-badge--sm fr-badge--green-menthe">Rechercher<\/span><\/p>/
+  )
+  assert.equal(addBadge(header, null), header)
+  assert.throws(() => addBadge('<header></header>', 'x'), /service title/)
 })
 
-test('duplicateToolLinks fills the mobile menu links', () => {
-  const header = duplicateToolLinks(extractBlock(doc, 'En-tête'))
-  assert.match(header, /<div class="fr-header__menu-links"><ul class="fr-btns-group"><li>GIS<\/li><\/ul><\/div>/)
+test('duplicateToolLinks copies the tool menus into the mobile menu with -mobile ids', () => {
+  const out = duplicateToolLinks(header)
+  const mobile = innerOfDiv(out, '<div class="fr-header__menu-links">')
+  assert.match(mobile, /id="menu-help-mobile"/)
+  assert.match(mobile, /aria-controls="menu-help-mobile"/)
+  assert.match(out, /<div class="fr-header__tools-links">.*id="menu-help"/)
+  assert.equal((out.match(/fr-nav__item--align-right/g) ?? []).length, 2)
+})
+
+test('rewriteAssetPaths serves brand images and DSFR artwork under the base href', () => {
+  const out = rewriteAssetPaths('<img src="/assets/brand/a.png"><use href="/dsfr/artwork/b.svg#c">', '/r/')
+  assert.equal(out, '<img src="/r/assets/brand/a.png"><use href="/r/assets/dsfr/artwork/b.svg#c">')
 })
 
 test('assertStaticTemplate rejects Angular syntax', () => {
@@ -60,17 +80,29 @@ test('assertStaticTemplate rejects Angular syntax', () => {
 })
 
 test('buildLayout returns the three blocks', () => {
-  assert.deepEqual(Object.keys(buildLayout(doc, '/rechercher-une-donnee/')), ['skiplinks', 'header', 'footer'])
+  const layout = buildLayout(doc, { baseHref: '/r/', badge: 'Rechercher' })
+  assert.deepEqual(Object.keys(layout), ['skiplinks', 'header', 'footer'])
+  assert.match(layout.footer, /href="\/r\/assets\/dsfr\/artwork\/x.svg#a"/)
 })
 
-test('the real edito reference produces the catalogue header and footer', () => {
+test('extractSharedCss keeps only the shared header/footer rules', () => {
+  const css = '.hero { color: red; }\n.sols-operator { gap: 1rem; }\n@media (min-width: 62em) { .hero { x: y; } .sols-tool-menu { position: relative; } }\n.sols-tool-menu__btn::after { mask-image: url(../dsfr/icons/a.svg); }'
+  const out = extractSharedCss(css, '/r/')
+  assert.doesNotMatch(out, /hero/)
+  assert.match(out, /@media \(min-width: 62em\) \{\n {2}\.sols-tool-menu \{/)
+  assert.match(out, /url\(\/r\/assets\/dsfr\/icons\/a.svg\)/)
+})
+
+test('the real edito reference produces the v1 catalogue header and footer', () => {
   const layout = readLayout(readUpstream().baseHref)
-  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr<\/p>/)
+  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr<span class="fr-badge[^"]*">Rechercher<\/span><\/p>/)
   assert.match(layout.header, /Observatoire des sols de France/)
-  assert.match(layout.header, /href="\/rechercher-une-donnee\/" target="_self" aria-current="page"/)
-  assert.match(layout.header, /<div class="fr-header__menu-links"><ul class="fr-btns-group">/)
+  assert.match(layout.header, /id="menu-services-mobile"/)
+  assert.match(layout.header, /src="\/rechercher-une-donnee\/assets\/brand\/logo-gissol.png"/)
   assert.match(layout.footer, /id="pied-de-page"/)
+  assert.match(layout.footer, /<dialog id="fr-theme-modal"/)
   assert.match(layout.skiplinks, /href="#contenu"/)
+  assert.match(readSharedCss('/rechercher-une-donnee/'), /\.sols-partner-logo/)
 })
 
 test('patch 0003 only touches the expected upstream files', () => {
@@ -123,5 +155,6 @@ test('the CSS overrides ship in overlay/ and are loaded by the build (patch 0003
   const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
   assert.match(css, /gn-ui-sticky-header/)
   const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
-  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-overrides.css",$/m)
+  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-overrides.css",?$/m)
+  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-shared.css",?$/m)
 })
