@@ -1,0 +1,64 @@
+diff --git a/apps/datahub/src/app/home/home-header/home-header.component.html b/apps/datahub/src/app/home/home-header/home-header.component.html
+index f9d789c..79d8b94 100644
+--- a/apps/datahub/src/app/home/home-header/home-header.component.html
++++ b/apps/datahub/src/app/home/home-header/home-header.component.html
+@@ -39,6 +39,8 @@
+       <div
+         class="flex flex-wrap h-0 py-5 gap-3"
+         [style.opacity]="-0.6 + expandRatio * 2"
++        role="group"
++        aria-label="Mots-clés suggérés"
+       >
+         @if (showFavoritesButton$ | async) {
+           <datahub-header-badge-button
+@@ -75,7 +77,10 @@
+               <button
+                 type="button"
+                 class="badge-btn text-primary-white bg-primary/50 hover:bg-primary/100"
+-                (click)="clearSearchAndFilterAndSort(preset)"
++                [attr.aria-pressed]="
++                  isKeywordPresetActive(preset, selectedKeywords$ | async)
++                "
++                (click)="toggleKeywordPreset(preset)"
+               >
+                 <span translate>{{ preset['name'] }}</span>
+               </button>
+diff --git a/apps/datahub/src/app/home/home-header/home-header.component.ts b/apps/datahub/src/app/home/home-header/home-header.component.ts
+index f8661d6..fafe09c 100644
+--- a/apps/datahub/src/app/home/home-header/home-header.component.ts
++++ b/apps/datahub/src/app/home/home-header/home-header.component.ts
+@@ -28,7 +28,7 @@ import {
+ } from '@geonetwork-ui/common/domain/model/search'
+ import { map } from 'rxjs/operators'
+ import { ROUTER_ROUTE_NEWS } from '../../router/constants'
+-import { lastValueFrom, of } from 'rxjs'
++import { firstValueFrom, lastValueFrom, of } from 'rxjs'
+ import { CatalogRecord } from '@geonetwork-ui/common/domain/model/record'
+ import { sortByFromString } from '@geonetwork-ui/util/shared'
+ import { PlatformServiceInterface } from '@geonetwork-ui/common/domain/platform.service.interface'
+@@ -121,6 +121,25 @@ export class HomeHeaderComponent {
+     this.searchService.setSortAndFilters({}, sort)
+   }
+ 
++  // Sols: keyword presets are toggle chips (aria-pressed); see doc/catalogue-patches.md
++  selectedKeywords$ = this.routerFacade.searchParams$.pipe(
++    map((params) => [].concat(params['keyword'] ?? []) as string[])
++  )
++
++  isKeywordPresetActive(preset: SearchPreset, selected: string[] | null) {
++    const keywords = [].concat(preset.filters['keyword'] ?? []) as string[]
++    return keywords.length > 0 && keywords.every((k) => selected?.includes(k))
++  }
++
++  async toggleKeywordPreset(preset: SearchPreset) {
++    const keywords = [].concat(preset.filters['keyword'] ?? []) as string[]
++    const selected = await firstValueFrom(this.selectedKeywords$)
++    const next = this.isKeywordPresetActive(preset, selected)
++      ? selected.filter((k) => !keywords.includes(k))
++      : [...new Set([...selected, ...keywords])]
++    this.routerFacade.updateSearch({ keyword: next.length ? next : undefined })
++  }
++
+   async clearSearchAndFilterAndSort(customSearchParameters: SearchPreset) {
+     const searchFilters = await lastValueFrom(
+       this.fieldsService.buildFiltersFromFieldValues(
