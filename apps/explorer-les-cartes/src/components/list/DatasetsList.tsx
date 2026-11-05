@@ -59,9 +59,8 @@ export default function DatasetsList() {
                         <li key={`${layer.service}:${layer.name}`}>
                           {SERVICE_LABELS[layer.service]} : <code>{layer.name}</code> –{' '}
                           <a href={serviceEndpointUrl(layer)}>
-                            point d’accès
+                            point d’accès{' '}
                             <span className={fr.cx('fr-sr-only')}>
-                              {' '}
                               {SERVICE_LABELS[layer.service]} {layer.name}
                             </span>
                           </a>
@@ -70,8 +69,8 @@ export default function DatasetsList() {
                               {' '}
                               –{' '}
                               <a href={mapLink}>
-                                voir sur la carte
-                                <span className={fr.cx('fr-sr-only')}> : {layer.title}</span>
+                                voir sur la carte{' '}
+                                <span className={fr.cx('fr-sr-only')}>: {layer.title}</span>
                               </a>
                             </>
                           )}
@@ -82,8 +81,8 @@ export default function DatasetsList() {
                 )}
                 <p className={fr.cx('fr-mt-2w')}>
                   <a className={fr.cx('fr-link')} href={catalogueRecordPath(dataset.id)}>
-                    Fiche de la donnée dans le catalogue
-                    <span className={fr.cx('fr-sr-only')}> : {dataset.title}</span>
+                    Fiche de la donnée dans le catalogue{' '}
+                    <span className={fr.cx('fr-sr-only')}>: {dataset.title}</span>
                   </a>
                 </p>
               </article>

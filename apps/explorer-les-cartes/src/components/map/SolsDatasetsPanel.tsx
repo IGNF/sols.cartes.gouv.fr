@@ -89,8 +89,8 @@ export default function SolsDatasetsPanel() {
                     }
                   }}
                 >
-                  {isOnMap ? 'Retirer de la carte' : 'Ajouter à la carte'}
-                  <span className={fr.cx('fr-sr-only')}> : {dataset.title}</span>
+                  {isOnMap ? 'Retirer de la carte' : 'Ajouter à la carte'}{' '}
+                  <span className={fr.cx('fr-sr-only')}>: {dataset.title}</span>
                 </Button>
               ) : (
                 <p className={fr.cx('fr-text--xs', 'fr-mb-0')}>
