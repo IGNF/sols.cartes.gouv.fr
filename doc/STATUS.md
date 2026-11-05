@@ -31,7 +31,7 @@
 | X8   | root      | done               | #38      | doc/v0/REPORT.md, final status (merged without agent review at the usage cut; superseded by X9).                                               |
 | C7   | catalogue | done               | #40      | Record page: 0 critical/serious axe (patch 0004 + overlay CSS), search gap collapsed, preview base map on Plan IGN WMTS.                       |
 | X9   | root      | done               | #41      | Closing update of STATUS and REPORT after M6, C7 and T2.                                                                                       |
-| X11  | root      | in review          |          | v1: shared `@sols/brand` package (header/footer spec, logos, illustrations), refine.md and figma skill committed.                              |
+| X11  | root      | in review          | #43      | v1: shared `@sols/brand` package (header/footer spec, logos, illustrations), refine.md and figma skill committed.                              |
 | E7   | edito     | todo               |          | v1 header/footer (brand package), help page, no nav bar, display settings.                                                                     |
 | E8   | edito     | todo               |          | v1 home content from Figma: texts, use-case illustrations, data cards, agenda carousel, partners.                                              |
 | C8   | catalogue | todo               |          | v1 header/footer from the edito reference, badge « Rechercher ».                                                                               |

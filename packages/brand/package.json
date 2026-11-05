@@ -9,5 +9,10 @@
     "./brand.json": "./brand.json",
     "./assets/*": "./assets/*"
   },
-  "files": ["index.js", "brand.json", "assets", "README.md"]
+  "files": [
+    "index.js",
+    "brand.json",
+    "assets",
+    "README.md"
+  ]
 }
