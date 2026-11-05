@@ -171,11 +171,11 @@ par catégorie (~40 ko chacune), le build extrait la règle de chaque icône lis
 `DSFR_ICONS`. Les classes utilitaires de couleur de fond (`fr-background-*`) ne sont pas dans `dsfr.min.css` :
 utiliser les jetons (`var(--background-alt-blue-france)`) dans `site.css`.
 
-JS : en plus du carrousel de l'agenda (`/js/carousel.js`, accueil seulement), le bundle DSFR est chargé pour les
+JS : en plus du carrousel de l'agenda (`/js/carousel.js`, accueil seulement) et de `/js/header.js` (Échap dans les
+sous-menus du menu mobile, voir « En-tête et pied de page partagés »), le bundle DSFR est chargé pour les
 composants interactifs (menu mobile de l'en-tête en modale, menus « Aide » /
 « Services », sélecteur de langue, fil d'Ariane repliable, accordéons de l'aide, paramètres d'affichage et schéma
-clair / sombre `data-fr-scheme="system"`). Aucun autre JS client ; les pages
-de renvoi n'en chargent aucun.
+clair / sombre `data-fr-scheme="system"`). Aucun autre JS client ; les pages de renvoi n'en chargent aucun.
 
 ## Gabarit de base
 
@@ -248,6 +248,33 @@ d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. 
 3. « Pied de page et modale « Paramètres d'affichage » » : de `<footer class="fr-footer" ...>` jusqu'à `</dialog>`
    inclus, c'est-à-dire `footer#pied-de-page` puis `dialog#fr-theme-modal`, frères, à insérer tels quels à la fin du
    `body` (avant les scripts).
+
+**Échap dans le menu mobile (E9, défaut D-edito-2)** : en dessous du point de rupture LG, les menus d'outils sont
+recopiés dans la modale `#menu-principal`. DSFR 1.14.2 ne traite Échap pour un `fr-nav__item` ouvert qu'en LG
+(`Navigation._keydown`, `hasOpenedMenu`) ; ailleurs `Modal._escape` ferme toute la modale, et aucun attribut ni option
+DSFR ne change cet ordre. `apps/accueil/src/js/header.js` (chargé en module après `dsfr.module.min.js` sur chaque
+page) écoute `keydown` en phase de capture sur `document`, donc avant l'écouteur racine DSFR (capture sur `<html>`) :
+si le focus est dans un `.fr-header__menu-links .fr-nav__item` dont le bouton est ouvert, il referme ce sous-menu par
+son bouton (bascule DSFR), rend le focus au bouton et arrête la propagation ; le second Échap ferme la modale (focus
+rendu au bouton « Menu »), comme sur la carto. Bureau inchangé (DSFR ferme le menu et rend le focus). Les briques qui
+reprennent l'en-tête doivent embarquer ce script (ou son équivalent) :
+
+```js
+document.addEventListener(
+  'keydown',
+  (event) => {
+    if (event.key !== 'Escape') return;
+    const item = event.target.closest?.('.fr-header__menu-links .fr-nav__item');
+    const button = item?.querySelector('button[aria-expanded="true"]');
+    if (!button) return;
+    event.stopPropagation();
+    event.preventDefault();
+    button.click();
+    button.focus();
+  },
+  { capture: true },
+);
+```
 
 Ressources requises par ces blocs : `/assets/brand/*` (images de `@sols/brand`, copiées telles quelles depuis
 `packages/brand/assets/`, sans transformation, et republiées sous le chemin public de la brique), pictogrammes DSFR `artwork/pictograms/environment/{sun,moon}.svg` et `system/system.svg`, icônes
