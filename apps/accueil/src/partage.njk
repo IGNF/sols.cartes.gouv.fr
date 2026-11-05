@@ -10,8 +10,8 @@ shared: true
   <head>
 {% include "partials/head-common.njk" %}
     <meta name="robots" content="noindex">
-    <title>En-tête et pied de page partagés - {{ t.name }}</title>
-    <meta name="description" content="Référence technique : en-tête et pied de page communs aux briques de sols.cartes.gouv.fr.">
+    <title>{{ t.partage.title }} - {{ t.name }}</title>
+    <meta name="description" content="{{ t.partage.description }}">
     <link rel="canonical" href="{{ site.url }}{{ page.url }}">
   </head>
   <body>
@@ -19,8 +19,8 @@ shared: true
     {% include "partials/header.njk" %}
     <main id="contenu" tabindex="-1">
       <div class="fr-container fr-py-6w">
-        <h1>En-tête et pied de page partagés</h1>
-        <p>Page technique non indexée : balisage commun repris par les briques catalogue et carto.</p>
+        <h1>{{ t.partage.title }}</h1>
+        <p>{{ t.partage.body }}</p>
       </div>
     </main>
     {% include "partials/footer.njk" %}

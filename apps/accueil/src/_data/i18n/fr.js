@@ -62,6 +62,12 @@ export default {
     intro: 'Vous allez être redirigé vers la version française.',
     link: 'Version française',
   },
+  partage: {
+    title: 'En-tête et pied de page partagés',
+    description:
+      'Référence technique : en-tête et pied de page communs aux briques de sols.cartes.gouv.fr.',
+    body: 'Page technique non indexée : balisage commun repris par les briques catalogue et carto.',
+  },
   pages: {
     accueil: { title: 'Observatoire des sols', description },
     accessibilite: {
