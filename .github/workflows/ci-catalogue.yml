@@ -1,0 +1,32 @@
+name: CI catalogue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/rechercher-une-donnee/**'
+      - '.github/workflows/ci-catalogue.yml'
+  pull_request:
+    paths:
+      - 'apps/rechercher-une-donnee/**'
+      - '.github/workflows/ci-catalogue.yml'
+
+jobs:
+  catalogue:
+    name: Lint, test, build (apps/rechercher-une-donnee)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/rechercher-une-donnee
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/rechercher-une-donnee/package-lock.json
+      - run: npm ci
+      - run: npm run lint --if-present
+      - run: npm run test --if-present
+      - run: npm run build

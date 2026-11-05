@@ -1,0 +1,35 @@
+name: CI carto
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/explorer-les-cartes/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/ci-carto.yml'
+  pull_request:
+    paths:
+      - 'apps/explorer-les-cartes/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/ci-carto.yml'
+
+jobs:
+  carto:
+    name: Lint, type-check, test, build (apps/explorer-les-cartes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/explorer-les-cartes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      - run: bun run lint
+      - run: bun run typecheck
+      - run: bun run test
+      - run: bun run build

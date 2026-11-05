@@ -1,0 +1,34 @@
+name: CI edito
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/accueil/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/ci-edito.yml'
+  pull_request:
+    paths:
+      - 'apps/accueil/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/ci-edito.yml'
+
+jobs:
+  edito:
+    name: Lint, test, build (apps/accueil)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/accueil
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      - run: bun run lint
+      - run: bun run test
+      - run: bun run build
