@@ -2,8 +2,8 @@
 
 | Task | Brick | Status | PR | Notes |
 |---|---|---|---|---|
-| X1 | root | in progress | | Monorepo root, bun workspaces, doc/, preflight. |
-| X2 | root | todo | | Agent definition files. |
+| X1 | root | done | #11 | Monorepo root, bun workspaces, doc/, preflight. |
+| X2 | root | in progress | | Agent definition files; not loadable mid-session, general-purpose fallback used in v0. |
 | E1 | edito | todo | | |
 | E2 | edito | todo | | |
 | E3 | edito | todo | | |
