@@ -17,25 +17,85 @@ interface CustomEventSource {
   on(type: string, listener: (event: unknown) => void): unknown;
 }
 
+/** CSS hooks on the tool widgets (layout rules in MapView.css). */
+export const TOOL_CLASS = 'map-tool';
+export const LISTABLE_TOOL_CLASS = 'map-tool--listable';
+
+/** Entries of the « Mes outils » list (upstream `li[role=button]`, made `menuitem` by fixToolButtons). */
+const MENU_ITEMS =
+  '[id^="GPcontrolListPanel-"] li[role="menuitem"], [id^="GPcontrolListPanel-"] li[role="button"]';
+
 /**
  * Choosing an entry of « Mes outils » empties the list (the focused `<li>` disappears, focus lands on
  * the body): give it back to the « Mes outils » button, the only way to reach the tools below 48em.
+ * The focus moves in a later task: the entry is activated on `keydown`, and Enter would otherwise
+ * activate the newly focused button in the same event and reopen the list.
  */
 export function returnFocusOnCollapse(controlList: object, element: HTMLElement): void {
   const toggle = element.querySelector('button');
   (controlList as CustomEventSource).on('change:collapsed', () => {
-    if (
-      toggle?.getAttribute('aria-pressed') === 'false' &&
-      document.activeElement === document.body
-    ) {
-      toggle.focus();
-    }
+    if (toggle?.getAttribute('aria-pressed') !== 'false') return;
+    window.setTimeout(() => {
+      if (document.activeElement === document.body) toggle.focus();
+    }, 0);
   });
 }
 
-/** CSS hooks on the tool widgets (layout rules in MapView.css). */
-export const TOOL_CLASS = 'map-tool';
-export const LISTABLE_TOOL_CLASS = 'map-tool--listable';
+/**
+ * Keyboard of the « Mes outils » menu (WAI-ARIA menu button pattern on the upstream list): one tab stop
+ * (roving `tabindex`, first entry focused when the list opens), ArrowUp/ArrowDown (wrapping), Home/End,
+ * Escape closes the list (focus back to the button through returnFocusOnCollapse). Enter/Space are
+ * handled by the control; their default action is prevented so nothing else is activated or scrolled.
+ */
+export function menuKeyboard(controlList: object, element: HTMLElement): void {
+  const toggle = element.querySelector('button');
+  const items = () => Array.from(element.querySelectorAll<HTMLElement>(MENU_ITEMS));
+  (controlList as CustomEventSource).on('change:collapsed', () => {
+    if (toggle?.getAttribute('aria-pressed') !== 'true') return;
+    items().forEach((item, index) => item.setAttribute('tabindex', index === 0 ? '0' : '-1'));
+    items()[0]?.focus();
+  });
+  // Capture phase: the control's own keydown handler (Enter/Space) empties the list before bubbling.
+  element.addEventListener(
+    'keydown',
+    (event) => {
+      const target = event.target instanceof HTMLElement ? event.target : null;
+      const list = items();
+      const index = target ? list.indexOf(target) : -1;
+      if (index < 0) return;
+      const moveTo = (next: number) => {
+        const item = list[(next + list.length) % list.length];
+        if (!item) return;
+        list.forEach((entry) => entry.setAttribute('tabindex', entry === item ? '0' : '-1'));
+        item.focus();
+      };
+      switch (event.key) {
+        case 'ArrowDown':
+          moveTo(index + 1);
+          break;
+        case 'ArrowUp':
+          moveTo(index - 1);
+          break;
+        case 'Home':
+          moveTo(0);
+          break;
+        case 'End':
+          moveTo(list.length - 1);
+          break;
+        case 'Escape':
+          toggle?.click();
+          break;
+        case 'Enter':
+        case ' ':
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    },
+    true,
+  );
+}
 
 /**
  * Instantiates the tool set of the cartes.gouv.fr map viewer (doc/agents/geopf-ext.md §10), in the order
@@ -50,6 +110,7 @@ export function createMapTools(tools: MapToolsModule): Control[] {
   labelToggleButton(controlElement(controlList), CONTROL_LABELS.controlList);
   fixToolButtons(controlElement(controlList));
   returnFocusOnCollapse(controlList, controlElement(controlList));
+  menuKeyboard(controlList, controlElement(controlList));
   const territories = tools.TERRITORIES.filter(
     (territory) => !EXCLUDED_TERRITORY_IDS.includes(territory.id),
   );

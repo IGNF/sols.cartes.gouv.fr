@@ -513,13 +513,19 @@ hors du chargement initial).
    « Retirer le territoire : <titre> ». Bouton de `ControlList` nommé « Afficher plus » : renommé.
 7. Les `<li>` de « Mes outils » ont `role="button"` et `tabindex="0"` (Entrée/Espace gérés), pas de `aria-pressed` : rôle interdit sur un
    `li` (axe `aria-allowed-role`) et `<ul>` sans élément de liste (axe `list`, sérieux). `fixToolButtons` en fait un menu (`ul`
-   `role="menu"`, `li` `role="menuitem"`, rôles autorisés ; les éléments sont recréés à chaque ouverture, d'où l'observateur) ; patch amont
-   à signaler. `check:map` passe axe-core (jeu de règles par défaut, comme la suite e2e) avec « Mes outils » ouvert.
+   `role="menu"`, `li` `role="menuitem"`, rôles autorisés ; les éléments sont recréés à chaque ouverture, d'où l'observateur) et
+   `menuKeyboard` (`useMapTools.ts`) applique le motif « menu button » : une seule entrée tabulable (première entrée focalisée à
+   l'ouverture), flèches haut/bas en boucle, Début/Fin, Échap ferme la liste ; Entrée/Espace restent au contrôle (action par défaut
+   empêchée). L'activation d'une entrée se fait au `keydown` et vide la liste : le retour du focus au bouton « Mes outils »
+   (`returnFocusOnCollapse`) est **différé d'une tâche**, sinon Entrée active le bouton nouvellement focalisé dans le même évènement et
+   rouvre la liste (observé à 375px : le panneau choisi s'ouvrait derrière la liste pleine largeur). Patch amont à signaler ; `check:map`
+   passe axe-core (jeu de règles par défaut, comme la suite e2e) avec « Mes outils » ouvert et rejoue l'activation au clavier à 375px.
 8. `LayerSwitcher._updateLayerGrayScale` appelle `console.warn("Greyscale only implemented for raster and vector tiles")` pour **chaque**
    couche vecteur ajoutée (mesures, croquis, calculs), sans option pour l'éviter : `check:map` compte ces avertissements (`UPSTREAM_WARNINGS`)
    au lieu d'échouer ; à signaler aussi.
-9. Les formulaires de lieu (Route, Isocurve) appellent la complétion avec un texte vide (`geocodage/completion?text=73%20`), que la GPF
-   refuse (400, « Failed to load resource » en console) : `check:map` compte ces requêtes (`UPSTREAM_REQUEST_ERRORS`) ; à signaler.
+9. Les formulaires de lieu (Route, Isocurve) appellent la complétion avec un texte vide ou numérique (`geocodage/completion?text=73%20`),
+   que la GPF refuse (400, « Failed to load resource » en console) : `check:map` ne compte que ces requêtes-là (`isUpstreamRequestError` :
+   texte de moins de trois caractères ou chiffres seuls) ; à signaler.
 
 ### 10.5 Vérification et sélecteurs e2e
 

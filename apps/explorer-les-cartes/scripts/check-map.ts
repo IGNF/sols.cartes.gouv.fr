@@ -40,9 +40,14 @@ const UPSTREAM_WARNINGS = [
 /**
  * GPF requests the geopf controls send on their own and the service refuses (HTTP 4xx logged by the
  * browser as "Failed to load resource"): the Route/Isocurve forms call the geocoding completion with a
- * blank text (`geocodage/completion?text=73%20`, 400). Counted in the notes, like the tile errors.
+ * blank or numeric text (`geocodage/completion?text=73%20`, 400). Only those (text shorter than three
+ * characters, or digits only) are counted in the notes, like the tile errors.
  */
-const UPSTREAM_REQUEST_ERRORS = [/\/geocodage\/completion\?/];
+function isUpstreamRequestError(url: string): boolean {
+  if (!/\/geocodage\/completion\?/.test(url)) return false;
+  const text = new URL(url).searchParams.get('text')?.trim() ?? '';
+  return text.length < 3 || /^\d+$/.test(text);
+}
 
 /**
  * Console messages of a page, minus the "Failed to load resource" lines caused by GPF tiles, as long as
@@ -60,8 +65,7 @@ function watchConsole(page: import('playwright').Page) {
   page.on('response', (r) => {
     if (/REQUEST=Get(Tile|Map)/i.test(r.url()))
       tiles.set(r.url(), [...(tiles.get(r.url()) ?? []), r.status()]);
-    else if (r.status() >= 400 && UPSTREAM_REQUEST_ERRORS.some((p) => p.test(r.url())))
-      upstreamRequests += 1;
+    else if (r.status() >= 400 && isUpstreamRequestError(r.url())) upstreamRequests += 1;
   });
   return () => {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
@@ -936,13 +940,32 @@ const TOOL_BUTTONS = [
         .isVisible()),
     '375px : outils listables masqués, « Mes outils » visible',
   );
-  await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
-  await page.locator('[id^="GPcontrolListPanel-"] li', { hasText: 'Itinéraire' }).click();
+  const toolsButton = page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true });
+  await toolsButton.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const firstEntryFocused = await page.evaluate(
+    () => document.activeElement?.closest('[id^="GPcontrolListPanel-"] li') !== null,
+  );
+  // Arrow down to « Itinéraire » (sixth entry), Enter activates it: the list closes, the panel shows.
+  for (let i = 0; i < 5; i += 1) await page.keyboard.press('ArrowDown');
+  const onRoute = await page.evaluate(
+    () => document.activeElement?.textContent?.trim() === 'Itinéraire',
+  );
+  await page.keyboard.press('Enter');
   await page.waitForTimeout(800);
   const panel = await page.locator('[id^="GProutePanel-"]').boundingBox();
+  const listClosed = (await toolsButton.getAttribute('aria-pressed')) === 'false';
+  const focusOnTools = await page.evaluate(
+    () => document.activeElement?.id.startsWith('GPshowControlListPicto-') === true,
+  );
   check(
-    Boolean(panel && panel.width >= 360 && panel.x <= 8),
-    `375px : « Itinéraire » ouvert depuis « Mes outils » occupe la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
+    firstEntryFocused && onRoute,
+    '375px : Entrée ouvre « Mes outils » sur sa première entrée, les flèches y circulent',
+  );
+  check(
+    listClosed && focusOnTools && Boolean(panel && panel.width >= 360 && panel.x <= 8),
+    `375px : Entrée sur « Itinéraire » ferme la liste, rend le focus à « Mes outils » et ouvre le panneau sur la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
   );
   await page.close();
 }
