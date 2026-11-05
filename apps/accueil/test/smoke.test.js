@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import accueil from '../src/_data/accueil.js';
+import agenda from '../src/_data/agenda.json';
 import i18n from './i18n.js';
 import brand from '@sols/brand';
 import site from '../src/_data/site.js';
@@ -103,19 +104,89 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     }
   });
 
-  test('boutons vers le catalogue et la carto, sections et lien GIS Sol', () => {
+  test('héros : textes de la maquette, deux boutons réels, trois chiffres clés', () => {
+    expect(home()).toContain(`<h1>${html(t.accueil.hero.title)}</h1>`);
     for (const action of accueil.actions) {
       expect(home()).toContain(`href="${action.href}"`);
-      expect(home()).toContain(`>${t.accueil.hero.actions[action.key]}</a>`);
+      expect(home()).toContain(`>${html(t.accueil.hero.actions[action.key])}</a>`);
     }
+    for (const key of accueil.figures) {
+      expect(home()).toContain(`>${html(t.accueil.hero.figures[key].value)}</span>`);
+    }
+  });
+
+  test('plan des titres : un h1, un h2 par section dans l’ordre de la maquette', () => {
+    const h2 = [...home().matchAll(/<h2[^>]*id="(titre-[a-z]+)"/g)].map(([, id]) => id);
+    expect(h2).toEqual([
+      'titre-service',
+      'titre-usages',
+      'titre-donnees',
+      'titre-agenda',
+      'titre-articles',
+      'titre-partenaires',
+    ]);
+    const main = home().slice(home().indexOf('<main'), home().indexOf('</main>'));
+    const levels = [...main.matchAll(/<h([1-6])[\s>]/g)].map(([, level]) => Number(level));
+    expect(levels[0]).toBe(1);
+    for (let index = 1; index < levels.length; index += 1) {
+      expect(levels[index] - levels[index - 1]).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('« Le service » : frise Sans / Avec et trois tuiles', () => {
+    for (const side of ['without', 'with']) {
+      const column = t.accueil.service.frieze[side];
+      expect(home()).toContain(
+        `<h3 class="sols-frieze__title fr-text--sm">${html(column.title)}</h3>`,
+      );
+      for (const item of column.items) expect(home()).toContain(html(item));
+    }
+    expect(home().match(/class="sols-frieze__item"/g)).toHaveLength(8);
     expect(home().match(/class="fr-tile"/g)).toHaveLength(accueil.service.length);
-    expect(
-      home().match(
-        new RegExp(`<h3 class="fr-card__title"><a href="${escape(accueil.donnees.href)}"`, 'g'),
-      ),
-    ).toHaveLength(accueil.donnees.items.length);
-    expect(home()).toContain('class="fr-callout');
-    expect(home()).toMatch(new RegExp(`class="fr-btn" href="${escape(site.external.gissol)}"`));
+  });
+
+  test('« Cas d’usage » : trois cartes illustrées avec trois puces chacune', () => {
+    for (const usage of accueil.usages) {
+      expect(home()).toContain(`src="${usage.image}" alt=""`);
+      expect(existsSync(join(DIST, usage.image))).toBe(true);
+      expect(home()).toContain(html(t.accueil.usages.items[usage.key].title));
+    }
+    expect(home().match(/<ul class="sols-usage__points">/g)).toHaveLength(accueil.usages.length);
+  });
+
+  test('« Données disponibles » : étiquettes, ligne Usage et bandeau vers le catalogue', () => {
+    const tags = accueil.donnees.items.reduce((total, item) => total + item.tags.length, 0);
+    expect(home().match(/<p class="fr-tag fr-tag--sm">/g)).toHaveLength(tags);
+    expect(home().match(/class="fr-tags-group sols-data-tags"/g)).toHaveLength(3);
+    expect(home()).toMatch(
+      new RegExp(`class="fr-btn sols-banner__btn" href="${escape(accueil.donnees.href)}"`),
+    );
+  });
+
+  test('« Agenda » : événements à venir seulement, carrousel avec boutons et script', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = agenda.events.filter((event) => event.date >= today);
+    const cards = home().match(/class="fr-card sols-event"/g) ?? [];
+    expect(cards).toHaveLength(upcoming.length);
+    for (const event of agenda.events) {
+      const shown = home().includes(`datetime="${event.date}T${event.time}"`);
+      expect(shown).toBe(event.date >= today);
+    }
+    if (upcoming.length > 0) {
+      expect(home()).toContain('data-sols-carousel-previous');
+      expect(home()).toContain('data-sols-carousel-next');
+      expect(home()).toContain(`src="${site.assets.js}/carousel.js"`);
+      expect(home()).toContain(`href="/${locale}${site.sections.aide}#contact"`);
+    } else {
+      expect(home()).toContain(html(t.accueil.agenda.empty));
+    }
+  });
+
+  test('« Partenaires » : logos, lien GIS Sol et encadré vers le contact', () => {
+    for (const partner of accueil.partners)
+      expect(home()).toContain(`src="${partner.logo}" alt="${partner.name}"`);
+    expect(home()).toContain(`href="${site.external.gissol}"`);
+    expect(home()).toContain('class="fr-callout fr-callout--green-emeraude');
     expect(home()).toContain(`href="/${locale}${site.sections.articles}"`);
   });
 });
