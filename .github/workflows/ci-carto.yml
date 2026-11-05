@@ -1,0 +1,50 @@
+name: CI carto
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/explorer-les-cartes/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.bun-version'
+      - '.github/workflows/ci-carto.yml'
+  pull_request:
+    paths:
+      - 'apps/explorer-les-cartes/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.bun-version'
+      - '.github/workflows/ci-carto.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  carto:
+    name: Lint, type-check, test, build (apps/explorer-les-cartes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/explorer-les-cartes
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+        working-directory: .
+      # --if-present skips a missing script (same semantics as scripts/run-all.ts); `test` needs
+      # an explicit guard because bun would otherwise run the PATH binary /usr/bin/test
+      - run: bun run --if-present lint
+      - run: bun run --if-present typecheck
+      - name: test (guarded, bun falls back to /usr/bin/test when the script is missing)
+        run: |
+          if jq -e '.scripts.test' package.json >/dev/null; then
+            bun run test
+          else
+            echo "skipped: no test script"
+          fi
+      - run: bun run --if-present build

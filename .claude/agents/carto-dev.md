@@ -12,6 +12,7 @@ Scope: you may write only inside `apps/explorer-les-cartes/` and `doc/agents/geo
 Before working: read `CLAUDE.md` fully, the `react-dsfr` skill in `.claude/skills/react-dsfr/`, then `doc/agents/gpf-sols-data.md` and `doc/agents/geopf-ext.md` (if present).
 
 Rules:
+- DSFR first: react-dsfr components and DSFR tokens before any custom CSS; plain `.css` only for what DSFR does not cover.
 - Vite + React + TypeScript strict + `@codegouvfr/react-dsfr` + Vitest + Testing Library; base path `/explorer-les-cartes`.
 - Layers and services come from the GPF (`https://data.geopf.fr`). Check layer names against GetCapabilities, never guess them.
 - Check the geopf-extensions-openlayers API in the JSDoc of the installed version before using a control or option: https://ignf.github.io/geopf-extensions-openlayers/jsdoc/ and `node_modules/geopf-extensions-openlayers`.

@@ -1,0 +1,44 @@
+name: CI catalogue
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/rechercher-une-donnee/**'
+      - '.nvmrc'
+      - '.github/workflows/ci-catalogue.yml'
+  pull_request:
+    paths:
+      - 'apps/rechercher-une-donnee/**'
+      - '.nvmrc'
+      - '.github/workflows/ci-catalogue.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalogue:
+    name: Lint, test, build (apps/rechercher-une-donnee)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/rechercher-une-donnee
+    steps:
+      - uses: actions/checkout@v7
+      # Every step below is skipped while the brick has no lockfile yet (task C2 creates it)
+      - uses: actions/setup-node@v7
+        if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/rechercher-une-donnee/package-lock.json
+      - run: npm ci
+        if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
+      - run: npm run lint --if-present
+        if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
+      - run: npm run test --if-present
+        if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
+      - run: npm run build
+        if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
