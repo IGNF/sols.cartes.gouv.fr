@@ -41,11 +41,17 @@ const link = (protocol: string, linkage: string, name: string) => ({
   description: '',
 });
 
-const record = (id: string, title: string, links: CswRecord['links']): CswRecord => ({
+const record = (
+  id: string,
+  title: string,
+  links: CswRecord['links'],
+  thumbnail = '',
+): CswRecord => ({
   id,
   title,
   abstract: 'Résumé',
   organisation: 'INRAE - Info&Sols',
+  thumbnail,
   links,
 });
 
@@ -69,7 +75,12 @@ describe('serviceForLink', () => {
 describe('buildSolsLayersFile', () => {
   const file = buildSolsLayersFile(
     [
-      record('b', 'Zèbre', [link('OGC:WMS', 'https://data.geopf.fr/wms-v', 'couche_v')]),
+      record(
+        'b',
+        'Zèbre',
+        [link('OGC:WMS', 'https://data.geopf.fr/wms-v', 'couche_v')],
+        'https://data.geopf.fr/annexes/gissol-osf/thumbnail/b.png',
+      ),
       record('a', 'Abeille', [
         link('OGC:WMS', 'https://data.geopf.fr/wms-r/wms', 'COUCHE_R'),
         link('OGC:WMTS', 'https://data.geopf.fr/wmts', 'COUCHE_WMTS'),
@@ -87,9 +98,13 @@ describe('buildSolsLayersFile', () => {
   );
   const abeille = file.datasets[0];
 
-  it('produit un fichier conforme au schéma, fiches triées par titre', () => {
+  it('produit un fichier conforme au schéma, fiches triées par titre, vignette quand la fiche en a une', () => {
     expect(isSolsLayersFile(file)).toBe(true);
     expect(file.datasets.map((d) => d.title)).toEqual(['Abeille', 'Zèbre']);
+    expect(file.datasets[1]?.thumbnail).toBe(
+      'https://data.geopf.fr/annexes/gissol-osf/thumbnail/b.png',
+    );
+    expect(file.datasets[0]).not.toHaveProperty('thumbnail');
   });
 
   it('garde les couches publiées avec titre, point d’accès canonique, CRS WMTS et légende, sans doublon', () => {

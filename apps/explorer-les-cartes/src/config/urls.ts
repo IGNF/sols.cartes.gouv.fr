@@ -17,6 +17,11 @@ export function catalogueRecordPath(identifier: string): string {
   return `${SECTION_PATHS.catalogue}dataset/${encodeURIComponent(identifier)}`;
 }
 
+/** Search page of the catalogue brick filtered on an organisation (producer tags of the map catalogue). */
+export function catalogueSearchByOrganisationPath(organisation: string): string {
+  return `${SECTION_PATHS.catalogue}search?organization=${encodeURIComponent(organisation)}`;
+}
+
 /**
  * Non-map alternative of the carto page: `?vue=liste`. A query parameter rather than a path, so it works
  * on any static host without SPA fallback, and the page never loads the map bundle.

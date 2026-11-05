@@ -67,7 +67,7 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
           as="h2"
           small
           title="Couche introuvable"
-          description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans l’onglet « Données sols ».`}
+          description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans le catalogue de la carte.`}
         />
       );
     case 'invalid':
@@ -78,7 +78,7 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
           small
           as="h2"
           title="Lien invalide"
-          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans l’onglet « Données sols ».`}
+          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans le catalogue de la carte.`}
         />
       );
     case 'unsupported':
@@ -95,12 +95,12 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
                 Le lien désigne le style de tuiles vectorielles (TMS) «&nbsp;{status.style}&nbsp;»,
                 qui ne peut pas encore être affiché sur cette carte (
                 <a href={solsStyleUrl(status.style)}>fichier de style</a>). Les données sols
-                disponibles sont listées dans l’onglet « Données sols ».
+                disponibles sont listées dans le catalogue de la carte.
               </>
             ) : status.type === 'TMS' ? (
-              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans le catalogue de la carte.`
             ) : (
-              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans le catalogue de la carte.`
             )
           }
         />

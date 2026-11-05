@@ -72,3 +72,17 @@
     display: none;
   }
 }
+
+/* Catalogue of the sols datasets (M9): the entry point of the data, a primary button as on cartes.gouv.fr. */
+.map-view .map-catalog > .gpf-btn-icon {
+  background-color: var(--background-action-high-blue-france);
+  color: var(--text-inverted-blue-france);
+}
+
+.map-view .map-catalog > .gpf-btn-icon:hover {
+  background-color: var(--background-action-high-blue-france-hover);
+}
+
+.map-view .map-catalog > .gpf-btn-icon:active {
+  background-color: var(--background-action-high-blue-france-active);
+}

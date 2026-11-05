@@ -4,6 +4,8 @@ import type BaseLayer from 'ol/layer/Base';
 export interface LayerInfo {
   /** Published name (WMS/WMTS identifier): also the id of the legend entry. */
   name: string;
+  /** Service type as the geopf Catalog control keys its entries (`WMS`, `WMTS`...); own property `service`. */
+  service?: string;
   title: string;
   description?: string;
   /** Legend image (capabilities `LegendURL`, or a GetLegendGraphic request). */
@@ -17,9 +19,13 @@ export interface LegendEntry {
   minScaleDenominator: number;
 }
 
-/** The interface the Legends control reads on a layer (`Legends.js`, `getMetaInformations`). */
+/**
+ * The interface the Legends control reads on a layer (`Legends.js`, `getMetaInformations`); `service`
+ * is what the Catalog control reads (`checkLayersOnMap`, `map:add` listener) to tick its entries.
+ */
 export interface LegendCapableLayer {
   name: string;
+  service?: string;
   getTitle(): string;
   getDescription(): string;
   getLegends(): LegendEntry[];
@@ -51,6 +57,7 @@ export function attachLayerInfo<T extends BaseLayer>(
     : [];
   const capable: LegendCapableLayer = {
     name: info.name,
+    ...(info.service ? { service: info.service } : {}),
     getTitle: () => info.title,
     getDescription: () => info.description ?? '',
     getLegends: () => legends,

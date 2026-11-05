@@ -18,37 +18,21 @@ vi.mock('./PrintModal', () => ({
   PrintButton: () => <button type="button">Imprimer</button>,
 }));
 vi.mock('./BaseLayerPanel', () => ({ default: () => <p>Contenu fonds de carte</p> }));
-vi.mock('./SolsDatasetsPanel', () => ({ default: () => <p>Contenu données sols</p> }));
 
 describe('MapExplorer', () => {
   beforeEach(() => {
     useMapStore.setState(initialMapState);
   });
 
-  it('affiche le panneau latéral à côté de la carte, onglet des fonds sélectionné', () => {
+  it('affiche le panneau des fonds de carte à côté de la carte, sans onglets (les données viennent du catalogue)', () => {
     render(<MapExplorer />);
     const button = screen.getByRole('button', { name: 'Masquer le panneau' });
     expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(button).toHaveAttribute('aria-controls', SIDE_PANEL_ID);
     expect(document.getElementById(SIDE_PANEL_ID)).toBeVisible();
-    expect(screen.getByRole('tab', { name: 'Fonds de carte' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(screen.queryByRole('tab')).toBeNull();
     expect(screen.getByText('Contenu fonds de carte')).toBeInTheDocument();
     expect(screen.getByTestId('map-view')).toBeInTheDocument();
-  });
-
-  it('passe à l’onglet « Données sols »', async () => {
-    const user = userEvent.setup();
-    render(<MapExplorer />);
-    await user.click(screen.getByRole('tab', { name: 'Données sols' }));
-    expect(useMapStore.getState().activeTab).toBe('sols');
-    expect(screen.getByRole('tab', { name: 'Données sols' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByText('Contenu données sols')).toBeInTheDocument();
   });
 
   it('masque et réaffiche le panneau au clavier', async () => {
@@ -61,6 +45,7 @@ describe('MapExplorer', () => {
     expect(document.getElementById(SIDE_PANEL_ID)).not.toBeVisible();
     await user.keyboard(' ');
     expect(useMapStore.getState().isPanelOpen).toBe(true);
+    expect(screen.getByText('Contenu fonds de carte')).toBeVisible();
   });
 
   it('propose la version accessible de la liste des données dans la barre d’outils', () => {

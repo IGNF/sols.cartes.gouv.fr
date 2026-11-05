@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import { MAP_LABEL } from '../../config/map';
 import useBaseLayer from '../../hooks/useBaseLayer';
 import useBaseLayerCatalogue from '../../hooks/useBaseLayerCatalogue';
+import useCatalog from '../../hooks/useCatalog';
 import useLayerSwitcher from '../../hooks/useLayerSwitcher';
 import useMap from '../../hooks/useMap';
 import useMapControls from '../../hooks/useMapControls';
@@ -21,6 +22,7 @@ export default function MapView() {
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
   useMapControls(map);
   useLayerSwitcher(map);
+  useCatalog(map);
   useMapTools(map);
   useOverlays(map);
 

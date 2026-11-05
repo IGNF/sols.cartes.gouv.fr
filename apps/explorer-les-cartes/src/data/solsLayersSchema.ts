@@ -43,6 +43,8 @@ export interface SolsDataset {
   title: string;
   abstract: string;
   organisation: string;
+  /** Preview image of the record (`mri:graphicOverview`), shown by the map catalogue. */
+  thumbnail?: string;
   layers: SolsLayer[];
   rejected: SolsRejectedLayer[];
 }
@@ -93,6 +95,7 @@ function isDataset(value: unknown): value is SolsDataset {
     isString(value['title']) &&
     isString(value['abstract']) &&
     isString(value['organisation']) &&
+    (value['thumbnail'] === undefined || isString(value['thumbnail'])) &&
     Array.isArray(value['layers']) &&
     value['layers'].every(isSolsLayer) &&
     Array.isArray(value['rejected']) &&

@@ -1,12 +1,27 @@
 import { TOOL_BUTTON_LABELS } from '../config/map';
 
 /**
- * Names the icon-only buttons the Legends and Territories controls render without any accessible name
- * (geopf-extensions 1.0.0-beta.16, upstream gap): the "show legend" toggle of each legend entry and the
- * "remove territory" button of each entry of the territory views. Returns the number of buttons named.
+ * Names the controls the Legends, Territories and Catalog widgets render without any accessible name
+ * (geopf-extensions 1.0.0-beta.16, upstream gap): the "show legend" toggle of each legend entry, the
+ * "remove territory" button of each entry of the territory views, and the checkbox of each catalogue
+ * entry (its `<label for>` is empty, the visible title is another label). Returns the number fixed.
  */
 export function fixToolButtons(root: HTMLElement): number {
   let fixed = 0;
+  root
+    .querySelectorAll<HTMLInputElement>('input[data-layer]:not([aria-label])')
+    .forEach((input) => {
+      const title =
+        input
+          .closest('[data-layeritem]')
+          ?.querySelector('.catalog-layer-title')
+          ?.textContent?.trim() ?? '';
+      input.setAttribute(
+        'aria-label',
+        `${TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
+      );
+      fixed += 1;
+    });
   root
     .querySelectorAll<HTMLButtonElement>('button[id^="GPcollapseLegend_ID_"]:not([aria-label])')
     .forEach((button) => {

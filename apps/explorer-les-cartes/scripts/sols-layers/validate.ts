@@ -113,6 +113,7 @@ export function buildSolsLayersFile(
       title: record.title,
       abstract: record.abstract,
       organisation: record.organisation,
+      ...(record.thumbnail ? { thumbnail: record.thumbnail } : {}),
       layers,
       rejected,
     };

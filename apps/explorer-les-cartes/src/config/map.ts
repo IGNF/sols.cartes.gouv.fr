@@ -10,6 +10,7 @@ import type { Options as OverviewMapOptions } from 'ol/control/OverviewMap';
 import type { Options as ScaleLineOptions } from 'ol/control/ScaleLine';
 import type { Options as ZoomOptions } from 'ol/control/Zoom';
 import type {
+  CatalogOptions,
   ControlListOptions,
   DrawingOptions,
   ElevationPathOptions,
@@ -328,6 +329,35 @@ export const MAP_TOOLS_OPTIONS = {
   } satisfies OverviewMapOptions & ControlPlacement,
 };
 
+/**
+ * Catalogue of the GIS Sol datasets (geopf Catalog control, M9): names checked in Catalog.d.ts. The
+ * `Categories` type declares `field`, `value` and `clusterOptions` as required although a category with
+ * `filter: null` needs none of them (upstream typing gap): the list is cast.
+ */
+export const CATALOG_CATEGORIES = [
+  { title: 'Données sols', id: 'sols', producer: true, order: true, filter: null },
+] as unknown as NonNullable<CatalogOptions['categories']>;
+
+export const CATALOG_OPTIONS = {
+  position: 'top-right',
+  gutter: true,
+  collapsed: true,
+  titlePrimary: 'Catalogue des données sols',
+  layerLabel: 'title',
+  layerThumbnail: true,
+  size: 'lg',
+  tabHeightAuto: false,
+  addToMap: false, // the store adds the layers (legend, retry, availability as for every sols layer)
+  auto: true, // ticks the entries of the layers present on the map (deep links, permalinks)
+  optimisation: 'none',
+  search: {
+    display: true,
+    label: 'Rechercher une donnée',
+    criteria: ['title', 'description', 'producer', 'name'],
+  },
+  categories: CATALOG_CATEGORIES,
+} satisfies CatalogOptions & ControlPlacement;
+
 /** Query parameters of the cartes.gouv.fr permalink (src/map/permalink.ts, src/map/deepLink.ts). */
 export const PERMALINK_PARAMS = {
   center: 'c',
@@ -400,6 +430,7 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
   GPimportMapBoxPanel: 'Style de la couche importée',
   GPgetFeatureInfoPanel: 'Informations sur les couches',
   GPlocationAutoCompleteList: 'Suggestions de lieux',
+  GPcatalogPanel: 'Catalogue des données sols',
   // Sub-dialog of the Territories panel (fixed id, no uid).
   'gpf-territories-views-container-id': 'Vues des territoires',
 };
@@ -408,6 +439,8 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
 export const TOOL_BUTTON_LABELS = {
   showLegend: 'Afficher la légende',
   removeTerritory: 'Retirer le territoire',
+  /** Checkbox of a catalogue entry (its visible label is not associated with the input). */
+  addToMap: 'Ajouter à la carte',
 } as const;
 
 /**
@@ -420,18 +453,11 @@ export const CONTROL_LABELS = {
   rotate: 'Réinitialiser l’orientation',
   searchInput: 'Rechercher un lieu ou une adresse',
   controlList: 'Mes outils',
+  catalog: 'Catalogue des données sols',
 } as const;
 
 /** Id of the side panel (target of the toggle button). */
 export const SIDE_PANEL_ID = 'panneau-lateral';
-
-/** Tabs of the side panel. */
-export const SIDE_PANEL_TABS = [
-  { tabId: 'fonds', label: 'Fonds de carte', iconId: 'ri-stack-line' },
-  { tabId: 'sols', label: 'Données sols', iconId: 'ri-plant-line' },
-] as const;
-
-export type SidePanelTab = (typeof SIDE_PANEL_TABS)[number]['tabId'];
 
 /**
  * Display preference for "Ajouter à la carte": WMTS first (EPSG:2154 layers are reprojected after

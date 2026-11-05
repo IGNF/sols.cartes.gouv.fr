@@ -21,11 +21,6 @@
   padding: 1rem;
 }
 
-/* Separator between the datasets of the "Données sols" panel (DSFR default border token). */
-.sols-dataset {
-  border-bottom: 1px solid var(--border-default-grey);
-}
-
 /*
  * Print sheet (PrintModal): mounted at the end of the body only while printing; it is the only thing the
  * browser prints (title, map image, sources, date).

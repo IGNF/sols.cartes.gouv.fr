@@ -25,6 +25,7 @@ export default function createWmtsLayer(
   );
   return attachLayerInfo(new TileLayer({ source }), {
     name: layerName,
+    service: 'WMTS',
     title: info.title,
     description: info.abstract,
     ...(info.legendUrl ? { legendUrl: info.legendUrl } : {}),
