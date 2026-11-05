@@ -1,11 +1,21 @@
 diff --git a/apps/datahub/project.json b/apps/datahub/project.json
-index c4dd0ba..19bbc13 100644
+index c4dd0ba..dcd7aa6 100644
 --- a/apps/datahub/project.json
 +++ b/apps/datahub/project.json
-@@ -38,6 +38,11 @@
+@@ -38,6 +38,21 @@
              "input": "node_modules/@gouvfr/dsfr/dist",
              "output": "assets/dsfr/"
            },
++          {
++            "glob": "{environment/sun,environment/moon,system/system}.svg",
++            "input": "node_modules/@gouvfr/dsfr/dist/artwork/pictograms",
++            "output": "assets/dsfr/artwork/pictograms/"
++          },
++          {
++            "glob": "arrows/arrow-down-s-line.svg",
++            "input": "node_modules/@gouvfr/dsfr/dist/icons",
++            "output": "assets/dsfr/icons/"
++          },
 +          {
 +            "glob": "favicon.*",
 +            "input": "node_modules/@gouvfr/dsfr/dist/favicon",
@@ -14,17 +24,25 @@ index c4dd0ba..19bbc13 100644
            {
              "glob": "analytics.module.min.js",
              "input": "node_modules/@gouvfr/dsfr/dist/analytics",
-@@ -58,8 +63,10 @@
+@@ -58,12 +73,17 @@
            "./node_modules/@gouvfr/dsfr/dist/component/search/search.min.css",
            "./node_modules/@gouvfr/dsfr/dist/component/header/header.min.css",
            "./node_modules/@gouvfr/dsfr/dist/component/footer/footer.min.css",
 +          "./node_modules/@gouvfr/dsfr/dist/component/skiplink/skiplink.min.css",
++          "./node_modules/@gouvfr/dsfr/dist/component/radio/radio.min.css",
++          "./node_modules/@gouvfr/dsfr/dist/component/display/display.min.css",
            "tailwind.base.css",
            "apps/datahub/src/styles.css",
-+          "apps/datahub/src/sols-overrides.css",
            "node_modules/tippy.js/dist/tippy.css",
            "node_modules/ol/ol.css",
            "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+-          "./node_modules/@gouvfr/dsfr/dist/utility/utility.css"
++          "./node_modules/@gouvfr/dsfr/dist/utility/utility.css",
++          "apps/datahub/src/sols-shared.css",
++          "apps/datahub/src/sols-overrides.css"
+         ],
+         "scripts": [],
+         "allowedCommonJsDependencies": [
 diff --git a/apps/datahub/src/app/app.component.html b/apps/datahub/src/app/app.component.html
 index f792cc8..c00f5b7 100644
 --- a/apps/datahub/src/app/app.component.html
