@@ -595,19 +595,24 @@ const TOOL_BUTTONS = [
   await page
     .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
     .click();
-  await page.mouse.click(760, 500);
-  // The GeoServer answer lands in a collapsed accordion: read textContent, not innerText.
+  // Click inside the sols layer, away from the measure line drawn above. The GeoServer answer lands in
+  // a collapsed accordion: wait for its text (textContent, not innerText).
+  await page.mouse.click(640, 620);
   const gfiPanel = page.locator('[id^="GPgetFeatureInfoPanel-"]');
-  const gfiContent = await gfiPanel
-    .locator('.fr-accordion')
-    .first()
-    .waitFor({ state: 'attached', timeout: 20_000 })
-    .then(() => page.waitForTimeout(1500))
-    .then(() => gfiPanel.evaluate((panel) => panel.textContent ?? ''))
-    .catch(() => '');
+  const gfiContent = await page
+    .waitForFunction(
+      () => {
+        const text = document.querySelector('[id^="GPgetFeatureInfoPanel-"]')?.textContent ?? '';
+        return /STOCK_C|featureInfo|FID/i.test(text) ? text : null;
+      },
+      undefined,
+      { timeout: 25_000 },
+    )
+    .then((handle) => handle.jsonValue() as Promise<string>)
+    .catch(() => gfiPanel.evaluate((panel) => panel.textContent ?? ''));
   check(
     /stocks de carbone/i.test(gfiContent) && /STOCK_C|featureInfo|FID/i.test(gfiContent),
-    'infos : GetFeatureInfo sur la couche sols affiche les attributs (sortie GeoServer)',
+    `infos : GetFeatureInfo sur la couche sols affiche les attributs (sortie GeoServer) [${gfiContent.replace(/\s+/g, ' ').slice(0, 100)}]`,
   );
   await page
     .getByRole('button', { name: "Activer/désactiver l'interrogation des couches", exact: true })
