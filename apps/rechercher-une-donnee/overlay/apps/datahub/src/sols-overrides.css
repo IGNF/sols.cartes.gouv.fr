@@ -1,0 +1,35 @@
+/*
+ * Habillage « Observatoire des sols » : surcharges CSS du datahub (thème, pas de code).
+ * Ajouté à la cible build après styles.css (patch 0003). Couleurs : jetons DSFR.
+ */
+
+/* Recherche : l'en-tête animé (gn-ui-sticky-header) a une hauteur fixe en style en ligne,
+   plus grande que son contenu ; la hauteur suit le contenu (l'en-tête reste collant). */
+#home-page gn-ui-sticky-header > div,
+#home-page gn-ui-sticky-header > div > div {
+  height: auto !important;
+}
+/* Rangée de badges (favoris, préréglages de recherche) : vide dans notre configuration. */
+datahub-home-header .h-0.py-5 {
+  display: none;
+}
+datahub-home-header > header > div > .py-8 {
+  padding-bottom: 0;
+}
+
+/* Contrastes (axe color-contrast, fiche) */
+.gn-ui-card-detail {
+  color: var(--text-mention-grey, #666666);
+}
+.bg-primary\/50.text-primary-lightest {
+  background-color: var(--background-action-high-blue-france, #000091);
+}
+gn-ui-copy-text-button .opacity-50 {
+  opacity: 1;
+}
+/* Badges de format : couleurs amont par format (certaines trop claires sous texte blanc) ;
+   fond DSFR bleu France uniforme, opaque. */
+[data-cy='download-format'] {
+  background-color: var(--background-action-high-blue-france, #000091) !important;
+  opacity: 1 !important;
+}

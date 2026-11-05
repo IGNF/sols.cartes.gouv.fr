@@ -92,12 +92,21 @@ test('patches 0004 and 0005 stay small and on the expected files', () => {
   const a11y = readFileSync(join(PATCHES_DIR, '0004-upstream-a11y.patch'), 'utf8')
   assert.deepEqual(patchedFiles(a11y).sort(), [
     'apps/datahub/src/app/home/search/search-filters/search-filters.component.html',
+    'apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html',
+    'apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html',
     'libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html',
+    'libs/feature/record/src/lib/map-view/map-view.component.html',
+    'libs/ui/elements/src/lib/api-card/api-card.component.html',
+    'libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html',
+    'libs/ui/elements/src/lib/record-api-form/record-api-form.component.html',
     'libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html',
     'libs/ui/inputs/src/lib/button/button.component.html',
     'libs/ui/inputs/src/lib/button/button.component.ts',
+    'libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html',
     'libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html',
     'libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html',
+    'libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html',
+    'libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html',
   ])
   const scope = readFileSync(join(PATCHES_DIR, '0005-elasticsearch-scope.patch'), 'utf8')
   assert.deepEqual(patchedFiles(scope), ['libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts'])
@@ -108,4 +117,11 @@ test('the thumbnail placeholder ships in overlay/ and is configured', () => {
   const svg = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/assets/img/sols-placeholder.svg'), 'utf8')
   assert.ok(svg.length < 50_000)
   assert.match(readFileSync(CONFIG_FILE, 'utf8'), /^thumbnail_placeholder = 'assets\/img\/sols-placeholder.svg'$/m)
+})
+
+test('the CSS overrides ship in overlay/ and are loaded by the build (patch 0003)', () => {
+  const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
+  assert.match(css, /gn-ui-sticky-header/)
+  const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-overrides.css",$/m)
 })
