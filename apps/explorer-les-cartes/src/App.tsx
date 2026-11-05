@@ -2,8 +2,7 @@ import { fr } from '@codegouvfr/react-dsfr';
 import { SkipLinks } from '@codegouvfr/react-dsfr/SkipLinks';
 import SiteFooter from './components/layout/SiteFooter';
 import SiteHeader from './components/layout/SiteHeader';
-
-const MAIN_CONTENT_ID = 'contenu';
+import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
 
 export default function App() {
   return (
@@ -11,7 +10,7 @@ export default function App() {
       <SkipLinks
         links={[
           { label: 'Contenu', anchor: `#${MAIN_CONTENT_ID}` },
-          { label: 'Pied de page', anchor: '#footer' },
+          { label: 'Pied de page', anchor: `#${FOOTER_ID}` },
         ]}
       />
       <SiteHeader />

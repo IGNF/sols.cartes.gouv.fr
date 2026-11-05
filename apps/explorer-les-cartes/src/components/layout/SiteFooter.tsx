@@ -1,12 +1,13 @@
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { Footer } from '@codegouvfr/react-dsfr/Footer';
 import { SITE } from '../../config/site';
+import { FOOTER_ID } from '../../config/landmarks';
 import { SECTION_PATHS } from '../../config/urls';
 
 export default function SiteFooter() {
   return (
     <Footer
-      id="footer"
+      id={FOOTER_ID}
       accessibility="non compliant"
       accessibilityLinkProps={{ href: SECTION_PATHS.accessibility }}
       termsLinkProps={{ href: SECTION_PATHS.legalNotice }}
