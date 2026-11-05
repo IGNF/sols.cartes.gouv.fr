@@ -24,3 +24,4 @@ Hard requirements: all OK. Work proceeds.
 Notes
 - `rtk` 0.42.4 is installed and wraps shell commands (see `~/.claude/RTK.md`).
 - The repository `.gitignore` ignored `/docs`; the folder was renamed to `doc/` (the name used by `CLAUDE.md` and `init.md`) and un-ignored in X1.
+- Update (end of session): the `.claude/agents/*.md` files became loadable once merged into `main` (X2); every review after PR #16 used the `reviewer` agent type.

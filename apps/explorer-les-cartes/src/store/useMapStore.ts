@@ -1,6 +1,11 @@
 import type OlMap from 'ol/Map';
 import { create } from 'zustand';
-import { DEFAULT_BASE_LAYER_ID, type BaseLayerId, type SidePanelTab } from '../config/map';
+import {
+  DEFAULT_BASE_LAYER_ID,
+  SIDE_PANEL_OPEN_MEDIA_QUERY,
+  type BaseLayerId,
+  type SidePanelTab,
+} from '../config/map';
 import { readDeepLink } from '../map/deepLink';
 import type { OverlayRef } from '../map/overlays';
 
@@ -45,8 +50,22 @@ export function initialTab(search: string): SidePanelTab {
   return readDeepLink(search) ? 'sols' : 'fonds';
 }
 
+/**
+ * Side panel open by default from the DSFR `md` breakpoint; closed on small screens so the map is
+ * visible without scrolling (the "Afficher le panneau" button stays first). Open when matchMedia is
+ * unavailable (tests, old browsers).
+ */
+export function initialPanelOpen(
+  matchMedia: ((query: string) => MediaQueryList) | undefined,
+): boolean {
+  return matchMedia ? matchMedia(SIDE_PANEL_OPEN_MEDIA_QUERY).matches : true;
+}
+
 export const useMapStore = create<MapState>()((set) => ({
   ...initialMapState,
+  isPanelOpen: initialPanelOpen(
+    typeof window.matchMedia === 'function' ? window.matchMedia.bind(window) : undefined,
+  ),
   activeTab: initialTab(window.location.search),
   setMap: (map) => set({ map }),
   setActiveBaseLayer: (activeBaseLayerId) => set({ activeBaseLayerId }),

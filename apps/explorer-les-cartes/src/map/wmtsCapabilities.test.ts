@@ -44,12 +44,34 @@ describe('wmtsCapabilities', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(capabilitiesXml, { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
     const capabilities = await fetchWmtsCapabilities();
-    expect(fetchMock).toHaveBeenCalledWith(WMTS_CAPABILITIES_URL, { signal: undefined });
+    expect(fetchMock).toHaveBeenCalledWith(WMTS_CAPABILITIES_URL, {
+      signal: expect.any(AbortSignal),
+    });
     expect(findWmtsLayer(capabilities, planIgn)).not.toBeNull();
   });
 
   it('signale une réponse HTTP en erreur', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 503 })));
     await expect(fetchWmtsCapabilities()).rejects.toThrow(/HTTP 503/);
+  });
+
+  it('abandonne une requête de capacités sans réponse', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) =>
+            init.signal?.addEventListener('abort', () =>
+              reject(new DOMException('aborted', 'AbortError')),
+            ),
+          ),
+      ),
+    );
+    const pending = fetchWmtsCapabilities(undefined, 5000);
+    const assertion = expect(pending).rejects.toThrow(/Pas de réponse de data.geopf.fr en 5 s/);
+    await vi.advanceTimersByTimeAsync(5000);
+    await assertion;
+    vi.useRealTimers();
   });
 });

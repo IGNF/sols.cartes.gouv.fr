@@ -8,3 +8,11 @@ export function createQueryWrapper() {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
 }
+
+/** Wrapper whose queries keep their own retry options (to test retries). */
+export function createRetryingQueryWrapper() {
+  const client = new QueryClient();
+  return function RetryingQueryWrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  };
+}

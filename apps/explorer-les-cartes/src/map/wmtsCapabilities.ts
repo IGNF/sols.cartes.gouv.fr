@@ -1,6 +1,7 @@
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import { WMTS_VERSION } from '../config/map';
+import { GPF_REQUEST_TIMEOUT_MS, WMTS_VERSION } from '../config/map';
 import { buildCapabilitiesUrl, GPF_ENDPOINTS } from '../config/urls';
+import { fetchWithTimeout } from './fetchWithTimeout';
 
 /** Parsed WMTS capabilities, as returned by ol/format/WMTSCapabilities. */
 export type WmtsCapabilities = Record<string, unknown>;
@@ -21,8 +22,11 @@ export function parseWmtsCapabilities(xml: string): WmtsCapabilities {
   return parsed as WmtsCapabilities;
 }
 
-export async function fetchWmtsCapabilities(signal?: AbortSignal): Promise<WmtsCapabilities> {
-  const response = await fetch(WMTS_CAPABILITIES_URL, { signal });
+export async function fetchWmtsCapabilities(
+  signal?: AbortSignal,
+  timeoutMs: number = GPF_REQUEST_TIMEOUT_MS,
+): Promise<WmtsCapabilities> {
+  const response = await fetchWithTimeout(WMTS_CAPABILITIES_URL, { signal, timeoutMs });
   if (!response.ok) {
     throw new Error(`Capacités WMTS indisponibles (HTTP ${response.status})`);
   }
