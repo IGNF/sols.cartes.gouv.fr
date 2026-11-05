@@ -26,7 +26,7 @@ test.describe('Accessibilité (axe-core)', () => {
       }));
       writeFileSync(`${OUT_DIR}/axe-${nom}.json`, JSON.stringify(summary, null, 2));
       const blocking = summary.filter((v) => v.impact === 'critical' || v.impact === 'serious');
-      // Les fiches gardent des violations amont documentées (doc/catalogue-patches.md) : rapportées, non bloquantes.
+      // Pages hors AXE_STRICT : violations rapportées, non bloquantes (aucune à ce jour depuis C7).
       if (!(AXE_STRICT as readonly string[]).includes(nom)) {
         test.info().annotations.push({
           type: 'axe amont',

@@ -35,8 +35,8 @@ export const PAGES = {
   fiche: `/rechercher-une-donnee/dataset/${RECORD_STOCK_CARBONE}`,
 } as const;
 
-/** Pages que axe doit garder sans violation critique/sérieuse (les fiches gardent des violations amont documentées). */
-export const AXE_STRICT = ['home', 'catalogue', 'carto', 'liste'] as const;
+/** Pages dont axe doit rester sans violation critique/sérieuse (fiche incluse depuis C7). */
+export const AXE_STRICT = ['home', 'catalogue', 'carto', 'liste', 'fiche'] as const;
 
 /** Nombre de chargements du test de stabilité du rendu de la carte (D-carto-1). */
 export const MAP_STABILITY_RUNS = 20;
