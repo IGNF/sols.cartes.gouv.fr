@@ -6,6 +6,7 @@ import { SOLS_DATASETS } from '../../data/solsLayers';
 import { solsLayerKey, type SolsDataset, type SolsService } from '../../data/solsLayersSchema';
 import { preferredLayer, toOverlayRef } from '../../map/overlays';
 import { useMapStore } from '../../store/useMapStore';
+import ListViewLink from '../list/ListViewLink';
 import { excerpt } from '../../text/excerpt';
 
 const TITLE_ID = 'titre-donnees-sols';
@@ -35,6 +36,9 @@ export default function SolsDatasetsPanel() {
       <h2 id={TITLE_ID} className={fr.cx('fr-h6')}>
         Données sols
       </h2>
+      <p className={fr.cx('fr-text--sm')}>
+        <ListViewLink />
+      </p>
       <p className={fr.cx('fr-sr-only')} role="status">
         {announcement}
       </p>

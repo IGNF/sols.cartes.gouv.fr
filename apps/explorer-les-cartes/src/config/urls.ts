@@ -15,6 +15,30 @@ export const SECTION_PATHS = {
   siteMap: '/plan-du-site/',
 } as const;
 
+/** Record page of the catalogue brick for a dataset identifier. */
+export function catalogueRecordPath(identifier: string): string {
+  return `${SECTION_PATHS.catalogue}dataset/${encodeURIComponent(identifier)}`;
+}
+
+/**
+ * Non-map alternative of the carto page: `?vue=liste`. A query parameter rather than a path, so it works
+ * on any static host without SPA fallback, and the page never loads the map bundle.
+ */
+export const LIST_VIEW = { param: 'vue', value: 'liste' } as const;
+
+export const LIST_VIEW_PATH = `${SECTION_PATHS.carto}?${LIST_VIEW.param}=${LIST_VIEW.value}`;
+
+/** True when the query string asks for the list view. */
+export function isListView(search: string): boolean {
+  return new URLSearchParams(search).get(LIST_VIEW.param) === LIST_VIEW.value;
+}
+
+/** "Voir sur la carte" deep link of the carto brick (same contract as the catalogue, doc/agents/geonetwork-ui.md §10). */
+export function mapDeepLinkPath(layer: string, type: 'WMS' | 'WMTS', endpoint: string): string {
+  const params = new URLSearchParams({ layer, type, url: endpoint });
+  return `${SECTION_PATHS.carto}?${params.toString()}`;
+}
+
 /** External links. */
 export const EXTERNAL_LINKS = {
   gisSol: 'https://www.gissol.fr/',

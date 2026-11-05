@@ -33,10 +33,6 @@ export function toOverlayRef(
   };
 }
 
-export function isDisplayable(service: SolsService): boolean {
-  return (DISPLAYABLE_SOLS_SERVICES as readonly SolsService[]).includes(service);
-}
-
 /** The layer "Ajouter à la carte" draws for a dataset, by service preference. */
 export function preferredLayer(dataset: Pick<SolsDataset, 'layers'>): SolsLayer | null {
   for (const service of DISPLAYABLE_SOLS_SERVICES) {
