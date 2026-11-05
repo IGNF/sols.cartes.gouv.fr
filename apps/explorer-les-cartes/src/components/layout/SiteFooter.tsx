@@ -1,7 +1,7 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { FooterBottomItem } from '@codegouvfr/react-dsfr/Footer';
-import { BRAND } from '../../config/site';
+import { BACK_TO_TOP_LABEL, BRAND } from '../../config/site';
 import { FOOTER_ID, HEADER_ID } from '../../config/landmarks';
 import './SiteFooter.css';
 
@@ -31,7 +31,7 @@ export default function SiteFooter() {
             className={`${fr.cx('fr-link', 'fr-icon-arrow-up-line', 'fr-link--icon-left')} compact-footer__top`}
             href={`#${HEADER_ID}`}
           >
-            Haut de page
+            {BACK_TO_TOP_LABEL}
           </a>
         </div>
       </div>

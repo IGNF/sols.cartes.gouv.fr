@@ -129,8 +129,16 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 
 - Constat : l'API MCP Figma n'expose pas les commentaires du fichier ; l'orchestrateur ne peut pas les lire. Les cadres « recherche mots clés » (`8:3980`) et « recherche millésime » (`8:4057`) de la page Prototype montrent des puces de mots-clés sous la barre de recherche (ajout/retrait, champ « Rechercher des mots clés… »).
 - Défaut appliqué : la tâche C9 propose une barre de mots-clés sous la recherche à partir des mots-clés réels des 7 fiches (préréglages `[[search_preset]]` du datahub si cela suffit, sinon patch documenté). Si les commentaires disent autre chose, les coller dans ce fichier.
+- Suite C9 : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels), filtre « Mot-clé » avec champ de recherche ; pas d'état sélectionné ni de retrait au second clic (patch proposé, non fait, voir C-4). Détails : `doc/agents/geonetwork-ui.md` §13.
 
 ## G-3. Sections de l'accueil non reprises (v1, edito)
 
 - Constat : la maquette contient un bloc « Le portail … arrive bientôt » (CTA lancement, `8:4896`) avec inscription et la mention « Incubé par beta.gouv.fr · Ministère de l'Agriculture », ainsi que des chiffres (60 ans, 12+, 100 %).
 - Défaut appliqué : E8 reprend les textes de la maquette (demande v1), y compris les chiffres ; le bloc « arrive bientôt » n'est pas repris sur un site en ligne (contradictoire) et la mention d'incubation reste à valider ; la vidéo de la section « Le service » est ignorée (demande v1).
+
+## C-4. Autocomplétion et filtres hors périmètre, et bascule des puces (catalogue-dev, C9)
+
+- Constat : sur le build de `main` (`45fe939`), l'autocomplétion et toutes les agrégations des filtres portent déjà `groupPublished:gissol-osf_g` (patch 0005, C5) ; « route » ne propose rien et les décomptes sont ≤ 7. Le défaut signalé (« Agriculture (34) », suggestions hors périmètre) n'est pas reproduit.
+- Questions : (1) sur quel build ou quelle URL l'observation a-t-elle été faite (version antérieure à C5, `.upstream` non reconstruit, cartes.gouv.fr) ? (2) faut-il le patch « puce sélectionnée et retrait au second clic » (environ 15 lignes dans `home-header`) ?
+- Défaut appliqué : (1) rien de plus, en attente du lieu d'observation ; (2) pas de patch, retrait par la croix du filtre « Mot-clé ».
+- Suite de G-2 (question sur la branche X11) : puces faites par configuration (`[[search_preset]]`, 5 mots-clés réels) ; filtre « Mot-clé » avec champ de recherche. Détails : `doc/agents/geonetwork-ui.md` §13.

@@ -4,12 +4,14 @@ on:
   push:
     branches: [main]
     paths:
+      - 'packages/**'
       - 'apps/rechercher-une-donnee/**'
       - 'doc/agents/edito.md'
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
   pull_request:
     paths:
+      - 'packages/**'
       - 'apps/rechercher-une-donnee/**'
       - 'doc/agents/edito.md'
       - '.nvmrc'
