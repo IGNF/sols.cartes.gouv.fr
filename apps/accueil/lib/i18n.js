@@ -14,3 +14,8 @@ export function stripLocale(url) {
   const [, first] = (url ?? '').split('/');
   return CODES.has(first) ? url.slice(first.length + 1) : url;
 }
+
+/** Default-language version of a localized URL ("/en/articles/" -> "/fr/articles/"), used for x-default. */
+export function defaultLocaleUrl(url) {
+  return `/${site.defaultLanguage}${stripLocale(url)}`;
+}

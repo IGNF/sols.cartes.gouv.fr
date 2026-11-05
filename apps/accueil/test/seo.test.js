@@ -7,6 +7,7 @@ import site from '../src/_data/site.js';
 import { DIST, LOCALES, allPages, build, localizedPages, read } from './helpers.js';
 
 const stripLocale = (path) => path.replace(/^\/[a-z]{2}\//, '/');
+const xDefault = (path) => `/${site.defaultLanguage}${stripLocale(path)}`;
 
 beforeAll(build);
 
@@ -31,7 +32,7 @@ describe('sitemap.xml et robots.txt', () => {
         );
       }
       expect(entry).toContain(
-        `<xhtml:link rel="alternate" hreflang="x-default" href="${site.url}${stripLocale(path)}"/>`,
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${site.url}${xDefault(path)}"/>`,
       );
     }
   });
@@ -74,7 +75,7 @@ describe('en-tête de chaque page', () => {
         );
       }
       expect(html).toContain(
-        `<link rel="alternate" hreflang="x-default" href="${site.url}${stripLocale(path)}">`,
+        `<link rel="alternate" hreflang="x-default" href="${site.url}${xDefault(path)}">`,
       );
     }
   });
