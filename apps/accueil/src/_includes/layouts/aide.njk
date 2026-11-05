@@ -1,0 +1,20 @@
+---
+layout: layouts/page.njk
+---
+{%- set aide = t.pages.aide -%}
+<p class="fr-text--lead">{{ aide.intro }}</p>
+<h2>{{ aide.faqTitle }}</h2>
+<div class="fr-accordions-group">
+  {%- for item in aide.faq %}
+  <section class="fr-accordion">
+    <h3 class="fr-accordion__title">
+      <button type="button" class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-{{ loop.index }}">{{ item.question }}</button>
+    </h3>
+    <div class="fr-collapse" id="faq-{{ loop.index }}">
+      <p>{{ item.answer }}</p>
+    </div>
+  </section>
+  {%- endfor %}
+</div>
+<h2 id="contact" class="fr-mt-6w">{{ aide.contactTitle }}</h2>
+<p>{{ aide.contactText }} <a href="mailto:{{ site.contactEmail }}">{{ site.contactEmail }}</a> {{ aide.contactNote }}.</p>
