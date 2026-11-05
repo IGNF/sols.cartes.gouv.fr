@@ -40,12 +40,10 @@ test.describe('Catalogue', () => {
 
     // KNOWN LIMIT (doc/catalogue-patches.md « Limites connues ») : les agrégations (size 0) ne sont pas filtrées.
     const unscopedAggs = searchBodies.filter((b) => !isResultQuery(b) && !b.includes(SOLS_GROUP));
-    test
-      .info()
-      .annotations.push({
-        type: 'KNOWN LIMIT',
-        description: `${unscopedAggs.length}/${searchBodies.length} requêtes _search d'agrégation sans ${SOLS_GROUP}`,
-      });
+    test.info().annotations.push({
+      type: 'KNOWN LIMIT',
+      description: `${unscopedAggs.length}/${searchBodies.length} requêtes _search d'agrégation sans ${SOLS_GROUP}`,
+    });
 
     expect(untolerated(c.errors, TOLERATED), 'erreurs console hors liste documentée').toEqual([]);
   });
