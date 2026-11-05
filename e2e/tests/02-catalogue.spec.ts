@@ -10,8 +10,8 @@ import {
   SOLS_LAYER,
 } from './helpers';
 
-// Erreurs console tolérées : documentées en amont (doc/catalogue-patches.md), uniquement sur les pages fiche.
-// Le 400 est ancré sur l'URL WMTS GPF pour ne masquer aucun autre 4xx.
+// Erreurs console tolérées, uniquement sur les pages fiche. Le motif GPF couvre aussi le 400 WMTS/légende
+// documenté en amont (nom CSW absent du service) : il est ancré sur data.geopf.fr, donc aucun autre 4xx n'est masqué.
 const TOLERATED = [
   {
     pattern: GPF_TILE_FLAKE,
@@ -21,10 +21,6 @@ const TOLERATED = [
   {
     pattern: /Invalid layer for legend creation/,
     reason: 'upstream geonetwork-ui : création de légende pour une couche invalide',
-  },
-  {
-    pattern: /status of 400.*data\.geopf\.fr\/wmts/,
-    reason: 'WMTS/légende 400 pour un nom CSW absent du service (documenté en amont)',
   },
 ];
 

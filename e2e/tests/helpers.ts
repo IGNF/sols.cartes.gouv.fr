@@ -38,6 +38,8 @@ export const PAGES = {
 /** Pages que axe doit garder sans violation critique/sérieuse (les fiches gardent des violations amont documentées). */
 export const AXE_STRICT = ['home', 'catalogue', 'carto', 'liste'] as const;
 
+/** Nombre de chargements du test de stabilité du rendu de la carte (D-carto-1). */
+export const MAP_STABILITY_RUNS = 20;
 export const GPF_WMTS = 'data.geopf.fr/wmts';
 export const SOLS_GROUP = 'gissol-osf_g';
 export const SOLS_LAYER = 'stock_carbone_fao_fr_wmsv';

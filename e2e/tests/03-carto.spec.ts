@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   collectConsole,
+  MAP_STABILITY_RUNS,
   trackResponses,
   expectFlakeWithin,
   GPF_TILE_FLAKE,
@@ -37,6 +38,8 @@ function layerTitles(page: Page) {
   return page.locator('[id^="GPtitle_ID_"]');
 }
 
+const STOCK_CARBONE_FULL_TITLE =
+  'Carte nationale des stocks de carbone des sols intégrée dans la carte mondiale de la FAO';
 const STOCK_CARBONE_TITLE = /Carte nationale des stocks de carbone/;
 
 /** Le fond Plan IGN manque parfois dans la liste (flake intermittent observé, noté sans faire échouer la couche sols). */
@@ -101,15 +104,10 @@ test.describe('Carto', () => {
     await openMap(page);
     await ensurePanel(page);
     await page.getByRole('tab', { name: 'Données sols' }).click();
-    const add = page.getByRole('button', { name: /^Ajouter à la carte\s*:/ });
-    // La donnée « stock de carbone » : on cherche le bouton dont l'article mentionne la couche.
-    const article = page
-      .getByRole('article')
-      .filter({ hasText: /carbone/i })
-      .first();
-    const addBtn = (await article.count())
-      ? article.getByRole('button', { name: /Ajouter à la carte/ }).first()
-      : add.first();
+    // Nom exact (doc/agents/geopf-ext.md §7.4) ; le nom calculé peut être « …carte: titre ».
+    const addBtn = page.getByRole('button', {
+      name: new RegExp(`^Ajouter à la carte\\s*: ${STOCK_CARBONE_FULL_TITLE}$`),
+    });
     await addBtn.focus();
     await page.keyboard.press('Enter');
     await expect
@@ -189,5 +187,36 @@ test.describe('Carto', () => {
       requests.filter((u) => /data\.geopf\.fr\/(wmts|wms-v)/.test(u) && /GetTile|GetMap/i.test(u)),
     ).toEqual([]);
     expect(await page.locator('canvas').count()).toBe(0);
+  });
+
+  // D-carto-1 : la carte s'affiche parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Échec connu :
+  // `test.fail()` fait passer ce test au vert dès que M6 corrige le défaut (Playwright signale alors « attendu en échec »).
+  test('stabilité du rendu : la carte a un canvas à chaque chargement (D-carto-1)', async ({
+    browser,
+  }, testInfo) => {
+    test.fail(true, 'D-carto-1 : canvas absent sur ~5 % des chargements, correctif prévu en M6');
+    test.setTimeout(MAP_STABILITY_RUNS * 25_000);
+    let sansCanvas = 0;
+    let sansFond = 0;
+    for (let i = 0; i < MAP_STABILITY_RUNS; i++) {
+      const context = await browser.newContext(testInfo.project.use);
+      const page = await context.newPage();
+      await page.goto(PAGES.carto);
+      await expect(page.getByRole('region', MAP_REGION)).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(5000);
+      if ((await page.locator('.map-view canvas').count()) === 0) sansCanvas++;
+      await openLayerList(page);
+      if ((await layerTitles(page).filter({ hasText: 'Plan IGN' }).count()) === 0) sansFond++;
+      await context.close();
+    }
+    testInfo.annotations.push(
+      { type: 'sans canvas', description: `${sansCanvas}/${MAP_STABILITY_RUNS} sans canvas` },
+      {
+        type: 'Plan IGN absent',
+        description: `${sansFond}/${MAP_STABILITY_RUNS} Plan IGN absent de la liste des couches`,
+      },
+    );
+    expect(sansCanvas, 'chargements sans canvas').toBe(0);
+    expect(sansFond, 'chargements sans Plan IGN dans la liste').toBe(0);
   });
 });

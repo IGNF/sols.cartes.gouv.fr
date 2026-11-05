@@ -2,9 +2,9 @@
 
 Date : 2026-11-05. Base : `origin/main` 47aacd5 (M3, M4, M5, C5, C6 fusionnés). Les trois briques ont été construites (`bun run build:all`, sans erreur) et servies sur `:8102`. Chromium headless, projets `desktop` (1280x900) et `mobile` (375x812). Aucun appel réseau simulé : tuiles et GetMap viennent de `data.geopf.fr`, le catalogue interroge son API réelle.
 
-Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all` ; `dist/` doit exister). Attention : `reuseExistingServer` est actif, la suite teste donc le serveur déjà présent sur le port (`PORT`, 8102 par défaut), pas forcément le `dist/` courant. Exécution séquentielle (`workers: 1`) et 1 retry. Les captures JPEG (< 300 kB, vérifié par le test) et les JSON axe sont écrits dans `doc/e2e/`.
+Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all` ; `dist/` doit exister). Attention : `reuseExistingServer` est actif hors CI (`!process.env.CI`), un avertissement est affiché : la suite teste le serveur déjà présent sur le port (`PORT`, 8102 par défaut), pas forcément le `dist/` courant. Exécution séquentielle (`workers: 1`) et 1 retry. Les captures JPEG (< 300 kB, vérifié par le test) et les JSON axe sont écrits dans `doc/e2e/`.
 
-Résultat du dernier passage complet : 45 réussis, 5 ignorés (axe sur mobile, volontaire), 0 échec, **2 flaky** (réussis au retry, voir D-carto-1).
+Résultat du dernier passage complet (port libre 8103, `reuseExistingServer` sans effet) : 49 réussis, 5 ignorés (axe sur mobile, volontaire), 0 échec inattendu, 0 flaky ; parmi les 49, 2 sont des échecs attendus (`test.fail()`, scénario 3h). Contrôle de types : `bun run typecheck` (tsconfig strict).
 
 ## Évolution depuis la passe 1
 
@@ -33,7 +33,7 @@ Résultat du dernier passage complet : 45 réussis, 5 ignorés (axe sur mobile, 
 | 3e | Lien profond WMTS `INRAE_CARTE-SOLS` : couche ajoutée, pas d'alerte | PASS | |
 | 3f | Lien profond inconnu : alerte « Couche introuvable » | PASS | |
 | 3g | `?vue=liste` : un `h1`, 7 données, 7 liens catalogue, aucun canvas ni requête de tuile GPF | PASS | |
-| 3h | Stabilité du rendu de la carte (canvas dans les 30 s) | FAIL (intermittent) | 2 flaky sur la dernière exécution ; ~5 % des chargements sans canvas à 5 s (D-carto-1) |
+| 3h | Stabilité du rendu de la carte : 20 chargements en contextes neufs, canvas `.map-view canvas` et Plan IGN dans la liste (`tests/03-carto.spec.ts`, « stabilité du rendu ») | FAIL connu (`test.fail()`, D-carto-1, M6) | desktop 2/20 sans canvas et 2/20 Plan IGN absent ; mobile 3/20 et 3/20 ; passe au vert (attendu en échec) dès que M6 corrige |
 | 4a | axe `/fr/` | PASS | 0 violation |
 | 4b | axe `/rechercher-une-donnee/` | PASS | 1 violation modérée (`heading-order`) |
 | 4c | axe `/explorer-les-cartes/` | PASS | 0 violation |
@@ -48,7 +48,8 @@ BLOCKED : aucun.
 Chaque test enregistre `requêtes / non-200` en annotation (`flake GPF`) ; seuil : 10 % des requêtes, au moins 2. Observés durant cette passe, tous côté GPF (question M-2) :
 - 400/404 sur tuiles `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` (WMTS, TileMatrix 6) : plusieurs occurrences, dont 2 sur 10 tuiles lors d'un passage mobile ;
 - 502 sur un GetMap `data.geopf.fr/wms-r` (Plan IGN v2) dans l'aperçu d'une fiche.
-Ces erreurs sont tolérées uniquement quand elles visent `data.geopf.fr` (`wmts`, `wms-v`, `wms-r`).
+Environnement (catalogue, pour C7) : lors d'un passage, la capture de la recherche a échoué une fois (résultats non affichés en 60 s, `waitForCatalogueResults`) puis réussi au retry ; non reproduit sur le dernier passage complet.
+Les erreurs GPF ci-dessus sont tolérées uniquement quand elles visent `data.geopf.fr` (`wmts`, `wms-v`, `wms-r`).
 
 ## Défauts par brique
 
@@ -65,7 +66,7 @@ Aucun défaut. Écarts de design : voir « Figma ».
 
 ### carto
 
-- D-carto-1 (intermittent, majeur) : la carte s'affiche parfois sans canvas (donc sans fond Plan IGN, parfois absent de la liste « Ma sélection de cartes »), sans aucune erreur réseau ni console. Mesure sur 20 chargements chacun, 5 s après `goto` : page nue 2/20 desktop et 2/20 mobile, lien inconnu 0/20 desktop et 1/20 mobile, lien WMS 0/20 et 0/20 ; en suite complète, 2 tests sur ~10 carto échouent au premier essai (canvas absent 30 s) puis passent. Reproduire : charger `/explorer-les-cartes/` une vingtaine de fois (contexte neuf à chaque fois) et compter les chargements sans `canvas`. Piste : course à l'initialisation du fond (capacités Plan IGN). Le test garde un retry et note l'absence du fond dans la liste.
+- D-carto-1 (intermittent, majeur ; test : « stabilité du rendu » dans `tests/03-carto.spec.ts`, annotations `sans canvas` et `Plan IGN absent`, dernière mesure 2/20 desktop, 3/20 mobile) : la carte s'affiche parfois sans canvas (donc sans fond Plan IGN, parfois absent de la liste « Ma sélection de cartes »), sans aucune erreur réseau ni console. Mesure sur 20 chargements chacun, 5 s après `goto` : page nue 2/20 desktop et 2/20 mobile, lien inconnu 0/20 desktop et 1/20 mobile, lien WMS 0/20 et 0/20 ; en suite complète, 2 tests sur ~10 carto échouent au premier essai (canvas absent 30 s) puis passent. Reproduire : charger `/explorer-les-cartes/` une vingtaine de fois (contexte neuf à chaque fois) et compter les chargements sans `canvas`. Piste : course à l'initialisation du fond (capacités Plan IGN). Le test garde un retry et note l'absence du fond dans la liste.
 - D-carto-2 : flake GPF (M-2) confirmé, côté serveur, non corrigeable dans la brique.
 - Avis : le panneau latéral ouvert par défaut occupe tout l'écran sur mobile ; la carte est sous le pli (voir captures).
 
