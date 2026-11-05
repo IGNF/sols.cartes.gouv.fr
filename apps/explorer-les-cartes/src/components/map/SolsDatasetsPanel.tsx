@@ -3,7 +3,7 @@ import { Badge } from '@codegouvfr/react-dsfr/Badge';
 import { Button } from '@codegouvfr/react-dsfr/Button';
 import { useState } from 'react';
 import { SOLS_DATASETS } from '../../data/solsLayers';
-import type { SolsDataset, SolsService } from '../../data/solsLayersSchema';
+import { solsLayerKey, type SolsDataset, type SolsService } from '../../data/solsLayersSchema';
 import { preferredLayer, toOverlayRef } from '../../map/overlays';
 import { useMapStore } from '../../store/useMapStore';
 import { excerpt } from '../../text/excerpt';
@@ -42,7 +42,10 @@ export default function SolsDatasetsPanel() {
         {SOLS_DATASETS.map((dataset) => {
           const layer = preferredLayer(dataset);
           const overlay = layer ? toOverlayRef(layer, dataset.title) : null;
-          const isOnMap = overlay ? overlays.some((o) => o.key === overlay.key) : false;
+          // A deep link may have added another layer of the dataset than the preferred one.
+          const datasetKeys = dataset.layers.map(solsLayerKey);
+          const onMapKeys = overlays.map((o) => o.key).filter((key) => datasetKeys.includes(key));
+          const isOnMap = onMapKeys.length > 0;
           return (
             <li
               key={dataset.id}
@@ -74,7 +77,7 @@ export default function SolsDatasetsPanel() {
                   iconPosition="left"
                   onClick={() => {
                     if (isOnMap) {
-                      removeOverlay(overlay.key);
+                      onMapKeys.forEach(removeOverlay);
                       setAnnouncement(`« ${dataset.title} » retirée de la carte.`);
                     } else {
                       addOverlay(overlay);
@@ -90,7 +93,7 @@ export default function SolsDatasetsPanel() {
                   Aucune couche affichable sur la carte.
                 </p>
               )}
-              {overlay && isOnMap && unavailable.includes(overlay.key) && (
+              {onMapKeys.some((key) => unavailable.includes(key)) && (
                 <p className={fr.cx('fr-error-text', 'fr-mt-1w')} role="status">
                   La Géoplateforme ne renvoie pas d’image pour cette couche pour le moment.
                 </p>

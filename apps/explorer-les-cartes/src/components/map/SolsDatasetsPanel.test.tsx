@@ -56,4 +56,21 @@ describe('SolsDatasetsPanel', () => {
     });
     expect(screen.getByText(/ne renvoie pas d’image pour cette couche/)).toBeInTheDocument();
   });
+
+  it('considère une fiche affichée quand une autre de ses couches a été ajoutée par un lien profond', async () => {
+    const dataset = SOLS_DATASETS.find(
+      (d) => d.layers.filter((l) => l.service.startsWith('wms')).length > 1,
+    );
+    if (!dataset) throw new Error('aucune fiche à deux couches WMS');
+    const other = dataset.layers.filter((l) => l.service.startsWith('wms'))[1];
+    if (!other) throw new Error('couche manquante');
+    const user = userEvent.setup();
+    render(<SolsDatasetsPanel />);
+    act(() => useMapStore.getState().addOverlay(toOverlayRef(other, other.title)));
+    const remove = screen.getByRole('button', {
+      name: new RegExp(`^Retirer de la carte\\s*: ${escape(dataset.title)}$`),
+    });
+    await user.click(remove);
+    expect(useMapStore.getState().overlays).toEqual([]);
+  });
 });
