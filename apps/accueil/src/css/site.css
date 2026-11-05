@@ -57,8 +57,8 @@
   }
 }
 
-/* Dark theme: the brand images are drawn for a white background: one white plate behind the
-   whole operator group, so the separator between the two images stays visible. */
+/* Dark theme: one white plate behind the whole operator group, so the separator stays visible.
+   #fff on purpose, not a DSFR token: the brand images are drawn for a white background. */
 [data-fr-theme='dark'] .sols-operator {
   padding: 0.25rem 0.5rem;
   background-color: #fff;
@@ -107,10 +107,13 @@
 /* Footer partner logos: same height (DSFR sets height: auto on .fr-footer__partners .fr-footer__logo). */
 .fr-footer__partners .fr-footer__logo.sols-partner-logo {
   height: 4.5rem;
+  max-width: 12rem;
   padding: 0.5rem;
+  object-fit: contain;
 }
 
-/* Dark theme: keep a white plate behind each partner logo (drawn for a light background). */
+/* Dark theme: keep a white plate behind each partner logo. #fff on purpose, not a DSFR token: the
+   logos are their owners' artwork, drawn for a white background, and must keep their colours. */
 [data-fr-theme='dark'] .fr-footer__partners .fr-footer__logo.sols-partner-logo {
   background-color: #fff;
 }
