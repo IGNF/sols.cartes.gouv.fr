@@ -165,6 +165,9 @@ Clavier : la recherche s'utilise au clavier (saisie, flèche bas, Entrée → `/
   toujours en erreur est demandée 2 ou 3 fois au total (le navigateur/OL la redemande parfois aussitôt), jamais en boucle.
   Le message « Failed to load resource » du premier échec reste dans la console.
 - `ol/format/WMTSCapabilities.read` renvoie un objet même pour un document invalide : `parseWmtsCapabilities` exige `Contents`.
+- Build : avertissement Vite `[EVAL]` venu de `geopf-extensions-openlayers/src/packages/Services/Search.js` (`setUrl` fait
+  `eval("`" + value + "`")`, commenté « insecure ! » en amont). Appelé seulement si `searchOptions.serviceOptions.url` est fourni :
+  ne jamais le renseigner. À signaler si une politique CSP sans `unsafe-eval` est adoptée.
 - Panneau DSFR : le `<label>` d'un `RadioButtons` recouvre l'`<input>` ; dans Playwright, cliquer le libellé (pas `check()` sur l'input).
 - Tests : `ol/Map` et `../map/geopf` sont simulés (`vi.mock`) ; le catalogue, `createWmtsLayer` et le parseur utilisent un extrait réel
   des capacités (`src/test/fixtures/wmts-capabilities.xml` : Plan IGN, orthophotos, relief et leurs TileMatrixSet, importé avec `?raw`).
