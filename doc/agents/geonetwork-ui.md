@@ -178,16 +178,16 @@ La vérification navigateur (§1) a servi `dist/apps/datahub` sous `/rechercher-
 
 Construite selon l'option A du §5 : rien du dépôt amont n'est copié dans notre dépôt, tout est rejoué depuis la ref épinglée.
 
-| Fichier | Rôle |
-| --- | --- |
-| `upstream.json` | **Seul endroit** de la ref : dépôt, `ref` (`v1.6.2`), `commit` (SHA complet vérifié après clonage), `app`, `baseHref`, `devPort`. |
-| `config/default.toml` | Notre configuration, copiée sur `.upstream/conf/default.toml` (que le build publie en `assets/configuration/default.toml`). |
-| `patches/*.patch` | Patchs rejoués dans l'ordre lexical, listés dans `doc/catalogue-patches.md` (le lint échoue sinon). |
-| `scripts/prepare.mjs` | Clone superficiel (`git clone --depth 1 --branch <ref>`) dans `.upstream/`, contrôle du SHA, remise à zéro (`git checkout -- .` puis `git clean -fd`, sans toucher `node_modules`), `npm ci` seulement si `package-lock.json` amont a changé (empreinte dans `node_modules/.sols-install-stamp`), patchs (`git apply --check` puis `git apply`), copie de la config. Idempotent. |
-| `scripts/build.mjs`, `scripts/dev.mjs` | `nx build datahub --configuration=production` puis copie vers `dist/` ; `nx serve datahub --port=4200`. Le base href `/rechercher-une-donnee/` vient de `project.json` (patch 0002), commun au build et au serveur de dev. |
-| `scripts/lint.mjs`, `scripts/checks.mjs`, `test/` | Vérifications hors ligne de ce que la brique possède : syntaxe des scripts, `upstream.json`, config (clés obligatoires, `datahub_url`, `config_filters`, guillemets), patchs documentés, `baseHref` du patch 0002 égal à `upstream.json`. Le code amont n'est ni linté ni testé ici. |
-| `.gitignore` | `.upstream/` (~2 Go avec `node_modules`) et `dist/`. |
-| `package-lock.json` | Lockfile vide (aucune dépendance propre), commité pour activer le job `ci-catalogue.yml`. |
+| Fichier                                           | Rôle                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `upstream.json`                                   | **Seul endroit** de la ref : dépôt, `ref` (`v1.6.2`), `commit` (SHA complet vérifié après clonage), `app`, `baseHref`, `devPort`.                                                                                                                                                                                                                                                |
+| `config/default.toml`                             | Notre configuration, copiée sur `.upstream/conf/default.toml` (que le build publie en `assets/configuration/default.toml`).                                                                                                                                                                                                                                                      |
+| `patches/*.patch`                                 | Patchs rejoués dans l'ordre lexical, listés dans `doc/catalogue-patches.md` (le lint échoue sinon).                                                                                                                                                                                                                                                                              |
+| `scripts/prepare.mjs`                             | Clone superficiel (`git clone --depth 1 --branch <ref>`) dans `.upstream/`, contrôle du SHA, remise à zéro (`git checkout -- .` puis `git clean -fd`, sans toucher `node_modules`), `npm ci` seulement si `package-lock.json` amont a changé (empreinte dans `node_modules/.sols-install-stamp`), patchs (`git apply --check` puis `git apply`), copie de la config. Idempotent. |
+| `scripts/build.mjs`, `scripts/dev.mjs`            | `nx build datahub --configuration=production` puis copie vers `dist/` ; `nx serve datahub --port=4200`. Le base href `/rechercher-une-donnee/` vient de `project.json` (patch 0002), commun au build et au serveur de dev.                                                                                                                                                       |
+| `scripts/lint.mjs`, `scripts/checks.mjs`, `test/` | Vérifications hors ligne de ce que la brique possède : syntaxe des scripts, `upstream.json`, config (clés obligatoires, `datahub_url`, `config_filters`, guillemets), patchs documentés, `baseHref` du patch 0002 égal à `upstream.json`. Le code amont n'est ni linté ni testé ici.                                                                                             |
+| `.gitignore`                                      | `.upstream/` (~2 Go avec `node_modules`) et `dist/`.                                                                                                                                                                                                                                                                                                                             |
+| `package-lock.json`                               | Lockfile vide (aucune dépendance propre), commité pour activer le job `ci-catalogue.yml`.                                                                                                                                                                                                                                                                                        |
 
 Commandes (dans `apps/rechercher-une-donnee`, avec **npm**, hors workspace bun) :
 
@@ -273,15 +273,15 @@ En-tête et pied de page :
 
 Périmètre (voir aussi `doc/catalogue-patches.md`, « Limites connues ») :
 
-| Route ou bloc | État |
-| --- | --- |
-| Recherche (`search`) | Filtrée (patch 0001, `mainSearch`) |
-| `organization/<nom>` | Filtrée (patch 0001, `organization-page`) : 0 fiche pour l'IGN (87 fiches hors filtre) |
-| `organisations` | Redirigée vers la recherche (patch 0003) |
-| Fiche : « Explorez le catalogue » (fiches similaires) | Masquée (patch 0003) ; avant : 1 fiche hors périmètre sur `osf63e6c177-…` |
-| Fiche hors périmètre saisie à la main (`dataset/<uuid>`) | Non filtrée (le sous-portail C-1 le réglerait) |
-| Fiches associées déclarées dans la métadonnée | Non filtrées (liens explicites du producteur) |
-| Listes de valeurs des filtres avancés | Non filtrées (agrégations) |
+| Route ou bloc                                            | État                                                                                   |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Recherche (`search`)                                     | Filtrée (patch 0001, `mainSearch`)                                                     |
+| `organization/<nom>`                                     | Filtrée (patch 0001, `organization-page`) : 0 fiche pour l'IGN (87 fiches hors filtre) |
+| `organisations`                                          | Redirigée vers la recherche (patch 0003)                                               |
+| Fiche : « Explorez le catalogue » (fiches similaires)    | Masquée (patch 0003) ; avant : 1 fiche hors périmètre sur `osf63e6c177-…`              |
+| Fiche hors périmètre saisie à la main (`dataset/<uuid>`) | Non filtrée (le sous-portail C-1 le réglerait)                                         |
+| Fiches associées déclarées dans la métadonnée            | Non filtrées (liens explicites du producteur)                                          |
+| Listes de valeurs des filtres avancés                    | Non filtrées (agrégations)                                                             |
 
 Vérification (Playwright, aperçu complet `PORT=8091 bun run preview:all`, contexte navigateur `en-US` sans stockage) :
 titre « Rechercher une donnée - Observatoire des sols », `lang="fr"`, aucune chaîne anglaise repérée, en-tête
@@ -291,7 +291,7 @@ pied de page, « 7 résultats. », **aucune erreur ni avertissement console** su
 
 - Fiche `osf63e6c177-…` : `error: Invalid layer for legend creation` (légende de l'aperçu carte, geospatial-sdk).
 - Fiche `osfd95caa37-…` : `Error creating legend for layer INRAE_CARTE-SOLS_WMTS: ... was not found in the endpoint
-  capabilities`. Le nom WMTS publié dans le CSW n'existe pas (cf. `doc/agents/gpf-sols-data.md` §5), c'est une donnée à
+capabilities`. Le nom WMTS publié dans le CSW n'existe pas (cf. `doc/agents/gpf-sols-data.md` §5), c'est une donnée à
   corriger côté producteur.
 
 Captures : `doc/screenshots/C3/` (recherche bureau et mobile, menu mobile, pied de page, fiche).
@@ -320,30 +320,30 @@ URL observées (build C4, aperçu complet, Playwright : interception de `window.
 couches sélectionnée tour à tour, 2026-11-05). `type` arrive en majuscules, `layer` n'est pas encodé, `url` l'est
 (`encodeURIComponent`) :
 
-| Fiche | Entrée de la liste | Bouton | URL ouverte |
-| --- | --- | --- | --- |
-| `osf63e6c177-…` (vibrisses RMQS) | `vibrisses_rmqs_gpkg_03-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=vibrisses_rmqs_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 3 liens WFS | désactivé | — |
-| `osff858525a-…` (stock de carbone) | `stock_carbone_fao_fr_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 1 lien WFS | désactivé | — |
-| `osfde26f53e-…` (cartogrammes RMQS) | `cartogrammes_gpkg_11-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=cartogrammes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | `cartogrammes_gpkg_11-09-2026_tms (TMS)` | actif | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Ffca2b3ec-0d23-4dfd-baa8-15c10db4bc14_pb_ext_1.json` |
-| | 1 lien WFS | désactivé | — |
-| `osfd95b355a-…` (RRP Landes) | `rrp_landes_gpkg_11-09-2026_tms (TMS)` | absent | — |
-| | `rrp_landes_gpkg_11-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=rrp_landes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 1 lien WFS | désactivé | — |
-| `1b464210-…` (RRP Gironde) | `rrp_gironde_gpkg_03-09-2026_tms (TMS)` | actif | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json` |
-| | `etude_30110_gpkg_03-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=etude_30110_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 2 liens WFS | désactivé | — |
-| `osfc9008138-…` (RRP Loiret) | `rrp_dept_loiret_gpkg_11-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=rrp_dept_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | `rrp_loiret_gpkg_11-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=rrp_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 1 lien WFS | désactivé | — |
-| `osfd95caa37-…` (sols dominants) | `INRAE_CARTE-SOLS_WMTS (WMTS)` | actif | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS_WMTS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts` |
-| | `inrae_carte_sols_wmsr (WMS)` | actif | `/explorer-les-cartes/?layer=inrae_carte_sols_wmsr&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-r%2Fwms` |
-| | `INRAE_CARTE-SOLS (WMTS)` | actif | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts` |
-| | `INRAE_CARTE-SOLS (WMS)` | actif | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | `etude_34015_gpkg_04-09-2026_wmsv (WMS)` | actif | `/explorer-les-cartes/?layer=etude_34015_gpkg_04-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v` |
-| | 2 liens WFS | désactivé | — |
+| Fiche                               | Entrée de la liste                           | Bouton    | URL ouverte                                                                                                                                                          |
+| ----------------------------------- | -------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `osf63e6c177-…` (vibrisses RMQS)    | `vibrisses_rmqs_gpkg_03-09-2026_wmsv (WMS)`  | actif     | `/explorer-les-cartes/?layer=vibrisses_rmqs_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                   |
+|                                     | 3 liens WFS                                  | désactivé | —                                                                                                                                                                    |
+| `osff858525a-…` (stock de carbone)  | `stock_carbone_fao_fr_wmsv (WMS)`            | actif     | `/explorer-les-cartes/?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                             |
+|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
+| `osfde26f53e-…` (cartogrammes RMQS) | `cartogrammes_gpkg_11-09-2026_wmsv (WMS)`    | actif     | `/explorer-les-cartes/?layer=cartogrammes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                     |
+|                                     | `cartogrammes_gpkg_11-09-2026_tms (TMS)`     | actif     | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Ffca2b3ec-0d23-4dfd-baa8-15c10db4bc14_pb_ext_1.json`     |
+|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
+| `osfd95b355a-…` (RRP Landes)        | `rrp_landes_gpkg_11-09-2026_tms (TMS)`       | absent    | —                                                                                                                                                                    |
+|                                     | `rrp_landes_gpkg_11-09-2026_wmsv (WMS)`      | actif     | `/explorer-les-cartes/?layer=rrp_landes_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                       |
+|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
+| `1b464210-…` (RRP Gironde)          | `rrp_gironde_gpkg_03-09-2026_tms (TMS)`      | actif     | `/explorer-les-cartes/?layer=style&type=TMS&url=https%3A%2F%2Fdata.geopf.fr%2Fannexes%2Fgissol-osf%2Fstyle%2Fc9740106-d6a2-481b-92ae-4e4609a25e49_sols_gironde.json` |
+|                                     | `etude_30110_gpkg_03-09-2026_wmsv (WMS)`     | actif     | `/explorer-les-cartes/?layer=etude_30110_gpkg_03-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                      |
+|                                     | 2 liens WFS                                  | désactivé | —                                                                                                                                                                    |
+| `osfc9008138-…` (RRP Loiret)        | `rrp_dept_loiret_gpkg_11-09-2026_wmsv (WMS)` | actif     | `/explorer-les-cartes/?layer=rrp_dept_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                  |
+|                                     | `rrp_loiret_gpkg_11-09-2026_wmsv (WMS)`      | actif     | `/explorer-les-cartes/?layer=rrp_loiret_gpkg_11-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                       |
+|                                     | 1 lien WFS                                   | désactivé | —                                                                                                                                                                    |
+| `osfd95caa37-…` (sols dominants)    | `INRAE_CARTE-SOLS_WMTS (WMTS)`               | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS_WMTS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`                                                                 |
+|                                     | `inrae_carte_sols_wmsr (WMS)`                | actif     | `/explorer-les-cartes/?layer=inrae_carte_sols_wmsr&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-r%2Fwms`                                                           |
+|                                     | `INRAE_CARTE-SOLS (WMTS)`                    | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMTS&url=https%3A%2F%2Fdata.geopf.fr%2Fwmts`                                                                      |
+|                                     | `INRAE_CARTE-SOLS (WMS)`                     | actif     | `/explorer-les-cartes/?layer=INRAE_CARTE-SOLS&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                                      |
+|                                     | `etude_34015_gpkg_04-09-2026_wmsv (WMS)`     | actif     | `/explorer-les-cartes/?layer=etude_34015_gpkg_04-09-2026_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`                                                      |
+|                                     | 2 liens WFS                                  | désactivé | —                                                                                                                                                                    |
 
 Trois exemples pour le lecteur carto (M4), un par type émis :
 
@@ -364,9 +364,12 @@ de patch) :
 - Landes, lien TMS : bouton absent. La fiche n'a pas de style MapLibre JSON (seulement un `.sld`), alors que Gironde et
   cartogrammes en ont un : le datahub ne peut pas convertir ce lien TMS en couche `maplibre-style`, et le bouton ne
   s'affiche que pour un type reconnu. La couche reste accessible par le lien WMS de la même fiche.
-- Les noms et URL sont ceux du CSW, sans validation : `INRAE_CARTE-SOLS_WMTS`, `inrae_carte_sols_wmsr`, et
-  `INRAE_CARTE-SOLS` sur `wms-v` n'existent pas dans les GetCapabilities (`doc/agents/gpf-sols-data.md` §5). Le lecteur
-  carto doit valider la couche contre les capacités et afficher un message si elle est introuvable.
+- Les noms et URL sont ceux du CSW, sans validation : quatre noms n'existent pas dans les GetCapabilities
+  (`doc/agents/gpf-sols-data.md` §5) : `INRAE_CARTE-SOLS_WMTS` (WMTS), `inrae_carte_sols_wmsr` (wms-r),
+  `INRAE_CARTE-SOLS` sur `wms-v` et `etude_34015_gpkg_04-09-2026_wmsv` sur `wms-v` ; ce dernier a pourtant un bouton
+  actif dans le tableau ci-dessus. Le lecteur carto doit valider la couche contre les capacités et afficher un message
+  si elle est introuvable. Il doit aussi accepter les deux formes de point d'entrée WMS observées (`https://data.geopf.fr/wms-v`
+  sans chemin, `https://data.geopf.fr/wms-r/wms` avec chemin).
 - `url` est le point d'accès tel qu'écrit dans le CSW (`https://data.geopf.fr/wms-v`, sans `/ows`).
 
 Console sur les fiches (hors C4, déjà présent avant) : `Invalid layer for legend creation` (§9) et des réponses 400 de
