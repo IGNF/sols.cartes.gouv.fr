@@ -13,6 +13,10 @@ on:
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   catalogue:
     name: Lint, test, build (apps/rechercher-une-donnee)

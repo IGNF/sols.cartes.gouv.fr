@@ -9,7 +9,9 @@ Quatre workflows GitHub Actions, filtrés par chemin pour ne lancer que ce qui e
 | `ci-carto.yml` | `apps/explorer-les-cartes/**`, `package.json`, `bun.lock`, `.bun-version`, le workflow | `bun run --if-present lint`, `typecheck`, `test`, `build` dans `apps/explorer-les-cartes` |
 | `ci-catalogue.yml` | `apps/rechercher-une-donnee/**`, `.nvmrc`, le workflow | `npm ci`, `lint`, `test` (si présents), `build` ; toutes les étapes sont sautées tant que `apps/rechercher-une-donnee/package-lock.json` n'existe pas |
 
-Les briques bun partagent le lockfile racine, donc une PR qui modifie `bun.lock` relance les deux workflows bun ; `--if-present` évite un échec quand une brique n'expose pas encore un script (même sémantique que `scripts/run-all.ts`).
+Les briques bun partagent le lockfile racine, donc une PR qui modifie `bun.lock` relance les deux workflows bun. `bun run --if-present` évite un échec quand une brique n'expose pas encore `lint`, `typecheck` ou `build` (même sémantique que `scripts/run-all.ts`). L'étape `test` est protégée explicitement par un `jq -e '.scripts.test' package.json` : sans script `test`, bun retombe sur le binaire `/usr/bin/test` du PATH et sort en erreur, `--if-present` ne suffit donc pas. Ne pas « simplifier » cette étape.
+
+Chaque workflow a un `timeout-minutes` et un bloc `concurrency` (un seul run par workflow et par ref, les précédents sont annulés).
 
 Les workflows tournent sur `pull_request` et sur `push` vers `main`.
 
@@ -21,6 +23,5 @@ Les workflows tournent sur `pull_request` et sur `push` vers `main`.
 ## Vérifier localement
 
 ```bash
-actionlint            # https://github.com/rhysd/actionlint, si installé
-python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]"
+actionlint   # https://github.com/rhysd/actionlint
 ```

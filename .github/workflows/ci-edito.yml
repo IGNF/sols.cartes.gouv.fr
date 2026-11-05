@@ -17,10 +17,15 @@ on:
       - '.bun-version'
       - '.github/workflows/ci-edito.yml'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   edito:
     name: Lint, test, build (apps/accueil)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: apps/accueil
@@ -31,7 +36,14 @@ jobs:
           bun-version-file: .bun-version
       - run: bun install --frozen-lockfile
         working-directory: .
-      # --if-present: a brick without the script yet is skipped, like scripts/run-all.ts does
+      # --if-present skips a missing script (same semantics as scripts/run-all.ts); `test` needs
+      # an explicit guard because bun would otherwise run the PATH binary /usr/bin/test
       - run: bun run --if-present lint
-      - run: bun run --if-present test
+      - name: test (guarded, bun falls back to /usr/bin/test when the script is missing)
+        run: |
+          if jq -e '.scripts.test' package.json >/dev/null; then
+            bun run test
+          else
+            echo "skipped: no test script"
+          fi
       - run: bun run --if-present build
