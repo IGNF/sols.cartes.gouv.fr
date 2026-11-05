@@ -1,19 +1,13 @@
-{%- set pageTitle = (title + " - " + site.name) if title and title != site.name else site.name -%}
+{%- set pageTitle = (heading + " - " + t.name) if heading and heading != t.name else t.name -%}
 <!DOCTYPE html>
-<html lang="{{ site.lang }}" data-fr-scheme="system">
+<html lang="{{ locale }}" data-fr-scheme="system">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+{% include "partials/head-common.njk" %}
     <title>{{ pageTitle }}</title>
-    <meta name="description" content="{{ description or site.description }}">
+    <meta name="description" content="{{ metaDescription }}">
     <link rel="canonical" href="{{ site.url }}{{ page.url }}">
-    <meta name="theme-color" content="{{ site.themeColor }}">
-    <link rel="apple-touch-icon" href="{{ site.assets.dsfr }}/favicon/apple-touch-icon.png">
-    <link rel="icon" href="{{ site.assets.dsfr }}/favicon/favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="{{ site.assets.dsfr }}/favicon/favicon.ico" type="image/x-icon">
-    <link rel="manifest" href="{{ site.assets.dsfr }}/favicon/manifest.webmanifest" crossorigin="use-credentials">
-    <link rel="stylesheet" href="{{ site.assets.dsfr }}/dsfr.min.css">
-    <link rel="stylesheet" href="{{ site.assets.css }}/site.css">
+    {%- set alternatesUrl = page.url %}
+{% include "partials/alternates.njk" %}
   </head>
   <body>
     {% include "partials/skiplinks.njk" %}

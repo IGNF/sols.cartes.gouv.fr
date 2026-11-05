@@ -11,7 +11,9 @@ Quatre workflows GitHub Actions, filtrés par chemin pour ne lancer que ce qui e
 
 Les briques bun partagent le lockfile racine, donc une PR qui modifie `bun.lock` relance les deux workflows bun. `bun run --if-present` évite un échec quand une brique n'expose pas encore `lint`, `typecheck` ou `build` (même sémantique que `scripts/run-all.ts`). L'étape `test` est protégée explicitement par un `jq -e '.scripts.test' package.json` : sans script `test`, bun retombe sur le binaire `/usr/bin/test` du PATH et sort en erreur, `--if-present` ne suffit donc pas. Ne pas « simplifier » cette étape.
 
-Chaque workflow a un `timeout-minutes` et un bloc `concurrency` (un seul run par workflow et par ref, les précédents sont annulés).
+Chaque workflow a un `timeout-minutes` et un bloc `concurrency` (un seul run par workflow et par ref ; les runs précédents ne sont annulés que sur `pull_request`, pour que chaque commit de `main` garde une conclusion).
+
+Les fichiers Markdown sont exclus de `prettier --check .` (`.prettierignore`) ; `bun run format:docs` / `format:docs:check` les formatent explicitement (`doc/**/*.md` et les `*.md` racine) sans être imposés en CI pour l'instant.
 
 Les workflows tournent sur `pull_request` et sur `push` vers `main`.
 
