@@ -1,9 +1,33 @@
 .map-view {
   position: relative;
   width: 100%;
-  height: min(70vh, 40rem);
-  min-height: 25rem;
+  height: 70dvh;
+  min-height: 20rem;
   background-color: var(--background-alt-grey);
+
+  /*
+   * OpenLayers controls (attribution, scale line, rotate) follow the DSFR theme, like the geopf-ext
+   * controls (DSFR classes): ol.css colours are CSS variables, mapped here to DSFR tokens.
+   */
+  --ol-background-color: var(--background-default-grey);
+  --ol-accent-background-color: var(--background-alt-grey);
+  --ol-subtle-background-color: var(--background-contrast-grey);
+  --ol-partial-background-color: color-mix(
+    in srgb,
+    var(--background-default-grey) 80%,
+    transparent
+  );
+  --ol-foreground-color: var(--text-default-grey);
+  --ol-subtle-foreground-color: var(--text-mention-grey);
+  --ol-brand-color: var(--text-action-high-blue-france);
+}
+
+/* From the DSFR md breakpoint the map fills its docked area (see MapExplorer.css). */
+@media (min-width: 48em) {
+  .map-view {
+    height: 100%;
+    min-height: 0;
+  }
 }
 
 /*

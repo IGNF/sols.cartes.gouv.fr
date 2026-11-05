@@ -10,9 +10,11 @@
  * permalink, and the `layer/type/url` alias) add their layer or show the matching notice.
  * M5: keyboard (tabs, add/remove focus, Escape on the layer list) and the non-map list view (?vue=liste).
  * M6: a canvas on 20 fresh loads (D-carto-1) and the side panel closed by default at 375 px.
+ * M7: header v1 (brand), compact footer, map width and no page scroll, controls in both themes.
  * Exits 1 on failure.
  */
 import { chromium } from 'playwright';
+import brand from '@sols/brand/brand.json';
 import { CONTROL_LABELS } from '../src/config/map';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
@@ -366,6 +368,130 @@ for (const [label, query, assertion] of deepLinks) {
     '1280px : panneau latéral ouvert par défaut',
   );
   await page.close();
+}
+
+// M7: header v1 from @sols/brand, compact footer, cartes.gouv.fr layout, controls in both themes.
+for (const width of [1024, 1440]) {
+  const page = await browser.newPage({ viewport: { width, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 20_000 });
+  const layout = await page.evaluate(() => {
+    const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
+    return {
+      map: box('.map-view')?.width ?? 0,
+      panelOpen: !(document.getElementById('panneau-lateral')?.hidden ?? true),
+      scroll: document.documentElement.scrollHeight - window.innerHeight,
+      footer: box('.fr-footer')?.height ?? 0,
+      mapBottom: box('.map-view')?.bottom ?? 0,
+      footerTop: box('.fr-footer')?.top ?? 0,
+    };
+  });
+  check(
+    layout.panelOpen && layout.map >= width * 0.6,
+    `${width}px : panneau ouvert, la carte garde ${Math.round((layout.map / width) * 100)} % de la largeur (≥ 60 %)`,
+  );
+  check(layout.scroll <= 1, `${width}px : la page ne défile pas (carte jusqu’au pied de page)`);
+  check(
+    layout.footer <= 64 && Math.abs(layout.footerTop - layout.mapBottom) <= 1,
+    `${width}px : pied de page compact (${Math.round(layout.footer)} px) collé à la carte`,
+  );
+  await page.close();
+}
+
+{
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  const header = page.locator('header.fr-header');
+  await header.waitFor();
+  check(
+    (await page
+      .locator('.fr-header__brand a[href]')
+      .evaluateAll((links) => links.every((link) => link.getAttribute('href') === '/'))) &&
+      (await page.locator('header a[href*="cartes.gouv.fr"]').count()) === 0,
+    'en-tête : la marque renvoie vers « / », jamais vers cartes.gouv.fr',
+  );
+  check(
+    (await header.locator('.fr-nav').count()) === 0 &&
+      (await page.getByRole('navigation', { name: /menu principal/i }).count()) === 0,
+    'en-tête : pas de barre de navigation',
+  );
+  check(
+    (await header.getByText(/se connecter/i).count()) === 0,
+    'en-tête : pas de « Se connecter »',
+  );
+  check(
+    (await header
+      .locator('.fr-badge--purple-glycine', { hasText: brand.badges.carto ?? '' })
+      .count()) >= 1,
+    `en-tête : badge « ${brand.badges.carto} »`,
+  );
+  check(
+    (await header.getByAltText(brand.header.operator.logoAlt).count()) >= 1,
+    'en-tête : logo GIS Sol en opérateur',
+  );
+  const services = header
+    .locator('.fr-header__tools')
+    .getByRole('button', { name: brand.header.tools.services.label });
+  await services.focus();
+  await page.keyboard.press('Enter');
+  const servicesPanel = page.locator(`#${await services.getAttribute('aria-controls')}`);
+  check(
+    (await services.getAttribute('aria-expanded')) === 'true' &&
+      (await servicesPanel.getByRole('link').count()) === brand.header.tools.services.items.length,
+    'en-tête : « Services » s’ouvre au clavier avec les liens de la marque',
+  );
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Escape');
+  check(
+    (await services.getAttribute('aria-expanded')) === 'false' &&
+      (await page.evaluate(() => document.activeElement?.textContent?.trim() ?? '')).startsWith(
+        brand.header.tools.services.label,
+      ),
+    'en-tête : Échap ferme « Services » et rend le focus au bouton',
+  );
+  const footer = page.getByRole('contentinfo');
+  check(
+    (await footer.locator('.fr-footer__body, .fr-footer__partners').count()) === 0 &&
+      (await footer.getByRole('button', { name: /paramètres d.affichage/i }).count()) === 1 &&
+      (await footer.getByRole('link', { name: 'Haut de page' }).count()) === 1,
+    'pied de page compact : liens bas, « Paramètres d’affichage », « Haut de page »',
+  );
+  await page.close();
+}
+
+for (const scheme of ['light', 'dark'] as const) {
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    colorScheme: scheme,
+  });
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('#GPzoomIn').waitFor({ timeout: 20_000 });
+  await page.locator('.ol-attribution').waitFor({ state: 'attached', timeout: 20_000 });
+  const colours = await page.evaluate(() => {
+    const background = (selector: string) => {
+      const element = document.querySelector(selector);
+      return element ? getComputedStyle(element).backgroundColor : null;
+    };
+    const probe = document.createElement('div');
+    probe.style.backgroundColor = 'var(--background-default-grey)';
+    document.body.append(probe);
+    const token = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return {
+      theme: document.documentElement.getAttribute('data-fr-theme'),
+      token,
+      zoom: background('#GPzoomIn'),
+      attribution: background('.ol-attribution button'),
+    };
+  });
+  check(
+    colours.theme === scheme &&
+      colours.zoom === colours.token &&
+      colours.attribution === colours.token,
+    `thème ${scheme} : zoom et attributions sur le fond DSFR (${colours.token} ; zoom ${colours.zoom}, attributions ${colours.attribution})`,
+  );
+  await context.close();
 }
 
 await browser.close();

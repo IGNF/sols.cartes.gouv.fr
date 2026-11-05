@@ -47,11 +47,11 @@ Bun utilise le linker isolé : les dépendances de l'app sont dans `apps/explore
 
 ### 5.1 Versions et sources lues
 
-| Paquet | Version | Remarque |
-|---|---|---|
-| `geopf-extensions-openlayers` | 1.0.0-beta.16 (tag `1.0.0-beta.16`) | dépend de `ol ^10.8`, `@gouvfr/dsfr 1.14.4`, `geoportal-access-lib 3.4.7` ; pair `@panoramax/web-viewer` (non installé) |
-| `ol` | 10.11.0 | |
-| `zustand` / `@tanstack/react-query` | 5.0 / 5.106 | |
+| Paquet                              | Version                             | Remarque                                                                                                                |
+| ----------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `geopf-extensions-openlayers`       | 1.0.0-beta.16 (tag `1.0.0-beta.16`) | dépend de `ol ^10.8`, `@gouvfr/dsfr 1.14.4`, `geoportal-access-lib 3.4.7` ; pair `@panoramax/web-viewer` (non installé) |
+| `ol`                                | 10.11.0                             |                                                                                                                         |
+| `zustand` / `@tanstack/react-query` | 5.0 / 5.106                         |                                                                                                                         |
 
 Lu dans `node_modules/geopf-extensions-openlayers` : `README.md`, `DOCUMENTATION.md` (identique à celui du tag), `src/index.d.ts`,
 `src/packages/Layers/LayerWMTS.{js,d.ts}`, `src/packages/Utils/Config.js`, `src/packages/Controls/LayerSwitcher/LayerSwitcher.{js,d.ts}`,
@@ -107,18 +107,18 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 
 ### 5.5 Architecture React (style guichet-collaboratif)
 
-| Élément | Rôle |
-|---|---|
-| `src/store/useMapStore.ts` (Zustand) | état client : instance `map`, `activeBaseLayerId`, `isPanelOpen` |
-| `src/hooks/useWmtsCapabilities.ts` (TanStack Query) | état serveur : capacités WMTS GPF, jamais recopiées dans le store |
-| `src/hooks/useMap.ts` | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
-| `src/hooks/useBaseLayerCatalogue.ts` | fonds candidats publiés dans les capacités (`availableBaseLayers`) et fond effectif dérivé (choix du store, sinon le premier disponible) |
-| `src/hooks/useBaseLayer.ts` | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage (changement de fond compris) |
-| `src/hooks/useMapControls.ts` | zoom, plein écran, attributions geopf + échelle OL dans un effet ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée |
-| `src/components/map/BaseLayerPanel.tsx` | panneau DSFR « Fonds de carte » : `RadioButtons` (flèches du clavier) → `setActiveBaseLayer` |
-| `src/components/map/MapExplorer.tsx` | bouton « Masquer/Afficher les fonds de carte » (`aria-expanded`, `aria-controls`, `togglePanel`) + grille panneau/carte |
-| `src/hooks/useLayerSwitcher.ts` | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage |
-| `src/config/map.ts` | fonds candidats (`BASE_LAYER_CANDIDATES`), vue initiale, options des outils et du `LayerSwitcher`, libellés, attribution, délai de nouvel essai |
+| Élément                                             | Rôle                                                                                                                                               |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/store/useMapStore.ts` (Zustand)                | état client : instance `map`, `activeBaseLayerId`, `isPanelOpen`                                                                                   |
+| `src/hooks/useWmtsCapabilities.ts` (TanStack Query) | état serveur : capacités WMTS GPF, jamais recopiées dans le store                                                                                  |
+| `src/hooks/useMap.ts`                               | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
+| `src/hooks/useBaseLayerCatalogue.ts`                | fonds candidats publiés dans les capacités (`availableBaseLayers`) et fond effectif dérivé (choix du store, sinon le premier disponible)           |
+| `src/hooks/useBaseLayer.ts`                         | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage (changement de fond compris)               |
+| `src/hooks/useMapControls.ts`                       | zoom, plein écran, attributions geopf + échelle OL dans un effet ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée  |
+| `src/components/map/BaseLayerPanel.tsx`             | panneau DSFR « Fonds de carte » : `RadioButtons` (flèches du clavier) → `setActiveBaseLayer`                                                       |
+| `src/components/map/MapExplorer.tsx`                | bouton « Masquer/Afficher les fonds de carte » (`aria-expanded`, `aria-controls`, `togglePanel`) + grille panneau/carte                            |
+| `src/hooks/useLayerSwitcher.ts`                     | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage                                                                              |
+| `src/config/map.ts`                                 | fonds candidats (`BASE_LAYER_CANDIDATES`), vue initiale, options des outils et du `LayerSwitcher`, libellés, attribution, délai de nouvel essai    |
 
 L'état OpenLayers (vue, visibilité, opacité, ordre) reste dans les objets OL : pas de copie dans React. `useMap` observe la taille du
 conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand le panneau est masqué.
@@ -134,14 +134,14 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 
 ### 5.6 bis Outils (M3)
 
-| Outil | Classe | Options (vérifiées dans les `.d.ts` / sources) |
-|---|---|---|
-| Zoom | `GeoportalZoom` (étend `ol/control/Zoom`) | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`) |
-| Plein écran | `GeoportalFullScreen` (étend `ol/control/FullScreen`) | `position`, `tipLabel` |
-| Attributions | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut |
-| Échelle | `ol/control/ScaleLine` | geopf-ext n'en fournit pas ; `units: 'metric'` |
-| Recherche + géolocalisation | `SearchEngine` | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
-| Rotation | `ol/control/Rotate` (via `defaults`) | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults` |
+| Outil                       | Classe                                                  | Options (vérifiées dans les `.d.ts` / sources)                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Zoom                        | `GeoportalZoom` (étend `ol/control/Zoom`)               | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`)                                                                                                          |
+| Plein écran                 | `GeoportalFullScreen` (étend `ol/control/FullScreen`)   | `position`, `tipLabel`                                                                                                                                                                            |
+| Attributions                | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
+| Échelle                     | `ol/control/ScaleLine`                                  | geopf-ext n'en fournit pas ; `units: 'metric'`                                                                                                                                                    |
+| Recherche + géolocalisation | `SearchEngine`                                          | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
+| Rotation                    | `ol/control/Rotate` (via `defaults`)                    | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults`                                                                                                                         |
 
 Disposition (revue M3) : geopf place la recherche à `left: 46px` au-dessus de 576 px et à `0` en dessous, donc **sur** la colonne
 de zoom (bouton « Zoomer » non cliquable à 375 px, 4 px de recouvrement ailleurs). `MapView.css` lui donne son propre emplacement à
@@ -331,20 +331,20 @@ Issue commune :
 
 ### 7.4 Sélecteurs stables pour la suite e2e
 
-| Élément | Sélecteur conseillé |
-|---|---|
-| Carte | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas` |
-| Bouton du panneau latéral | `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
-| Onglets | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })` |
-| Fond orthophotos | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut |
-| Ajouter une couche sols | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre ») |
-| Gestionnaire de couches | `getByRole('button', { name: 'Ma sélection de cartes' })` ; titres des couches `[id^="GPtitle_ID_"]` |
-| Lien profond qui fonctionne | `?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` (alias : `?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`) ; éviter `rrp_loiret_*` (M-4) |
-| Avis du lien | `getByRole('alert')` « Couche introuvable », « Lien invalide », « Couche indisponible » ; `getByRole('status')` « Format non pris en charge » |
-| Vue liste | `?vue=liste`, `getByRole('heading', { level: 1, name: 'Liste des données sols' })`, `getByRole('article')` (7) |
-| Lien vers la vue liste | `getByRole('link', { name: 'Version accessible de la liste des données' })` |
-| Recherche | `getByRole('textbox', { name: 'Rechercher un lieu ou une adresse' })` |
-| Contrôles | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée) |
+| Élément                     | Sélecteur conseillé                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Carte                       | `getByRole('region', { name: 'Carte interactive des données sols' })`, canvas `.map-view canvas`                                                                                                                                                                                                                                                                 |
+| Bouton du panneau latéral   | dans la barre d'outils au-dessus de la carte (M7) : `getByRole('button', { name: 'Masquer le panneau' })` / `'Afficher le panneau'` (`aria-controls="panneau-lateral"`). **Depuis M6 : panneau ouvert par défaut à partir de 48em (DSFR `md`), fermé en dessous** (projet mobile 375 px de l'e2e : cliquer « Afficher le panneau » avant d'utiliser les onglets) |
+| Onglets                     | `getByRole('tab', { name: 'Fonds de carte' })`, `getByRole('tab', { name: 'Données sols' })`                                                                                                                                                                                                                                                                     |
+| Fond orthophotos            | radio de libellé « Photographies aériennes » : cliquer le `label` (`label` avec texte exact), le libellé DSFR recouvre l'`input` ; « Plan IGN » coché par défaut                                                                                                                                                                                                 |
+| Ajouter une couche sols     | `getByRole('button', { name: /^Ajouter à la carte\s*: <titre de la donnée>$/ })` (le nom calculé peut être « …carte: titre »)                                                                                                                                                                                                                                    |
+| Gestionnaire de couches     | `getByRole('button', { name: 'Ma sélection de cartes' })` ; titres des couches `[id^="GPtitle_ID_"]`                                                                                                                                                                                                                                                             |
+| Lien profond qui fonctionne | `?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` (alias : `?layer=stock_carbone_fao_fr_wmsv&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-v`) ; éviter `rrp_loiret_*` (M-4)                                                                                                                                                              |
+| Avis du lien                | `getByRole('alert')` « Couche introuvable », « Lien invalide », « Couche indisponible » ; `getByRole('status')` « Format non pris en charge »                                                                                                                                                                                                                    |
+| Vue liste                   | `?vue=liste`, `getByRole('heading', { level: 1, name: 'Liste des données sols' })`, `getByRole('article')` (7)                                                                                                                                                                                                                                                   |
+| Lien vers la vue liste      | `getByRole('link', { name: 'Version accessible de la liste des données' })`                                                                                                                                                                                                                                                                                      |
+| Recherche                   | `getByRole('textbox', { name: 'Rechercher un lieu ou une adresse' })`                                                                                                                                                                                                                                                                                            |
+| Contrôles                   | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée)                                                                                                                                                                                                                 |
 
 Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lente peut retarder l'inactivité réseau de plus de 30 s.
 
@@ -369,3 +369,72 @@ Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lent
   À 375 px, la carte commence au-dessus du pli (y ≈ 490 px), « Afficher le panneau » reste avant la carte ; clavier inchangé.
 - Impact e2e (projet mobile) : ouvrir le panneau avant de cibler les onglets « Fonds de carte » / « Données sols ».
 
+## 9. Mise en page et en-tête v1 (M7, 2026-11-05)
+
+Brief : `.claude/commands/refine.md` (v1), plan `doc/v1/PLAN.md`, maquette Figma `1:10562`, contenu partagé `packages/brand`.
+
+### 9.1 Mise en page cartes.gouv.fr
+
+- `App.tsx` / `App.css` : en vue carte, à partir de 48em (DSFR `md`), colonne flex de hauteur `100dvh` : en-tête, zone principale
+  (`flex: 1`, `min-height: 0`), pied de page compact ; la page ne défile pas. Le `h1` « Explorer les cartes » est en `fr-sr-only`
+  (pas de bloc de titre visible). Sous 48em, la page défile : carte (70dvh) d'abord, panneau en dessous.
+- `MapExplorer` : barre d'outils fine (« Masquer/Afficher le panneau », « Version accessible de la liste des données »), avis du lien
+  profond, puis corps en ligne : panneau ancré à gauche, largeur `clamp(18rem, 30 %, 26rem)` avec défilement propre, carte `flex: 1`.
+  Mesuré : carte à 70 % (1024 px) et 71 % (1440 px) de la largeur, panneau ouvert. `useMap` suit la taille par `ResizeObserver`.
+- Vue liste (`?vue=liste`) : page classique qui défile, même en-tête et pied de page compact.
+
+### 9.2 En-tête v1 (`@sols/brand`)
+
+- Dépendance `"@sols/brand": "workspace:*"`, `import brand from '@sols/brand/brand.json'` (`src/config/site.ts`), images importées
+  par Vite (`@sols/brand/assets/*`, publiées dans `dist/assets`). `SECTION_PATHS` et `EXTERNAL_LINKS` en dérivent. Aucun contenu
+  d'en-tête ou de pied de page n'est écrit dans la brique.
+- `Header` react-dsfr : lien de marque `header.brandLink` (`/`, jamais cartes.gouv.fr), Marianne, `operatorLogo` = logo GIS Sol
+  (`header.operator.logo`/`logoAlt`), titre `service.title` + badge `badges.carto` (« Explorer », `fr-badge--sm
+fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` en balisage DSFR direct : le composant `Badge` de react-dsfr
+  ajoute `fr-badge--no-icon` sans sévérité), slogan `service.tagline`. Pas de `navigation` (pas de barre `fr-nav`), pas de
+  « Se connecter » (`header.tools.login` vaut `false`).
+- Marque Observatoire (`header.operator.mark`, `alt=""`) : react-dsfr n'accepte qu'une image d'opérateur ; la marque est dessinée en
+  CSS dans `.fr-header__service::after` (le DSFR utilise `::before` pour le séparateur), image passée par la variable
+  `--osf-mark` posée sur l'en-tête. `osf-carotte.png` est transparent (sur `main`) : pas de tuile ni de couleur de fond. La
+  marque est masquée sous 62em (DSFR `lg`), où l'en-tête DSFR empile le titre du service sous la marque.
+- Menus « Aide » et « Services » (`src/components/layout/HeaderMenu.tsx`) : react-dsfr 1.36 n'a pas de menu dans
+  `quickAccessItems`, mais accepte des éléments JSX : chaque menu est un composant React (bouton `fr-btn` + icône de la marque,
+  chevron, `aria-expanded`/`aria-controls`, liste `fr-menu__list` de liens `fr-nav__link` avec la description en `fr-hint-text`),
+  état React (pas de `fr-collapse`, dont le script DSFR lutterait avec React). Échap (écouté en phase de capture, pour ne pas fermer
+  la modale du menu mobile), un clic ou le focus hors du menu le ferment ; Échap rend le focus au bouton. react-dsfr rend les outils
+  deux fois (bureau et modale mobile) : identifiants par `useId`.
+- Comportement DSFR connu : en thème sombre, un bouton d'outil ouvert (« Aide », « Services ») prend le fond de survol DSFR
+  (`--background-default-grey-hover`), au contraste plus faible que le fond de l'en-tête ; c'est le rendu DSFR natif, non modifié.
+- Icônes : `react-dsfr update-icons` ne lit que les sources de l'application ; les icônes de `brand.json` sont donc listées dans
+  `HEADER_MENU_ICONS` (un test vérifie que les icônes de la marque y figurent ; il a détecté `fr-icon-grid-fill`).
+
+### 9.3 Pied de page compact
+
+`SiteFooter` : `fr-footer` réduit à `fr-footer__bottom` (`footer.compactOnCarto`) : liens `footer.bottomLinks`, « Paramètres
+d'affichage » (`headerFooterDisplayItem`, la modale reste montée par le `Header`), « Haut de page » vers `#en-tete`. 52 px de haut à
+partir de 48em. Plus de description, de partenaires, de liens de contenu ni de licence sur la carto (ils restent sur l'edito et le
+catalogue).
+
+### 9.4 Thème des contrôles
+
+- Mesure (clair, sombre, et bascule par « Paramètres d'affichage ») : le zoom geopf-ext (`fr-btn fr-btn--tertiary`), le plein
+  écran, la recherche et le gestionnaire de couches suivent déjà le thème DSFR (variables `--background-*`, `--text-*`). Ceux qui ne
+  le suivaient pas : les contrôles OpenLayers (attributions, échelle, rotation), blancs en sombre, car `ol.css` utilise ses propres
+  variables `--ol-*`.
+- Correctif : `MapView.css` fait pointer `--ol-background-color`, `--ol-accent-background-color`, `--ol-subtle-background-color`,
+  `--ol-partial-background-color` (`color-mix` à 80 %), `--ol-foreground-color`, `--ol-subtle-foreground-color` et
+  `--ol-brand-color` vers les jetons DSFR. `check:map` vérifie que le zoom et les attributions prennent le fond
+  `--background-default-grey` dans les deux thèmes.
+
+### 9.5 Vérifications
+
+Vitest 189 tests ; `check:map` 76/76 ; axe 0 violation : carte claire et sombre (1440 px), menu « Services » ouvert, menu mobile avec
+« Aide » ouvert, vue liste, lien `l=`. Captures `doc/screenshots/M7/`.
+
+### 9.6 Impact pour la suite e2e
+
+- Plus de barre de navigation : les liens vers le catalogue et la carte sont dans le menu « Services » de l'en-tête
+  (`getByRole('button', { name: 'Services' })` dans `.fr-header__tools`, puis les liens).
+- Le `h1` « Explorer les cartes » est masqué (`fr-sr-only`) : chercher le titre par rôle, pas sa visibilité.
+- Pied de page compact : plus de liens de contenu (legifrance...), de partenaires ni de licence sur la carto.
+- « Version accessible de la liste des données » et le bouton du panneau sont dans la barre d'outils au-dessus de la carte.

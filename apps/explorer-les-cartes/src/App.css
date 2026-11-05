@@ -1,0 +1,22 @@
+/*
+ * Map view layout (cartes.gouv.fr): header, a main area that takes the rest of the viewport, compact
+ * footer. From the DSFR md breakpoint the page does not scroll; below it, the page scrolls (map first).
+ */
+@media (min-width: 48em) {
+  .app-layout--map {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  .app-layout--map > .app-main {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .app-layout--map > .fr-footer {
+    flex: 0 0 auto;
+  }
+}

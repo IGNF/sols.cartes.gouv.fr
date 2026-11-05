@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SIDE_PANEL_ID } from '../../config/map';
+import { LIST_VIEW_PATH } from '../../config/urls';
 import { initialMapState, useMapStore } from '../../store/useMapStore';
 import MapExplorer from './MapExplorer';
 
@@ -51,5 +52,12 @@ describe('MapExplorer', () => {
     expect(document.getElementById(SIDE_PANEL_ID)).not.toBeVisible();
     await user.keyboard(' ');
     expect(useMapStore.getState().isPanelOpen).toBe(true);
+  });
+
+  it('propose la version accessible de la liste des données dans la barre d’outils', () => {
+    render(<MapExplorer />);
+    expect(
+      screen.getByRole('link', { name: 'Version accessible de la liste des données' }),
+    ).toHaveAttribute('href', LIST_VIEW_PATH);
   });
 });

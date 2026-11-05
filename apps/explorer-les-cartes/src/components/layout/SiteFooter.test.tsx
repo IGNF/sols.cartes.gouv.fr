@@ -1,27 +1,35 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { FOOTER_HOME_TITLE, SITE } from '../../config/site';
-import { EXTERNAL_LINKS, FOOTER_DOMAINS, SECTION_PATHS } from '../../config/urls';
+import { FOOTER_ID, HEADER_ID } from '../../config/landmarks';
+import { BRAND } from '../../config/site';
 import SiteFooter from './SiteFooter';
 
-describe('SiteFooter', () => {
-  it('affiche les six liens de contenu dans l’ordre de la brique edito', () => {
+describe('SiteFooter (compact, footer.compactOnCarto)', () => {
+  it('ne garde que la barre basse : liens de la marque et « Paramètres d’affichage »', () => {
+    expect(BRAND.footer.compactOnCarto).toBe(true);
     render(<SiteFooter />);
     const footer = screen.getByRole('contentinfo');
-    const list = footer.querySelector('.fr-footer__content-list');
-    expect(list).not.toBeNull();
-    const links = within(list as HTMLElement).getAllByRole('link');
-    expect(links.map((link) => link.textContent)).toEqual(FOOTER_DOMAINS);
-    expect(links[0]).toHaveAttribute('href', `https://${FOOTER_DOMAINS[0]}`);
+    expect(footer).toHaveAttribute('id', FOOTER_ID);
+    const list = footer.querySelector('.fr-footer__bottom-list') as HTMLElement;
+    for (const link of BRAND.footer.bottomLinks) {
+      expect(within(list).getByRole('link', { name: link.label })).toHaveAttribute(
+        'href',
+        link.href,
+      );
+    }
+    expect(
+      within(list).getByRole('button', { name: /paramètres d.affichage/i }),
+    ).toBeInTheDocument();
+    expect(
+      footer.querySelector('.fr-footer__body, .fr-footer__partners, .fr-footer__content'),
+    ).toBeNull();
   });
 
-  it('affiche la mention de licence et le titre du lien d’accueil', () => {
+  it('propose « Haut de page » vers l’en-tête', () => {
     render(<SiteFooter />);
-    expect(screen.getByText(SITE.licenceText, { exact: false })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: SITE.licenceLabel })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Haut de page' })).toHaveAttribute(
       'href',
-      EXTERNAL_LINKS.licenceEtalab,
+      `#${HEADER_ID}`,
     );
-    expect(screen.getByTitle(FOOTER_HOME_TITLE)).toHaveAttribute('href', SECTION_PATHS.home);
   });
 });

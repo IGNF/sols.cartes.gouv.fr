@@ -1,0 +1,59 @@
+/*
+ * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn in
+ * `::after` (DSFR uses `::before` for the separator). The PNG is transparent: no tile. Hidden below 62em,
+ * where the DSFR header stacks the service title under the brand.
+ */
+@media (min-width: 62em) {
+  .site-header .fr-header__service {
+    position: relative;
+    padding-left: 5rem;
+  }
+
+  .site-header .fr-header__service::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 1.25rem;
+    width: 3rem;
+    height: 3rem;
+    transform: translateY(-50%);
+    background: var(--osf-mark) center / contain no-repeat;
+  }
+}
+
+/* Header tool menus (Aide, Services): cartes.gouv.fr pattern, DSFR tokens only. */
+.header-menu {
+  position: relative;
+}
+
+.header-menu__chevron {
+  margin-left: 0.25rem;
+}
+
+.header-menu__panel {
+  position: absolute;
+  z-index: 1000;
+  top: 100%;
+  right: 0;
+  min-width: 16rem;
+  background-color: var(--background-overlap-grey);
+  filter: drop-shadow(var(--overlap-shadow));
+}
+
+.header-menu__panel .fr-menu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.header-menu__panel .fr-nav__link {
+  display: block;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 1px 0 0 var(--border-default-grey);
+}
+
+/* In the DSFR mobile menu modal, the list is part of the flow. */
+.fr-header__menu .header-menu__panel {
+  position: static;
+  filter: none;
+}

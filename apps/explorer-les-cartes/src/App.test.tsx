@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FOOTER_ID, MAIN_CONTENT_ID } from './config/landmarks';
-import { LIST_VIEW_PATH, SECTION_PATHS } from './config/urls';
+import { BRAND } from './config/site';
 import App from './App';
 
 vi.mock('./components/map/MapExplorer', () => ({
@@ -15,9 +15,9 @@ describe('App', () => {
     render(<App />);
     const main = screen.getByRole('main');
     expect(main).toHaveAttribute('id', MAIN_CONTENT_ID);
-    expect(
-      screen.getByRole('heading', { level: 1, name: 'Explorer les cartes' }),
-    ).toBeInTheDocument();
+    const title = screen.getByRole('heading', { level: 1, name: 'Explorer les cartes' });
+    // cartes.gouv.fr layout: the map fills the page, the title is for screen readers only.
+    expect(title).toHaveClass('fr-sr-only');
   });
 
   it('charge la carte dans le contenu principal', async () => {
@@ -26,26 +26,13 @@ describe('App', () => {
     expect(screen.getByRole('main')).toContainElement(map);
   });
 
-  it('affiche les liens obligatoires du pied de page', () => {
-    render(<App />);
+  it('affiche le pied de page compact avec les liens de la marque', () => {
+    render(<App search="" />);
     const footer = screen.getByRole('contentinfo');
     expect(footer).toHaveAttribute('id', FOOTER_ID);
-    expect(screen.getByRole('link', { name: /accessibilité : non conforme/i })).toHaveAttribute(
-      'href',
-      SECTION_PATHS.accessibility,
-    );
-    expect(screen.getByRole('link', { name: 'Mentions légales' })).toHaveAttribute(
-      'href',
-      SECTION_PATHS.legalNotice,
-    );
-    expect(screen.getByRole('link', { name: 'Données personnelles' })).toHaveAttribute(
-      'href',
-      SECTION_PATHS.personalData,
-    );
-    expect(screen.getByRole('link', { name: 'Plan du site' })).toHaveAttribute(
-      'href',
-      SECTION_PATHS.siteMap,
-    );
+    for (const link of BRAND.footer.bottomLinks) {
+      expect(screen.getByRole('link', { name: link.label })).toHaveAttribute('href', link.href);
+    }
   });
 
   it('propose les paramètres d’affichage dans le pied de page', () => {
@@ -67,12 +54,10 @@ describe('App', () => {
     );
   });
 
-  it('propose la version accessible de la liste des données depuis la page carte', async () => {
+  it('charge la carte en vue carte, sans la liste', async () => {
     render(<App search="" />);
-    expect(
-      screen.getByRole('link', { name: 'Version accessible de la liste des données' }),
-    ).toHaveAttribute('href', LIST_VIEW_PATH);
     expect(await screen.findByTestId('map-view')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 1, name: 'Liste des données sols' })).toBeNull();
   });
 
   it('affiche la liste sans carte avec ?vue=liste', () => {
