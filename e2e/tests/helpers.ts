@@ -1,4 +1,5 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,8 +28,11 @@ export function untolerated(
 
 export const RECORD_STOCK_CARBONE = 'osff858525a-9fea-5ae3-93ab-43afab78483f';
 
+export const GISSOL_URL = 'https://www.gissol.fr/observatoire-des-sols-de-france/';
+
 export const PAGES = {
   home: '/fr/',
+  aide: '/fr/aide/',
   catalogue: '/rechercher-une-donnee/',
   carto: '/explorer-les-cartes/',
   liste: '/explorer-les-cartes/?vue=liste',
@@ -36,7 +40,7 @@ export const PAGES = {
 } as const;
 
 /** Pages dont axe doit rester sans violation critique/sérieuse (fiche incluse depuis C7). */
-export const AXE_STRICT = ['home', 'catalogue', 'carto', 'liste', 'fiche'] as const;
+export const AXE_STRICT = ['home', 'aide', 'catalogue', 'carto', 'liste', 'fiche'] as const;
 
 /** Nombre de chargements du test de stabilité du rendu de la carte (D-carto-1). */
 export const MAP_STABILITY_RUNS = 20;
@@ -114,4 +118,32 @@ export function isResultQuery(body: string): boolean {
   } catch {
     return true; // corps illisible : traité comme requête de résultats, donc contrôlé
   }
+}
+
+/** Ouvre le menu « Services » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
+export async function openServicesMenu(page: Page, isMobile: boolean) {
+  if (isMobile) await page.locator('header .fr-btn--menu').click();
+  const button = page
+    .locator('header')
+    .getByRole('button', { name: 'Services' })
+    .locator('visible=true');
+  await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  return button;
+}
+
+/** Capture JPEG sous 300 kB : baisse la qualité (55, 40, 30, 20) jusqu'à tenir ; échoue sinon. */
+export async function shootJpeg(
+  page: Page,
+  file: string,
+  options: {
+    fullPage?: boolean;
+    clip?: { x: number; y: number; width: number; height: number };
+  } = {},
+): Promise<void> {
+  for (const quality of [55, 40, 30, 20]) {
+    await page.screenshot({ path: file, type: 'jpeg', quality, scale: 'css', ...options });
+    if (statSync(file).size < MAX_SCREENSHOT_BYTES) return;
+  }
+  throw new Error(`${file} dépasse 300 kB même à qualité 20`);
 }

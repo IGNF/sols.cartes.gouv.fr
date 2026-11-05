@@ -92,4 +92,100 @@ test.describe('Catalogue', () => {
     );
     await expect(page.getByRole('alert').filter({ hasText: 'Couche indisponible' })).toHaveCount(0);
   });
+
+  test('l\u2019en-tête v1 du catalogue : badge « Rechercher », marque vers /, pas de navigation', async ({
+    page,
+  }) => {
+    await page.goto(PAGES.catalogue);
+    await expect(page.locator('header .fr-badge')).toHaveText('Rechercher');
+    await expect(
+      page.locator('header #navigation-principale, header nav[aria-label="Menu principal"]'),
+    ).toHaveCount(0);
+    const hrefs = await page
+      .locator('header a')
+      .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
+    expect(hrefs).toContain('/');
+    expect(hrefs.filter((h) => /cartes\.gouv\.fr/.test(h))).toEqual([]);
+    // C-6 : les paramètres d'affichage sont masqués sur le catalogue.
+    await expect(page.getByRole('button', { name: "Paramètres d'affichage" })).toHaveCount(0);
+    // Partenaires dans le pied de page.
+    await expect(
+      page.locator('footer').getByRole('link', { name: 'INRAE', exact: true }),
+    ).toBeAttached();
+  });
+
+  test('les puces de mots-clés basculent (aria-pressed, filtre keyword, résultats)', async ({
+    page,
+  }) => {
+    await page.goto(PAGES.catalogue);
+    const total = await waitForCatalogueResults(page);
+    const group = page.getByRole('group', { name: 'Mots-clés suggérés' });
+    await expect(group).toBeVisible();
+    const chip = group.getByRole('button', { name: 'RRP' });
+    await expect(chip).toHaveAttribute('aria-pressed', 'false');
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page).toHaveURL(/keyword=RRP/);
+    await expect
+      .poll(async () =>
+        Number(
+          /(\d+)/.exec(
+            await page
+              .getByText(/\d+ résultats?/)
+              .first()
+              .innerText(),
+          )?.[1],
+        ),
+      )
+      .toBeLessThan(total);
+    await chip.click();
+    await expect(chip).toHaveAttribute('aria-pressed', 'false');
+    await expect(page).not.toHaveURL(/keyword=RRP/);
+    await expect(page.getByText(new RegExp(`${total} résultats`)).first()).toBeVisible();
+    // Clavier : Entrée puis Espace sur deux puces, cumul.
+    const rmqs = group.getByRole('button', { name: 'RMQS' });
+    await rmqs.focus();
+    await page.keyboard.press('Enter');
+    await expect(rmqs).toHaveAttribute('aria-pressed', 'true');
+    const pedo = group.getByRole('button', { name: 'pédologie' });
+    await pedo.focus();
+    await page.keyboard.press('Space');
+    await expect(pedo).toHaveAttribute('aria-pressed', 'true');
+    await expect(rmqs).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('seuls les filtres Thèmes et Mot-clé sont proposés', async ({ page, isMobile }) => {
+    test.skip(
+      isMobile,
+      'filtres repliés dans « Affiner votre recherche » sur mobile : vérifié sur desktop',
+    );
+    await page.goto(PAGES.catalogue);
+    await waitForCatalogueResults(page);
+    await expect(page.getByRole('button', { name: 'Thèmes' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Mot-clé' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Année de publication/ })).toHaveCount(0);
+  });
+
+  test('le lien « Voir sur la carte » de la fiche (section liens) ouvre la carte, même onglet, avec la couche', async ({
+    page,
+  }) => {
+    const popups: unknown[] = [];
+    page.context().on('page', (p) => popups.push(p));
+    await page.goto(PAGES.fiche);
+    const link = page.getByRole('link', { name: /^Voir sur la carte/ }).first();
+    await expect(link).toBeVisible({ timeout: 30_000 });
+    const href = await link.getAttribute('href');
+    expect(href).toMatch(
+      /^\/explorer-les-cartes\/\?l=[^$]+\$GEOPORTAIL:OGC:(WMS|WMTS)\(1;1;1;0\)&permalink=no$/,
+    );
+    await link.click();
+    await page.waitForURL(/\/explorer-les-cartes\/\?l=/, { timeout: 30_000 });
+    expect(popups, 'aucun nouvel onglet').toHaveLength(0);
+    await page.getByRole('button', { name: 'Ma sélection de cartes' }).click({ timeout: 30_000 });
+    await expect(
+      page
+        .locator('[id^="GPtitle_ID_"]')
+        .filter({ hasText: /Carte nationale des stocks de carbone/ }),
+    ).toHaveCount(1, { timeout: 30_000 });
+  });
 });

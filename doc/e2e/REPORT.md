@@ -1,73 +1,74 @@
-# Rapport e2e (T2, seconde passe)
+# Rapport e2e (T3, passe 3, première partie)
 
-Date : 2026-11-05. Base : `origin/main` avec M3, M4, M5, M6 (#39), C5, C6 et C7 (#40) fusionnés. Les trois briques ont été reconstruites (`bun run build:all`, sans erreur) et servies sur un port libre (8105). Chromium headless, projets `desktop` (1280x900) et `mobile` (375x812). Aucun appel réseau simulé : tuiles et GetMap viennent de `data.geopf.fr`, le catalogue interroge son API réelle.
+Date : 2026-11-05. Base : `origin/main` 360b0c0 (v1 : X11, E7, E8, C8 à C11, M7 fusionnés ; M8 et M9 pas encore). Les trois briques ont été construites (`bun run build:all`, sans erreur) et servies sur le port 8133. Chromium headless, projets `desktop` (1280x900) et `mobile` (375x812). Aucun appel réseau simulé.
 
-Lancer : `cd e2e && bun i && bun run test` (le `webServer` démarre `preview:all` ; `dist/` doit exister). Attention : `reuseExistingServer` est actif hors CI (`!process.env.CI`), un avertissement est affiché : la suite teste le serveur déjà présent sur le port (`PORT`, 8102 par défaut), pas forcément le `dist/` courant. Exécution séquentielle (`workers: 1`) et 1 retry. Les captures JPEG (< 300 kB, vérifié par le test) et les JSON axe sont écrits dans `doc/e2e/`.
+Lancer : `cd e2e && bun i && PORT=8133 bun run test` (`dist/` doit exister ; `reuseExistingServer` hors CI : la suite teste le serveur déjà présent sur le port, un avertissement est affiché). Exécution séquentielle, 1 retry. Captures JPEG (< 300 kB, qualité abaissée automatiquement si besoin) et JSON axe écrits dans `doc/e2e/`. Contrôle de types : `bun run typecheck`.
 
-Résultat du dernier passage complet : 48 réussis, 5 ignorés (axe sur mobile, volontaire), 0 échec, **1 flaky** (stabilité du rendu, mobile : 1 chargement sans canvas sur 20 au premier essai, 0/20 au retry ; voir D-carto-1). Contrôle de types : `bun run typecheck` (tsconfig strict).
+Résultat du dernier passage complet : **78 réussis, 8 ignorés, 0 échec, 0 flaky**. Ignorés : axe sur mobile (6), Échap du sous-menu sur mobile (la modale du menu burger se ferme en entier, comportement DSFR), filtres du catalogue sur mobile (repliés dans « Affiner votre recherche »).
 
-## Évolution depuis la passe 1
+## Passe 3 : ce qui a changé dans la suite
 
-- Les deux scénarios PENDING (M3 fonds de carte, M4 lien profond) sont exécutés et passent ; le lien profond utilise désormais le format cartes.gouv.fr (`?l=...$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`).
-- Catalogue : la limite connue « agrégations sans filtre » est fermée (C5) : toutes les requêtes `_search` portent `gissol-osf_g`, assertion stricte.
-- axe : catalogue (critical/serious de la passe 1) et carto (`label-content-name-mismatch`) corrigés ; home, catalogue, carto et vue liste : 0 critical/serious.
-- Nouveaux scénarios : vue liste sans carte, « Voir sur la carte », redirection `organisations`, axe et captures de la fiche et de la vue liste.
-- D-carto-1 (intermittent, résiduel après M6 ; test : « stabilité du rendu » dans `tests/03-carto.spec.ts`, annotations `sans canvas` et `Plan IGN absent`) : la carte s'affiche encore rarement sans canvas ni fond Plan IGN, sans erreur réseau ni console. Mesures sur ce build : desktop 0/20 puis 1/20 (deux passages), mobile 1/20 puis 0/20 (retry). Avant M6 : 2-3/20. Reproduire : charger `/explorer-les-cartes/` une vingtaine de fois en contextes neufs et compter les chargements sans `canvas` 5 s après le chargement.
+- En-tête v1 : plus de barre de navigation ; liens vers catalogue et carte dans le menu « Services » (ouverture souris et clavier, Échap sur desktop, retour du focus) ; pas de « Se connecter », aucun lien vers cartes.gouv.fr, logo GIS Sol ; badge « Rechercher » (catalogue) et « Explorer » (carte), aucun sur l'edito.
+- Pied de page v1 : partenaires IGN, INRAE, GIS Sol (lien `https://www.gissol.fr/observatoire-des-sols-de-france/`), « Paramètres d'affichage » (edito, carte ; masqué sur le catalogue), pied compact sur la carte.
+- Home v1 (sections), page `/fr/aide/` avec `#contact`, thème sombre via les paramètres d'affichage.
+- Catalogue : puces « Mots-clés suggérés » à bascule (`aria-pressed`, paramètre `keyword`, résultats, clavier), filtres Thèmes et Mot-clé seuls, lien « Voir sur la carte » de la fiche (même onglet, couche affichée).
+- Carte : mise en page plein viewport (pas de défilement à 1280x900), `h1` sr-only, barre d'outils au-dessus de la carte, panneau fermé par défaut sur mobile.
+- Axe : ajout de `/fr/aide/` ; fiche toujours bloquante. Captures : ajout de l'aide et des deux en-têtes (menu « Services » ouvert).
+- Test de stabilité de la carte conservé (M6) : 20 chargements, aucun sans canvas.
 
 ## Synthèse
 
 | # | Scénario | Statut | Preuve |
 |---|---|---|---|
 | 1a | `/` redirige vers `/fr/` | PASS | desktop + mobile |
-| 1b | `/fr/` : un `h1` visible, en-tête, pied de page, 0 erreur console | PASS | desktop + mobile |
-| 1c | Liens d'en-tête vers catalogue et carto : 200 et `h1` | PASS | desktop + mobile (un `h1` masqué de modale DSFR existe sur la carte, toléré) |
-| 1d | Sélecteur de langue atteint `/en/` | PASS | desktop + mobile |
-| 2a | Catalogue : au moins 1 résultat (7 observés), toutes les requêtes `_search` filtrées `gissol-osf_g`, erreurs console | PASS | 7 résultats ; 0 requête sans filtre, agrégations comprises |
-| 2b | Fiche : ouverture, titre, erreurs console limitées aux documentées | PASS | tolérées : légende invalide, 400/404/502/503 GPF sur le fond de l'aperçu |
-| 2c | `/rechercher-une-donnee/organisations` redirige vers la recherche | PASS | |
-| 2d | Fiche `stock_carbone` : « Voir sur la carte » ouvre `/explorer-les-cartes/?l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no` dans le même onglet, couche dans la liste, pas d'avis | PASS | aucun nouvel onglet |
-| 3a | Carto : canvas, tuiles WMTS 200, gestionnaire de couches (Plan IGN) | PASS | flake GPF compté, voir ci-dessous |
-| 3b | « Fonds de carte » : photographies aériennes au clavier, tuiles ORTHOIMAGERY 200 | PASS | |
-| 3c | « Données sols » : ajout au clavier de `stock_carbone_fao_fr_wmsv`, GetMap 200 `image/*`, titre dans le gestionnaire, retrait | PASS | |
-| 3d | Lien profond WMS (format cartes.gouv.fr) : couche ajoutée, GetMap 200, `image/*` | PASS | |
-| 3e | Lien profond WMTS `INRAE_CARTE-SOLS` : couche ajoutée, pas d'alerte | PASS | |
-| 3f | Lien profond inconnu : alerte « Couche introuvable » | PASS | |
-| 3g | `?vue=liste` : un `h1`, 7 données, 7 liens catalogue, aucun canvas ni requête de tuile GPF | PASS | |
-| 3h | Stabilité du rendu de la carte : 20 chargements en contextes neufs, canvas `.map-view canvas` et Plan IGN dans la liste (`tests/03-carto.spec.ts`, « stabilité du rendu ») | PASS (flaky) | desktop 0/20 sans canvas ; mobile 1/20 au premier essai puis 0/20 au retry (Plan IGN absent : mêmes comptes). Passage précédent (même build M6) : 1/20 desktop. Le test échoue tant qu'un chargement manque, D-carto-1 n'est donc pas totalement éteint |
-| 4a | axe `/fr/` | PASS | 0 violation |
-| 4b | axe `/rechercher-une-donnee/` | PASS | 1 violation modérée (`heading-order`) |
-| 4c | axe `/explorer-les-cartes/` | PASS | 0 violation |
-| 4d | axe `/explorer-les-cartes/?vue=liste` | PASS | 0 violation |
-| 4e | axe fiche (bloquant depuis C7) | PASS | 0 critical/serious |
-| 5 | Captures desktop + mobile : home, catalogue, carto, liste, fiche | PASS | `doc/e2e/*.jpg`, toutes < 300 kB |
+| 1b | `/fr/` : un `h1` visible, 0 erreur console | PASS | desktop + mobile |
+| 1c | En-tête v1 de l'edito : sans `#navigation-principale`, sans « Se connecter », sans lien cartes.gouv.fr, logo GIS Sol, sans badge | PASS | desktop + mobile |
+| 1d | Pied de page v1 : partenaires, lien GIS Sol corrigé, paramètres d'affichage | PASS | |
+| 1e | Menu « Services » : Entrée ouvre, Échap ferme, focus rendu (desktop) | PASS | mobile : ouverture seulement |
+| 1f | Menu « Services » mène au catalogue et à la carte (200, un h1 visible) | PASS | |
+| 1g | Page `/fr/aide/` avec `#contact` | PASS | |
+| 1h | Paramètres d'affichage : thème sombre sur `/fr/` | PASS | `data-fr-theme="dark"` |
+| 1i | Sections de la home v1 | PASS | h2 des six sections, « Accéder au portail » |
+| 1j | Sélecteur de langue atteint `/en/` | PASS | |
+| 2a | Catalogue : au moins 1 résultat (7), toutes les requêtes `_search` filtrées | PASS | |
+| 2b | Fiche : ouverture, titre, console limitée aux erreurs documentées | PASS | |
+| 2c | `organisations` redirige vers la recherche | PASS | |
+| 2d | En-tête catalogue : badge « Rechercher », marque vers `/`, pas de navigation, pas de paramètres d'affichage | PASS | |
+| 2e | Puces de mots-clés : bascule, `keyword=RRP`, cumul clavier | PASS | |
+| 2f | Filtres Thèmes et Mot-clé seuls | PASS (desktop) | mobile ignoré |
+| 2g | Lien « Voir sur la carte » de la fiche : format `l=`, même onglet, couche dans la carte | PASS | deux variantes (bouton historique et lien de la section liens) |
+| 3a | Carte : canvas, tuiles WMTS 200, gestionnaire de couches | PASS | flakes GPF comptés en annotation |
+| 3b | Fonds de carte : photographies aériennes au clavier, tuiles 200 | PASS | |
+| 3c | « Données sols » : ajout/retrait de `stock_carbone_fao_fr_wmsv`, GetMap 200 image | PASS | |
+| 3d | Liens profonds WMS, WMTS, inconnu (« Couche introuvable ») | PASS | |
+| 3e | Vue liste sans carte | PASS | |
+| 3f | Mise en page v1 : badge « Explorer », `h1` sr-only, pied compact, barre d'outils au-dessus de la carte, pas de défilement de page | PASS | |
+| 3g | Menu « Services » de la carte vers le catalogue | PASS | |
+| 3h | Stabilité du rendu : 20 chargements avec canvas et Plan IGN | PASS | 0/20 desktop et mobile |
+| 4 | axe sur `/fr/`, `/fr/aide/`, catalogue, fiche, carte, liste : 0 critical/serious | PASS | 1 violation modérée (`heading-order`, catalogue) |
+| 5 | Captures desktop + mobile (6 pages) et 2 en-têtes | PASS | `doc/e2e/*.jpg`, toutes < 300 kB |
 
-BLOCKED : aucun.
+BLOCKED : aucun. Non couvert, en attente de la partie 2 : outils geopf (M8) et widget Catalog (M9).
 
-### Flakes GPF (comptés séparément)
+### Flakes GPF
 
-Chaque test enregistre `requêtes / non-200` en annotation (`flake GPF`) ; seuil : 10 % des requêtes, au moins 2. Observés durant cette passe, tous côté GPF (question M-2) :
-- 400/404 sur tuiles `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` (WMTS, TileMatrix 6) : plusieurs occurrences, dont 2 sur 10 tuiles lors d'un passage mobile ;
-- 502 sur un GetMap `data.geopf.fr/wms-r` (Plan IGN v2) dans l'aperçu d'une fiche.
-Environnement (catalogue, pour C7) : lors d'un passage, la capture de la recherche a échoué une fois (résultats non affichés en 60 s, `waitForCatalogueResults`) puis réussi au retry ; non reproduit sur le dernier passage complet.
-Les erreurs GPF ci-dessus sont tolérées uniquement quand elles visent `data.geopf.fr` (`wmts`, `wms-v`, `wms-r`).
+Chaque test enregistre `requêtes / non-200` en annotation ; tolérance 10 % des requêtes, au moins 2, uniquement sur `data.geopf.fr`. Aucun flake bloquant sur ce passage complet.
 
 ## Défauts par brique
 
 ### edito
-
-Aucun défaut. Écarts de design : voir « Figma ».
+- D-edito-1 (visuel, mineur) : la capture de la home montre le hero sans visuel d'application, la rangée « Sponsors » absente (voulu) ; rien d'autre. Pas de défaut fonctionnel.
+- Un `h2` vide existe dans la page (titre de la modale des paramètres d'affichage) : sans effet visible.
 
 ### catalogue
-
-- D-cat-1 (a11y, fiche) : corrigé par C7 : 0 critical/serious sur la fiche (étaient `button-name` 6, `label` 4, `color-contrast` 10, `aria-tab-name` 1).
-- D-cat-2 (a11y, modérée) : `heading-order` sur la recherche (titres de résultats en `h4`), déjà documenté.
-- D-cat-3 (visuel) : l'espace sous la recherche est réduit par C7 (~32 px). Sur la fiche, la capture montre encore une zone vide au-dessus du résumé (aperçu cartographique non rendu au moment de la capture : la capture n'attend pas la carte d'aperçu ; à vérifier à la main).
+- D-cat-1 (a11y, modérée, amont) : `heading-order` sur la recherche (titres de résultats en `h4`).
+- D-cat-2 (comportement) : sur mobile, les filtres Thèmes et Mot-clé sont repliés dans « Affiner votre recherche » ; pas un défaut, mais le test ne les contrôle qu'en desktop.
+- Le test historique du bouton « Voir sur la carte » (titre sur l'hôte `gn-ui-button`) passe toujours.
 
 ### carto
-
-- D-carto-1 (intermittent, résiduel après M6 ; test : « stabilité du rendu » dans `tests/03-carto.spec.ts`, annotations `sans canvas` et `Plan IGN absent`) : la carte s'affiche encore rarement sans canvas ni fond Plan IGN, sans erreur réseau ni console. Mesures sur ce build : desktop 0/20 puis 1/20 (deux passages), mobile 1/20 puis 0/20 (retry). Avant M6 : 2-3/20. Reproduire : charger `/explorer-les-cartes/` une vingtaine de fois en contextes neufs et compter les chargements sans `canvas` 5 s après le chargement.
-- D-carto-2 : flake GPF (M-2) confirmé, côté serveur, non corrigeable dans la brique.
-- Panneau latéral (M6) : fermé par défaut à 375 px, la carte démarre au-dessus du pli (voir capture mobile).
+- D-carto-1 : stabilité du rendu corrigée par M6, 0/20 chargements sans canvas sur ce passage (desktop et mobile).
+- D-carto-3 (divergence maquette) : voir « Figma ».
+- Pas de défaut fonctionnel.
 
 ## Violations axe-core (toutes sévérités)
 
@@ -76,21 +77,27 @@ Fichiers bruts : `doc/e2e/axe-*.json`.
 | Page | Règle | Impact | Noeuds |
 |---|---|---|---|
 | `/fr/` | aucune | | 0 |
+| `/fr/aide/` | aucune | | 0 |
 | catalogue | `heading-order` | moderate | 1 |
-| carto | aucune | | 0 |
-| liste | aucune | | 0 |
 | fiche | aucune | | 0 |
+| carte | aucune | | 0 |
+| liste | aucune | | 0 |
 
 ## Captures
 
-Fichiers : `doc/e2e/{home,catalogue,carto,liste,fiche}-{desktop,mobile}.jpg` (home et liste en pleine page).
+Fichiers : `doc/e2e/{home,aide,catalogue,carto,liste,fiche}-{desktop,mobile}.jpg` et `doc/e2e/en-tete-{home,carto}-{desktop,mobile}.jpg` (home, aide et liste en pleine page).
 
-- Home : en-tête, hero, sections, pied de page présents, pas de débordement ; mobile correct.
-- Catalogue : liste complète avec vignettes, filtres, pied de page ; vide résiduel sous la recherche (D-cat-3).
-- Carto : panneau « Fonds de carte » (5 radios) à gauche, carte Plan IGN à droite, recherche, zoom, plein écran, gestionnaire de couches ; pas d'écran blanc sur ces captures. Mobile : panneau au-dessus, carte sous le pli.
-- Liste : sept données lisibles, services, liens « point d'accès » et « voir sur la carte », lien « Fiche de la donnée dans le catalogue », pas de débordement mobile.
-- Fiche : titre, étiquettes, mots-clés, contact ; zone vide au-dessus du résumé (aperçu non rendu à la capture).
+- Home : héros à fond bleu pâle avec boutons et trois chiffres, frise « Sans / Avec », tuiles, cas d'usage illustrés (images chargées), cartes de données avec étiquettes et bandeau bleu, agenda en carrousel (3 cartes visibles, boutons précédent/suivant), articles, partenaires (logos IGN, INRAE, GIS Sol), pied de page avec partenaires. Pas de débordement ; mobile correct.
+- En-têtes : logo République, GIS Sol, logo OSF, séparés par un filet, titre et signature ; badge « EXPLORER » sur la carte ; menus « Aide » et « Services » avec sous-titres (« Le catalogue des données sols », etc.). Mobile : tiroir avec Aide, Services déplié, sélecteur de langue.
+- Carte : carte plein cadre sous l'en-tête, barre d'outils (Masquer le panneau, version accessible de la liste), panneau « Fonds de carte » à gauche, pied de page compact sur une ligne. Pas d'écran blanc.
+- Catalogue, liste, fiche : voir passes précédentes ; plus de vide sous la recherche ; la capture de la fiche garde une zone au-dessus du résumé qui dépend du chargement de l'aperçu.
 
-## Comparaison Figma (home)
+## Comparaison Figma
 
-Seules les divergences nouvelles depuis la passe 1 : aucune sur la home (inchangée). Le hero, la section « Le service » et le pied de page restent ceux déjà consignés (`doc/design/README.md`). Les pages carto, liste et fiche n'ont pas de maquette dans `doc/design/`.
+Home (`doc/design/figma-home-1440-light.png`), nouvelles divergences seulement : la home v1 reprend l'ordre et le contenu de la maquette (héros avec chiffres, service Sans/Avec, cas d'usage illustrés, données, agenda, partenaires). Écarts restants : pas de capture d'application dans le héros, pas de vidéo, pas de rangée « Sponsors », encart « Derniers articles » ajouté, pied de page DSFR clair avec partenaires (la maquette a un pied sombre, divergence connue Q7).
+
+Carte (`carto-1-10562.png`), nouvelles divergences :
+- le panneau latéral « Fonds de carte / Données sols » est présent alors que la maquette n'a qu'une carte pleine page (les outils et l'ajout de données de la maquette sont les tâches M8/M9) ;
+- pas de « Se connecter » (voulu) ;
+- le pied de page compact n'a pas « Conditions générales d'utilisation » (la maquette l'a) ; ordre des liens différent (maquette : Plan du site en premier) ;
+- le menu « Services » et le badge « Explorer » correspondent à la maquette ; la barre d'outils au-dessus de la carte est un ajout.
