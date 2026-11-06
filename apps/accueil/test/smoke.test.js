@@ -68,13 +68,24 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
       expect(header).toContain(
         `<div class="fr-collapse fr-menu sols-tool-menu__menu" id="${tool.id}">`,
       );
-      for (const href of tool.items) {
-        expect(t.header.tools[tool.key].items[href]).toBeDefined();
-        expect(header).toContain(`>${html(t.header.tools[tool.key].items[href].label)}`);
+      for (const entry of tool.items) {
+        expect(t.header.tools[tool.key].items[entry.key]).toBeDefined();
+        expect(header).toContain(`>${html(t.header.tools[tool.key].items[entry.key].label)}`);
       }
     }
-    expect(header).toContain(`href="/${locale}${site.sections.aide}"`);
-    expect(header).toContain(`href="/${locale}${site.sections.aide}#contact"`);
+    // « Aide » links to the cartes.gouv.fr help in the page language, opened in a new window,
+    // with the DSFR icon before and the external-link icon after (sols-tool-menu__external).
+    for (const path of [
+      `https://cartes.gouv.fr/aide/${locale}/`,
+      `https://cartes.gouv.fr/aide/${locale}/nous-ecrire/`,
+    ]) {
+      expect(header).toMatch(
+        new RegExp(
+          `class="fr-nav__link fr-link--icon-left fr-icon-[a-z-]+ sols-tool-menu__external" href="${escape(path)}" target="_blank" rel="noopener external"`,
+        ),
+      );
+    }
+    expect(header).not.toContain(`href="/${locale}${site.sections.aide}`);
     for (const path of site.crossBrick) expect(header).toContain(`href="${path}"`);
   });
 
@@ -223,7 +234,9 @@ describe.each(LOCALES)('aide /%s/', (locale) => {
     expectPageBasics(html, locale);
     expect(html.match(/class="fr-accordion"/g)).toHaveLength(i18n[locale].pages.aide.faq.length);
     expect(html).toContain(`<h2 id="contact"`);
-    expect(html).toContain(`href="mailto:${site.contactEmail}"`);
+    expect(html).toContain(
+      `href="https://cartes.gouv.fr/aide/${locale}/nous-ecrire/" target="_blank"`,
+    );
   });
 });
 
@@ -284,7 +297,7 @@ describe('@sols/brand', () => {
   test.each(LOCALES)('chaque entrée des menus a un libellé en %s', (locale) => {
     for (const tool of site.header.tools) {
       expect(Object.keys(i18n[locale].header.tools[tool.key].items).sort()).toEqual(
-        [...tool.items].sort(),
+        tool.items.map((entry) => entry.key).sort(),
       );
     }
   });
@@ -330,9 +343,15 @@ describe('page de référence partagée et doc/agents/edito.md', () => {
     expect(html).toContain('<meta name="robots" content="noindex">');
     expect(html).not.toContain('fr-translate');
     expect(html).toContain(`<a class="sols-operator" href="${site.header.brandLink}"`);
-    expect(html).toContain(`href="${site.sections.aide}"`);
-    // A rerouting page cannot keep an anchor: anchored links point to the default language.
-    expect(html).toContain(`href="/${site.defaultLanguage}${site.sections.aide}#contact"`);
+    expect(html).toContain(`href="https://cartes.gouv.fr/aide/${site.defaultLanguage}/"`);
+    expect(html).toContain(
+      `href="https://cartes.gouv.fr/aide/${site.defaultLanguage}/nous-ecrire/"`,
+    );
+    for (const badge of site.header.brickBadges) {
+      expect(html).toContain(
+        `<p class="fr-header__service-title">${site.header.serviceTitle} <span class="fr-badge fr-badge--sm fr-badge--${badge.color} fr-badge--icon-left ${badge.icon}">${badge.label}</span></p>`,
+      );
+    }
     for (const path of FOOTER_PATHS)
       expect(html).toContain(`class="fr-footer__bottom-link" href="${path}"`);
     expect(html).toContain('<dialog id="fr-theme-modal"');
