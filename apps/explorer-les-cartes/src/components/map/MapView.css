@@ -99,6 +99,17 @@
   display: none;
 }
 
+/*
+ * D-carto-7 (v1.1): geopf shows the button name as a tooltip (`::before`, `content: attr(aria-label)`) on
+ * hover and keyboard focus, beside the button: left of a right-column button, right of a left-column
+ * one, where the button's panel opens. Pressed, the panel is open and titled: the tooltip only covered
+ * its header (catalogue title and close button). No tooltip on the button of an open panel; the
+ * accessible name (`aria-label`) is unchanged, and buttons without a panel (measures) keep theirs.
+ */
+.map-view .gpf-widget:has(> dialog) > .gpf-btn-icon[aria-pressed='true']::before {
+  display: none;
+}
+
 /* Print button (v1.1, src/map/printControl.ts): in the column flow like the geopf widgets, not absolute as OL controls. */
 .map-view .map-print {
   position: static;
