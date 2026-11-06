@@ -582,13 +582,16 @@ Aucune erreur console. Captures : `doc/screenshots/C12/`.
 
 ## 18. En-tête v1.1 (C13)
 
-Référence : `doc/agents/edito.md` sur la branche E10 (`feat/E10-header-v1.1`, `f250c0a`), « Ce qui change pour catalogue
+Référence : `doc/agents/edito.md` d'E10 (PR #70, fusionnée sur `main`), « Ce qui change pour catalogue
 et carto (v1 → v1.1) ».
 
 - **Badge** : le titre du service n'est plus construit à partir de `brand.json`. `layout.mjs` substitue au titre sans
   badge le bloc de référence « Titre du service avec badge, catalogue »
   (`fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line`, « Rechercher ») ; échec si le bloc manque ou n'a pas
   la forme attendue.
+- **Contrôle `brand.json`** : `readLayout` vérifie que l'en-tête injecté porte le badge de `badges.catalogue` avec la
+  couleur et l'icône de `badgeStyles.catalogue`, et chaque lien d'aide externe de `brand.json` (`href`, icône,
+  `target="_blank" rel="noopener external"`) ; un écart fait échouer `prepare` (donc le build).
 - **Menu « Aide »** : repris tel quel du bloc « En-tête » : « Centre d'aide » → `https://cartes.gouv.fr/aide/fr/`,
   « Nous contacter » → `https://cartes.gouv.fr/aide/fr/nous-ecrire/`, nouvelle fenêtre, icône avant
   (`fr-icon-question-mark`, `fr-icon-mail-line`, feuille `utility` du build) et icône « lien externe » après
