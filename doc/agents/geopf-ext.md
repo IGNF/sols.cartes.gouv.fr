@@ -681,7 +681,10 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
 - **Plus de `map-explorer__toolbar` ni de panneau latéral** (`MapExplorer` = avis + carte) : la vue carte occupe toute la largeur. Le
   bouton « Imprimer » est un contrôle OpenLayers maison (`src/map/printControl.ts`, `usePrintControl`) habillé comme les boutons geopf
   (`gpf-widget gpf-widget-button`, `gpf-btn gpf-btn-icon fr-btn fr-btn--tertiary fr-icon-printer-line`, `aria-label` « Imprimer »), déplacé
-  dans `#position-container-top-left` après les contrôles geopf (zoom, plein écran, import, GetFeatureInfo) ; il ouvre la modale DSFR
+  dans `#position-container-top-left` après les contrôles geopf (zoom, plein écran, import, GetFeatureInfo) ; **id `GPprint-<n>` obligatoire**
+  (le `PanelManager` de `Controls/Widget.js` lit `element.id.match(/(\w+)-[0-9]+/)[1]` sur chaque widget d'une colonne à l'ouverture d'un
+  panneau : sans id, `TypeError` et GetFeatureInfo/Légendes ne s'ouvrent plus) et `position: static` (OL pose `absolute` : le bouton
+  recouvrait le zoom) ; il ouvre la modale DSFR
   `printModal` (`src/components/map/printModal.ts`, `openPrintModal`). **Partage retiré** (`ShareModal`, `mapPermalink`, `SHARE_LABELS`) ;
   la lecture des permaliens/liens profonds (`permalink.ts`, `deepLink.ts`) reste. **Vue liste conservée mais plus liée** depuis la carte
   (`?vue=liste` ; l'avis « Catalogue indisponible » y renvoie encore) ; le magasin perd `isPanelOpen`/`togglePanel`.

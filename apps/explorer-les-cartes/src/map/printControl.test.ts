@@ -7,6 +7,9 @@ describe('createPrintControl', () => {
     const control = createPrintControl('Imprimer', onOpen);
     const element = (control as unknown as { element: HTMLElement }).element;
     expect(element).toHaveClass(PRINT_CONTROL_CLASS);
+    // geopf's panel manager reads `<name>-<number>` on every widget of a position container.
+    expect(element.id).toMatch(/^GPprint-\d+$/);
+    expect(createPrintControl('Imprimer', onOpen)).not.toBe(control);
     const button = element.querySelector('button');
     expect(button).toHaveAttribute('aria-label', 'Imprimer');
     expect(button).toHaveAttribute('type', 'button');

@@ -603,7 +603,8 @@ const TOOL_BUTTONS = [
   );
   await page.waitForTimeout(1500);
   for (const name of TOOL_BUTTONS) {
-    const button = page.getByRole('button', { name, exact: true });
+    // On-demand tools are hidden until chosen (v1.1): the name check includes them.
+    const button = page.getByRole('button', { name, exact: true, includeHidden: true });
     check((await button.count()) === 1, `outils : bouton « ${name} » nommé`);
   }
   const unnamedDialogs = await page.evaluate(() =>
@@ -814,15 +815,18 @@ const TOOL_BUTTONS = [
     iconClosed && (await iconContrast()),
     'catalogue : icône du bouton primaire visible (couleur inversée), fermé et ouvert',
   );
-  const entries = await page.locator('[data-layeritem]').evaluateAll((items) =>
-    items.map((item) => ({
-      layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
-      name: item.querySelector('input')?.getAttribute('aria-label') ?? '',
-      thumbnail: item.querySelector('img')?.getAttribute('src') ?? '',
-      record: item.querySelector('a.fr-link')?.getAttribute('href') ?? '',
-      producer: item.querySelector('a.fr-tag')?.getAttribute('href') ?? '',
-    })),
-  );
+  // The sols entries only (the « Fonds de cartes » entries have no record nor producer).
+  const entries = await page
+    .locator('[data-layeritem]:has(input[name="checkboxes-sols"])')
+    .evaluateAll((items) =>
+      items.map((item) => ({
+        layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
+        name: item.querySelector('input')?.getAttribute('aria-label') ?? '',
+        thumbnail: item.querySelector('img')?.getAttribute('src') ?? '',
+        record: item.querySelector('a.fr-link')?.getAttribute('href') ?? '',
+        producer: item.querySelector('a.fr-tag')?.getAttribute('href') ?? '',
+      })),
+    );
   check(
     entries.length === 7 &&
       entries.every(
