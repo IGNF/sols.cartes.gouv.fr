@@ -21,6 +21,16 @@ export function labelToggleButton(root: HTMLElement, label: string): void {
   root.querySelector('button')?.setAttribute('aria-label', label);
 }
 
+/**
+ * Replaces the visible title of a geopf panel header (`.gpf-panel__title`), which some controls hardcode
+ * (the ControlList's « Mes outils », D-carto-9). The header is built in the constructor: call it once the
+ * control exists.
+ */
+export function labelPanelTitle(root: HTMLElement, title: string): void {
+  const element = root.querySelector('.gpf-panel__title');
+  if (element) element.textContent = title;
+}
+
 /** Gives the geopf search input an accessible name (it has no label). */
 export function labelSearchInput(root: HTMLElement): void {
   root

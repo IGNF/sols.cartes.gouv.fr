@@ -7,6 +7,7 @@ import {
   controlElement,
   fixLayerMoveArrows,
   labelControlButtons,
+  labelPanelTitle,
   labelSearchInput,
   watchLayerMoveArrows,
 } from './labelControls';
@@ -26,6 +27,18 @@ describe('labelControls', () => {
     expect(screen.getByRole('button', { name: 'Réinitialiser l’orientation' })).toBe(
       controlElement(rotate).querySelector('button'),
     );
+  });
+
+  it('remplace le titre visible d’un panneau geopf, sans toucher à ses boutons', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<button type="button" aria-label="Afficher tous les outils"></button>
+      <dialog><div class="gpf-panel__header"><span class="gpf-panel__title">Mes outils</span>
+      <button type="button">Fermer le panneau</button></div></dialog>`;
+    labelPanelTitle(root, CONTROL_LABELS.controlListTitle);
+    expect(root.querySelector('.gpf-panel__title')).toHaveTextContent(/^Tous les outils$/);
+    expect(root.querySelector('dialog button')).toHaveTextContent('Fermer le panneau');
+    const empty = document.createElement('div');
+    expect(() => labelPanelTitle(empty, 'Titre')).not.toThrow();
   });
 
   it('donne un nom accessible au champ de recherche geopf', () => {

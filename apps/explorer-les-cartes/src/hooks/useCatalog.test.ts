@@ -9,15 +9,38 @@ import useCatalog, { CATALOG_CLASS, createCatalog, patchProducerLinks } from './
 const geopf = vi.hoisted(() => {
   const created: FakeCatalog[] = [];
   let failNext = false;
+  let uid = 1000;
+  /**
+   * Fake geopf Catalog: ids carry the control's uid, `collapsed: false` opens the panel (as `setMap`
+   * does), the header, search and tabs exist at once (tabs switched on click); the entries are put by
+   * the tests in `.entries`, as geopf inserts them later.
+   */
   class FakeCatalog {
     options: Record<string, unknown>;
     element: HTMLElement;
     listeners = new Map<string, (event: unknown) => void>();
     constructor(options: Record<string, unknown>) {
       this.options = options;
+      uid += 1;
       this.element = document.createElement('div');
-      this.element.innerHTML =
-        '<button type="button" aria-label="Catalogue de cartes">C</button><dialog id="GPcatalogPanel-1"></dialog>';
+      this.element.id = `GPcatalog-${uid}`;
+      const pressed = options['collapsed'] === false;
+      this.element.innerHTML = `<button type="button" id="GPshowCatalogPicto-${uid}" aria-label="Catalogue de cartes" aria-pressed="${pressed}">C</button>
+        <dialog id="GPcatalogPanel-${uid}" open><div class="gpf-panel__body">
+        <input id="catalog-input-search-global" type="text" /><button type="button" id="catalog-button-search-global">R</button>
+        <button type="button" id="tabbutton-0_sols" class="fr-tabs__tab" aria-selected="true">Données sols</button>
+        <button type="button" id="tabbutton-1_fonds" class="fr-tabs__tab" aria-selected="false">Fonds de cartes</button>
+        <div class="entries"></div></div></dialog>`;
+      const tabs = this.element.querySelectorAll('.fr-tabs__tab');
+      tabs.forEach((tab) =>
+        tab.addEventListener('click', () =>
+          tabs.forEach((other) => other.setAttribute('aria-selected', String(other === tab))),
+        ),
+      );
+      this.element.querySelector('#catalog-button-search-global')?.addEventListener('click', () => {
+        const input = this.element.querySelector<HTMLInputElement>('#catalog-input-search-global');
+        this.element.dataset['filter'] = input?.value ?? '';
+      });
       created.push(this);
     }
     on(type: string, listener: (event: unknown) => void) {
@@ -52,7 +75,10 @@ function createFakeMap() {
   const addControl = vi.fn((control: { element: HTMLElement }) => {
     container.append(control.element);
   });
-  const removeControl = vi.fn();
+  // OpenLayers detaches the control's element (and the focus it had goes to the body).
+  const removeControl = vi.fn((control: { element: HTMLElement }) => {
+    control.element.remove();
+  });
   return {
     map: { addControl, removeControl } as unknown as OlMap,
     addControl,
@@ -127,6 +153,13 @@ describe('createCatalog', () => {
     expect(onRemove).toHaveBeenCalledWith({ name: 'a', service: 'WMS' });
   });
 });
+
+const BASE_LAYERS: AvailableBaseLayer[] = [
+  { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+];
+
+const layersOf = (catalog: (typeof geopf.created)[number] | undefined) =>
+  Object.keys((catalog?.options['configuration'] as { data: { layers: object } }).data.layers);
 
 describe('useCatalog', () => {
   beforeEach(() => {
@@ -255,29 +288,94 @@ describe('useCatalog', () => {
     expect(inputs()).toEqual([false, true]);
   });
 
-  it('crée le catalogue aussitôt, puis le reconstruit à l’arrivée des fonds, une fois son panneau refermé', async () => {
+  it('crée le catalogue aussitôt et le reconstruit fermé à l’arrivée des fonds', async () => {
     const { map, addControl, removeControl } = createFakeMap();
     const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
       initialProps: { layers: [] as AvailableBaseLayer[] },
     });
     await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
     const first = geopf.created[0];
-    const layersOf = (catalog: (typeof geopf.created)[number] | undefined) =>
-      Object.keys((catalog?.options['configuration'] as { data: { layers: object } }).data.layers);
     expect(layersOf(first)).toHaveLength(7);
-    // The panel is open when the capabilities arrive: nothing moves until it is closed.
-    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'true');
-    const baseLayers: AvailableBaseLayer[] = [
-      { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
-    ];
-    rerender({ layers: baseLayers });
-    await Promise.resolve();
-    expect(removeControl).not.toHaveBeenCalled();
-    expect(geopf.created).toHaveLength(1);
-    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'false');
+    rerender({ layers: BASE_LAYERS });
     await waitFor(() => expect(geopf.created).toHaveLength(2));
     expect(removeControl).toHaveBeenCalledWith(first);
     expect(layersOf(geopf.created[1])).toHaveLength(8);
+    expect(geopf.created[1]?.options['collapsed']).toBe(true);
+  });
+
+  it('reconstruit aussitôt le catalogue ouvert à l’arrivée des fonds, sur le même onglet, avec la même recherche (D-carto-8)', async () => {
+    const { map, addControl, removeControl, container } = createFakeMap();
+    document.body.append(container);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const first = geopf.created[0];
+    if (!first) throw new Error('fixture');
+    // The user opened the panel, typed a search, chose « Fonds de cartes » (still empty) and kept the focus on it.
+    first.element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    const firstSearch = first.element.querySelector<HTMLInputElement>(
+      '#catalog-input-search-global',
+    );
+    if (firstSearch) firstSearch.value = 'photo';
+    const firstTab = first.element.querySelector<HTMLElement>('#tabbutton-1_fonds');
+    firstTab?.click();
+    firstTab?.focus();
+    rerender({ layers: BASE_LAYERS });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(removeControl).toHaveBeenCalledWith(first);
+    const second = geopf.created[1];
+    if (!second) throw new Error('fixture');
+    // Built open, without closing in between: the panel stays on screen.
+    expect(second.options['collapsed']).toBe(false);
+    expect(second.element.querySelector('button')).toHaveAttribute('aria-pressed', 'true');
+    const tab = second.element.querySelector('#tabbutton-1_fonds');
+    expect(tab).toHaveAttribute('aria-selected', 'true');
+    expect(document.activeElement).toBe(tab);
+    // The search is applied once the entries (7 records + 1 base layer) are rendered.
+    expect(second.element.dataset['filter']).toBeUndefined();
+    second.element
+      .querySelector('.entries')
+      ?.insertAdjacentHTML(
+        'beforeend',
+        Array.from(
+          { length: 8 },
+          (_, i) => `<input type="checkbox" data-layer="e${i}:WMS" />`,
+        ).join(''),
+      );
+    await waitFor(() => expect(second.element.dataset['filter']).toBe('photo'));
+    expect(second.element.querySelector('#catalog-input-search-global')).toHaveValue('photo');
+    container.remove();
+  });
+
+  it('rend le focus à l’entrée qui l’avait une fois les entrées du nouveau catalogue rendues', async () => {
+    const { map, addControl, container } = createFakeMap();
+    document.body.append(container);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const entries = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, i) =>
+          `<input type="checkbox" id="checkboxes-sols-${i}_e${i}-WMS" data-layer="e${i}:WMS" />`,
+      ).join('');
+    const first = geopf.created[0];
+    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    first?.element.querySelector('.entries')?.insertAdjacentHTML('beforeend', entries(7));
+    first?.element.querySelector<HTMLElement>('#checkboxes-sols-3_e3-WMS')?.focus();
+    rerender({ layers: BASE_LAYERS });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(document.activeElement).toBe(document.body);
+    const second = geopf.created[1];
+    second?.element.querySelector('.entries')?.insertAdjacentHTML('beforeend', entries(8));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        second?.element.querySelector('#checkboxes-sols-3_e3-WMS'),
+      ),
+    );
+    container.remove();
   });
 
   it('rend le focus au nouveau bouton quand le catalogue est reconstruit depuis son bouton', async () => {

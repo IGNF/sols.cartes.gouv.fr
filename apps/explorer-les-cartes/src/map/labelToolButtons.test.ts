@@ -45,7 +45,7 @@ describe('fixToolButtons', () => {
     expect(fixToolButtons(root)).toBe(0);
   });
 
-  it('donne à « Mes outils » la sémantique d’un menu (ses li étaient des boutons)', () => {
+  it('donne à « Tous les outils » la sémantique d’un menu (ses li étaient des boutons)', () => {
     const root = document.createElement('div');
     root.innerHTML =
       '<dialog id="GPcontrolListPanel-1"><ul class="fr-m-0"><li role="button">A</li><li role="button">B</li></ul></dialog>';

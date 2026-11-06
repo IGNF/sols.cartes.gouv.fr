@@ -13,7 +13,13 @@ describe('createPrintControl', () => {
     const button = element.querySelector('button');
     expect(button).toHaveAttribute('aria-label', 'Imprimer');
     expect(button).toHaveAttribute('type', 'button');
-    expect(button).toHaveClass('fr-icon-printer-line');
+    // The icon is a decorative span: the button's ::before is geopf's tooltip.
+    expect(button).not.toHaveClass('fr-icon-printer-line');
+    expect(button?.querySelector('span.fr-icon-printer-line')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+    expect(button).not.toHaveAttribute('title');
     button?.click();
     expect(onOpen).toHaveBeenCalledTimes(1);
   });

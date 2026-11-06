@@ -99,9 +99,32 @@
   display: none;
 }
 
+/*
+ * D-carto-7 (v1.1): geopf shows the button name as a tooltip (`::before`, `content: attr(aria-label)`) on
+ * hover and keyboard focus, beside the button: left of a right-column button, right of a left-column
+ * one, where the button's panel opens. Pressed, the panel is open and titled: the tooltip only covered
+ * its header (catalogue title and close button). No tooltip on the button of an open panel; the
+ * accessible name (`aria-label`) is unchanged, and buttons without a panel (measures) keep theirs.
+ */
+.map-view .gpf-widget:has(> dialog) > .gpf-btn-icon[aria-pressed='true']::before {
+  display: none;
+}
+
 /* Print button (v1.1, src/map/printControl.ts): in the column flow like the geopf widgets, not absolute as OL controls. */
 .map-view .map-print {
   position: static;
+}
+
+/*
+ * Its icon is a span (the button's ::before is geopf's tooltip), centred over the square button; the
+ * button keeps the geopf box (padding), from which geopf places the tooltip, as on the other buttons.
+ */
+.map-view .map-print > .gpf-btn-icon > [class^='fr-icon-'] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Catalogue of the sols datasets (M9): the entry point of the data, a primary button as on cartes.gouv.fr. */
@@ -146,7 +169,7 @@
 }
 
 /*
- * Below 48em the catalogue panel leaves the button column visible (layer switcher, « Mes outils »)
+ * Below 48em the catalogue panel leaves the button column visible (layer switcher, « Afficher tous les outils »)
  * instead of covering the screen: geopf keeps its `min-width: 450px` (size "lg") in its own mobile
  * rules and anchors the panel to the right edge of its button. Width = screen minus the column
  * (1w gutter + 5w buttons + 1w gap) and a half-w left margin; anchored 1w left of the button.

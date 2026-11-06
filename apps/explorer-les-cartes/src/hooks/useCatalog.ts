@@ -12,6 +12,7 @@ import {
   findCatalogOverlay,
   syncCatalogTicks,
 } from '../map/catalogConfig';
+import { readCatalogView, restoreCatalogView, type CatalogView } from '../map/catalogView';
 import { loadCatalog, type CatalogControl } from '../map/geopf';
 import { unescapeHtml } from '../text/escapeHtml';
 import { controlElement, labelToggleButton } from '../map/labelControls';
@@ -68,17 +69,20 @@ export function patchProducerLinks(Catalog: CatalogClass): void {
 /**
  * Instantiates the geopf Catalog control on the GIS Sol datasets (src/map/catalogConfig.ts). The control
  * does not add layers itself (`addToMap: false`): its events drive the store, which draws the overlays
- * (legend, retry, availability as for every sols layer).
+ * (legend, retry, availability as for every sols layer). `open` builds it with its panel open (option
+ * `collapsed: false`, applied when it reaches the map: no click, other panels left alone).
  */
 export function createCatalog(
   Catalog: CatalogClass,
   onAdd: (event: CatalogLayerEvent) => void,
   onRemove: (event: CatalogLayerEvent) => void,
   baseLayers: readonly AvailableBaseLayer[] = [],
+  open = false,
 ): CatalogControl {
   patchProducerLinks(Catalog);
   const control = new Catalog({
     ...CATALOG_OPTIONS,
+    collapsed: !open,
     configuration: { type: 'json', data: buildCatalogData(SOLS_DATASETS, baseLayers) },
   });
   const element = controlElement(control);
@@ -135,23 +139,12 @@ interface MountedCatalog {
   dispose: () => void;
 }
 
-/** True while the catalogue panel is open (its toggle button is pressed). */
-function isOpen(element: HTMLElement): boolean {
-  return element.querySelector('button')?.getAttribute('aria-pressed') === 'true';
-}
-
-/** Calls `done` once the toggle button of the control is released; returns a function to give up. */
-function whenCollapsed(element: HTMLElement, done: () => void): () => void {
-  const button = element.querySelector('button');
-  if (!button) return () => undefined;
-  const observer = new MutationObserver(() => {
-    if (button.getAttribute('aria-pressed') !== 'true') {
-      observer.disconnect();
-      done();
-    }
-  });
-  observer.observe(button, { attributes: true, attributeFilter: ['aria-pressed'] });
-  return () => observer.disconnect();
+/** True once every entry of a catalogue built on `baseLayers` is rendered (one checkbox each). */
+function entriesRendered(
+  baseLayers: readonly AvailableBaseLayer[],
+): (root: HTMLElement) => boolean {
+  const count = Object.keys(buildCatalogData(SOLS_DATASETS, baseLayers).layers).length;
+  return (root) => root.querySelectorAll('input[data-layer]').length >= count;
 }
 
 /**
@@ -160,8 +153,10 @@ function whenCollapsed(element: HTMLElement, done: () => void): () => void {
  * dataset from the store (`auto: false`: the control would only tick its own layer); the « Fonds de
  * cartes » entries (GPF base layers of the capabilities) follow the active base layer, which always
  * stays ticked. The control is created at once (the button must not wait for a slow GPF) and rebuilt
- * when the base layers arrive, in place; if its panel is open at that moment, the rebuild waits for it
- * to be closed. When the chunk fails, the store reports it (notice pointing to the list view).
+ * in place when the base layers arrive, even with its panel open: the new control shows the same view
+ * (open panel, tab, search, scroll, focus; src/map/catalogView.ts), so « Fonds de cartes » fills in
+ * without closing the panel (D-carto-8). When the chunk fails, the store reports it (notice pointing to
+ * the list view).
  */
 export default function useCatalog(
   map: OlMap | null,
@@ -176,7 +171,11 @@ export default function useCatalog(
   useEffect(() => {
     if (!map) return undefined;
     let active = true;
-    const mount = (Catalog: CatalogClass, layers: readonly AvailableBaseLayer[]) => {
+    const mount = (
+      Catalog: CatalogClass,
+      layers: readonly AvailableBaseLayer[],
+      view?: CatalogView,
+    ) => {
       let sync = () => 0;
       const control = createCatalog(
         Catalog,
@@ -186,6 +185,7 @@ export default function useCatalog(
           sync(); // an unticked base layer stays the base layer: tick it again
         },
         layers,
+        view?.open,
       );
       map.addControl(control);
       // geopf appends to the position container: put the catalogue first (the switcher came earlier).
@@ -205,11 +205,15 @@ export default function useCatalog(
         )
           sync();
       });
+      const stopRestoring = view
+        ? restoreCatalogView(element, view, entriesRendered(layers))
+        : () => undefined;
       mounted.current = {
         control,
         element,
         baseLayers: layers,
         dispose: () => {
+          stopRestoring();
           stopWatching();
           unsubscribe();
           map.removeControl(control);
@@ -217,43 +221,30 @@ export default function useCatalog(
         },
       };
     };
-    const remountIfStale = (): (() => void) | undefined => {
+    const remountIfStale = () => {
       const current = mounted.current;
       const Catalog = catalogClass.current;
-      if (!current || !Catalog || current.baseLayers === wanted.current) return undefined;
-      const rebuild = () => {
-        // The old control takes the focus away with it (to the body): give it to the new button.
-        const hadFocus = current.element.contains(document.activeElement);
-        current.dispose();
-        mount(Catalog, wanted.current);
-        if (hadFocus) mounted.current?.element.querySelector('button')?.focus();
-      };
-      if (!isOpen(current.element)) {
-        rebuild();
-        return undefined;
-      }
-      return whenCollapsed(current.element, rebuild);
+      if (!current || !Catalog || current.baseLayers === wanted.current) return;
+      // Read before disposing: the old control takes the focus away with it (to the body).
+      const view = readCatalogView(current.element);
+      current.dispose();
+      mount(Catalog, wanted.current, view);
     };
-    let cancelDeferred: (() => void) | undefined;
     loadCatalog()
       .then((Catalog) => {
         if (!active) return;
         catalogClass.current = Catalog;
         mount(Catalog, wanted.current);
         // Base layers may have arrived while the chunk was loading.
-        cancelDeferred = remountIfStale();
+        remountIfStale();
       })
       .catch(() => {
         // The map stays usable without the catalogue; the list view keeps every dataset.
         if (active) setCatalogueUnavailable(true);
       });
-    rebuildRequest.current = () => {
-      cancelDeferred?.();
-      cancelDeferred = remountIfStale();
-    };
+    rebuildRequest.current = remountIfStale;
     return () => {
       active = false;
-      cancelDeferred?.();
       rebuildRequest.current = null;
       mounted.current?.dispose();
     };

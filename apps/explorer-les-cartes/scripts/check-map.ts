@@ -13,15 +13,18 @@
  * M7: header v1 (brand), compact footer, map width and no page scroll, controls in both themes.
  * M8: the geopf-extensions tool set (every button named and operable, a distance measured, a WMS import of
  * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the print sheet
- * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
+ * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Afficher tous les outils ».
  * M11: axe at 375 px in the dark theme with the page idle (pointer off the header); with the pointer on the
  * header brand block, only the known DSFR hover contrast on the « Menu » button (QUESTIONS M-5) is tolerated.
  * M13: the expandable footer (« Haut de page » expands it, the page scrolls, the map keeps ≥ 70 % of the
  * viewport, axe clean; « Fermer » collapses it), at 1280 and 375 px; the whole header brand block links to « / ».
+ * M14: the tool list panel is titled « Tous les outils » (375, 1280 px); no tooltip over an open panel, the
+ * print icon kept under its tooltip; WMTS capabilities held back while the catalogue is opened on « Fonds de
+ * cartes » at 375 px: the entries fill the open panel (tab, search, focus kept) and tick at the keyboard.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
-import { chromium } from 'playwright';
+import { chromium, devices } from 'playwright';
 import brand from '@sols/brand/brand.json';
 import { CONTROL_LABELS, PRINT_LABELS } from '../src/config/map';
 import { GPF_ENDPOINTS } from '../src/config/urls';
@@ -1302,6 +1305,178 @@ const TOOL_BUTTONS = [
     '375px : « Haut de page » déplie le pied de page, « Fermer » le replie et remonte',
   );
   await page.close();
+}
+
+// M14 (D-carto-9): the tool list panel bears the same title on every width.
+for (const width of [375, 1280]) {
+  const page = await browser.newPage({ viewport: { width, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  const toolsButton = page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true });
+  await toolsButton.waitFor({ timeout: 30_000 });
+  await toolsButton.click();
+  const panel = page.locator('[id^="GPcontrolListPanel-"]');
+  await panel.waitFor({ state: 'visible' });
+  const title = (await panel.locator('.gpf-panel__title').innerText()).trim();
+  check(
+    title === CONTROL_LABELS.controlListTitle &&
+      (await panel.getAttribute('aria-label')) === CONTROL_LABELS.controlListTitle,
+    `${width}px : panneau de la liste d’outils titré et nommé « ${CONTROL_LABELS.controlListTitle} » (titre « ${title} »)`,
+  );
+  await page.close();
+}
+
+// M14 (D-carto-7): geopf's button tooltip (::before, content: attr(aria-label)) is not drawn over an open
+// panel; buttons without a panel keep it; the print icon stays under its tooltip.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('[id^="GPcontrolList-"]').waitFor({ state: 'attached', timeout: 30_000 });
+  const tooltip = (locator: import('playwright').Locator) =>
+    locator.evaluate((button) => {
+      const style = getComputedStyle(button, '::before');
+      return style.display === 'none' || style.content === 'none' ? '' : style.content;
+    });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.hover();
+  const closedTip = await tooltip(catalogue);
+  await catalogue.click();
+  await page.locator('[id^="GPcatalogPanel-"]').waitFor({ state: 'visible' });
+  const openTip = await tooltip(catalogue);
+  const header = await page.evaluate(() => {
+    const panel = document.querySelector('[id^="GPcatalogPanel-"]');
+    const close = panel?.querySelector('.GPpanelClose, .gpf-panel__header button');
+    return {
+      title: panel?.querySelector('.gpf-panel__title')?.textContent?.trim() ?? '',
+      close: Boolean(close && close.getBoundingClientRect().width > 0),
+    };
+  });
+  check(
+    closedTip === `"${CATALOGUE}"` &&
+      openTip === '' &&
+      (await catalogue.getAttribute('aria-label')) === CATALOGUE &&
+      header.title === CATALOGUE &&
+      header.close,
+    `D-carto-7 : infobulle « ${CATALOGUE} » au survol, bouton relâché (${closedTip || 'aucune'}) ; aucune, panneau ouvert (${openTip || 'aucune'}) ; nom accessible gardé`,
+  );
+  await catalogue.click();
+  // Keyboard focus too (geopf shows the tooltip on :focus-visible).
+  const toolsButton = page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true });
+  await toolsButton.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(300);
+  await toolsButton.focus();
+  const listTip = await tooltip(toolsButton);
+  await page.keyboard.press('Escape');
+  const measure = page.getByRole('button', { name: 'Mesurer une distance', exact: true });
+  await measure.click();
+  await measure.hover();
+  const measureTip = await tooltip(measure);
+  await measure.click();
+  check(
+    listTip === '' && measureTip === '"Mesurer une distance"',
+    `D-carto-7 : pas d’infobulle sur « ${CONTROL_LABELS.controlList} » liste ouverte (focus clavier), infobulle gardée sur une mesure active (sans panneau)`,
+  );
+  const print = page.getByRole('button', { name: PRINT_LABELS.button, exact: true });
+  await print.hover();
+  const printTip = await tooltip(print);
+  const printIcon = await print.evaluate((button) => {
+    const icon = button.querySelector('[class^="fr-icon-"]');
+    const box = icon?.getBoundingClientRect();
+    const own = button.getBoundingClientRect();
+    return Boolean(
+      icon &&
+      getComputedStyle(icon, '::before').maskImage.startsWith('url(') &&
+      box &&
+      Math.abs(box.x + box.width / 2 - (own.x + own.width / 2)) <= 1,
+    );
+  });
+  check(
+    printTip === `"${PRINT_LABELS.button}"` && printIcon,
+    `bouton « ${PRINT_LABELS.button} » survolé : infobulle (${printTip || 'aucune'}) et icône centrée conservée`,
+  );
+  await page.close();
+}
+
+// M14 (D-carto-8): the « Fonds de cartes » entries arrive with the WMTS capabilities, after the catalogue.
+// Opened before them (capabilities held back, 375 px, touch device as in the e2e suite), the panel stays
+// open and fills in on the same tab, with the same search and focus; then a base layer ticks at the keyboard.
+{
+  const context = await browser.newContext({
+    ...devices['Pixel 5'],
+    viewport: { width: 375, height: 812 },
+  });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  // Released by the test, or after 2 s at most: under the 3 s timeout of the capabilities request.
+  const fallback = setTimeout(() => release(), 2_000);
+  await page.route(/data\.geopf\.fr\/wmts\?.*GetCapabilities/i, async (route) => {
+    await gate;
+    await route.continue();
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page.locator('#tabbutton-1_fonds').click();
+  const emptyBefore = (await page.locator('input[name="checkboxes-fonds"]').count()) === 0;
+  await page.locator('#catalog-input-search-global').fill('photo');
+  await page.locator('#tabbutton-1_fonds').focus();
+  const widgetBefore = await page.locator('.map-catalog').getAttribute('id');
+  release();
+  clearTimeout(fallback);
+  const fond = (title: string) =>
+    page.locator(
+      `input[name="checkboxes-fonds"][aria-label="Afficher le fond de carte : ${title}"]`,
+    );
+  const ortho = fond('Photographies aériennes');
+  // Visible, not only attached: right after a tab change the DSFR panel is hidden for one frame.
+  const filled = await ortho
+    .waitFor({ state: 'visible', timeout: 20_000 })
+    .then(() => true)
+    .catch(() => false);
+  await page.waitForTimeout(300);
+  const after = await page.evaluate(() => {
+    const root = document.querySelector('.map-catalog');
+    return {
+      id: root?.id ?? '',
+      widgets: document.querySelectorAll('.map-catalog').length,
+      pressed: root?.querySelector('button')?.getAttribute('aria-pressed'),
+      tab: root?.querySelector('.fr-tabs__tab[aria-selected="true"]')?.id,
+      search: (root?.querySelector('#catalog-input-search-global') as HTMLInputElement | null)
+        ?.value,
+      focus: document.activeElement?.id,
+    };
+  });
+  check(
+    emptyBefore && filled && after.widgets === 1 && after.id !== widgetBefore,
+    `D-carto-8 : catalogue ouvert avant les fonds (onglet vide), reconstruit avec les fonds sans se fermer (${filled ? 'entrées affichées' : 'onglet resté vide'})`,
+  );
+  check(
+    after.pressed === 'true' &&
+      after.tab === 'tabbutton-1_fonds' &&
+      after.search === 'photo' &&
+      after.focus === 'tabbutton-1_fonds' &&
+      !(await fond('Plan IGN').isVisible()),
+    `D-carto-8 : même vue après reconstruction (ouvert ${after.pressed}, onglet ${after.tab}, recherche « ${after.search} » appliquée, focus ${after.focus})`,
+  );
+  const orthoTiles = page.waitForResponse(
+    (r) => /ORTHOIMAGERY\.ORTHOPHOTOS/.test(r.url()) && /REQUEST=GetTile/i.test(r.url()),
+    { timeout: 30_000 },
+  );
+  await ortho.focus();
+  await page.keyboard.press('Space');
+  const tiles = await orthoTiles.then(() => true).catch(() => false);
+  check(
+    (await ortho.isChecked()) && !(await fond('Plan IGN').isChecked()) && tiles,
+    'D-carto-8 : « Photographies aériennes » cochée au clavier dans le panneau reconstruit, tuiles demandées, Plan IGN décoché',
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `D-carto-8 : console vide${notes} ${messages.join(' | ')}`);
+  await context.close();
 }
 
 await browser.close();
