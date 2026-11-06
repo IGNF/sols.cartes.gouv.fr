@@ -580,3 +580,28 @@ ouvert ; Tab → focus sur « Rechercher une donnée » ; Échap → sous-menu f
 Échap → modale fermée, focus sur « Menu ». Bureau inchangé (Échap ferme le menu « Services » et rend le focus au bouton).
 Aucune erreur console. Captures : `doc/screenshots/C12/`.
 
+## 18. En-tête v1.1 (C13)
+
+Référence : `doc/agents/edito.md` sur la branche E10 (`feat/E10-header-v1.1`, `f250c0a`), « Ce qui change pour catalogue
+et carto (v1 → v1.1) ».
+
+- **Badge** : le titre du service n'est plus construit à partir de `brand.json`. `layout.mjs` substitue au titre sans
+  badge le bloc de référence « Titre du service avec badge, catalogue »
+  (`fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line`, « Rechercher ») ; échec si le bloc manque ou n'a pas
+  la forme attendue.
+- **Menu « Aide »** : repris tel quel du bloc « En-tête » : « Centre d'aide » → `https://cartes.gouv.fr/aide/fr/`,
+  « Nous contacter » → `https://cartes.gouv.fr/aide/fr/nous-ecrire/`, nouvelle fenêtre, icône avant
+  (`fr-icon-question-mark`, `fr-icon-mail-line`, feuille `utility` du build) et icône « lien externe » après
+  (`.sols-tool-menu__external::after`). Le catalogue étant en français, le `href` français de `brand.json` convient.
+- **CSS partagée** : la règle d'alignement `.fr-header__tools-links` (en LG) rejoint les préfixes extraits de
+  `apps/accueil/src/css/site.css`. Les icônes DSFR que cette CSS référence (`url(.../assets/dsfr/icons/...)` :
+  `arrows/arrow-down-s-line.svg`, `system/external-link-line.svg`) sont désormais copiées par `prepare.mjs` depuis le
+  DSFR installé (`referencedDsfrIcons`), au lieu d'une entrée `assets` du patch 0003 par icône.
+- **Mode sombre** : sans changement pour le catalogue (C-6). Le JS DSFR n'applique pas la préférence enregistrée
+  (`data-fr-scheme` absent, feuille `scheme` non chargée) : le catalogue reste clair, captures claires et sombres
+  identiques (vérifié avec `localStorage.scheme = dark`).
+
+Vérification (Playwright, bureau 1280×900 et mobile 375×812) : badge avec icône, liens d'aide (URL, `target="_blank"`,
+icônes avant et après chargées), menus « Aide » et « Services » ; aucune erreur console ni réponse en erreur ; axe : 0
+violation critique ou sérieuse. Captures : `doc/screenshots/C13/`.
+
