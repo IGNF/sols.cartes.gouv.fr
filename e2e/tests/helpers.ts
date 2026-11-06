@@ -174,3 +174,42 @@ export async function openCatalogue(page: Page): Promise<void> {
 export async function searchCatalogue(page: Page, text: string): Promise<void> {
   await page.locator('#catalog-input-search-global').fill(text);
 }
+
+/** Liens du menu « Aide » (v1.1, E10/C13) : tous externes vers cartes.gouv.fr. */
+export const AIDE_CONTACT_URL = 'https://cartes.gouv.fr/aide/fr/nous-ecrire/';
+
+/** Ouvre le menu « Aide » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
+export async function openAideMenu(page: Page, isMobile: boolean, label = 'Aide') {
+  await waitForDsfr(page);
+  if (isMobile) await page.locator('header .fr-btn--menu').click();
+  const button = page
+    .locator('header')
+    .getByRole('button', { name: label })
+    .locator('visible=true');
+  await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  return button;
+}
+
+/** Vérifie les deux liens du menu « Aide » : cible, attributs, icône avant et icône « lien externe » après. */
+export async function expectAideLinks(page: Page, lang: 'fr' | 'en'): Promise<void> {
+  const links = page
+    .locator('header a[href^="https://cartes.gouv.fr/aide/"]')
+    .locator('visible=true');
+  await expect(links).toHaveCount(2);
+  const [centre, contact] = [links.nth(0), links.nth(1)];
+  await expect(centre).toHaveAttribute('href', `https://cartes.gouv.fr/aide/${lang}/`);
+  await expect(contact).toHaveAttribute('href', AIDE_CONTACT_URL);
+  for (const link of [centre, contact]) {
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener external');
+    const icons = await link.evaluate((el) => ({
+      before:
+        getComputedStyle(el, '::before').maskImage +
+        getComputedStyle(el, '::before').webkitMaskImage,
+      after: getComputedStyle(el, '::after').content,
+    }));
+    expect(icons.before, 'icône avant (masque DSFR)').toContain('url(');
+    expect(icons.after, 'icône « lien externe » après (::after)').not.toBe('none');
+  }
+}

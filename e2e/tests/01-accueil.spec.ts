@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
-import { waitForDsfr, collectConsole, openServicesMenu, GISSOL_URL } from './helpers';
+import {
+  openAideMenu,
+  expectAideLinks,
+  waitForDsfr,
+  collectConsole,
+  openServicesMenu,
+  GISSOL_URL,
+} from './helpers';
 
 test.describe('Accueil et en-tête v1', () => {
   test('/ redirige vers /fr/', async ({ page }) => {
@@ -31,8 +38,11 @@ test.describe('Accueil et en-tête v1', () => {
       .locator('a')
       .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
     expect(
-      hrefs.filter((h) => /cartes\.gouv\.fr/.test(h)),
-      'aucun lien vers cartes.gouv.fr',
+      // Seuls les liens d'aide (menu « Aide », v1.1) pointent vers cartes.gouv.fr.
+      hrefs.filter(
+        (h) => /cartes\.gouv\.fr/.test(h) && !h.startsWith('https://cartes.gouv.fr/aide/'),
+      ),
+      'aucun autre lien vers cartes.gouv.fr',
     ).toEqual([]);
     await expect(header.locator('img[alt*="GIS Sol"]').first()).toBeVisible();
     await expect(header.locator('.fr-badge')).toHaveCount(0); // pas de badge sur l'edito
@@ -154,5 +164,51 @@ test.describe('Accueil et en-tête v1', () => {
     await page.locator('.fr-translate__menu a[hreflang="en"]:visible').click();
     await page.waitForURL('**/en/');
     await expect(page.locator('h1:visible')).toHaveCount(1);
+  });
+
+  for (const lang of ['fr', 'en'] as const) {
+    test(`le menu « Aide » (${lang}) : liens externes cartes.gouv.fr, cible, attributs, icônes`, async ({
+      page,
+      isMobile,
+    }) => {
+      await page.goto(`/${lang}/`);
+      await openAideMenu(page, isMobile, lang === 'fr' ? 'Aide' : 'Help');
+      await expectAideLinks(page, lang);
+    });
+  }
+
+  test('Échap depuis l’intérieur du menu « Aide » le ferme (desktop)', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'Échap du sous-menu : couvert séparément sur mobile');
+    await page.goto('/fr/');
+    const button = await openAideMenu(page, false);
+    await page
+      .locator('header a[href^="https://cartes.gouv.fr/aide/"]')
+      .locator('visible=true')
+      .first()
+      .focus();
+    await page.keyboard.press('Escape');
+    await expect(button).toHaveAttribute('aria-expanded', 'false');
+    await expect(button).toBeFocused();
+  });
+
+  test('thème sombre : les logos de l’en-tête n’ont pas de plaque de fond', async ({ page }) => {
+    await page.goto('/fr/');
+    await page.locator('footer').getByRole('button', { name: "Paramètres d'affichage" }).click();
+    const dialog = page.getByRole('dialog', { name: "Paramètres d'affichage" });
+    await dialog.locator('label', { hasText: 'Sombre' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-fr-theme', 'dark');
+    await dialog.getByRole('button', { name: 'Fermer' }).click();
+    const fonds = await page
+      .locator(
+        'header .fr-header__operator, header .sols-operator, header .sols-operator__logo, header .sols-operator__mark',
+      )
+      .evaluateAll((els) =>
+        els.map((el) => `${el.className}: ${getComputedStyle(el).backgroundColor}`),
+      );
+    expect(fonds.length).toBeGreaterThan(0);
+    for (const f of fonds) expect(f, 'fond du logo').toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
   });
 });

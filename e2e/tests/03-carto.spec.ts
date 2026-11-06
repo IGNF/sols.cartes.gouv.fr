@@ -4,6 +4,8 @@ import {
   openCatalogue,
   searchCatalogue,
   openServicesMenu,
+  openAideMenu,
+  expectAideLinks,
   waitForDsfr,
   MAP_STABILITY_RUNS,
   trackResponses,
@@ -237,6 +239,10 @@ test.describe('Carto', () => {
   }) => {
     await openMap(page);
     await expect(page.locator('header .fr-badge')).toHaveText('Explorer');
+    // v1.1 : icône avant du badge (DSFR), violet glycine + repère de carte.
+    await expect(page.locator('header .fr-badge')).toHaveClass(
+      /fr-badge--purple-glycine.*fr-badge--icon-left.*fr-icon-map-pin-2-fill/,
+    );
     await expect(
       page.getByRole('heading', { level: 1, name: 'Explorer les cartes' }),
     ).toBeAttached();
@@ -330,5 +336,15 @@ test.describe('Carto', () => {
     );
     expect(sansCanvas, 'chargements sans canvas').toBe(0);
     expect(sansFond, 'chargements sans Plan IGN dans la liste').toBe(0);
+  });
+
+  // L'en-tête est partagé : ce test ne dépend pas de la barre d'outils de la carte (refonte M13 en cours).
+  test('le menu « Aide » de la carte : liens externes cartes.gouv.fr, cible, attributs, icônes', async ({
+    page,
+    isMobile,
+  }) => {
+    await openMap(page);
+    await openAideMenu(page, isMobile);
+    await expectAideLinks(page, 'fr');
   });
 });
