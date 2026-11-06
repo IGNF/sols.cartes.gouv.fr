@@ -115,6 +115,18 @@
   position: static;
 }
 
+/*
+ * Its icon is a span (the button's ::before is geopf's tooltip), centred over the square button; the
+ * button keeps the geopf box (padding), from which geopf places the tooltip, as on the other buttons.
+ */
+.map-view .map-print > .gpf-btn-icon > [class^='fr-icon-'] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Catalogue of the sols datasets (M9): the entry point of the data, a primary button as on cartes.gouv.fr. */
 .map-view .map-catalog > .gpf-btn-icon {
   background-color: var(--background-action-high-blue-france);
