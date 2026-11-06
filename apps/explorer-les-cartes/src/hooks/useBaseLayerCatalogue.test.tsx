@@ -19,7 +19,9 @@ describe('useBaseLayerCatalogue', () => {
       wrapper: createQueryWrapper(),
     });
     expect(result.current.isPending).toBe(true);
+    expect(result.current.status).toBe('loading');
     await waitFor(() => expect(result.current.layers).toHaveLength(3));
+    expect(result.current.status).toBe('ready');
     expect(result.current.activeLayer?.id).toBe('plan-ign');
     act(() => useMapStore.getState().setActiveBaseLayer('orthophotos'));
     expect(result.current.activeLayer?.layerName).toBe('ORTHOIMAGERY.ORTHOPHOTOS');

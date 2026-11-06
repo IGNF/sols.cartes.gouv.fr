@@ -1,6 +1,6 @@
 import type OlMap from 'ol/Map';
 import { useEffect, useRef } from 'react';
-import type { AvailableBaseLayer } from '../map/baseLayerCatalogue';
+import type { AvailableBaseLayer, BaseLayersStatus } from '../map/baseLayerCatalogue';
 import { CATALOG_OPTIONS, CONTROL_LABELS } from '../config/map';
 import { catalogueSearchByOrganisationPath } from '../config/urls';
 import { SOLS_DATASETS } from '../data/solsLayers';
@@ -12,6 +12,7 @@ import {
   findCatalogOverlay,
   syncCatalogTicks,
 } from '../map/catalogConfig';
+import { showBaseLayersNotice } from '../map/catalogNotice';
 import { dropBrokenThumbnails } from '../map/catalogThumbnails';
 import { readCatalogView, restoreCatalogView, type CatalogView } from '../map/catalogView';
 import { loadCatalog, type CatalogControl } from '../map/geopf';
@@ -137,7 +138,14 @@ interface MountedCatalog {
   control: CatalogControl;
   element: HTMLElement;
   baseLayers: readonly AvailableBaseLayer[];
+  /** Puts the « Fonds de cartes » notice of the current status (src/map/catalogNotice.ts). */
+  notice: () => void;
   dispose: () => void;
+}
+
+/** The error notice of the « Fonds de cartes » tab offers a page reload (the capabilities are cached). */
+function reloadPage(): void {
+  window.location.reload();
 }
 
 /** True once every entry of a catalogue built on `baseLayers` is rendered (one checkbox each). */
@@ -156,17 +164,20 @@ function entriesRendered(
  * stays ticked. The control is created at once (the button must not wait for a slow GPF) and rebuilt
  * in place when the base layers arrive, even with its panel open: the new control shows the same view
  * (open panel, tab, search, scroll, focus; src/map/catalogView.ts), so « Fonds de cartes » fills in
- * without closing the panel (D-carto-8). When the chunk fails, the store reports it (notice pointing to
- * the list view).
+ * without closing the panel (D-carto-8). Until then the tab shows a notice of the capabilities `status`
+ * (loading, failed with a reload button, nothing published; M15). When the chunk fails, the store reports
+ * it (notice pointing to the list view).
  */
 export default function useCatalog(
   map: OlMap | null,
   baseLayers: readonly AvailableBaseLayer[] = [],
+  status: BaseLayersStatus = 'ready',
 ): void {
   const setCatalogueUnavailable = useMapStore((state) => state.setCatalogueUnavailable);
   const catalogClass = useRef<CatalogClass | null>(null);
   const mounted = useRef<MountedCatalog | null>(null);
   const wanted = useRef(baseLayers);
+  const wantedStatus = useRef(status);
   const rebuildRequest = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -196,9 +207,16 @@ export default function useCatalog(
         const { overlays, activeBaseLayerId } = useMapStore.getState();
         return syncCatalogTicks(element, overlays, SOLS_DATASETS, layers, activeBaseLayerId);
       };
+      const notice = () => {
+        showBaseLayersNotice(element, wantedStatus.current, reloadPage);
+      };
       // Entries are rendered once the configuration is loaded: name their checkboxes and tick them as
-      // they appear, then follow the store (layers removed from the switcher, links, base layer).
-      const stopWatching = watchToolButtons(element, sync);
+      // they appear, then follow the store (layers removed from the switcher, links, base layer). The
+      // « Fonds de cartes » panel also comes later: its notice is put as soon as it is there.
+      const stopWatching = watchToolButtons(element, () => {
+        notice();
+        sync();
+      });
       const stopThumbnails = dropBrokenThumbnails(element);
       const unsubscribe = useMapStore.subscribe((state, previous) => {
         if (
@@ -214,6 +232,7 @@ export default function useCatalog(
         control,
         element,
         baseLayers: layers,
+        notice,
         dispose: () => {
           stopRestoring();
           stopWatching();
@@ -255,6 +274,8 @@ export default function useCatalog(
 
   useEffect(() => {
     wanted.current = baseLayers;
+    wantedStatus.current = status;
     rebuildRequest.current?.();
-  }, [baseLayers]);
+    mounted.current?.notice();
+  }, [baseLayers, status]);
 }

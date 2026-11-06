@@ -5,8 +5,9 @@ import MapView from './MapView';
 
 const state = vi.hoisted(() => ({
   capabilities: {} as Record<string, unknown>,
-  catalogue: { layers: [] as unknown[], activeLayer: undefined as unknown },
+  catalogue: { layers: [] as unknown[], activeLayer: undefined as unknown, status: 'loading' },
   useBaseLayer: vi.fn(),
+  useCatalog: vi.fn(),
   useMapControls: vi.fn(),
   useLayerSwitcher: vi.fn(),
   useOverlays: vi.fn(),
@@ -19,6 +20,7 @@ vi.mock('../../hooks/useBaseLayer', () => ({ default: state.useBaseLayer }));
 vi.mock('../../hooks/useMapControls', () => ({ default: state.useMapControls }));
 vi.mock('../../hooks/useLayerSwitcher', () => ({ default: state.useLayerSwitcher }));
 vi.mock('../../hooks/useOverlays', () => ({ default: state.useOverlays }));
+vi.mock('../../hooks/useCatalog', () => ({ default: state.useCatalog }));
 
 const PLAN_IGN = {
   id: 'plan-ign',
@@ -29,7 +31,7 @@ const PLAN_IGN = {
 describe('MapView', () => {
   beforeEach(() => {
     state.capabilities = { data: undefined, isPending: true, isError: false, isSuccess: false };
-    state.catalogue = { layers: [], activeLayer: undefined };
+    state.catalogue = { layers: [], activeLayer: undefined, status: 'loading' };
     vi.clearAllMocks();
   });
 
@@ -42,8 +44,9 @@ describe('MapView', () => {
     expect(state.useOverlays).toHaveBeenCalled();
   });
 
-  it('annonce le chargement du fond de carte', () => {
+  it('annonce le chargement du fond de carte, aussi dans l’onglet « Fonds de cartes » du catalogue', () => {
     render(<MapView />);
+    expect(state.useCatalog).toHaveBeenCalledWith(null, [], 'loading');
     expect(screen.getByRole('status')).toHaveTextContent('Chargement du fond de carte');
     expect(screen.getByRole('region', { name: MAP_LABEL })).toHaveAttribute('aria-busy', 'true');
   });
@@ -51,9 +54,10 @@ describe('MapView', () => {
   it('affiche le fond actif du catalogue', () => {
     const data = {};
     state.capabilities = { data, isPending: false, isError: false, isSuccess: true };
-    state.catalogue = { layers: [PLAN_IGN], activeLayer: PLAN_IGN };
+    state.catalogue = { layers: [PLAN_IGN], activeLayer: PLAN_IGN, status: 'ready' };
     render(<MapView />);
     expect(state.useBaseLayer).toHaveBeenCalledWith(null, data, PLAN_IGN.layerName);
+    expect(state.useCatalog).toHaveBeenCalledWith(null, [PLAN_IGN], 'ready');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

@@ -21,6 +21,10 @@
  * M14: the tool list panel is titled « Tous les outils » (375, 1280 px); no tooltip over an open panel, the
  * print icon kept under its tooltip; WMTS capabilities held back while the catalogue is opened on « Fonds de
  * cartes » at 375 px: the entries fill the open panel (tab, search, focus kept) and tick at the keyboard.
+ * M15 (D-carto-11): Plan IGN listed in the layer switcher 5 s after the map shows, on 40 fresh mobile loads
+ * (4 at a time), with the first two capabilities requests hung, and with a GPF answering after 3.2 s; the
+ * « Fonds de cartes » tab shows a loading notice while the capabilities are held, an error notice with a
+ * working « Recharger la page » button when they fail.
  * M16: base-layer entries of the catalogue show their GPF thumbnail (and the sols entries theirs), never a
  * placeholder nor a broken image; the zoom sits bottom right below the full screen (keyboard order kept).
  * Exits 1 on failure.
@@ -28,7 +32,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium, devices } from 'playwright';
 import brand from '@sols/brand/brand.json';
-import { CONTROL_LABELS, PRINT_LABELS } from '../src/config/map';
+import { CONTROL_LABELS, MAP_LABEL, MAP_NOTICES, PRINT_LABELS } from '../src/config/map';
 import { GPF_ENDPOINTS } from '../src/config/urls';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
@@ -1496,6 +1500,172 @@ for (const width of [375, 1280]) {
   );
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `D-carto-8 : console vide${notes} ${messages.join(' | ')}`);
+  await context.close();
+}
+
+// M15 (D-carto-11): the e2e stability test looks for « Plan IGN » in the layer switcher 5 s after the map
+// region shows (fresh context, 375 px). A hung capabilities request used to cost a 3 s timeout, then a
+// slow retry: Plan IGN came too late (2/90 loads under load, 6/6 with two hangs) or never (GPF slower
+// than 3 s). Hedged requests (src/map/fetchHedged.ts) keep the slow ones and send others alongside.
+const MOBILE = { ...devices['Pixel 5'], viewport: { width: 375, height: 812 } };
+const CAPABILITIES = /data\.geopf\.fr\/wmts\?.*GetCapabilities/i;
+const planIgnRow = (page: import('playwright').Page) =>
+  page.locator('[id^="GPtitle_ID_"]', { hasText: 'Plan IGN' });
+
+/** Loads the map in a fresh mobile context; ms from the map region shown to Plan IGN listed (-1: absent). */
+async function planIgnDelay(
+  setup?: (page: import('playwright').Page) => Promise<void>,
+  windowMs = 5_000,
+): Promise<{ delay: number; canvas: boolean }> {
+  const context = await browser.newContext(MOBILE);
+  const page = await context.newPage();
+  await setup?.(page);
+  await page.goto(url);
+  await page.getByRole('region', { name: MAP_LABEL }).waitFor({ timeout: 30_000 });
+  const shown = Date.now();
+  const delay = await planIgnRow(page)
+    .first()
+    .waitFor({ state: 'attached', timeout: windowMs })
+    .then(() => Date.now() - shown)
+    .catch(() => -1);
+  // OpenLayers creates the canvas on the frame after the layer is added: wait within the same window.
+  const canvas = await page
+    .locator('.map-view canvas')
+    .first()
+    .waitFor({ state: 'attached', timeout: Math.max(1, windowMs - (Date.now() - shown)) })
+    .then(() => true)
+    .catch(() => false);
+  await context.close();
+  return { delay, canvas };
+}
+
+{
+  const results: { delay: number; canvas: boolean }[] = [];
+  for (let round = 0; round < 10; round++) {
+    results.push(...(await Promise.all([1, 2, 3, 4].map(() => planIgnDelay()))));
+  }
+  const missing = results.filter((r) => r.delay < 0 || !r.canvas).length;
+  const slowest = Math.max(...results.map((r) => r.delay));
+  check(
+    missing === 0,
+    `D-carto-11 : 40 chargements mobiles neufs (4 à la fois) : Plan IGN listé dans les 5 s à chaque fois (${missing} sans, le plus lent ${slowest} ms)`,
+  );
+
+  let sent = 0;
+  const twoHung = await planIgnDelay(async (page) => {
+    await page.route(CAPABILITIES, async (route) => {
+      sent += 1;
+      if (sent <= 2) return; // accepted, never answered (D-carto-1)
+      await route.continue();
+    });
+  });
+  check(
+    twoHung.delay >= 0 && twoHung.canvas,
+    `D-carto-11 : deux premières requêtes de capacités sans réponse : Plan IGN listé ${twoHung.delay} ms après l’affichage de la carte (${sent} requêtes)`,
+  );
+
+  const slow = await planIgnDelay(async (page) => {
+    await page.route(CAPABILITIES, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 3_200));
+      await route.continue().catch(() => undefined); // aborted once another request answered
+    });
+  }, 10_000);
+  check(
+    slow.delay >= 0 && slow.canvas,
+    `D-carto-11 : Géoplateforme répondant après 3,2 s (au-delà de l’ancien délai par requête) : Plan IGN listé ${slow.delay} ms après l’affichage de la carte`,
+  );
+}
+
+// M15: the « Fonds de cartes » tab is never blank: loading notice while the capabilities are held, entries
+// once they arrive; error notice with a reload button when they fail.
+{
+  const context = await browser.newContext(MOBILE);
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(CAPABILITIES, async (route) => {
+    await gate;
+    await route.continue().catch(() => undefined);
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page.locator('#tabbutton-1_fonds').click();
+  const notice = page.locator('[id$="-panel_fonds"] .map-catalog__notice');
+  const loading = await notice
+    .waitFor({ state: 'visible', timeout: 10_000 })
+    .then(async () => (await notice.textContent())?.trim() ?? '')
+    .catch(() => '');
+  const role = await notice.getAttribute('role').catch(() => null);
+  const entriesBefore = await page.locator('input[name="checkboxes-fonds"]').count();
+  release();
+  const filled = await page
+    .locator('input[name="checkboxes-fonds"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 20_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(
+    loading === MAP_NOTICES.baseLayersLoading && role === 'status' && entriesBefore === 0,
+    `M15 : onglet « Fonds de cartes » pendant le chargement des capacités : avis « ${loading} » (role ${role})`,
+  );
+  check(
+    filled && (await notice.count()) === 0,
+    'M15 : avis remplacé par les entrées des fonds à l’arrivée des capacités',
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `M15 : console vide${notes} ${messages.join(' | ')}`);
+  await context.close();
+}
+{
+  const context = await browser.newContext(MOBILE);
+  const page = await context.newPage();
+  let fail = true;
+  await page.route(CAPABILITIES, async (route) => {
+    if (fail) await route.abort();
+    else await route.continue();
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  const notice = page.locator('[id$="-panel_fonds"] .map-catalog__notice');
+  // Every request of the round fails at once, then one more round (GPF_REQUEST_RETRIES).
+  await page.waitForFunction(
+    (text) => document.querySelector('.map-catalog__notice')?.textContent?.includes(text),
+    MAP_NOTICES.baseLayersReload,
+    { timeout: 20_000 },
+  );
+  await catalogue.click();
+  await page.locator('#tabbutton-1_fonds').click();
+  const reload = notice.getByRole('button', { name: MAP_NOTICES.baseLayersReload });
+  // Right after a tab change the DSFR panel stays hidden for one frame (§12.4).
+  const shown = await reload
+    .waitFor({ state: 'visible', timeout: 5_000 })
+    .then(() => true)
+    .catch(() => false);
+  const text = (await notice.textContent())?.trim() ?? '';
+  fail = false;
+  const reloaded = page.waitForEvent('load', { timeout: 20_000 }).then(
+    () => true,
+    () => false,
+  );
+  await reload.click();
+  const planIgnAfter = (await reloaded)
+    ? await planIgnRow(page)
+        .first()
+        .waitFor({ state: 'attached', timeout: 20_000 })
+        .then(() => true)
+        .catch(() => false)
+    : false;
+  check(
+    shown && text.startsWith(MAP_NOTICES.baseLayersError),
+    `M15 : capacités en échec : avis d’erreur et bouton « ${MAP_NOTICES.baseLayersReload} » dans l’onglet (${shown ? 'visible' : 'absent'})`,
+  );
+  check(planIgnAfter, 'M15 : « Recharger la page » recharge la carte, Plan IGN listé ensuite');
   await context.close();
 }
 

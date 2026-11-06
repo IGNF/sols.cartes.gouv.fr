@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import {
   availableBaseLayers,
+  baseLayersStatus,
   resolveActiveBaseLayer,
   type AvailableBaseLayer,
+  type BaseLayersStatus,
 } from '../map/baseLayerCatalogue';
 import { useMapStore } from '../store/useMapStore';
 import useWmtsCapabilities from './useWmtsCapabilities';
@@ -13,6 +15,8 @@ export interface BaseLayerCatalogue {
   activeLayer: AvailableBaseLayer | undefined;
   isPending: boolean;
   isError: boolean;
+  /** Loading, failed, empty or ready: drives the notice of the « Fonds de cartes » tab. */
+  status: BaseLayersStatus;
 }
 
 /** Base layers published by the GPF among the configured candidates. */
@@ -28,5 +32,6 @@ export default function useBaseLayerCatalogue(): BaseLayerCatalogue {
     activeLayer: resolveActiveBaseLayer(layers, selectedId),
     isPending: capabilities.isPending,
     isError: capabilities.isError,
+    status: baseLayersStatus(capabilities, layers),
   };
 }

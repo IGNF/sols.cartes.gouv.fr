@@ -369,9 +369,9 @@ Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lent
   couche) et sans entrée dans « Ma sélection de cartes », indéfiniment ; avec `curl`, 5 requêtes sur 25 sans réponse au bout de 12 s,
   les autres en 0,15 à 0,23 s. TanStack Query ne réessayait pas : la requête n'échouait jamais. Les liens profonds WMS semblaient
   épargnés parce que la couche sols dessine un canvas même sans fond.
-- Correctif : `src/map/fetchWithTimeout.ts` abandonne une requête sans en-têtes de réponse au bout de `GPF_REQUEST_TIMEOUT_MS` (3 s ;
-  le téléchargement du corps n'est pas limité, un réseau lent n'est pas pénalisé), puis `GPF_REQUEST_RETRIES` (4) nouveaux essais
-  espacés de 300 ms, pour les capacités WMTS et WMS. Pire cas ≈ 16 s, alerte « n'ont pas pu être chargés » ensuite.
+- Correctif M6 (remplacé en M15, §12.6) : abandon d'une requête sans en-têtes de réponse au bout de 3 s, puis 4 nouveaux essais
+  espacés de 300 ms. Depuis M15 les requêtes de capacités sont **doublées** (`src/map/fetchHedged.ts`) : la requête lente n'est plus
+  abandonnée, une autre part à côté.
 - Vérifié : 0 chargement sans canvas sur 40 (bureau) ; les chargements où le premier essai bloquait obtiennent le canvas en 4 à 6 s.
   `bun run check:map` charge la page 20 fois dans des contextes neufs et exige un canvas à chaque fois (attente 20 s).
 
@@ -819,6 +819,51 @@ Rapport `doc/e2e/REPORT.md` « Passe 4 » (PR #76) ; plan `doc/plans/M14.md`.
 | Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
 | Plein écran, zoom, échelle (M16) | `#position-container-bottom-right` contient, dans l'ordre, `[id^="GPfullScreen-"]` (bouton « Plein écran ») puis `[id^="GPzoom-"]` (`#GPzoomIn` « Zoomer », `#GPzoomOut` « Dézoomer ») ; `.ol-scale-line` à leur gauche ; conteneurs `[id^="position-container-"]` dans l'ordre top-left, top-right, bottom-left, bottom-right (ordre du clavier) |
 | Vignettes du catalogue (M16) | `[data-layeritem] .catalog-thumbnail-container img` ; fonds : `src` sous `https://data.geopf.fr/annexes/ressources/metadata/thumbnail/` ; entrée sans image : conteneur masqué (`display: none`) |
+| Avis de l'onglet « Fonds de cartes » (M15) | `[id$="-panel_fonds"] .map-catalog__notice` (`role="status"`, `data-status` = `loading`, `error` ou `empty`) ; bouton `getByRole('button', { name: 'Recharger la page' })` en cas d'échec ; absent dès que les entrées sont là |
+
+### 12.6 Courses du fond de carte et onglet « Fonds de cartes » vide (M15)
+
+Rapport e2e « Passe 4 » (PR #76, D-carto-11) ; plan `doc/plans/M15.md`.
+
+- **D-carto-11, Plan IGN absent de la liste à 375 px** (test de stabilité e2e : « Plan IGN » cherché **5 s** après l'affichage de la
+  carte). Mesures Playwright (Pixel 5, 375×812, aperçu local, script de reproduction hors dépôt) avant correctif : 0/30 en série,
+  0/40 avec le test e2e lui-même, **2/90** en trois boucles parallèles (premier GetCapabilities sans réponse, abandonné à 3 s, nouvel
+  essai lent : Plan IGN à 6,5–6,7 s) ; deux requêtes bloquées de suite (`page.route`) : 6/6 en retard (7,8 s) ; GPF qui répond
+  après ~3 s : 10/10 **sans fond, définitivement** (chacun des cinq essais abandonné juste avant sa réponse). `curl` : 2/30 puis 3/40
+  requêtes sans en-têtes en 12–15 s, les autres en 0,1–1 s, corps reçu en moins de 0,1 s : la GPF bloque **avant** les en-têtes.
+- Pistes écartées (code lu, mesures) : identifiant du fond perdu à la reconstruction du catalogue (le magasin n'est écrit que sur un
+  clic d'entrée ; `checkLayersOnMap` et `syncCatalogTicks` posent `checked` sans évènement) ; gestionnaire non rafraîchi (une seule
+  instance, `setMap` liste les couches présentes puis écoute `add` ; conteneurs de position jamais recréés ; état OpenLayers relu par
+  la fibre React : une couche, une ligne) ; capacités sans PLANIGNV2 (toutes les réponses complètes la publient). Dans nos mesures, un
+  chargement sans Plan IGN à 5 s n'a **jamais** de canvas non plus : le cas « canvas présent » du rapport n'a pas été reproduit.
+- **Cause trouvée en vérifiant le correctif** : la GPF peut aussi **s'arrêter au milieu du corps** : en-têtes à 1,9 s puis corps
+  complet à 13,2 s (1 chargement sur ~200, journal des requêtes Playwright) ; `curl` ne l'a pas montré sur 40 requêtes. L'ancien
+  correctif ne bornait que l'attente des en-têtes : ce chargement restait sans fond tant que le corps n'arrivait pas.
+- **Correctif** : `src/map/fetchHedged.ts` (remplace `fetchWithTimeout`), pour les capacités WMTS et WMS. Dès que **aucune**
+  requête n'a progressé (en-têtes ou octets du corps) pendant `GPF_REQUEST_HEDGE_DELAY_MS` (1,5 s), une autre requête part **à côté**
+  (les lentes ne sont pas abandonnées), jusqu'à `GPF_REQUEST_ATTEMPTS` (5) ; la première **lue en entier** gagne (corps mis en
+  mémoire, rendu dans une `Response`), les autres sont annulées ; une erreur réseau, un corps coupé ou une erreur HTTP envoie aussitôt
+  la suivante ; `GPF_REQUEST_DEADLINE_MS` (16 s) **sans aucun progrès** → `TimeoutError`, alerte. Un réseau lent qui reçoit des octets
+  n'est jamais coupé ni doublé. TanStack Query ne relance plus après l'échéance (`shouldRetryGpfRequest`), une fois après une erreur
+  HTTP ou un document illisible.
+- **Piège, `cache: 'no-store'`** : sans lui, Chromium fait attendre une requête identique en vol derrière la première (verrou du cache
+  HTTP) : la requête doublée restait bloquée avec elle (5/90 chargements sans fond au premier essai du correctif, invisible avec
+  `page.route`, qui désactive le cache). Les capacités GPF n'ont ni `Cache-Control`, ni `ETag`, ni `Last-Modified` : rien n'est perdu.
+- Après correctif (même aperçu, mêmes scripts) : **0/200** chargements mobiles parallèles (4 à la fois) sans Plan IGN à 5 s, le plus
+  lent à 3,45 s ; deux requêtes bloquées de suite : 5/6 dans les 5 s (la sixième : seule requête servie, en 3,5 s par la GPF) ; GPF
+  à ~3 s : 0/12 sans fond. **Pour la suite e2e** : attendre « Plan IGN » (attente bornée, 20 s) plutôt qu'un délai fixe de 5 s,
+  comme `check:map` ; une GPF lente reste possible.
+- **Onglet « Fonds de cartes » vide** pendant le chargement des capacités : `useBaseLayerCatalogue().status` (`loading`, `error`,
+  `empty`, `ready`, `baseLayersStatus`) → `useCatalog(map, layers, status)` → `showBaseLayersNotice` (`src/map/catalogNotice.ts`) pose
+  en tête du panneau `[role=tabpanel][id$=-panel_fonds]` un conteneur `role="status"` (gardé d'un état à l'autre, contenu remplacé)
+  avec une alerte DSFR `fr-alert--sm` : info « Chargement des fonds de cartes de la Géoplateforme… », erreur avec bouton « Recharger
+  la page » (`fr-icon-refresh-line`, `location.reload()` : les capacités ne sont pas en cache), avertissement si aucun fond prévu
+  n'est publié ; rien dès que les entrées sont là (le widget est reconstruit avec elles, §12.4). Idempotent : appelé à chaque
+  mutation du widget (geopf construit les panneaux après un délai) et à chaque changement d'état. Textes dans `MAP_NOTICES`.
+- `check:map` (bloc M15) : 40 chargements mobiles neufs, 4 à la fois, Plan IGN listé et canvas présent dans les 5 s à chaque fois ;
+  deux premières requêtes sans réponse : Plan IGN dans les 5 s ; GPF à 3,2 s : Plan IGN listé ; capacités retenues : avis de
+  chargement (`role="status"`) dans l'onglet, puis entrées et plus d'avis, console vide ; capacités en échec : avis d'erreur, « Recharger
+  la page » recharge la carte (Plan IGN listé ensuite). Captures `doc/screenshots/M15/`.
 
 ### 12.7 Vignettes des fonds de cartes, zoom sous le plein écran (M16)
 

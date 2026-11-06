@@ -55,6 +55,7 @@ describe('wmtsCapabilities', () => {
     const capabilities = await fetchWmtsCapabilities();
     expect(fetchMock).toHaveBeenCalledWith(WMTS_CAPABILITIES_URL, {
       signal: expect.any(AbortSignal),
+      cache: 'no-store',
     });
     expect(findWmtsLayer(capabilities, planIgn)).not.toBeNull();
   });
@@ -77,7 +78,11 @@ describe('wmtsCapabilities', () => {
           ),
       ),
     );
-    const pending = fetchWmtsCapabilities(undefined, 5000);
+    const pending = fetchWmtsCapabilities(undefined, {
+      hedgeDelayMs: 1000,
+      attempts: 2,
+      deadlineMs: 5000,
+    });
     const assertion = expect(pending).rejects.toThrow(/Pas de réponse de data.geopf.fr en 5 s/);
     await vi.advanceTimersByTimeAsync(5000);
     await assertion;

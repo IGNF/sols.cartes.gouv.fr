@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CATALOG_OPTIONS, CONTROL_LABELS, GEOPF_DIALOG_LABELS } from '../config/map';
+import { CATALOG_OPTIONS, CONTROL_LABELS, GEOPF_DIALOG_LABELS, MAP_NOTICES } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
 import type { AvailableBaseLayer } from '../map/baseLayerCatalogue';
 import useCatalog, { CATALOG_CLASS, createCatalog, patchProducerLinks } from './useCatalog';
@@ -455,6 +455,54 @@ describe('useCatalog', () => {
     body.innerHTML = '<div class="catalog-thumbnail-container"><img src="x.jpg" alt="" /></div>';
     body.querySelector('img')?.dispatchEvent(new Event('error'));
     expect(body.querySelector('img')).toBeNull();
+  });
+
+  /** geopf builds the category panels after the control (once its configuration is loaded). */
+  function addFondsPanel(catalog: { element: HTMLElement } | undefined): HTMLElement {
+    const panel = document.createElement('div');
+    panel.id = 'tabpanel-1-panel_fonds';
+    panel.setAttribute('role', 'tabpanel');
+    panel.innerHTML = '<div class="tabcontent" data-category="fonds"></div>';
+    catalog?.element.querySelector('.gpf-panel__body')?.append(panel);
+    return panel;
+  }
+
+  it('affiche dans l’onglet « Fonds de cartes » le chargement puis l’échec des capacités (M15)', async () => {
+    const { map, addControl } = createFakeMap();
+    // Stable list, as `useBaseLayerCatalogue` memoizes it: a new list would rebuild the catalogue.
+    const none: AvailableBaseLayer[] = [];
+    const { rerender } = renderHook(({ status }) => useCatalog(map, none, status), {
+      initialProps: { status: 'loading' as 'loading' | 'error' },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const panel = addFondsPanel(geopf.created[0]);
+    await waitFor(() => expect(panel).toHaveTextContent(MAP_NOTICES.baseLayersLoading));
+    expect(panel.querySelector('[role="status"]')).not.toBeNull();
+    rerender({ status: 'error' });
+    expect(panel).toHaveTextContent(MAP_NOTICES.baseLayersError);
+    expect(panel.querySelector('button')).toHaveTextContent(MAP_NOTICES.baseLayersReload);
+    // Same widget: a failure does not rebuild the catalogue.
+    expect(geopf.created).toHaveLength(1);
+  });
+
+  it('remplace l’avis de chargement par les entrées quand les fonds arrivent', async () => {
+    const { map, addControl } = createFakeMap();
+    const { rerender } = renderHook(({ layers, status }) => useCatalog(map, layers, status), {
+      initialProps: {
+        layers: [] as AvailableBaseLayer[],
+        status: 'loading' as 'loading' | 'ready',
+      },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const before = addFondsPanel(geopf.created[0]);
+    await waitFor(() => expect(before).toHaveTextContent(MAP_NOTICES.baseLayersLoading));
+    rerender({ layers: BASE_LAYERS, status: 'ready' });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    const after = addFondsPanel(geopf.created[1]);
+    after.querySelector('.tabcontent')?.append(document.createElement('input'));
+    await Promise.resolve();
+    expect(after.querySelector('[role="status"]')).toBeNull();
+    expect(after).not.toHaveTextContent(MAP_NOTICES.baseLayersLoading);
   });
 
   it('ne fait rien sans carte et n’ajoute rien après un démontage précoce', async () => {
