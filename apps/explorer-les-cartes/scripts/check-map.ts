@@ -25,13 +25,23 @@
  * (4 at a time), with the first two capabilities requests hung, and with a GPF answering after 3.2 s; the
  * « Fonds de cartes » tab shows a loading notice while the capabilities are held, an error notice with a
  * working « Recharger la page » button when they fail.
+ * M16: base-layer entries of the catalogue show their GPF thumbnail (and the sols entries theirs), never a
+ * placeholder nor a broken image; the zoom sits bottom right below the full screen (keyboard order kept).
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
 import { chromium, devices } from 'playwright';
 import brand from '@sols/brand/brand.json';
-import { CONTROL_LABELS, MAP_LABEL, MAP_NOTICES, PRINT_LABELS } from '../src/config/map';
-import { GPF_ENDPOINTS } from '../src/config/urls';
+import {
+  BASE_LAYER_CANDIDATES,
+  CONTROL_LABELS,
+  MAP_LABEL,
+  MAP_NOTICES,
+  PRINT_LABELS,
+  THUMBNAIL_LOAD_TIMEOUT_MS,
+} from '../src/config/map';
+import { GPF_ENDPOINTS, gpfThumbnailUrl } from '../src/config/urls';
+import { SOLS_DATASETS } from '../src/data/solsLayers';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
 
@@ -135,40 +145,58 @@ for (const width of [375, 768, 1280]) {
   const overlap = await page.evaluate(() => {
     const search = document.querySelector('[id^="GPsearchEngine-"]')?.getBoundingClientRect();
     const zoom = document.querySelector('[id^="GPzoom-"]')?.getBoundingClientRect();
-    return search && zoom ? Math.max(0, zoom.right - search.left) : -1;
+    if (!search || !zoom) return -1;
+    const x = Math.max(0, Math.min(search.right, zoom.right) - Math.max(search.left, zoom.left));
+    const y = Math.max(0, Math.min(search.bottom, zoom.bottom) - Math.max(search.top, zoom.top));
+    return Math.round(x * y);
   });
-  check(
-    overlap === 0,
-    `${width}px : la recherche ne recouvre pas la colonne de zoom (${overlap} px)`,
-  );
-  // v1.1: no attribution control any more (brief); full screen and the scale line sit bottom right.
+  check(overlap === 0, `${width}px : la recherche ne recouvre pas le zoom (${overlap} px²)`);
+  // v1.1: no attribution control any more (brief). M16: full screen then zoom stacked bottom right (as on
+  // cartes.gouv.fr), the scale line at their left; geopf containers in reading order (keyboard order).
   await page.locator('[id^="GPfullScreen-"]').waitFor({ state: 'attached', timeout: 15_000 });
   const bottomRight = await page.evaluate(() => {
     const map = document.querySelector('.map-view')?.getBoundingClientRect();
     const full = document.querySelector('[id^="GPfullScreen-"]');
+    const zoom = document.querySelector('[id^="GPzoom-"]');
     const scale = document.querySelector('.ol-scale-line')?.getBoundingClientRect();
-    // The geopf widget div is wider than its 40 px button: measure the button.
+    // The geopf widget div is wider than its 40 px button: measure the buttons.
     const fullBox = full?.querySelector('button')?.getBoundingClientRect();
-    if (!map || !full || !scale || !fullBox) return null;
+    const zoomIn = document.querySelector('#GPzoomIn')?.getBoundingClientRect();
+    const zoomOut = document.querySelector('#GPzoomOut')?.getBoundingClientRect();
+    if (!map || !full || !zoom || !scale || !fullBox || !zoomIn || !zoomOut) return null;
+    const column = full.parentElement;
     return {
       attribution: document.querySelector('.ol-attribution') !== null,
-      fullInColumn: full.parentElement?.id === 'position-container-bottom-right',
-      fullBottom: Math.round(map.bottom - fullBox.bottom),
-      fullRight: Math.round(map.right - fullBox.right),
+      column: column?.id === 'position-container-bottom-right' && zoom.parentElement === column,
+      order: Array.from(column?.children ?? [])
+        .map((child) => child.id.split('-')[0])
+        .join(','),
+      containers: Array.from(document.querySelectorAll('[id^="position-container-"]'))
+        .map((c) => c.id.replace('position-container-', ''))
+        .join(','),
+      zoomBottom: Math.round(map.bottom - zoomOut.bottom),
+      zoomRight: Math.round(map.right - zoomOut.right),
+      fullAbove: Math.round(zoomIn.top - fullBox.bottom),
+      aligned: Math.round(Math.abs(zoomIn.left - fullBox.left)),
       scaleBottom: Math.round(map.bottom - scale.bottom),
-      scaleGap: Math.round(fullBox.left - scale.right),
+      scaleGap: Math.round(zoomOut.left - scale.right),
     };
   });
   check(
     bottomRight !== null &&
       !bottomRight.attribution &&
-      bottomRight.fullInColumn &&
-      bottomRight.fullBottom <= 16 &&
-      bottomRight.fullRight <= 16 &&
+      bottomRight.column &&
+      bottomRight.order === 'GPfullScreen,GPzoom' &&
+      bottomRight.containers === 'top-left,top-right,bottom-left,bottom-right' &&
+      bottomRight.zoomBottom <= 16 &&
+      bottomRight.zoomRight <= 16 &&
+      bottomRight.fullAbove >= 0 &&
+      bottomRight.fullAbove <= 8 &&
+      bottomRight.aligned <= 1 &&
       bottomRight.scaleBottom <= 16 &&
       bottomRight.scaleGap >= 4 &&
       bottomRight.scaleGap <= 24,
-    `${width}px : pas de bouton « Sources des données », plein écran en bas à droite et échelle à sa gauche (${JSON.stringify(bottomRight)})`,
+    `${width}px : pas de bouton « Sources des données », plein écran puis zoom en bas à droite, échelle à leur gauche, conteneurs dans l’ordre de lecture (${JSON.stringify(bottomRight)})`,
   );
   check(
     (await page
@@ -1646,6 +1674,165 @@ async function planIgnDelay(
     `M15 : capacités en échec : avis d’erreur et bouton « ${MAP_NOTICES.baseLayersReload} » dans l’onglet (${shown ? 'visible' : 'absent'})`,
   );
   check(planIgnAfter, 'M15 : « Recharger la page » recharge la carte, Plan IGN listé ensuite');
+  await context.close();
+}
+
+// M16: thumbnails of the catalogue entries. The base layers show their GPF thumbnail
+// (BASE_LAYER_CANDIDATES), the sols records their CSW one; no entry shows geopf's empty placeholder, and a
+// thumbnail that fails is dropped (no broken image).
+for (const [name, context] of [
+  ['1280px', await browser.newContext({ viewport: { width: 1280, height: 900 } })],
+  [
+    '375px',
+    await browser.newContext({ ...devices['Pixel 5'], viewport: { width: 375, height: 812 } }),
+  ],
+] as const) {
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page.locator('#tabbutton-1_fonds').click();
+  await page
+    .locator('input[name="checkboxes-fonds"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
+  // Every image settled: loaded, failed, or dropped by the stall rule (THUMBNAIL_LOAD_TIMEOUT_MS).
+  await page
+    .waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('[data-layeritem] img')).every(
+          (i) => (i as HTMLImageElement).complete,
+        ),
+      undefined,
+      { timeout: THUMBNAIL_LOAD_TIMEOUT_MS + 10_000 },
+    )
+    .catch(() => undefined); // still pending: reported below with its URL
+  const entries = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-layeritem]')).map((entry) => {
+      const img = entry.querySelector('img');
+      const container = entry.querySelector('.catalog-thumbnail-container');
+      const hidden = !container || getComputedStyle(container).display === 'none';
+      const layer = entry.querySelector('input[data-layer]')?.getAttribute('data-layer') ?? '';
+      const state = img
+        ? img.complete
+          ? img.naturalWidth > 0
+            ? 'chargée'
+            : 'cassée'
+          : 'en attente'
+        : hidden
+          ? 'retirée'
+          : 'case vide';
+      return {
+        fond: entry.querySelector('input[name="checkboxes-fonds"]') !== null,
+        // `data-layer` is `<name>:<service>`; names may hold a colon.
+        layer: layer.slice(0, layer.lastIndexOf(':')),
+        src: img?.getAttribute('src') ?? '',
+        state,
+      };
+    }),
+  );
+  // URL of the entry's thumbnail, also once dropped (from the configuration of its layer).
+  const thumbnailOf = (e: (typeof entries)[number]) =>
+    e.src ||
+    (e.fond
+      ? BASE_LAYER_CANDIDATES.find((c) => c.layerName === e.layer)?.thumbnail
+      : SOLS_DATASETS.find((d) => d.layers.some((l) => l.name === e.layer))?.thumbnail) ||
+    `(${e.layer}, sans vignette configurée)`;
+  const fonds = entries.filter((e) => e.fond);
+  const sols = entries.filter((e) => !e.fond);
+  // GPF base-layer thumbnails: always loaded. CSW record thumbnails (other server, may stall): loaded or
+  // dropped, never an empty slot nor a broken image (M16 review 2).
+  const badFonds = fonds.filter(
+    (e) => e.state !== 'chargée' || !e.src.startsWith(gpfThumbnailUrl('')),
+  );
+  const badSols = sols.filter((e) => e.state !== 'chargée' && e.state !== 'retirée');
+  const dropped = sols.filter((e) => e.state === 'retirée');
+  const detail = [...badFonds, ...badSols].map((e) => `${e.state} ${thumbnailOf(e)}`);
+  check(
+    fonds.length >= 2 && sols.length === 7 && detail.length === 0,
+    `M16 ${name} : vignettes GPF des ${fonds.length} fonds chargées, vignettes CSW des ${sols.length} données sols chargées ou retirées, ni case vide ni image cassée (${
+      detail.join(' ; ') ||
+      (dropped.length ? `retirée(s) : ${dropped.map(thumbnailOf).join(' ')}` : 'toutes chargées')
+    })`,
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `M16 ${name} : console vide${notes} ${messages.join(' | ')}`);
+  // A thumbnail that fails to load leaves no broken image and no placeholder.
+  const broken = await page.evaluate(async () => {
+    const img = document.querySelector<HTMLImageElement>('[data-layeritem] img');
+    const container = img?.closest('.catalog-thumbnail-container');
+    if (!img || !container) return null;
+    await new Promise<void>((resolve) => {
+      img.addEventListener('error', () => setTimeout(resolve, 0), { once: true });
+      img.src = 'https://data.geopf.fr/annexes/ressources/metadata/thumbnail/absente-m16.jpg';
+    });
+    return {
+      img: container.querySelector('img') !== null,
+      display: getComputedStyle(container).display,
+    };
+  });
+  check(
+    broken !== null && !broken.img && broken.display === 'none',
+    `M16 ${name} : vignette en échec retirée, ni image cassée ni vignette vide (${JSON.stringify(broken)})`,
+  );
+  await context.close();
+}
+
+// M16 review: a stalled thumbnail request (seen once on a CSW thumbnail) left an empty slot. One record
+// thumbnail is held: after THUMBNAIL_LOAD_TIMEOUT_MS its image is dropped and the slot hidden.
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  let held = '';
+  await page.route(/\/annexes\/gissol-osf\/thumbnail\/.*\.png/, async (route) => {
+    if (!held) {
+      held = route.request().url();
+      return; // never answered
+    }
+    await route.continue();
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page
+    .locator('[data-layeritem] img')
+    .first()
+    .waitFor({ state: 'attached', timeout: 30_000 });
+  const slot = (src: string) =>
+    page.evaluate((s) => {
+      const entry = Array.from(document.querySelectorAll('[data-layeritem]')).find((e) =>
+        e.querySelector(`img[src="${s}"]`),
+      );
+      return entry ? 'img' : 'none';
+    }, src);
+  const before = held ? await slot(held) : 'not held';
+  await page.waitForTimeout(THUMBNAIL_LOAD_TIMEOUT_MS + 2_000);
+  const after = await page.evaluate((heldSrc) => {
+    const entries = Array.from(document.querySelectorAll('[data-layeritem]'));
+    return {
+      // Another thumbnail may stall for real and be dropped too: only the held one is required.
+      heldDropped: !document.querySelector(`[data-layeritem] img[src="${heldSrc}"]`),
+      withoutImage: entries.filter((e) => !e.querySelector('img')).length,
+      emptySlots: entries.filter((e) => {
+        const container = e.querySelector('.catalog-thumbnail-container');
+        return (
+          container &&
+          !container.querySelector('img') &&
+          getComputedStyle(container).display !== 'none'
+        );
+      }).length,
+      notLoaded: Array.from(
+        document.querySelectorAll<HTMLImageElement>('[data-layeritem] img'),
+      ).filter((img) => !(img.complete && img.naturalWidth > 0)).length,
+    };
+  }, held);
+  check(
+    before === 'img' && after.heldDropped && after.emptySlots === 0 && after.notLoaded === 0,
+    `M16 : vignette bloquée retirée après ${THUMBNAIL_LOAD_TIMEOUT_MS / 1000} s, pas de case vide (${JSON.stringify({ before, ...after })})`,
+  );
   await context.close();
 }
 

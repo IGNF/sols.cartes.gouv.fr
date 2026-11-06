@@ -136,6 +136,18 @@ describe('fetchHedged', () => {
     expect((await failing).status).toBe(502);
   });
 
+  it('abandonne le corps d’une réponse en erreur HTTP (seul son statut sert)', async () => {
+    const { requests } = controlledFetch();
+    const pending = fetchHedged(URL_, OPTIONS);
+    const cancel = vi.fn();
+    const body = new ReadableStream({ cancel });
+    requests[0]?.answer(new Response(body, { status: 503 }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    requests[1]?.answer(new Response('ok'));
+    expect(await (await pending).text()).toBe('ok');
+  });
+
   it('transmet l’annulation de l’appelant à toutes les requêtes, sans délai dépassé', async () => {
     const { requests } = controlledFetch();
     const caller = new AbortController();

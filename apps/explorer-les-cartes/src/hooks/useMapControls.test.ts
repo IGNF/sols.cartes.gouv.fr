@@ -37,16 +37,34 @@ vi.mock('../map/geopf', () => ({
 function createFakeMap() {
   const addControl = vi.fn();
   const removeControl = vi.fn();
-  return { map: { addControl, removeControl } as unknown as OlMap, addControl, removeControl };
+  const overlays = document.createElement('div');
+  const getOverlayContainerStopEvent = () => overlays;
+  return {
+    map: { addControl, removeControl, getOverlayContainerStopEvent } as unknown as OlMap,
+    addControl,
+    removeControl,
+    overlays,
+  };
 }
 
 describe('useMapControls', () => {
   it('ajoute zoom, plein écran (en bas à droite) et échelle, sans attributions, puis la recherche chargée à la demande', async () => {
     geopf.created.length = 0;
-    const { map, addControl } = createFakeMap();
+    const { map, addControl, overlays } = createFakeMap();
     renderHook(() => useMapControls(map));
-    expect(geopf.created.map((c) => c.kind).sort()).toEqual(['fullScreen', 'zoom']);
+    // geopf position containers created first, in reading order (keyboard order).
+    expect(Array.from(overlays.children).map((c) => c.id)).toEqual([
+      'position-container-top-left',
+      'position-container-top-right',
+      'position-container-bottom-left',
+      'position-container-bottom-right',
+    ]);
+    // Full screen first, then the zoom below it, both bottom right (M16).
+    expect(geopf.created.map((c) => c.kind)).toEqual(['fullScreen', 'zoom']);
     expect(geopf.created.find((c) => c.kind === 'fullScreen')?.options).toMatchObject({
+      position: 'bottom-right',
+    });
+    expect(geopf.created.find((c) => c.kind === 'zoom')?.options).toMatchObject({
       position: 'bottom-right',
     });
     expect(addControl.mock.calls.some(([c]) => c instanceof ScaleLine)).toBe(true);

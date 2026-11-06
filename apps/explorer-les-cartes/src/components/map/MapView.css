@@ -33,9 +33,10 @@
 }
 
 /*
- * geopf-extensions search engine: its own slot, right of the zoom column and left of the layer
- * switcher, at every width (geopf puts it at left: 46px above 576px and at 0 below, over the zoom).
- * Offsets follow the DSFR spacing scale (1w = 0.5rem): zoom column = 1w offset + 5w buttons, plus 1w gap.
+ * geopf-extensions search engine: its own slot, right of the top-left button column (print, import,
+ * feature info; the zoom until M16) and left of the layer switcher, at every width (geopf puts it at
+ * left: 46px above 576px and at 0 below, over that column). Offsets follow the DSFR spacing scale
+ * (1w = 0.5rem): column = 1w offset + 5w buttons, plus 1w gap.
  */
 .map-view [id^='GPsearchEngine-'] {
   top: 0.5rem;
@@ -144,6 +145,14 @@
 
 .map-view .map-catalog > .gpf-btn-icon:active {
   background-color: var(--background-action-high-blue-france-active);
+}
+
+/*
+ * Entry thumbnails (M16): geopf paints a placeholder vignette behind every entry without an image (or whose
+ * image failed and was dropped, src/map/catalogThumbnails.ts): no image at all rather than an empty one.
+ */
+.map-view .map-catalog .catalog-thumbnail-container:not(:has(img)) {
+  display: none;
 }
 
 /*

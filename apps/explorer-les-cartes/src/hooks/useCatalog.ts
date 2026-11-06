@@ -13,6 +13,7 @@ import {
   syncCatalogTicks,
 } from '../map/catalogConfig';
 import { showBaseLayersNotice } from '../map/catalogNotice';
+import { dropBrokenThumbnails } from '../map/catalogThumbnails';
 import { readCatalogView, restoreCatalogView, type CatalogView } from '../map/catalogView';
 import { loadCatalog, type CatalogControl } from '../map/geopf';
 import { unescapeHtml } from '../text/escapeHtml';
@@ -216,6 +217,7 @@ export default function useCatalog(
         notice();
         sync();
       });
+      const stopThumbnails = dropBrokenThumbnails(element);
       const unsubscribe = useMapStore.subscribe((state, previous) => {
         if (
           state.overlays !== previous.overlays ||
@@ -234,6 +236,7 @@ export default function useCatalog(
         dispose: () => {
           stopRestoring();
           stopWatching();
+          stopThumbnails();
           unsubscribe();
           map.removeControl(control);
           mounted.current = null;

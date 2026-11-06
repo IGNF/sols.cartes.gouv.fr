@@ -27,7 +27,7 @@ import type {
   SearchEngineOptions,
   TerritoriesOptions,
 } from '../map/geopf';
-import { EXTERNAL_LINKS, GPF_ENDPOINTS } from './urls';
+import { EXTERNAL_LINKS, GPF_ENDPOINTS, gpfThumbnailUrl } from './urls';
 
 /** WMTS version requested from the GPF. */
 export const WMTS_VERSION = '1.0.0';
@@ -37,6 +37,8 @@ export interface BaseLayerDefinition {
   id: string;
   /** WMTS layer identifier on https://data.geopf.fr/wmts. */
   layerName: string;
+  /** Thumbnail shown in the « Fonds de cartes » tab (gpfThumbnailUrl); none: no image at all. */
+  thumbnail?: string;
 }
 
 /**
@@ -46,12 +48,36 @@ export interface BaseLayerDefinition {
  * CADASTRALPARCELS.PARCELLAIRE_EXPRESS is published but transparent: an overlay, not a background.
  */
 export const BASE_LAYER_CANDIDATES = [
-  { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2' },
-  { id: 'orthophotos', layerName: 'ORTHOIMAGERY.ORTHOPHOTOS' },
-  { id: 'cartes-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.MAPS' },
-  { id: 'relief', layerName: 'ELEVATION.SLOPES' },
-  { id: 'etat-major', layerName: 'GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40' },
-  { id: 'photos-1950-1965', layerName: 'ORTHOIMAGERY.ORTHOPHOTOS.1950-1965' },
+  {
+    id: 'plan-ign',
+    layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+    thumbnail: gpfThumbnailUrl('vignette-plan-ign.jpg'),
+  },
+  {
+    id: 'orthophotos',
+    layerName: 'ORTHOIMAGERY.ORTHOPHOTOS',
+    thumbnail: gpfThumbnailUrl('vignette-bd-ortho.jpg'),
+  },
+  {
+    id: 'cartes-ign',
+    layerName: 'GEOGRAPHICALGRIDSYSTEMS.MAPS',
+    thumbnail: gpfThumbnailUrl('vignette-scan-25.jpg'),
+  },
+  {
+    id: 'relief',
+    layerName: 'ELEVATION.SLOPES',
+    thumbnail: gpfThumbnailUrl('vignette-bd-alti.jpg'),
+  },
+  {
+    id: 'etat-major',
+    layerName: 'GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40',
+    thumbnail: gpfThumbnailUrl('vignette-scan-EM-40k.jpg'),
+  },
+  {
+    id: 'photos-1950-1965',
+    layerName: 'ORTHOIMAGERY.ORTHOPHOTOS.1950-1965',
+    thumbnail: gpfThumbnailUrl('vignette-bd-orthohisto.jpg'),
+  },
 ] as const satisfies readonly BaseLayerDefinition[];
 
 export type BaseLayerId = (typeof BASE_LAYER_CANDIDATES)[number]['id'];
@@ -75,6 +101,12 @@ export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_
  * on valid tiles (doc/agents/QUESTIONS.md M-2).
  */
 export const TILE_RETRY_DELAY_MS = 500;
+
+/**
+ * Wait for a catalogue thumbnail (GPF annexes) before giving up on it: a stalled request otherwise leaves
+ * an empty slot (M16 review); the thumbnails load even with the panel closed, within 1 s normally.
+ */
+export const THUMBNAIL_LOAD_TIMEOUT_MS = 10_000;
 
 /**
  * GPF capabilities requests (src/map/fetchHedged.ts). The GPF intermittently accepts a request and never
@@ -207,7 +239,8 @@ export const TOOL_PROJECTIONS: readonly string[] = ['EPSG:2154', 'EPSG:27572'];
  * JSDoc of the controls but missing from their `.d.ts` (upstream gap).
  */
 export const MAP_TOOLS_OPTIONS = {
-  zoom: { position: 'top-left' } satisfies ZoomOptions & { position: ControlPosition },
+  // M16: bottom right below the full screen button, next to the scale line (as on cartes.gouv.fr).
+  zoom: { position: 'bottom-right' } satisfies ZoomOptions & { position: ControlPosition },
   // v1.1: bottom right, next to the scale line (as on cartes.gouv.fr).
   fullScreen: {
     position: 'bottom-right',

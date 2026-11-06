@@ -1,5 +1,5 @@
 import { CATALOG_KINDS, type BaseLayerId, type CatalogKind } from '../config/map';
-import { catalogueRecordPath } from '../config/urls';
+import { catalogueRecordPath, isTrustedImageUrl } from '../config/urls';
 import type { AvailableBaseLayer } from './baseLayerCatalogue';
 import { solsLayerKey, type SolsDataset, type SolsService } from '../data/solsLayersSchema';
 import { escapeHtml } from '../text/escapeHtml';
@@ -67,6 +67,10 @@ export function buildCatalogData(
       description: '',
       producer: [],
       search: [layer.title],
+      // GPF thumbnail (M16); without one geopf would draw its empty placeholder (hidden, MapView.css).
+      ...(layer.thumbnail && isTrustedImageUrl(layer.thumbnail)
+        ? { thumbnail: layer.thumbnail }
+        : {}),
       serviceParams: { id: 'OGC:WMTS' },
       metadata_urls: [],
     };
