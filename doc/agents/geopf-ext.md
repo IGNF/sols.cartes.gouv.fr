@@ -845,7 +845,10 @@ Rapport e2e « Passe 4 » (PR #76, D-carto-11) ; plan `doc/plans/M15.md`.
   mémoire, rendu dans une `Response`), les autres sont annulées ; une erreur réseau, un corps coupé ou une erreur HTTP envoie aussitôt
   la suivante ; `GPF_REQUEST_DEADLINE_MS` (16 s) **sans aucun progrès** → `TimeoutError`, alerte. Un réseau lent qui reçoit des octets
   n'est jamais coupé ni doublé. TanStack Query ne relance plus après l'échéance (`shouldRetryGpfRequest`), une fois après une erreur
-  HTTP ou un document illisible.
+  HTTP ou un document illisible. La borne de 5 requêtes vaut pour les **blocages** (attente, échéance) : des échecs **rapides**
+  (erreur réseau ou HTTP) envoient aussitôt la suivante, épuisent les 5, puis TanStack relance une série (`GPF_REQUEST_RETRIES`) :
+  jusqu'à **10 requêtes** au total. Le corps d'une réponse en erreur HTTP est abandonné (`response.body.cancel()`) : seul son statut
+  sert (revue M15).
 - **Piège, `cache: 'no-store'`** : sans lui, Chromium fait attendre une requête identique en vol derrière la première (verrou du cache
   HTTP) : la requête doublée restait bloquée avec elle (5/90 chargements sans fond au premier essai du correctif, invisible avec
   `page.route`, qui désactive le cache). Les capacités GPF n'ont ni `Cache-Control`, ni `ETag`, ni `Last-Modified` : rien n'est perdu.
