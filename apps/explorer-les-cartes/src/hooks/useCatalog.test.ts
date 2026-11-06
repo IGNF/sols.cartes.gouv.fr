@@ -3,6 +3,7 @@ import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_OPTIONS, CONTROL_LABELS, GEOPF_DIALOG_LABELS } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
+import type { AvailableBaseLayer } from '../map/baseLayerCatalogue';
 import useCatalog, { CATALOG_CLASS, createCatalog, patchProducerLinks } from './useCatalog';
 
 const geopf = vi.hoisted(() => {
@@ -254,16 +255,29 @@ describe('useCatalog', () => {
     expect(inputs()).toEqual([false, true]);
   });
 
-  it('attend que les capacités soient connues avant de créer le catalogue (pas de reconstruction)', async () => {
-    const { map, addControl } = createFakeMap();
-    const { rerender } = renderHook(({ ready, layers }) => useCatalog(map, layers, ready), {
-      initialProps: { ready: false, layers: [] as never[] },
+  it('crée le catalogue aussitôt, puis le reconstruit à l’arrivée des fonds, une fois son panneau refermé', async () => {
+    const { map, addControl, removeControl } = createFakeMap();
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
     });
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(addControl).not.toHaveBeenCalled();
-    rerender({ ready: true, layers: [] });
     await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const first = geopf.created[0];
+    const layersOf = (catalog: (typeof geopf.created)[number] | undefined) =>
+      Object.keys((catalog?.options['configuration'] as { data: { layers: object } }).data.layers);
+    expect(layersOf(first)).toHaveLength(7);
+    // The panel is open when the capabilities arrive: nothing moves until it is closed.
+    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    const baseLayers: AvailableBaseLayer[] = [
+      { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+    ];
+    rerender({ layers: baseLayers });
+    await Promise.resolve();
+    expect(removeControl).not.toHaveBeenCalled();
+    expect(geopf.created).toHaveLength(1);
+    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'false');
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(removeControl).toHaveBeenCalledWith(first);
+    expect(layersOf(geopf.created[1])).toHaveLength(8);
   });
 
   it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {

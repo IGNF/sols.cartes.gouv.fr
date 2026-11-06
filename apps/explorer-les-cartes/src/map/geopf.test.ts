@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const loadByName = vi.hoisted(() => vi.fn());
-vi.mock(
-  'geopf-extensions-openlayers/src/packages/Controls/Attribution/GeoportalAttribution',
-  () => ({ default: function ControlStub() {} }),
-);
 vi.mock('geopf-extensions-openlayers/src/packages/Controls/FullScreen/GeoportalFullScreen', () => ({
   default: function ControlStub() {},
 }));

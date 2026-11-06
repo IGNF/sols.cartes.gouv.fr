@@ -24,7 +24,7 @@ export default function MapView() {
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
   useMapControls(map);
   useLayerSwitcher(map);
-  useCatalog(map, layers, !capabilities.isPending);
+  useCatalog(map, layers);
   useMapTools(map);
   usePrintControl(map, openPrintModal);
   useOverlays(map);
