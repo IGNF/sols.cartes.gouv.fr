@@ -673,3 +673,43 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   un avis par-dessus la carte recouvrirait ses widgets) et revient si la couche est retirée puis remise.
 - `check:map` : donnée Loiret ajoutée depuis le catalogue → avis « Couche indisponible » puis retrait ; lien `l=` vers `rrp_loiret_…` →
   entrée `rrp_dept_loiret_…` cochée, décocher retire la couche et l'avis.
+
+## 12. v1.1 (M13)
+
+### 12.1 Pied de page extensible et en-tête
+
+- **Motif d'origine** : `CgfrFooter.vue` (IGNF/cartes.gouv.fr-vue-components, utilisé par cartes.gouv.fr-entree-carto). Le pied de page
+  DSFR complet est rendu (`SiteFooter.tsx`, balisage calqué sur `apps/accueil/src/_includes/partials/footer.njk`, contenu de
+  `@sols/brand`) ; replié, la classe `compact-footer--collapsed` ne laisse que `.fr-footer__bottom` et les blocs `.fr-footer__body`,
+  `.fr-footer__partners`, `.fr-footer__bottom-copy` portent `hidden` (une règle `.compact-footer [hidden] { display: none }` est
+  nécessaire : le `display: flex` du DSFR l'emporte sur la feuille de style du navigateur). Le bouton bascule l'état puis
+  `setTimeout(() => window.scrollTo({ top: open ? document.body.scrollHeight : 0, behavior }), 0)` ; `behavior: 'smooth'` à l'ouverture
+  sauf `prefers-reduced-motion: reduce`. Le focus reste sur le bouton (même élément, libellé changé).
+- **`Footer` de react-dsfr écarté** : il impose ses liens bas (libellé d'accessibilité, ordre), réduit les liens de contenu à des domaines
+  (`domains`) et ne peut pas accueillir le bouton hors de `fr-footer__bottom-list`. `fr-footer__content-item` est une classe DSFR sans CSS
+  absente de la liste typée de `fr.cx` : chaîne brute.
+- **Mise en page (`App.css`, ≥ 48em)** : `display: grid; grid-template-rows: auto minmax(20rem, 1fr) auto; min-height: 100dvh`.
+  `min-height` et non `height` : un `height: 100dvh` (v1, flex) rognait le pied déplié au lieu d'agrandir le document. La rangée `1fr` se
+  résout contre le `min-height` (CSS Grid §12.7.1) : `main` a une hauteur définie, la chaîne flex de la carte (`.map-view { height: 100% }`)
+  fonctionne et OpenLayers suit par son ResizeObserver (canvas = hauteur de `.map-view`, vérifié). Pied déplié :
+  `.app-layout--map:has(> .compact-footer:not(.compact-footer--collapsed))` passe la rangée à `minmax(80dvh, 1fr)` : à 1280×900 la carte
+  passe de 683 à 679 px (75 %) au lieu de tomber à 589 px avec un plancher de 70dvh (la barre d'outils au-dessus de la carte prend ~40 px).
+  Le plancher replié (20rem) évite tout défilement sur les écrans bas. Les liens d'évitement DSFR sont en `position: absolute` : pas de rangée.
+- **Piège `fr-enlarge-link`** : le DSFR étend le lien de la marque par `a::before { position: absolute; inset: 0 }` jusqu'au premier ancêtre
+  positionné, normalement `.fr-header__brand.fr-enlarge-link`. Le `position: relative` posé en M7 sur `.fr-header__service` (pour la marque
+  Observatoire en `::after`) confinait ce calque au bloc titre : Marianne et logo GIS Sol n'étaient pas cliquables. La marque est désormais
+  un fond (`background: var(--osf-mark) 1.25rem center / 3rem 3rem no-repeat`, ≥ 62em) ; ne jamais repositionner un descendant de
+  `.fr-header__brand`. Vérifié par `elementFromPoint` (l'ancien CSS réinjecté donne `false, false`).
+- **Menus « Aide » (contrat E10, PR #70)** : items `{ label, href, hrefTemplate?, external?, icon?, description? }` (`HeaderMenuItem`,
+  champs facultatifs : la marque de `main` reste valide). `itemHref` résout `{lang}` en `fr` (pas de sélecteur de langue ici) ; un item
+  `external` ou à `href` absolu reçoit `target="_blank" rel="noopener external"` et `title="<libellé> - nouvelle fenêtre"`. Icône de l'item
+  avant le libellé (`fr-link--icon-left` + classe d'icône, si listée dans `HEADER_MENU_ICONS`, sinon rien) ; l'icône « lien externe » après
+  est celle du DSFR (`[target=_blank]::after`), poussée à droite comme sur cartes.gouv.fr (`.header-menu__label { flex: 1 }`). Badge :
+  `badgeStyles.carto` (E10) → `SERVICE_BADGE_CLASSES`, liste blanche de couleurs et d'icônes, repli violet glycine + `fr-icon-map-pin-2-fill`.
+- **Icônes et build parallèles** : `react-dsfr update-icons` réécrit `dsfr/utility/icons/icons.min.css` dans `node_modules` ; avec bun, ce
+  fichier est un lien physique partagé par tous les worktrees (7 liens observés) : un build lancé en parallèle dans une autre brique peut
+  retirer les icônes `ri-*` du bundle. Relancer `bun run build` juste avant `check:map` et vérifier `grep ri-share-line dist/assets/*.css`.
+- **Sélecteurs e2e** : bouton `getByRole('contentinfo').getByRole('button', { name: 'Haut de page' })` (replié) /
+  `{ name: 'Fermer' }` (déplié), `aria-expanded`, `aria-controls="footer"` ; état `footer.compact-footer--collapsed` ; logos
+  `.fr-footer__partners img`. `check:map` (bloc M13) : hauteur de document, `scrollY`, hauteur de `.map-view` et du canvas, axe déplié,
+  bascule à 375 px, test de clic sur `.fr-header__logo`, `.fr-header__operator`, `.fr-header__service`.
