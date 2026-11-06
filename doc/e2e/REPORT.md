@@ -15,6 +15,8 @@ Les captures de `doc/e2e/` sont régénérées par ce passage. Les sections suiv
 
 Ce rapport garde la partie 1 (v1 : en-tête, pied de page, home, aide, puces) puis ajoute la partie 2 (carte : outils geopf, catalogue des données sols). Partie 1 en dessous de la partie 2.
 
+`axe-fiche.json` a été régénéré lors de cette passe et est vide (0 violation sur la fiche à ce run).
+
 ## Passe 3, partie 2 : outils de la carte et catalogue des données sols
 
 Date : 2026-11-06. Base testée : branche `feat/T3-e2e-part2` = `origin/main` (qui contient M8 #56, M9 #60 tête `55a552a`, M10, M11, E9/C12) fusionné ; les trois briques ont été reconstruites (`bun run build:all`, sans erreur) et servies sur le port 8142. Un premier passage avait échoué en masse parce que le serveur d'aperçu avait été arrêté par un autre agent en cours de route (tests à ~100 ms, connexion refusée) : il a été relancé sous surveillance et le passage retenu est complet.
@@ -48,7 +50,7 @@ BLOCKED : aucun. Note axe : l'axe tourne en desktop uniquement ; sur mobile en t
   - D-carto-5 (visuel) : à 1280x900, le panneau du catalogue des données sols s'ouvre sur une hauteur d'environ 210 px quand on y filtre « carbone » : la première entrée est coupée (capture `carto-catalogue-desktop.jpg`). Sur mobile le panneau est plein écran et lisible.
   - Observation corrigée : la liste de « Mes outils » restait ouverte après Entrée avant le correctif de M8 (#56) ; depuis, elle se ferme et le focus revient sur « Mes outils » (test vert).
   - D-carto-6 (mobile, 375×812) : le panneau du catalogue des données sols, ouvert en plein écran, recouvre le bouton « Ma sélection de cartes » : ouvrir « Catalogue des données sols », puis essayer d'atteindre « Ma sélection de cartes » (le clic est intercepté par « Fermer le panneau » du catalogue). Contournement du test : fermer le catalogue par son bouton « Fermer le panneau ».
-  - Correctif en cours : `fix/M12-catalogue-panel-size` traite D-carto-5 (hauteur du panneau) et D-carto-6.
+  - corrigé par #66 : `fix/M12-catalogue-panel-size` traite D-carto-5 (hauteur du panneau) et D-carto-6.
 - **catalogue** : `heading-order` modérée sur la recherche (amont) et sur la fiche selon le chargement ; rien de nouveau.
 - **edito** : rien de nouveau.
 
