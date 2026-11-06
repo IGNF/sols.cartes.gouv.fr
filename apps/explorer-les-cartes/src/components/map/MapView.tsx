@@ -20,11 +20,11 @@ export default function MapView() {
   const targetRef = useRef<HTMLDivElement>(null);
   const map = useMap(targetRef);
   const capabilities = useWmtsCapabilities();
-  const { layers, activeLayer } = useBaseLayerCatalogue();
+  const { layers, activeLayer, status } = useBaseLayerCatalogue();
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
   useMapControls(map);
   useLayerSwitcher(map);
-  useCatalog(map, layers);
+  useCatalog(map, layers, status);
   useMapTools(map);
   usePrintControl(map, openPrintModal);
   useOverlays(map);
