@@ -453,6 +453,21 @@ Vitest 189 tests ; `check:map` 76/76 ; axe 0 violation : carte claire et sombre 
 - Pied de page compact : plus de liens de contenu (legifrance...), de partenaires ni de licence sur la carto.
 - « Version accessible de la liste des données » et le bouton du panneau sont dans la barre d'outils au-dessus de la carte.
 
+### 9.7 Contraste du bouton « Menu » au survol de la marque (M11, amont DSFR)
+
+- Constat (revue M8) : axe signale à 375 px en thème sombre un `color-contrast` grave de 3,35:1 sur `#en-tete-menu-button`
+  (`#8585f6` sur `#3f3f3f`), « rien d'ouvert ».
+- Cause : le pointeur. Chromium sans interface démarre avec le pointeur en (0, 0), sur `.fr-header__brand.fr-enlarge-link`.
+  La règle DSFR 1.14.2 `.fr-enlarge-link:hover { background-color: var(--hover) }` peint alors le bloc de marque en
+  `--background-lifted-grey-hover` (`--grey-1000-75-hover`, `#3f3f3f` en sombre) sous le bouton « Menu », qui est dans ce
+  bloc en mobile. Au repos le fond est `--background-lifted-grey` (`#1e1e1e`) et axe ne trouve aucune violation.
+- Pas de CSS du projet en cause : l'edito (`/fr/`, référence) donne exactement la même mesure, 3,35:1 au survol et
+  0 violation au repos (captures `doc/screenshots/M11/`). Thème clair : `#000091` sur `#f6f6f6`, contraste suffisant.
+- Décision : comportement DSFR amont, non corrigé localement (une surcharge du survol du bloc de marque s'écarterait de
+  l'edito et du DSFR) ; question M-5 dans `doc/agents/QUESTIONS.md`. `check:map` passe axe à 375 px sombre page au
+  repos (pointeur hors de l'en-tête, 0 violation grave) et, pointeur sur la marque, ne tolère que cette violation.
+- Pour la suite e2e : écarter le pointeur de l'en-tête (`page.mouse.move`) avant axe sur mobile.
+
 ## 10. Jeu d'outils de l'entrée carto (M8, 2026-11-05)
 
 Référence : `IGNF/cartes.gouv.fr-entree-carto` (`src/composables/controls.js`, `src/components/carte/Controls.vue`,
