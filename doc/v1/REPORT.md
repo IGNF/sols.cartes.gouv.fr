@@ -31,7 +31,7 @@ Date : 2026-11-05 (suite de la v0). Réponses humaines intégrées depuis `doc/a
 
 Partie 1 (PR #57, suite adaptée à la v1, `main` sans M8/M9) : 80 tests passés, 8 ignorés (axe mobile, filtres repliés sur mobile, Échap mobile edito), 0 échec imputable ; test de stabilité 0/20 sans canvas ; axe 0 critique/sérieuse sur accueil, aide, recherche, fiche, carte, vue liste (un `heading-order` modéré intermittent amont sur le catalogue). Défauts relevés et traités : D-edito-2 (Échap mobile ferme tout le menu, corrigé E9/C12), D-carto-3 (chevron des menus, M10).
 
-Partie 2 (couverture M8/M9, branche `feat/T3-e2e-part2`) : en cours au moment de la coupure de session ; à relire et fusionner.
+Partie 2 (PR #65, couverture M8/M9 sur `main` final) : 103 tests passés, 15 ignorés (axe mobile, outils masqués sous 48em, filtres repliés), 0 échec, 0 instable ; widget catalogue (recherche, ajout/retrait, lien profond coché, avis « Couche indisponible »), 15 outils nommés, « Mes outils » au clavier, mesure, permalien aller-retour, impression PNG, légendes, chevron, Échap sous-menu sur les trois briques, stabilité 0/20, axe 0 critique/sérieuse. Défauts relevés : D-carto-5 (hauteur du panneau catalogue filtré) et D-carto-6 (panneau mobile recouvrant le gestionnaire), corrigés par M12 (#66).
 
 ## 4. Écarts de processus v1
 
@@ -40,6 +40,6 @@ Partie 2 (couverture M8/M9, branche `feat/T3-e2e-part2`) : en cours au moment de
 - L'agent carto M8 (modèle Fable) a été interrompu par une limite d'usage puis repris sans perte.
 - Les commentaires Figma ne sont pas lisibles par l'API MCP (G-2).
 
-## 5. État
+## 5. État final
 
-Fusionné : X11–X17, E7–E9, C8–C12, M7–M11, T3 partie 1. Ouverts : la PR T3 partie 2 (couverture e2e de M8/M9, en cours d'ouverture par l'agent e2e), #15 (Docker, volontairement non fusionné). Les réponses attendues de l'humain sont dans `doc/agents/QUESTIONS.md` (C-4, C-5, C-6, G-1, G-2, E-3, E-4, M-5).
+Tout est fusionné dans `main` : X11–X18, E7–E9, C8–C12, M7–M12, T3 (parties 1 et 2). Seule la PR Docker #15 reste ouverte, volontairement. Décisions attendues de l'humain dans `doc/agents/QUESTIONS.md` : C-4 (où les défauts d'autocomplétion/décomptes ont été vus), C-5 (boucle WFS non reproduite), C-6 (thème sombre du catalogue), G-1 (authentification), G-2 (commentaires Figma), E-3 (adresse de contact), E-4 (agenda, liens d'inscription), M-5 (contraste du survol DSFR, ticket amont à ouvrir). Tickets amont à ouvrir par un humain : geonetwork/geonetwork-ui (patches 0004, 0006, 0007), IGNF/geopf-extensions-openlayers (lacunes d'accessibilité et options listées dans `doc/agents/geopf-ext.md` §5.7, §10.4, §11.3), DSFR (survol du bouton Menu).
