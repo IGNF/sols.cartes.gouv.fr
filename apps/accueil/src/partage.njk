@@ -21,6 +21,11 @@ shared: true
       <div class="fr-container fr-py-6w">
         <h1>{{ t.partage.title }}</h1>
         <p>{{ t.partage.body }}</p>
+        <h2 class="fr-h6">{{ t.partage.badgesTitle }}</h2>
+        {%- for brickBadge in site.header.brickBadges %}
+        {%- set badge = brickBadge %}
+        <p class="fr-header__service-title">{{ site.header.serviceTitle }} {% include "partials/badge.njk" %}</p>
+        {%- endfor %}
       </div>
     </main>
     {% include "partials/footer.njk" %}

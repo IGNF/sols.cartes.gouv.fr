@@ -17,6 +17,16 @@
     "catalogue": "Rechercher",
     "carto": "Explorer"
   },
+  "badgeStyles": {
+    "catalogue": {
+      "color": "green-menthe",
+      "icon": "fr-icon-search-line"
+    },
+    "carto": {
+      "color": "purple-glycine",
+      "icon": "fr-icon-map-pin-2-fill"
+    }
+  },
   "header": {
     "brandLink": "/",
     "operator": {
@@ -32,11 +42,16 @@
         "items": [
           {
             "label": "Centre d'aide",
-            "href": "/aide/"
+            "href": "https://cartes.gouv.fr/aide/fr/",
+            "hrefTemplate": "https://cartes.gouv.fr/aide/{lang}/",
+            "icon": "fr-icon-question-mark",
+            "external": true
           },
           {
             "label": "Nous contacter",
-            "href": "/fr/aide/#contact"
+            "href": "https://cartes.gouv.fr/aide/fr/nous-ecrire/",
+            "icon": "fr-icon-mail-line",
+            "external": true
           }
         ]
       },

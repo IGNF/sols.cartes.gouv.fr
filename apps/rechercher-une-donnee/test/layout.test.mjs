@@ -7,6 +7,7 @@ import {
   addBadge,
   assertStaticTemplate,
   buildLayout,
+  checkHeaderAgainstBrand,
   duplicateToolLinks,
   extractBlock,
   extractHeaderScript,
@@ -15,8 +16,12 @@ import {
   readHeaderScript,
   readLayout,
   readSharedCss,
+  referencedDsfrIcons,
   rewriteAssetPaths,
 } from '../scripts/layout.mjs'
+
+const badgeTitle =
+  '<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line">Rechercher</span></p>'
 
 const header = [
   '<header><div class="fr-header__service"><p class="fr-header__service-title">sols.cartes.gouv.fr</p></div>',
@@ -46,6 +51,13 @@ const doc = [
   '```html',
   '<footer id="pied-de-page"></footer><dialog id="fr-theme-modal"><use href="/dsfr/artwork/x.svg#a"></use></dialog>',
   '```',
+  '',
+  'Titre du service avec badge, catalogue :',
+  '',
+  '<!-- prettier-ignore -->',
+  '```html',
+  badgeTitle,
+  '```',
 ].join('\n')
 
 test('extractBlock reads the html block after its label', () => {
@@ -53,13 +65,10 @@ test('extractBlock reads the html block after its label', () => {
   assert.throws(() => extractBlock(doc, 'Absent'), /no html block/)
 })
 
-test('addBadge puts the brick badge in the service title', () => {
-  assert.match(
-    addBadge(header, 'Rechercher'),
-    /sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe">Rechercher<\/span><\/p>/
-  )
-  assert.equal(addBadge(header, null), header)
-  assert.throws(() => addBadge('<header></header>', 'x'), /service title/)
+test('addBadge substitutes the reference title-with-badge block', () => {
+  assert.ok(addBadge(header, badgeTitle).includes(badgeTitle))
+  assert.throws(() => addBadge('<header></header>', badgeTitle), /service title/)
+  assert.throws(() => addBadge(header, '<p>autre</p>'), /unexpected markup/)
 })
 
 test('duplicateToolLinks copies the tool menus into the mobile menu with -mobile ids', () => {
@@ -82,7 +91,7 @@ test('assertStaticTemplate rejects Angular syntax', () => {
 })
 
 test('buildLayout returns the three blocks', () => {
-  const layout = buildLayout(doc, { baseHref: '/r/', badge: 'Rechercher' })
+  const layout = buildLayout(doc, { baseHref: '/r/' })
   assert.deepEqual(Object.keys(layout), ['skiplinks', 'header', 'footer'])
   assert.match(layout.footer, /href="\/r\/assets\/dsfr\/artwork\/x.svg#a"/)
 })
@@ -97,7 +106,8 @@ test('extractSharedCss keeps only the shared header/footer rules', () => {
 
 test('the real edito reference produces the v1 catalogue header and footer', () => {
   const layout = readLayout(readUpstream().baseHref)
-  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge[^"]*">Rechercher<\/span><\/p>/)
+  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge[^"]*fr-icon-search-line">Rechercher<\/span><\/p>/)
+  assert.match(layout.header, /href="https:\/\/cartes.gouv.fr\/aide\/fr\/" target="_blank" rel="noopener external"/)
   assert.match(layout.header, /Observatoire des sols de France/)
   assert.match(layout.header, /id="menu-services-mobile"/)
   assert.match(layout.header, /src="\/rechercher-une-donnee\/assets\/brand\/logo-gissol.png"/)
@@ -198,4 +208,30 @@ test('the generated header script matches apps/accueil/src/js/header.js (C12)', 
   assert.ok(generated.includes(code))
   const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
   assert.match(patch, /\+\s*<script type="module" src="assets\/sols\/header.js"><\/script>/)
+})
+
+test('referencedDsfrIcons lists the DSFR icons the shared CSS needs (C13)', () => {
+  const css = readSharedCss('/rechercher-une-donnee/')
+  assert.deepEqual(referencedDsfrIcons(css, '/rechercher-une-donnee/').sort(), [
+    'arrows/arrow-down-s-line.svg',
+    'system/external-link-line.svg',
+  ])
+  assert.match(css, /\.fr-header__tools-links \{/)
+})
+
+test('checkHeaderAgainstBrand compares badge and help links with brand.json (C13)', () => {
+  const brand = {
+    badges: { catalogue: 'Rechercher' },
+    badgeStyles: { catalogue: { color: 'green-menthe', icon: 'fr-icon-search-line' } },
+    header: { tools: { help: { items: [{ label: 'Aide', href: 'https://x.fr/aide/', icon: 'fr-icon-q', external: true }] } } },
+  }
+  const ok =
+    badgeTitle +
+    '<a class="fr-nav__link fr-link--icon-left fr-icon-q sols-tool-menu__external" href="https://x.fr/aide/" target="_blank" rel="noopener external">'
+  assert.equal(checkHeaderAgainstBrand(ok, brand), ok)
+  assert.throws(() => checkHeaderAgainstBrand(badgeTitle, brand), /help link/)
+  assert.throws(
+    () => checkHeaderAgainstBrand(ok, { ...brand, badgeStyles: { catalogue: { color: 'blue', icon: 'x' } } }),
+    /badge/
+  )
 })

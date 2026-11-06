@@ -12,7 +12,8 @@ describe('SiteHeader (v1, contenu issu de @sols/brand)', () => {
     const homeLinks = screen.getAllByTitle(service.homeLinkTitle);
     expect(homeLinks.length).toBeGreaterThan(0);
     for (const link of homeLinks) expect(link).toHaveAttribute('href', header.brandLink);
-    expect(document.querySelector('a[href*="cartes.gouv.fr"]')).toBeNull();
+    // Only the brand must not lead to cartes.gouv.fr; since v1.1 the « Aide » menu links to its help (E10).
+    expect(document.querySelector('.fr-header__brand a[href*="cartes.gouv.fr"]')).toBeNull();
   });
 
   it('affiche le logo GIS Sol en opérateur, le titre, le badge « Explorer » et le slogan', () => {

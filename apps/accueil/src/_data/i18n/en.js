@@ -26,8 +26,8 @@ export default {
       help: {
         label: 'Help',
         items: {
-          '/aide/': { label: 'Help centre' },
-          '/fr/aide/#contact': { label: 'Contact us' },
+          'https://cartes.gouv.fr/aide/{lang}/': { label: 'Help centre' },
+          'https://cartes.gouv.fr/aide/fr/nous-ecrire/': { label: 'Contact us (in French)' },
         },
       },
       services: {
@@ -99,8 +99,10 @@ export default {
         },
       ],
       contactTitle: 'Contact us',
-      contactText: 'For any question about the service, write to us at',
-      contactNote: '(placeholder address)',
+      contactText:
+        'Help and the contact form are shared with cartes.gouv.fr: write to us with the « Nous écrire » form (in French) and mention that your question is about the Soil observatory of France.',
+      contactButton: 'Write to us on cartes.gouv.fr (in French)',
+      helpButton: 'cartes.gouv.fr help centre',
     },
     accueil: { title: 'Soil observatory', description },
     accessibilite: {
