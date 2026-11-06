@@ -452,11 +452,12 @@ for (const width of [1024, 1440]) {
   await page.goto(url, { waitUntil: 'load' });
   const header = page.locator('header.fr-header');
   await header.waitFor();
+  // Since E10 the « Aide » menu links to cartes.gouv.fr: the brand block alone must stay on « / ».
   check(
     (await page
       .locator('.fr-header__brand a[href]')
       .evaluateAll((links) => links.every((link) => link.getAttribute('href') === '/'))) &&
-      (await page.locator('header a[href*="cartes.gouv.fr"]').count()) === 0,
+      (await page.locator('.fr-header__brand a[href*="cartes.gouv.fr"]').count()) === 0,
     'en-tête : la marque renvoie vers « / », jamais vers cartes.gouv.fr',
   );
   check(

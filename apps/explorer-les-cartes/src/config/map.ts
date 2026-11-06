@@ -347,17 +347,20 @@ export const CATALOG_KIND_FIELD = 'kind';
 export const CATALOG_KINDS = { sols: 'sols', baseLayer: 'fond' } as const;
 export type CatalogKind = (typeof CATALOG_KINDS)[keyof typeof CATALOG_KINDS];
 
+/** Ids of the catalogue categories (tab ids `tabbutton-<n>_<id>`, checkbox names `checkboxes-<id>`). */
+export const CATALOG_CATEGORY_IDS = { sols: 'sols', baseLayers: 'fonds' } as const;
+
 export const CATALOG_CATEGORIES = [
   {
     title: 'Données sols',
-    id: 'sols',
+    id: CATALOG_CATEGORY_IDS.sols,
     producer: true,
     order: true,
     filter: { field: CATALOG_KIND_FIELD, value: CATALOG_KINDS.sols },
   },
   {
     title: 'Fonds de cartes',
-    id: 'fonds',
+    id: CATALOG_CATEGORY_IDS.baseLayers,
     producer: false,
     order: false,
     filter: { field: CATALOG_KIND_FIELD, value: CATALOG_KINDS.baseLayer },

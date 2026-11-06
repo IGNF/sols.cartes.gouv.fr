@@ -1,4 +1,4 @@
-import { TOOL_BUTTON_LABELS } from '../config/map';
+import { TOOL_BUTTON_LABELS, CATALOG_CATEGORY_IDS } from '../config/map';
 
 /**
  * Names the controls the Legends, Territories and Catalog widgets render without any accessible name
@@ -21,7 +21,7 @@ export function fixToolButtons(root: HTMLElement): number {
           ?.textContent?.trim() ?? '';
       input.setAttribute(
         'aria-label',
-        `${input.name.endsWith('-fonds') ? TOOL_BUTTON_LABELS.showBaseLayer : TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
+        `${input.name === `checkboxes-${CATALOG_CATEGORY_IDS.baseLayers}` ? TOOL_BUTTON_LABELS.showBaseLayer : TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
       );
       fixed += 1;
     });
