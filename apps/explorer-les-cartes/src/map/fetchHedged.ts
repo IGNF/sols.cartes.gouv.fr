@@ -124,6 +124,8 @@ export function fetchHedged(
           progress();
           if (!response.ok) {
             controllers.delete(controller);
+            // Only its status is reported (the callers never read an error body): free the connection.
+            void response.body?.cancel().catch(() => undefined);
             lastResponse = response;
             failed();
             return;
