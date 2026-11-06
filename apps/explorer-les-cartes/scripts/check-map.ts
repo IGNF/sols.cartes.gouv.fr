@@ -509,7 +509,7 @@ for (const width of [1024, 1440]) {
     (await page
       .locator('.fr-header__brand a[href]')
       .evaluateAll((links) => links.every((link) => link.getAttribute('href') === '/'))) &&
-      (await page.locator('header a[href*="cartes.gouv.fr"]').count()) === 0,
+      (await page.locator('.fr-header__brand a[href*="cartes.gouv.fr"]').count()) === 0,
     'en-tête : la marque renvoie vers « / », jamais vers cartes.gouv.fr',
   );
   check(
@@ -1185,6 +1185,44 @@ const TOOL_BUTTONS = [
     header.badgeIcon.startsWith('url(') && header.badgeContent !== 'none',
     `en-tête : icône DSFR du badge « ${brand.badges.carto} » présente (::before)`,
   );
+  // « Aide » (E10): external items open a new window, item icon before the label, external-link icon after.
+  const help = page
+    .locator('.fr-header__tools')
+    .getByRole('button', { name: brand.header.tools.help.label });
+  await help.click();
+  const helpPanel = page.locator(`#${await help.getAttribute('aria-controls')}`);
+  const helpLinks = await helpPanel.getByRole('link').evaluateAll((links) =>
+    links.map((link) => ({
+      label: link.textContent?.trim() ?? '',
+      target: link.getAttribute('target'),
+      rel: link.getAttribute('rel'),
+      title: link.getAttribute('title'),
+      before: getComputedStyle(link, '::before').maskImage,
+      after: getComputedStyle(link, '::after').maskImage,
+      afterContent: getComputedStyle(link, '::after').content,
+    })),
+  );
+  const externalItems = brand.header.tools.help.items.filter(
+    (item) => 'external' in item && item.external,
+  );
+  check(
+    externalItems.length > 0 &&
+      externalItems.every((item) => {
+        const link = helpLinks.find((entry) => entry.label === item.label);
+        return (
+          link?.target === '_blank' &&
+          link.rel === 'noopener external' &&
+          link.title === `${item.label} - nouvelle fenêtre` &&
+          link.before.startsWith('url(') &&
+          // The DSFR inlines its icons (data URIs): the after-icon must exist and differ from the item icon.
+          link.after.startsWith('url(') &&
+          link.after !== link.before &&
+          link.afterContent !== 'none'
+        );
+      }),
+    `en-tête : « ${brand.header.tools.help.label} », ${externalItems.length} lien(s) externe(s) en nouvelle fenêtre, icône avant, icône « lien externe » après`,
+  );
+  await help.click();
 
   const footer = page.getByRole('contentinfo');
   const toggle = footer.getByRole('button', { name: 'Haut de page' });
