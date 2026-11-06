@@ -208,6 +208,52 @@ describe('useCatalog', () => {
     await waitFor(() => expect(inputs()).toEqual([false, false]));
   });
 
+  it('bascule le fond de carte depuis l’onglet « Fonds de cartes », qui reste coché', async () => {
+    const baseLayers = [
+      {
+        id: 'plan-ign' as const,
+        layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+        title: 'Plan IGN',
+      },
+      { id: 'orthophotos' as const, layerName: 'ORTHOIMAGERY.ORTHOPHOTOS', title: 'Photos' },
+    ];
+    const { map, addControl } = createFakeMap();
+    renderHook(() => useCatalog(map, baseLayers));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const catalog = geopf.created[0];
+    const data = (catalog?.options['configuration'] as { data: { layers: object } }).data;
+    expect(Object.keys(data.layers)).toHaveLength(9);
+    const dialog = catalog?.element.querySelector('dialog');
+    if (!dialog) throw new Error('fixture');
+    dialog.innerHTML = `<div data-layeritem><input type="checkbox" name="checkboxes-fonds" data-layer="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2:WMTS" />
+      <label class="catalog-layer-title">Plan IGN</label></div>
+      <div data-layeritem><input type="checkbox" name="checkboxes-fonds" data-layer="ORTHOIMAGERY.ORTHOPHOTOS:WMTS" />
+      <label class="catalog-layer-title">Photos</label></div>`;
+    const inputs = () =>
+      Array.from(dialog.querySelectorAll<HTMLInputElement>('input')).map((i) => i.checked);
+    await waitFor(() => expect(inputs()).toEqual([true, false]));
+    expect(dialog.querySelector('input')).toHaveAttribute(
+      'aria-label',
+      'Afficher le fond de carte : Plan IGN',
+    );
+    catalog?.listeners.get('catalog:layer:add')?.({
+      name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+      service: 'WMTS',
+    });
+    expect(useMapStore.getState().activeBaseLayerId).toBe('orthophotos');
+    await waitFor(() => expect(inputs()).toEqual([false, true]));
+    expect(useMapStore.getState().overlays).toEqual([]);
+    // Unticking the active base layer changes nothing: it is ticked again.
+    const ortho = dialog.querySelectorAll<HTMLInputElement>('input')[1];
+    if (ortho) ortho.checked = false;
+    catalog?.listeners.get('catalog:layer:remove')?.({
+      name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+      service: 'WMTS',
+    });
+    expect(useMapStore.getState().activeBaseLayerId).toBe('orthophotos');
+    expect(inputs()).toEqual([false, true]);
+  });
+
   it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {
     geopf.failNext();
     const { map, addControl } = createFakeMap();

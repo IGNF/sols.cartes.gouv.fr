@@ -1,24 +1,5 @@
-.map-explorer__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.5rem;
-  padding: 0.25rem 1rem;
-  border-bottom: 1px solid var(--border-default-grey);
-}
-
-.map-explorer__body {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Small screens: map first, panel below it. */
 .map-explorer__map {
-  order: -1;
-}
-
-.map-explorer__panel {
-  padding: 1rem;
+  position: relative;
 }
 
 /*
@@ -46,10 +27,7 @@
   }
 }
 
-/*
- * From the DSFR md breakpoint: the body fills the main area, the panel is docked left with a bounded
- * width (18 to 26 rem, 30 %): the map keeps at least ~60 % of the width (62 % at 768 px) and scrolls nothing.
- */
+/* From the DSFR md breakpoint the map fills the main area (App.css: the main takes the viewport rest). */
 @media (min-width: 48em) {
   .map-explorer {
     display: flex;
@@ -58,22 +36,8 @@
     min-height: 0;
   }
 
-  .map-explorer__body {
-    flex: 1 1 auto;
-    flex-direction: row;
-    min-height: 0;
-  }
-
   .map-explorer__map {
-    position: relative;
     flex: 1 1 auto;
-    order: 0;
-    min-width: 0;
-  }
-
-  .map-explorer__panel {
-    flex: 0 0 clamp(18rem, 30%, 26rem);
-    overflow-y: auto;
-    border-right: 1px solid var(--border-default-grey);
+    min-height: 0;
   }
 }

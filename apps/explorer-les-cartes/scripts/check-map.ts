@@ -12,7 +12,7 @@
  * M6: a canvas on 20 fresh loads (D-carto-1) and the side panel closed by default at 375 px.
  * M7: header v1 (brand), compact footer, map width and no page scroll, controls in both themes.
  * M8: the geopf-extensions tool set (every button named and operable, a distance measured, a WMS import of
- * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the share permalink reopened
+ * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the print sheet
  * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
  * M11: axe at 375 px in the dark theme with the page idle (pointer off the header); with the pointer on the
  * header brand block, only the known DSFR hover contrast on the « Menu » button (QUESTIONS M-5) is tolerated.
@@ -23,7 +23,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium } from 'playwright';
 import brand from '@sols/brand/brand.json';
-import { CONTROL_LABELS, PRINT_LABELS, SHARE_LABELS } from '../src/config/map';
+import { CONTROL_LABELS, PRINT_LABELS } from '../src/config/map';
 import { GPF_ENDPOINTS } from '../src/config/urls';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
@@ -164,7 +164,7 @@ for (const width of [375, 768, 1280]) {
 const switcherTitles = (page: import('playwright').Page) =>
   page.locator('[id^="GPtitle_ID_"]').allInnerTexts();
 
-const CATALOGUE = 'Catalogue des données sols';
+const CATALOGUE = CONTROL_LABELS.catalog;
 const CARBONE_ENTRY = 'input[data-layer="stock_carbone_fao_fr_wmsv:WMS"]';
 /** Entry of the Loiret record (M-4: its GetMap answers 200 text/xml, the layer is reported unavailable). */
 const LOIRET_ENTRY = 'input[data-layer="rrp_dept_loiret_gpkg_11-09-2026_wmsv:WMS"]';
@@ -375,17 +375,8 @@ for (const [label, query, assertion, entry] of deepLinks) {
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const consoleReport = watchConsole(page);
-  await page.goto(url, { waitUntil: 'load' });
-  await page
-    .getByRole('link', { name: 'Version accessible de la liste des données' })
-    .first()
-    .click();
-  await page.waitForURL(/vue=liste/);
-  await page.waitForLoadState('load');
-  check(
-    new URL(page.url()).search === '?vue=liste',
-    'liste : lien « Version accessible » depuis la carte',
-  );
+  // v1.1: the list view is kept but no longer linked from the map page (reached by its URL).
+  await page.goto(`${url}?vue=liste`, { waitUntil: 'load' });
   check(
     (await page.getByRole('heading', { level: 1, name: 'Liste des données sols' }).count()) === 1,
     'liste : titre de niveau 1',
@@ -431,47 +422,6 @@ for (const [label, query, assertion, entry] of deepLinks) {
   );
 }
 
-// Mobile: side panel closed by default below the DSFR md breakpoint, map above the fold, toggle first.
-{
-  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
-  await page.goto(url, { waitUntil: 'load' });
-  const toggle = page.getByRole('button', { name: 'Afficher le panneau' });
-  await toggle.waitFor({ state: 'attached', timeout: 15_000 }).catch(() => undefined);
-  check(
-    (await toggle.getAttribute('aria-expanded')) === 'false' &&
-      !(await page.locator('#panneau-lateral').isVisible()),
-    '375px : panneau latéral fermé par défaut',
-  );
-  const mapBox = await page.locator('.map-view').boundingBox();
-  check(
-    Boolean(mapBox && mapBox.y < 812),
-    `375px : la carte commence au-dessus du pli (y = ${Math.round(mapBox?.y ?? -1)} px)`,
-  );
-  await toggle.focus();
-  await page.keyboard.press('Enter');
-  check(
-    (await page
-      .getByRole('button', { name: 'Masquer le panneau' })
-      .getAttribute('aria-expanded')) === 'true' &&
-      (await page.getByRole('heading', { level: 2, name: 'Fonds de carte' }).isVisible()),
-    '375px : Entrée sur « Afficher le panneau » ouvre le panneau des fonds de carte',
-  );
-  await page.close();
-}
-{
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await page.goto(url, { waitUntil: 'load' });
-  check(
-    await page
-      .getByRole('button', { name: 'Masquer le panneau' })
-      .waitFor({ state: 'attached', timeout: 15_000 })
-      .then(() => true)
-      .catch(() => false),
-    '1280px : panneau latéral ouvert par défaut',
-  );
-  await page.close();
-}
-
 // M7: header v1 from @sols/brand, compact footer, cartes.gouv.fr layout, controls in both themes.
 for (const width of [1024, 1440]) {
   const page = await browser.newPage({ viewport: { width, height: 900 } });
@@ -481,7 +431,6 @@ for (const width of [1024, 1440]) {
     const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
     return {
       map: box('.map-view')?.width ?? 0,
-      panelOpen: !(document.getElementById('panneau-lateral')?.hidden ?? true),
       scroll: document.documentElement.scrollHeight - window.innerHeight,
       footer: box('.fr-footer')?.height ?? 0,
       mapBottom: box('.map-view')?.bottom ?? 0,
@@ -489,8 +438,8 @@ for (const width of [1024, 1440]) {
     };
   });
   check(
-    layout.panelOpen && layout.map >= width * 0.6,
-    `${width}px : panneau ouvert, la carte garde ${Math.round((layout.map / width) * 100)} % de la largeur (≥ 60 %)`,
+    layout.map >= width * 0.95,
+    `${width}px : la carte prend toute la largeur (${Math.round((layout.map / width) * 100)} %)`,
   );
   check(layout.scroll <= 1, `${width}px : la page ne défile pas (carte jusqu’au pied de page)`);
   check(
@@ -505,6 +454,7 @@ for (const width of [1024, 1440]) {
   await page.goto(url, { waitUntil: 'load' });
   const header = page.locator('header.fr-header');
   await header.waitFor();
+  // Since E10 the « Aide » menu links to cartes.gouv.fr: the brand block alone must stay on « / ».
   check(
     (await page
       .locator('.fr-header__brand a[href]')
@@ -653,11 +603,12 @@ const TOOL_BUTTONS = [
     .catch(() => false);
   check(
     toolsLoaded,
-    'outils : le jeu d’outils geopf-extensions est chargé (« Mes outils » présent)',
+    'outils : le jeu d’outils geopf-extensions est chargé (« Afficher tous les outils » présent)',
   );
   await page.waitForTimeout(1500);
   for (const name of TOOL_BUTTONS) {
-    const button = page.getByRole('button', { name, exact: true });
+    // On-demand tools are hidden until chosen (v1.1): the name check includes them.
+    const button = page.getByRole('button', { name, exact: true, includeHidden: true });
     check((await button.count()) === 1, `outils : bouton « ${name} » nommé`);
   }
   const unnamedDialogs = await page.evaluate(() =>
@@ -729,25 +680,6 @@ const TOOL_BUTTONS = [
     'légendes : bouton de dépliage nommé',
   );
   await page.getByRole('button', { name: 'Légende', exact: true }).click();
-  // Share: the permalink carries the view, the base layer and the sols layer, and reopens the same map.
-  await page.getByRole('button', { name: SHARE_LABELS.button, exact: true }).click();
-  await page.waitForTimeout(500);
-  const permalink = await page
-    .getByRole('textbox', { name: new RegExp(`^${SHARE_LABELS.linkLabel}`) })
-    .inputValue();
-  const query = new URL(permalink || url).searchParams;
-  check(
-    permalink.startsWith(url) &&
-      /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(query.get('c') ?? '') &&
-      Number.isFinite(Number(query.get('z'))) &&
-      (query.get('l') ?? '').startsWith(
-        'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS(0;',
-      ) &&
-      (query.get('l') ?? '').includes('stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(') &&
-      query.get('permalink') === 'yes',
-    `partage : permalien au format cartes.gouv.fr (${permalink.slice(url.length, url.length + 90)}…)`,
-  );
-  await page.keyboard.press('Escape');
   // Print: PNG download and the print sheet.
   await page.getByRole('button', { name: PRINT_LABELS.button, exact: true }).click();
   await page.waitForTimeout(400);
@@ -769,29 +701,47 @@ const TOOL_BUTTONS = [
   check(messages.length === 0, `outils : console vide${notes} ${messages.join(' | ')}`);
   // Last: the panels of the compute tools, then a WMS import (it fits the view to the layer extent and
   // its tiles, loaded without CORS by geopf, taint the canvas: nothing else is printed afterwards).
-  for (const name of [
-    'Itinéraire',
-    'Zone selon le temps de trajet ou distance',
-    'Profil altimétrique',
-  ]) {
+  // v1.1: « Itinéraire » is a default tool (button on the map); the other two are on demand: their
+  // button is hidden until the tool is chosen in « Afficher tous les outils », then stays.
+  for (const [name, onDemand] of [
+    ['Itinéraire', false],
+    ['Zone selon le temps de trajet ou distance', true],
+    ['Profil altimétrique', true],
+  ] as const) {
     const button = page.getByRole('button', { name, exact: true });
-    await button.click();
+    const hiddenBefore = !(await button.isVisible());
+    if (onDemand) {
+      await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
+      await page.waitForTimeout(300);
+      await page
+        .locator('[id^="GPcontrolListPanel-"] li')
+        .filter({ hasText: name })
+        .first()
+        .click();
+    } else {
+      await button.click();
+    }
     await page.waitForTimeout(300);
     const pressed = (await button.getAttribute('aria-pressed')) === 'true';
+    const shown = await button.isVisible();
     await button.click();
     await page.waitForTimeout(200);
     check(
-      pressed && (await button.getAttribute('aria-pressed')) === 'false',
-      `outils : « ${name} » s’ouvre et se ferme`,
+      hiddenBefore === onDemand &&
+        pressed &&
+        shown &&
+        (await button.getAttribute('aria-pressed')) === 'false' &&
+        (await button.isVisible()),
+      `outils : « ${name} » ${onDemand ? 'caché au départ, choisi dans la liste, bouton ajouté' : 'affiché par défaut'}, s’ouvre et se ferme`,
     );
   }
-  // Accessibility with « Mes outils » open (axe-core, default rule set, as the e2e suite).
+  // Accessibility with « Afficher tous les outils » open (axe-core, default rule set, as the e2e suite).
   await page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true }).click();
   await page.waitForTimeout(500);
   const axe = await new AxeBuilder({ page }).analyze();
   check(
     axe.violations.length === 0,
-    `a11y : axe sans violation avec « Mes outils » ouvert${
+    `a11y : axe sans violation avec « Afficher tous les outils » ouvert${
       axe.violations.length
         ? ` : ${axe.violations
             .map(
@@ -836,24 +786,6 @@ const TOOL_BUTTONS = [
     importReport.messages.length === 0,
     `import : console vide${importReport.notes} ${importReport.messages.join(' | ')}`,
   );
-  // The permalink reopens the same layers in a fresh page.
-  const reopened = await context.newPage();
-  const reopenedReport = watchConsole(reopened);
-  await reopened.goto(permalink, { waitUntil: 'load' });
-  const sameLayers = await visible(
-    reopened.locator('[id^="GPtitle_ID_"]').filter({ hasText: /stocks de carbone/i }),
-  );
-  await reopened.waitForTimeout(1000);
-  const reopenedTitles = await switcherTitles(reopened);
-  check(
-    sameLayers && reopenedTitles.includes('Plan IGN'),
-    `partage : le permalien rouvre les mêmes couches (${reopenedTitles.join(' | ')})`,
-  );
-  const reopenedConsole = reopenedReport();
-  check(
-    reopenedConsole.messages.length === 0,
-    `partage : console vide à la réouverture${reopenedConsole.notes} ${reopenedConsole.messages.join(' | ')}`,
-  );
   await context.close();
 }
 
@@ -887,15 +819,18 @@ const TOOL_BUTTONS = [
     iconClosed && (await iconContrast()),
     'catalogue : icône du bouton primaire visible (couleur inversée), fermé et ouvert',
   );
-  const entries = await page.locator('[data-layeritem]').evaluateAll((items) =>
-    items.map((item) => ({
-      layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
-      name: item.querySelector('input')?.getAttribute('aria-label') ?? '',
-      thumbnail: item.querySelector('img')?.getAttribute('src') ?? '',
-      record: item.querySelector('a.fr-link')?.getAttribute('href') ?? '',
-      producer: item.querySelector('a.fr-tag')?.getAttribute('href') ?? '',
-    })),
-  );
+  // The sols entries only (the « Fonds de cartes » entries have no record nor producer).
+  const entries = await page
+    .locator('[data-layeritem]:has(input[name="checkboxes-sols"])')
+    .evaluateAll((items) =>
+      items.map((item) => ({
+        layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
+        name: item.querySelector('input')?.getAttribute('aria-label') ?? '',
+        thumbnail: item.querySelector('img')?.getAttribute('src') ?? '',
+        record: item.querySelector('a.fr-link')?.getAttribute('href') ?? '',
+        producer: item.querySelector('a.fr-tag')?.getAttribute('href') ?? '',
+      })),
+    );
   check(
     entries.length === 7 &&
       entries.every(
@@ -1055,7 +990,8 @@ const TOOL_BUTTONS = [
   await page.close();
 }
 
-// M8 mobile: the listable tools are hidden, « Mes outils » opens them; a panel fills the map width.
+// Mobile (M8, v1.1): the default tools and « Afficher tous les outils » (last) are visible, the
+// on-demand tools are not; a panel fills the map width.
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
   await page.goto(url, { waitUntil: 'load' });
@@ -1064,12 +1000,20 @@ const TOOL_BUTTONS = [
     .waitFor({ timeout: 30_000 })
     .catch(() => undefined);
   await page.waitForTimeout(1000);
+  const columnIds = await page
+    .locator('#position-container-top-right > *')
+    .evaluateAll((widgets) =>
+      widgets
+        .filter((w) => getComputedStyle(w.querySelector('button') ?? w).display !== 'none')
+        .map((w) => w.id.split('-')[0]),
+    );
   check(
-    !(await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).isVisible()) &&
-      (await page
-        .getByRole('button', { name: CONTROL_LABELS.controlList, exact: true })
-        .isVisible()),
-    '375px : outils listables masqués, « Mes outils » visible',
+    (await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).isVisible()) &&
+      !(await page
+        .getByRole('button', { name: 'Zone selon le temps de trajet ou distance', exact: true })
+        .isVisible()) &&
+      columnIds.at(-1) === 'GPcontrolList',
+    `375px : outils par défaut visibles, outils à la demande cachés, « Afficher tous les outils » en dernier (${columnIds.join(' ')})`,
   );
   const toolsButton = page.getByRole('button', { name: CONTROL_LABELS.controlList, exact: true });
   await toolsButton.focus();
@@ -1092,11 +1036,11 @@ const TOOL_BUTTONS = [
   );
   check(
     firstEntryFocused && onRoute,
-    '375px : Entrée ouvre « Mes outils » sur sa première entrée, les flèches y circulent',
+    '375px : Entrée ouvre « Afficher tous les outils » sur sa première entrée, les flèches y circulent',
   );
   check(
     listClosed && focusOnTools && Boolean(panel && panel.width >= 360 && panel.x <= 8),
-    `375px : Entrée sur « Itinéraire » ferme la liste, rend le focus à « Mes outils » et ouvre le panneau sur la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
+    `375px : Entrée sur « Itinéraire » ferme la liste, rend le focus à « Afficher tous les outils » et ouvre le panneau sur la largeur de la carte (${Math.round(panel?.width ?? 0)} px)`,
   );
   await page.close();
 }

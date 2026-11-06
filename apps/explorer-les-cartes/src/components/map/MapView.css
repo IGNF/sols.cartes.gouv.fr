@@ -48,6 +48,26 @@
   padding-right: 2.5rem;
 }
 
+/* The reset button only makes sense with a text to clear (v1.1): hidden while the input is empty. */
+.map-view
+  [id^='GPsearchEngine-']
+  :has(> input[id^='GPsearchInputText-']:placeholder-shown)
+  > button[id^='GPsearchInputReset-'] {
+  display: none;
+}
+
+/*
+ * From the DSFR md breakpoint the search bar is centred over the map (v1.1, as on cartes.gouv.fr),
+ * clear of the two button columns (1w offset + 5w buttons + 1w gap on each side).
+ */
+@media (min-width: 48em) {
+  .map-view [id^='GPsearchEngine-'] {
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 14rem);
+  }
+}
+
 /* Desktop (DSFR lg breakpoint): wide enough for the whole placeholder. */
 @media (min-width: 62em) {
   .map-view input[id^='GPsearchInputText-'] {
@@ -65,14 +85,17 @@
 }
 
 /*
- * Below the DSFR md breakpoint the right column cannot hold the eleven tool buttons over a 70dvh map:
- * only the layer switcher and « Mes outils » stay visible, the listable tools open from that list
+ * v1.1, as on cartes.gouv.fr: only the default tools (DEFAULT_TOOLS) have a button from the start; the
+ * other listable tools open from « Afficher tous les outils » and get their button once opened
  * (their panels stay in the DOM and open in place).
  */
-@media (max-width: 47.99em) {
-  .map-view .map-tool--listable > .gpf-btn-icon {
-    display: none;
-  }
+.map-view .map-tool--on-demand:not(.map-tool--shown) > .gpf-btn-icon {
+  display: none;
+}
+
+/* Print button (v1.1, src/map/printControl.ts): in the column flow like the geopf widgets, not absolute as OL controls. */
+.map-view .map-print {
+  position: static;
 }
 
 /* Catalogue of the sols datasets (M9): the entry point of the data, a primary button as on cartes.gouv.fr. */

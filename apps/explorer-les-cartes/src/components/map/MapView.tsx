@@ -11,7 +11,9 @@ import useMap from '../../hooks/useMap';
 import useMapControls from '../../hooks/useMapControls';
 import useMapTools from '../../hooks/useMapTools';
 import useOverlays from '../../hooks/useOverlays';
+import usePrintControl from '../../hooks/usePrintControl';
 import useWmtsCapabilities from '../../hooks/useWmtsCapabilities';
+import { openPrintModal } from './printModal';
 import './MapView.css';
 
 export default function MapView() {
@@ -22,8 +24,9 @@ export default function MapView() {
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
   useMapControls(map);
   useLayerSwitcher(map);
-  useCatalog(map);
+  useCatalog(map, layers);
   useMapTools(map);
+  usePrintControl(map, openPrintModal);
   useOverlays(map);
 
   const isEmpty = capabilities.isSuccess && layers.length === 0;
