@@ -1,9 +1,49 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { useEffect, useId, useRef, useState } from 'react';
-import { isMenuIcon, type HeaderMenuSpec } from '../../config/site';
+import {
+  isExternalItem,
+  itemHref,
+  isMenuIcon,
+  newWindowTitle,
+  type HeaderMenuItem,
+  type HeaderMenuSpec,
+} from '../../config/site';
 
 interface HeaderMenuProps {
   menu: HeaderMenuSpec;
+}
+
+interface MenuLinkProps {
+  item: HeaderMenuItem;
+}
+
+/**
+ * Link of a tool menu, cartes.gouv.fr « Aide » pattern: the item icon (if known) before the label
+ * (`fr-link--icon-left`); an external item opens a new window (`target="_blank"`, `rel="noopener external"`,
+ * title « <libellé> - nouvelle fenêtre ») and DSFR draws its external-link icon after the label
+ * (`[target=_blank]::after`).
+ */
+function MenuLink({ item }: MenuLinkProps) {
+  const external = isExternalItem(item);
+  const icon = isMenuIcon(item.icon) ? item.icon : undefined;
+  return (
+    <a
+      className={`${
+        icon ? fr.cx('fr-nav__link', icon, 'fr-link--icon-left') : fr.cx('fr-nav__link')
+      } header-menu__link`}
+      href={itemHref(item)}
+      {...(external
+        ? { target: '_blank', rel: 'noopener external', title: newWindowTitle(item.label) }
+        : {})}
+    >
+      <span className="header-menu__label">
+        {item.label}
+        {item.description ? (
+          <span className={fr.cx('fr-hint-text')}>{item.description}</span>
+        ) : null}
+      </span>
+    </a>
+  );
 }
 
 /**
@@ -68,12 +108,7 @@ export default function HeaderMenu({ menu }: HeaderMenuProps) {
         <ul className={fr.cx('fr-menu__list')}>
           {menu.items.map((item) => (
             <li key={item.href}>
-              <a className={fr.cx('fr-nav__link')} href={item.href}>
-                {item.label}
-                {'description' in item && item.description ? (
-                  <span className={fr.cx('fr-hint-text')}>{item.description}</span>
-                ) : null}
-              </a>
+              <MenuLink item={item} />
             </li>
           ))}
         </ul>

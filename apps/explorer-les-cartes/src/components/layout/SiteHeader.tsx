@@ -1,7 +1,7 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Header } from '@codegouvfr/react-dsfr/Header';
 import type { CSSProperties } from 'react';
-import { BRAND, BRAND_IMAGES, SERVICE_BADGE } from '../../config/site';
+import { BRAND, BRAND_IMAGES, SERVICE_BADGE, SERVICE_BADGE_CLASSES } from '../../config/site';
 import { HEADER_ID } from '../../config/landmarks';
 import BrandTop from './BrandTop';
 import HeaderMenu from './HeaderMenu';
@@ -37,9 +37,9 @@ export default function SiteHeader() {
               className={fr.cx(
                 'fr-badge',
                 'fr-badge--sm',
-                'fr-badge--purple-glycine',
+                SERVICE_BADGE_CLASSES.color,
                 'fr-badge--icon-left',
-                'fr-icon-map-pin-2-fill',
+                SERVICE_BADGE_CLASSES.icon,
               )}
             >
               {SERVICE_BADGE}
