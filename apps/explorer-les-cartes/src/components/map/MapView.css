@@ -76,12 +76,18 @@
 }
 
 /*
- * Tools (M8). The OpenLayers scale line sits right of the bottom-left column (legends, territories,
- * overview map), like the search engine right of the zoom column.
+ * Scale line (v1.1): bottom right, left of the full screen button (2w offset + 5w button + 1w gap), in
+ * the DSFR action colour rather than OL's grey (brief).
  */
 .map-view .ol-scale-line {
-  left: 3.5rem;
+  left: auto;
+  right: 4rem;
   bottom: 0.5rem;
+}
+
+.map-view .ol-scale-line-inner {
+  color: var(--text-action-high-blue-france);
+  border-color: var(--text-action-high-blue-france);
 }
 
 /*

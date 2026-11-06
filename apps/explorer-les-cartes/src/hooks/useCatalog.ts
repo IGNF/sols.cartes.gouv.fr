@@ -131,17 +131,19 @@ export function removeCatalogEntry({ name, service }: CatalogLayerEvent): void {
  * Adds the catalogue once the map exists (own chunk, after the map is displayed) as the first widget of
  * the right column, like the cartes.gouv.fr map viewer; removed on cleanup. The entries are ticked per
  * dataset from the store (`auto: false`: the control would only tick its own layer); the « Fonds de
- * cartes » entries (GPF base layers of the capabilities, rebuilt when they arrive) follow the active
- * base layer, which always stays ticked. When the chunk fails, the store reports it (notice pointing
- * to the list view).
+ * cartes » entries (GPF base layers of the capabilities) follow the active base layer, which always
+ * stays ticked. The control is created once the capabilities have settled (`ready`): rebuilding it when
+ * they arrive would close a panel the user has already opened. When the chunk fails, the store reports
+ * it (notice pointing to the list view).
  */
 export default function useCatalog(
   map: OlMap | null,
   baseLayers: readonly AvailableBaseLayer[] = [],
+  ready = true,
 ): void {
   const setCatalogueUnavailable = useMapStore((state) => state.setCatalogueUnavailable);
   useEffect(() => {
-    if (!map) return undefined;
+    if (!map || !ready) return undefined;
     let active = true;
     let control: CatalogControl | null = null;
     let stopWatching: (() => void) | undefined;
@@ -188,5 +190,5 @@ export default function useCatalog(
       unsubscribe?.();
       if (control) map.removeControl(control);
     };
-  }, [map, baseLayers, setCatalogueUnavailable]);
+  }, [map, baseLayers, ready, setCatalogueUnavailable]);
 }

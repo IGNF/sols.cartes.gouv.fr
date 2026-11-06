@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import Attribution from 'ol/control/Attribution';
 import Rotate from 'ol/control/Rotate';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
+import { CONTROL_LABELS } from '../config/map';
 import {
   controlElement,
   fixLayerMoveArrows,
@@ -17,9 +17,9 @@ describe('labelControls', () => {
   });
 
   it('nomme le bouton des attributions et celui de la rotation au lieu de leur glyphe', () => {
-    const attribution = new Attribution({ ...MAP_TOOLS_OPTIONS.attribution });
+    const attribution = new Attribution({ tipLabel: 'Sources' });
     const rotate = new Rotate({ autoHide: false });
-    labelControlButtons(attribution, CONTROL_LABELS.attribution);
+    labelControlButtons(attribution, 'Sources des données');
     labelControlButtons(rotate, CONTROL_LABELS.rotate);
     document.body.append(controlElement(attribution), controlElement(rotate));
     expect(screen.getByRole('button', { name: 'Sources des données' })).toBe(

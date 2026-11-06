@@ -254,6 +254,18 @@ describe('useCatalog', () => {
     expect(inputs()).toEqual([false, true]);
   });
 
+  it('attend que les capacités soient connues avant de créer le catalogue (pas de reconstruction)', async () => {
+    const { map, addControl } = createFakeMap();
+    const { rerender } = renderHook(({ ready, layers }) => useCatalog(map, layers, ready), {
+      initialProps: { ready: false, layers: [] as never[] },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(addControl).not.toHaveBeenCalled();
+    rerender({ ready: true, layers: [] });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+  });
+
   it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {
     geopf.failNext();
     const { map, addControl } = createFakeMap();
