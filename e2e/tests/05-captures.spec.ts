@@ -42,4 +42,24 @@ test.describe('Captures', () => {
       });
     });
   }
+
+  // Carte avec le catalogue des données sols ouvert (recherche « carbone », entrée non cochée), puis avec « Mes outils » ouvert.
+  test('capture de la carte, catalogue ouvert', async ({ page }, testInfo) => {
+    await page.goto(PAGES.carto);
+    await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Catalogue des données sols', exact: true }).click();
+    await page.locator('#catalog-input-search-global').fill('carbone');
+    await expect(page.locator('input[data-layer]:visible').first()).toBeVisible();
+    await page.waitForTimeout(800);
+    await shootJpeg(page, `${OUT_DIR}/carto-catalogue-${testInfo.project.name}.jpg`);
+  });
+
+  test('capture de la carte, « Mes outils » ouvert', async ({ page }, testInfo) => {
+    await page.goto(PAGES.carto);
+    await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Mes outils', exact: true }).click();
+    await expect(page.locator('[id^="GPcontrolListPanel-"] li').first()).toBeVisible();
+    await page.waitForTimeout(800);
+    await shootJpeg(page, `${OUT_DIR}/carto-outils-${testInfo.project.name}.jpg`);
+  });
 });

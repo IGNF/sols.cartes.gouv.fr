@@ -57,6 +57,8 @@ export const SOLS_GROUP = 'gissol-osf_g';
 export const SOLS_LAYER = 'stock_carbone_fao_fr_wmsv';
 export const GPF_WMS_V = 'data.geopf.fr/wms-v';
 export const DEEP_LINK_WMS = `/explorer-les-cartes/?l=${SOLS_LAYER}$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no`;
+export const DEEP_LINK_LOIRET =
+  '/explorer-les-cartes/?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no';
 export const DEEP_LINK_WMTS =
   '/explorer-les-cartes/?l=INRAE_CARTE-SOLS$GEOPORTAIL:OGC:WMTS(1;1;1;0)&permalink=no';
 export const DEEP_LINK_UNKNOWN =
@@ -160,4 +162,15 @@ export async function shootJpeg(
 /** Attend l'initialisation du JS DSFR (les menus ne répondent pas avant). */
 export async function waitForDsfr(page: Page): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-fr-js', 'true');
+}
+
+/** Ouvre le catalogue des données sols (contrôle geopf, M9) et attend son panneau. */
+export async function openCatalogue(page: Page): Promise<void> {
+  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
+  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
+  await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
+}
+
+export async function searchCatalogue(page: Page, text: string): Promise<void> {
+  await page.locator('#catalog-input-search-global').fill(text);
 }

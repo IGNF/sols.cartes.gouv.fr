@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   collectConsole,
+  openCatalogue,
+  searchCatalogue,
   openServicesMenu,
   waitForDsfr,
   MAP_STABILITY_RUNS,
@@ -11,6 +13,7 @@ import {
   GPF_WMS_V,
   SOLS_LAYER,
   DEEP_LINK_WMS,
+  DEEP_LINK_LOIRET,
   DEEP_LINK_WMTS,
   DEEP_LINK_UNKNOWN,
   PAGES,
@@ -37,6 +40,12 @@ async function ensurePanel(page: Page): Promise<void> {
 }
 
 async function openLayerList(page: Page): Promise<void> {
+  // Sur mobile le catalogue recouvre le bouton du gestionnaire : on le referme d'abord.
+  const panel = page.locator('[id^="GPcatalogPanel-"]');
+  if (await panel.isVisible()) {
+    await panel.getByRole('button', { name: 'Fermer le panneau' }).click();
+    await expect(panel).toBeHidden();
+  }
   const toggle = page.getByRole('button', { name: 'Ma sélection de cartes' });
   if ((await toggle.getAttribute('aria-pressed')) !== 'true') await toggle.click();
 }
@@ -87,7 +96,8 @@ test.describe('Carto', () => {
     const tiles = trackResponses(page, GPF_WMTS);
     await openMap(page);
     await ensurePanel(page);
-    await page.getByRole('tab', { name: 'Fonds de carte' }).click();
+    // Depuis M9 le panneau latéral ne contient que les fonds de carte (plus d'onglets).
+    await expect(page.getByRole('tab')).toHaveCount(0);
     const plan = page.getByRole('radio', { name: /Plan IGN/ });
     await expect(plan).toBeChecked();
     // Clavier : focus sur le radio coché, flèche vers le suivant jusqu'aux photographies aériennes.
@@ -104,19 +114,21 @@ test.describe('Carto', () => {
     expect(expectFlakeWithin(orthoTiles, testInfo, 'orthophotos')).toBeNull();
   });
 
-  test('l’onglet « Données sols » ajoute puis retire une couche (GetMap 200, image)', async ({
+  test('le catalogue des données sols ajoute puis retire une couche (GetMap 200, image)', async ({
     page,
   }, testInfo) => {
     const wms = trackResponses(page, GPF_WMS_V);
     await openMap(page);
-    await ensurePanel(page);
-    await page.getByRole('tab', { name: 'Données sols' }).click();
-    // Nom exact (doc/agents/geopf-ext.md §7.4) ; le nom calculé peut être « …carte: titre ».
-    const addBtn = page.getByRole('button', {
+    await expect(page.getByRole('tab', { name: 'Données sols' })).toHaveCount(0);
+    await openCatalogue(page);
+    await searchCatalogue(page, 'carbone');
+    const box = page.getByRole('checkbox', {
       name: new RegExp(`^Ajouter à la carte\\s*: ${STOCK_CARBONE_FULL_TITLE}$`),
     });
-    await addBtn.focus();
-    await page.keyboard.press('Enter');
+    await expect(box).toHaveCount(1);
+    await box.focus();
+    await page.keyboard.press('Space');
+    await expect(box).toBeChecked();
     await expect
       .poll(() => wms.filter((r) => /GetMap/i.test(r.url) && r.status === 200).length, {
         timeout: 45_000,
@@ -127,13 +139,36 @@ test.describe('Carto', () => {
     await openLayerList(page);
     await expect(layerTitles(page).filter({ hasText: STOCK_CARBONE_TITLE })).toHaveCount(1);
     await noteBaseLayer(page, testInfo);
-    // Retrait : le même bouton, libellé inversé.
+    // Décocher retire la couche : on ferme la liste des couches (Échap, M5, plein écran sur mobile), puis on rouvre le catalogue.
     await page.keyboard.press('Escape');
-    const remove = page.getByRole('button', { name: /Retirer de la carte/ }).first();
-    await remove.focus();
-    await page.keyboard.press('Enter');
-    await openLayerList(page);
+    await expect(page.getByRole('dialog', { name: 'Gestionnaire de couches' })).toBeHidden();
+    await openCatalogue(page);
+    await searchCatalogue(page, 'carbone');
+    await box.focus();
+    await page.keyboard.press('Space');
+    await expect(box).not.toBeChecked();
     await expect(layerTitles(page).filter({ hasText: STOCK_CARBONE_TITLE })).toHaveCount(0);
+  });
+
+  test('un lien profond coche l’entrée correspondante du catalogue', async ({ page }) => {
+    await openMap(page, DEEP_LINK_WMS);
+    await expect(layerTitles(page).first()).toBeAttached({ timeout: 30_000 });
+    await openCatalogue(page);
+    await searchCatalogue(page, 'carbone');
+    await expect(
+      page.getByRole('checkbox', {
+        name: new RegExp(`^Ajouter à la carte\\s*: ${STOCK_CARBONE_FULL_TITLE}$`),
+      }),
+    ).toBeChecked({ timeout: 30_000 });
+  });
+
+  test('couche du Loiret cassée côté serveur : avis « Couche indisponible » (M-4)', async ({
+    page,
+  }) => {
+    await openMap(page, DEEP_LINK_LOIRET);
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Couche indisponible' }).first(),
+    ).toBeVisible({ timeout: 45_000 });
   });
 
   test('lien profond cartes.gouv.fr WMS : couche ajoutée, tuiles 200', async ({
@@ -260,6 +295,9 @@ test.describe('Carto', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
+    // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
+    if (isMobile)
+      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6

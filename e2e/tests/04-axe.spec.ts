@@ -37,4 +37,38 @@ test.describe('Accessibilité (axe-core)', () => {
       expect(blocking).toEqual([]);
     });
   }
+
+  // Carte avec un panneau ouvert : catalogue des données sols, puis « Mes outils ».
+  for (const [nom, ouvrir] of [
+    [
+      'carto-catalogue-ouvert',
+      async (page: import('@playwright/test').Page) => {
+        await page.getByRole('button', { name: 'Catalogue des données sols', exact: true }).click();
+        await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
+      },
+    ],
+    [
+      'carto-mes-outils-ouvert',
+      async (page: import('@playwright/test').Page) => {
+        await page.getByRole('button', { name: 'Mes outils', exact: true }).click();
+        await expect(page.locator('[id^="GPcontrolListPanel-"] li').first()).toBeVisible();
+      },
+    ],
+  ] as const) {
+    test(`aucune violation critique ou sérieuse sur la carte (${nom})`, async ({ page }) => {
+      await page.goto(PAGES.carto);
+      await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
+      await ouvrir(page);
+      const { violations } = await new AxeBuilder({ page }).analyze();
+      const summary = violations.map((v) => ({
+        id: v.id,
+        impact: v.impact,
+        nodes: v.nodes.length,
+        help: v.help,
+        sample: v.nodes[0]?.target,
+      }));
+      writeFileSync(`${OUT_DIR}/axe-${nom}.json`, JSON.stringify(summary, null, 2));
+      expect(summary.filter((v) => v.impact === 'critical' || v.impact === 'serious')).toEqual([]);
+    });
+  }
 });
