@@ -4,7 +4,12 @@
 
 Date : 2026-11-06. Base : `origin/main` 7759161 (E10 #70, C13 #71, E11 #72, M13 #73, #74, #75 fusionnés), les trois briques reconstruites (`bun run build:all`, sans erreur), suite complète sur le port 8142 (arrêté ensuite).
 
-Résultat final (après la fusion de #77, M14 ; passage complet, JSON Playwright) : **128 réussis, 11 ignorés, 0 échec, 1 flaky**. Le flaky est « les puces de mots-clés basculent » du catalogue sur desktop (échec au premier essai, réussi au nouvel essai : lenteur de l'API du catalogue). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile. Stabilité du rendu : 0/20 sans canvas et 0/20 Plan IGN absent (desktop et mobile). L'onglet « Fonds de cartes » sur mobile réussit au premier essai (il échouait au premier essai dans les deux passages précédents du relecteur, D-carto-8). Historique mesuré avant #77 : auteur 128 réussis, 0 flaky ; relecteur, deux passages : 126 réussis, 2 flaky chacun (onglet « Fonds de cartes » mobile ; une fois les filtres du catalogue, lenteur réseau). Corrections de test conservées : attente `toBeVisible()` de la case « Photographies aériennes », réessai du clic d'ouverture des menus (le JS DSFR pose `data-fr-js` avant d'attacher ses gestionnaires), délai de stabilité 40 s par chargement, Échap dans « Aide » vérifié aussi sur mobile.
+Résultats mesurés (la flakiness varie d'un passage à l'autre, ne pas se fier à un seul run) :
+- Moi, passage complet après #77 (M14) : **128 réussis, 11 ignorés, 0 échec, 1 flaky** (puces de mots-clés du catalogue, desktop, premier essai en échec). Stabilité du rendu : 0/20 sans canvas et 0/20 sans Plan IGN (desktop et mobile). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile.
+- Relecteur, spécifications 01 à 03 seules, un passage : **79 réussis, 1 ignoré, 0 échec, 4 flaky** : « Voir sur la carte » (desktop, `02-catalogue.spec.ts`), canvas et tuiles (desktop, `03-carto.spec.ts`), onglet « Fonds de cartes » (desktop, case non trouvée) et stabilité mobile (1/20 chargements sans Plan IGN dans la liste des couches).
+- Antérieur à #77 : moi 128 réussis, 0 flaky ; relecteur, deux passages complets : 126 réussis, 2 flaky chacun.
+- Après ce tour : `03-carto.spec.ts`, 32 réussis (hors test de stabilité de 2 minutes), 0 flaky, sur mon port.
+Corrections de test conservées : attente bornée (20 s) des entrées de l'onglet « Fonds de cartes » avec un nouveau clic d'onglet si la liste est vide (l'onglet reste vide tant que les capacités WMTS n'arrivent pas, puis le catalogue est reconstruit), case visible avant `focus()` + Espace, délai du test de stabilité 40 s par chargement, Échap dans « Aide » vérifié aussi sur mobile. Les assistants de réessai de clic (`openAideMenu`, `openServicesMenu`) sont voulus : bornés à 15 s, ils couvrent un clic avant que le JS DSFR soit prêt (`data-fr-js` posé avant l'attache des gestionnaires).
 
 | # | Scénario | Statut | Preuve |
 |---|---|---|---|
@@ -15,7 +20,7 @@ Résultat final (après la fusion de #77, M14 ; passage complet, JSON Playwright
 | 2h | Badge « Rechercher » : `fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line` | PASS | |
 | 3o | Badge « Explorer » : `fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` | PASS | |
 | 3p | Carte v1.1 : plus de panneau latéral, de « Partager », de « Sources des données », de lien vers la vue liste ; bouton « Imprimer » en haut à gauche ; pas de défilement de page | PASS | desktop et mobile |
-| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | réussi au premier essai après #77 (D-carto-8 corrigé) |
+| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | attente bornée des fonds ; flaky selon les passages (voir D-carto-8) |
 | 3r | Catalogue : ajout (GetMap 200 image) et retrait d'une couche sols, lien profond coche l'entrée | PASS | |
 | 3s | Outils par défaut (distance, surface, itinéraire, annoter) visibles ; autres cachés ; « Afficher tous les outils » dernier de la colonne ; sélection au clavier ajoute le bouton, ferme la liste, rend le focus | PASS | |
 | 3t | Mesure de distance, Imprimer (PNG), Légendes (image), console propre hors bruits amont, partage retiré | PASS | |
@@ -34,8 +39,9 @@ BLOCKED : aucun.
 - **catalogue** : `heading-order` modérée (amont) ; rien de nouveau.
 - **carto**
   - D-carto-7 (visuel, **corrigé par #77**, confirmé) : l'infobulle « Catalogue de cartes » recouvrait le titre du panneau à 1280×900 ; sur la capture finale le panneau affiche son titre et sa croix, sans infobulle.
-  - D-carto-8 (**corrigé par #77**, confirmé) : à 375×812, ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » laissait la case décochée au premier essai ; plus d'échec sur le passage final.
+  - D-carto-8 : corrigé côté application par #77 ; le test attend désormais le chargement des fonds (l'onglet est vide tant que les capacités WMTS n'arrivent pas). À 375×812 : ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » trop tôt laissait la case décochée ; un échec « case non trouvée » a encore été vu sur desktop par le relecteur.
   - D-carto-9 (**corrigé par #77**, confirmé) : à 375 px le panneau s'intitulait « Mes outils » ; il s'intitule « Tous les outils » (`carto-outils-mobile.jpg`).
+  - D-carto-11 (rare, environ 1 chargement sur 20 à 375 px, projet mobile) : aucun « Plan IGN » dans la liste des couches (« Ma sélection de cartes ») alors que la carte est chargée ; vu par le relecteur sur le test de stabilité. Défaut applicatif possible, pas du bruit réseau : en cours d'investigation par un agent carto (M15).
   - D-carto-10 (non reproduit) : le relecteur de M14 a vu, à 1280 px, le clic sur « Afficher tous les outils » pour fermer la liste intercepté par un élément `GPlayerDragNDrop`. Essais : ouvrir puis fermer la liste à 1280×900 (carte nue et avec une couche ajoutée, gestionnaire de couches ouvert), 1280×720 et 1440×900 : le second clic aboutit chaque fois (liste fermée).
 
 ### Figma (carte, nœud `1:10562`), nouvelles divergences seulement

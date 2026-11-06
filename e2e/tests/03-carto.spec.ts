@@ -91,10 +91,16 @@ test.describe('Carto', () => {
       page.locator(
         `input[name="checkboxes-fonds"][aria-label="Afficher le fond de carte : ${nom}"]`,
       );
-    await expect(fond('Plan IGN')).toBeChecked();
     const ortho = fond('Photographies aériennes');
-    // Après le clic d'onglet, le panneau DSFR reste masqué une image : attendre la case avant focus() + Espace.
-    await expect(ortho).toBeVisible();
+    // L'onglet est vide tant que les capacités WMTS ne sont pas arrivées (le catalogue est alors reconstruit) :
+    // attente bornée (20 s) des entrées, un nouveau clic sur l'onglet si la liste est encore vide, puis case visible
+    // (après le clic d'onglet, le panneau DSFR reste masqué une image) avant focus() + Espace.
+    await expect(async () => {
+      if ((await page.locator('input[name="checkboxes-fonds"]').count()) === 0)
+        await page.locator('#tabbutton-1_fonds').click();
+      await expect(ortho).toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 20_000 });
+    await expect(fond('Plan IGN')).toBeChecked();
     await ortho.focus();
     await page.keyboard.press('Space');
     await expect(ortho).toBeChecked();
