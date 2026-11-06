@@ -77,13 +77,25 @@ export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_
 export const TILE_RETRY_DELAY_MS = 500;
 
 /**
- * GPF capabilities requests: per-attempt timeout, then retries. The GPF intermittently accepts a request
- * and never answers (D-carto-1: about 1 in 5 GetCapabilities in curl, 2026-11-05). The timeout only covers
- * the wait for the response headers (normally under 0.5 s), not the body download, so a slow network is
- * not penalised. Worst case: 5 attempts × 3 s + 4 × 0.3 s ≈ 16 s.
+ * GPF capabilities requests (src/map/fetchHedged.ts). The GPF intermittently accepts a request and never
+ * answers (D-carto-1: about 1 in 5 GetCapabilities in curl on 2026-11-05, 3 in 40 on 2026-11-06), answers
+ * late, or stops sending the body (D-carto-11: once in about 200 browser loads). Headers normally arrive
+ * within 0.1 to 1 s and the body 0.1 s later: after the hedge delay without any progress (headers or body
+ * bytes), another request is sent alongside (the earlier ones keep running), up to GPF_REQUEST_ATTEMPTS;
+ * the first complete answer wins. No progress at all during the deadline: failure (alert). A slow network
+ * that keeps receiving bytes is never cut off (M15).
  */
-export const GPF_REQUEST_TIMEOUT_MS = 3_000;
-export const GPF_REQUEST_RETRIES = 4;
+export const GPF_REQUEST_HEDGE_DELAY_MS = 1_500;
+export const GPF_REQUEST_ATTEMPTS = 5;
+export const GPF_REQUEST_DEADLINE_MS = 16_000;
+/** Options of `fetchHedged` for every GPF capabilities request. */
+export const GPF_CAPABILITIES_FETCH = {
+  hedgeDelayMs: GPF_REQUEST_HEDGE_DELAY_MS,
+  attempts: GPF_REQUEST_ATTEMPTS,
+  deadlineMs: GPF_REQUEST_DEADLINE_MS,
+} as const;
+/** New rounds after an HTTP error or an unreadable document (never after the deadline), and their delay. */
+export const GPF_REQUEST_RETRIES = 1;
 export const GPF_REQUEST_RETRY_DELAY_MS = 300;
 
 /** Initial view: metropolitan France, Web Mercator. */

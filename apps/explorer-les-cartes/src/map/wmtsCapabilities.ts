@@ -1,7 +1,7 @@
 import WMTSCapabilities from 'ol/format/WMTSCapabilities';
-import { GPF_REQUEST_TIMEOUT_MS, WMTS_VERSION } from '../config/map';
+import { GPF_CAPABILITIES_FETCH, WMTS_VERSION } from '../config/map';
 import { buildCapabilitiesUrl, GPF_ENDPOINTS } from '../config/urls';
-import { fetchWithTimeout } from './fetchWithTimeout';
+import { fetchHedged, type HedgeOptions } from './fetchHedged';
 
 /**
  * Parsed WMTS capabilities, as returned by ol/format/WMTSCapabilities, plus `QueryableLayers`: the
@@ -48,9 +48,9 @@ export function parseWmtsCapabilities(xml: string): WmtsCapabilities {
 
 export async function fetchWmtsCapabilities(
   signal?: AbortSignal,
-  timeoutMs: number = GPF_REQUEST_TIMEOUT_MS,
+  options: Omit<HedgeOptions, 'signal'> = GPF_CAPABILITIES_FETCH,
 ): Promise<WmtsCapabilities> {
-  const response = await fetchWithTimeout(WMTS_CAPABILITIES_URL, { signal, timeoutMs });
+  const response = await fetchHedged(WMTS_CAPABILITIES_URL, { ...options, signal });
   if (!response.ok) {
     throw new Error(`Capacités WMTS indisponibles (HTTP ${response.status})`);
   }
