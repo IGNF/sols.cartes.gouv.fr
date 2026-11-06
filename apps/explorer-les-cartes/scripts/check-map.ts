@@ -33,13 +33,15 @@ import AxeBuilder from '@axe-core/playwright';
 import { chromium, devices } from 'playwright';
 import brand from '@sols/brand/brand.json';
 import {
+  BASE_LAYER_CANDIDATES,
   CONTROL_LABELS,
   MAP_LABEL,
   MAP_NOTICES,
   PRINT_LABELS,
   THUMBNAIL_LOAD_TIMEOUT_MS,
 } from '../src/config/map';
-import { GPF_ENDPOINTS } from '../src/config/urls';
+import { GPF_ENDPOINTS, gpfThumbnailUrl } from '../src/config/urls';
+import { SOLS_DATASETS } from '../src/data/solsLayers';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
 
@@ -1696,43 +1698,63 @@ for (const [name, context] of [
     .locator('input[name="checkboxes-fonds"]')
     .first()
     .waitFor({ state: 'visible', timeout: 30_000 });
-  await page.waitForFunction(
-    () =>
-      Array.from(document.querySelectorAll('[data-layeritem] img')).every(
-        (i) => (i as HTMLImageElement).complete,
-      ),
-    undefined,
-    { timeout: 20_000 },
-  );
+  // Every image settled: loaded, failed, or dropped by the stall rule (THUMBNAIL_LOAD_TIMEOUT_MS).
+  await page
+    .waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('[data-layeritem] img')).every(
+          (i) => (i as HTMLImageElement).complete,
+        ),
+      undefined,
+      { timeout: THUMBNAIL_LOAD_TIMEOUT_MS + 10_000 },
+    )
+    .catch(() => undefined); // still pending: reported below with its URL
   const entries = await page.evaluate(() =>
     Array.from(document.querySelectorAll('[data-layeritem]')).map((entry) => {
       const img = entry.querySelector('img');
       const container = entry.querySelector('.catalog-thumbnail-container');
+      const hidden = !container || getComputedStyle(container).display === 'none';
+      const layer = entry.querySelector('input[data-layer]')?.getAttribute('data-layer') ?? '';
+      const state = img
+        ? img.complete
+          ? img.naturalWidth > 0
+            ? 'chargée'
+            : 'cassée'
+          : 'en attente'
+        : hidden
+          ? 'retirée'
+          : 'case vide';
       return {
         fond: entry.querySelector('input[name="checkboxes-fonds"]') !== null,
+        // `data-layer` is `<name>:<service>`; names may hold a colon.
+        layer: layer.slice(0, layer.lastIndexOf(':')),
         src: img?.getAttribute('src') ?? '',
-        loaded: img ? img.complete && img.naturalWidth > 0 : false,
-        placeholder: container ? getComputedStyle(container).display !== 'none' && !img : false,
+        state,
       };
     }),
   );
+  // URL of the entry's thumbnail, also once dropped (from the configuration of its layer).
+  const thumbnailOf = (e: (typeof entries)[number]) =>
+    e.src ||
+    (e.fond
+      ? BASE_LAYER_CANDIDATES.find((c) => c.layerName === e.layer)?.thumbnail
+      : SOLS_DATASETS.find((d) => d.layers.some((l) => l.name === e.layer))?.thumbnail) ||
+    `(${e.layer}, sans vignette configurée)`;
   const fonds = entries.filter((e) => e.fond);
   const sols = entries.filter((e) => !e.fond);
+  // GPF base-layer thumbnails: always loaded. CSW record thumbnails (other server, may stall): loaded or
+  // dropped, never an empty slot nor a broken image (M16 review 2).
+  const badFonds = fonds.filter(
+    (e) => e.state !== 'chargée' || !e.src.startsWith(gpfThumbnailUrl('')),
+  );
+  const badSols = sols.filter((e) => e.state !== 'chargée' && e.state !== 'retirée');
+  const dropped = sols.filter((e) => e.state === 'retirée');
+  const detail = [...badFonds, ...badSols].map((e) => `${e.state} ${thumbnailOf(e)}`);
   check(
-    fonds.length >= 2 &&
-      fonds.every(
-        (e) =>
-          e.loaded &&
-          e.src.startsWith('https://data.geopf.fr/annexes/ressources/metadata/thumbnail/'),
-      ) &&
-      sols.length === 7 &&
-      sols.every((e) => e.loaded) &&
-      entries.every((e) => !e.placeholder),
-    `M16 ${name} : vignettes GPF des ${fonds.length} fonds et des ${sols.length} données sols chargées, aucune vignette vide (${
-      fonds
-        .filter((e) => !e.loaded)
-        .map((e) => e.src)
-        .join(' ') || 'toutes chargées'
+    fonds.length >= 2 && sols.length === 7 && detail.length === 0,
+    `M16 ${name} : vignettes GPF des ${fonds.length} fonds chargées, vignettes CSW des ${sols.length} données sols chargées ou retirées, ni case vide ni image cassée (${
+      detail.join(' ; ') ||
+      (dropped.length ? `retirée(s) : ${dropped.map(thumbnailOf).join(' ')}` : 'toutes chargées')
     })`,
   );
   const { messages, notes } = consoleReport();
