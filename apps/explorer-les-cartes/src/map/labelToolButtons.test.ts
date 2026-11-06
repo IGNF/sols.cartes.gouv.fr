@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TOOL_BUTTON_LABELS } from '../config/map';
-import { fixToolButtons, labelDialogsOnInit, watchToolButtons } from './labelToolButtons';
+import {
+  fixCatalogMarkup,
+  fixToolButtons,
+  labelDialogsOnInit,
+  watchToolButtons,
+} from './labelToolButtons';
 
 const LEGEND_ENTRY = `<div class="legend-entry-container" id="x">
   <label class="legend-entry-title">Plan IGN</label>
@@ -9,7 +14,21 @@ const TERRITORY_ENTRY = `<div class="gpf-panel__views_territories-listview-entry
   <div><label class="gpf-label">La Réunion</label></div>
   <button id="gpf-territories-view-entry-button-id-REU" type="button"></button></div>`;
 
+const CATALOG_ENTRY = `<div data-layeritem>
+  <input type="checkbox" data-layer="stock:WMS" id="cb" /><label for="cb"></label>
+  <label class="catalog-layer-title">Stocks de carbone</label></div>`;
+
 describe('fixToolButtons', () => {
+  it('nomme la case à cocher d’une entrée du catalogue avec le titre de la donnée', () => {
+    const root = document.createElement('div');
+    root.innerHTML = CATALOG_ENTRY;
+    expect(fixToolButtons(root)).toBe(1);
+    expect(root.querySelector('input')).toHaveAttribute(
+      'aria-label',
+      `${TOOL_BUTTON_LABELS.addToMap} : Stocks de carbone`,
+    );
+  });
+
   it('nomme le bouton de dépliage d’une légende et le bouton de retrait d’un territoire', () => {
     const root = document.createElement('div');
     root.innerHTML = LEGEND_ENTRY + TERRITORY_ENTRY;
@@ -44,6 +63,28 @@ describe('fixToolButtons', () => {
       'aria-label',
       TOOL_BUTTON_LABELS.showLegend,
     );
+  });
+});
+
+describe('fixCatalogMarkup', () => {
+  it('rétablit des rôles ARIA valides, nomme la liste d’onglets et retire le titre vide', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<dialog id="GPcatalogPanel-1"><h5 style="margin:unset"></h5>
+      <ul role="tablist" aria-label="presentation"><li role="presentation">
+        <button id="tabbutton-0_sols" role="tabbutton" aria-selected="true">Données sols</button></li></ul>
+      <label role="label-collapse-more-sols">Titre</label>
+      <button role="button-collapse-more-sols" title="En savoir plus"></button>
+      <button role="section-collapse-sols">Section</button><h5>Gardé</h5></dialog>`;
+    expect(fixCatalogMarkup(root)).toBe(6);
+    expect(root.querySelector('#tabbutton-0_sols')).toHaveAttribute('role', 'tab');
+    expect(root.querySelector('[role="tablist"]')).toHaveAttribute(
+      'aria-label',
+      TOOL_BUTTON_LABELS.catalogCategories,
+    );
+    expect(root.querySelector('label')).not.toHaveAttribute('role');
+    expect(root.querySelectorAll('button[role]')).toHaveLength(1);
+    expect(root.querySelectorAll('h5')).toHaveLength(1);
+    expect(fixCatalogMarkup(root)).toBe(0);
   });
 });
 

@@ -8,6 +8,7 @@ import {
   type SolsRejectedLayer,
   type SolsService,
 } from '../../src/data/solsLayersSchema';
+import { isTrustedImageUrl } from '../../src/config/urls';
 import type { CswLink, CswRecord } from './csw';
 
 /** Protocols of the CSW links that describe a map service. */
@@ -113,6 +114,10 @@ export function buildSolsLayersFile(
       title: record.title,
       abstract: record.abstract,
       organisation: record.organisation,
+      // Thumbnails are shown by the map catalogue: only https images on trusted hosts are kept.
+      ...(record.thumbnail && isTrustedImageUrl(record.thumbnail)
+        ? { thumbnail: record.thumbnail }
+        : {}),
       layers,
       rejected,
     };

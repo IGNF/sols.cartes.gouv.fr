@@ -4,9 +4,8 @@ import {
   DEFAULT_BASE_LAYER_ID,
   SIDE_PANEL_OPEN_MEDIA_QUERY,
   type BaseLayerId,
-  type SidePanelTab,
 } from '../config/map';
-import { readDeepLinks, readPermalinkBaseLayer } from '../map/deepLink';
+import { readPermalinkBaseLayer } from '../map/deepLink';
 import type { OverlayRef } from '../map/overlays';
 
 /**
@@ -18,38 +17,30 @@ export interface MapState {
   map: OlMap | null;
   activeBaseLayerId: BaseLayerId;
   isPanelOpen: boolean;
-  activeTab: SidePanelTab;
   /** Layers the user put on the map, in drawing order (last on top). */
   overlays: OverlayRef[];
   /** Keys of overlays whose tiles all fail (the service answers with errors). */
   unavailableOverlays: string[];
+  /** The catalogue widget could not be loaded (its chunk failed): the list view is the fallback. */
+  catalogueUnavailable: boolean;
   setMap: (map: OlMap | null) => void;
   setActiveBaseLayer: (id: BaseLayerId) => void;
   togglePanel: () => void;
-  setActiveTab: (tab: SidePanelTab) => void;
   /** Adds an overlay once (same key ignored). */
   addOverlay: (overlay: OverlayRef) => void;
   removeOverlay: (key: string) => void;
   markOverlayUnavailable: (key: string) => void;
+  setCatalogueUnavailable: (unavailable: boolean) => void;
 }
 
 export const initialMapState = {
   map: null,
   activeBaseLayerId: DEFAULT_BASE_LAYER_ID,
   isPanelOpen: true,
-  activeTab: 'fonds' as SidePanelTab,
   overlays: [] as OverlayRef[],
   unavailableOverlays: [] as string[],
+  catalogueUnavailable: false,
 } satisfies Partial<MapState>;
-
-/**
- * A "Voir sur la carte" link (or a permalink with data layers) opens the "Données sols" tab. It must be
- * selected from the first render: the DSFR tabs script reads the selected tab when it initialises and
- * keeps it otherwise. A permalink that only names a base layer keeps the "Fonds de carte" tab.
- */
-export function initialTab(search: string): SidePanelTab {
-  return readDeepLinks(search).length > 0 ? 'sols' : 'fonds';
-}
 
 /** Base layer named by a permalink (`l`), else the default one. */
 export function initialBaseLayer(search: string): BaseLayerId {
@@ -72,12 +63,10 @@ export const useMapStore = create<MapState>()((set) => ({
   isPanelOpen: initialPanelOpen(
     typeof window.matchMedia === 'function' ? window.matchMedia.bind(window) : undefined,
   ),
-  activeTab: initialTab(window.location.search),
   activeBaseLayerId: initialBaseLayer(window.location.search),
   setMap: (map) => set({ map }),
   setActiveBaseLayer: (activeBaseLayerId) => set({ activeBaseLayerId }),
   togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
-  setActiveTab: (activeTab) => set({ activeTab }),
   addOverlay: (overlay) =>
     set((state) =>
       state.overlays.some((o) => o.key === overlay.key)
@@ -95,4 +84,5 @@ export const useMapStore = create<MapState>()((set) => ({
         ? state
         : { unavailableOverlays: [...state.unavailableOverlays, key] },
     ),
+  setCatalogueUnavailable: (catalogueUnavailable) => set({ catalogueUnavailable }),
 }));

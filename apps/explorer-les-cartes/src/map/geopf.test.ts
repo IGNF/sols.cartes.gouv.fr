@@ -66,6 +66,9 @@ vi.mock('geopf-extensions-openlayers/src/packages/Controls/GetFeatureInfo/GetFea
 vi.mock('geopf-extensions-openlayers/src/packages/Controls/ControlList/ControlList', () => ({
   default: function ControlListStub() {},
 }));
+vi.mock('geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog', () => ({
+  default: function CatalogStub() {},
+}));
 vi.mock('geopf-extensions-openlayers/src/packages/Controls/Territories/Territories.json', () => ({
   default: [{ id: 'FXX', title: 'France métropolitaine', bbox: [] }],
 }));
@@ -83,6 +86,11 @@ describe('geopf (point d’entrée unique)', () => {
     expect(tools.ControlList.name).toBe('ControlListStub');
     expect(tools.GeoportalOverviewMap.name).toBe('GeoportalOverviewMapStub');
     expect(tools.TERRITORIES.map((t) => t.id)).toEqual(['FXX']);
+  });
+
+  it('charge le catalogue à la demande', async () => {
+    const { loadCatalog } = await import('./geopf');
+    expect((await loadCatalog()).name).toBe('CatalogStub');
   });
 
   it('enregistre une projection par le module CRS chargé à la demande', async () => {

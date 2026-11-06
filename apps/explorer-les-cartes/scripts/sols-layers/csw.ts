@@ -13,6 +13,8 @@ export interface CswRecord {
   title: string;
   abstract: string;
   organisation: string;
+  /** First `mri:graphicOverview` image (empty when the record has none). */
+  thumbnail: string;
   links: CswLink[];
 }
 
@@ -92,6 +94,9 @@ export function parseCswRecords(xml: string): CswRecord[] {
       name: text(resource, [[NS.cit, 'name']]),
       description: text(resource, [[NS.cit, 'description']]),
     }));
+    const overview = identification
+      ? descendants(identification, NS.mcc, 'MD_BrowseGraphic')[0]
+      : undefined;
     return {
       id: text(record, [
         [NS.mdb, 'metadataIdentifier'],
@@ -105,6 +110,7 @@ export function parseCswRecords(xml: string): CswRecord[] {
       ]),
       abstract: text(identification, [[NS.mri, 'abstract']]),
       organisation: text(organisation, [[NS.cit, 'name']]),
+      thumbnail: text(overview, [[NS.mcc, 'fileName']]),
       links,
     };
   });

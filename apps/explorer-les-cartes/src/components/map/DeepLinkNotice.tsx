@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { solsStyleUrl } from '../../config/urls';
 import { useDeepLinkLayer } from '../../hooks/useDeepLink';
 import { readDeepLinks, type DeepLinkRequest } from '../../map/deepLink';
-import { useMapStore } from '../../store/useMapStore';
 
 interface DeepLinkNoticeProps {
   /** Query string; defaults to the current location. */
@@ -30,10 +29,12 @@ interface DeepLinkLayerNoticeProps {
   request: DeepLinkRequest;
 }
 
-/** Follows one layer and reports its outcome. */
+/**
+ * Follows one layer and reports its outcome. A layer added but returning no image is reported by
+ * `MapNotices` (same notice whatever added the layer).
+ */
 export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
   const status = useDeepLinkLayer(request);
-  const unavailable = useMapStore((state) => state.unavailableOverlays);
   switch (status.state) {
     case 'checking':
       return (
@@ -42,18 +43,6 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
         </p>
       );
     case 'added':
-      if (unavailable.includes(status.key)) {
-        return (
-          <Alert
-            className={fr.cx('fr-mb-2w')}
-            severity="warning"
-            small
-            as="h2"
-            title="Couche indisponible"
-            description={`La couche « ${status.title} » a été ajoutée à la carte, mais la Géoplateforme ne renvoie pas d’image pour cette couche pour le moment.`}
-          />
-        );
-      }
       return (
         <p role="status" className={fr.cx('fr-sr-only')}>
           Couche « {status.title} » ajoutée à la carte.
@@ -67,7 +56,7 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
           as="h2"
           small
           title="Couche introuvable"
-          description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans l’onglet « Données sols ».`}
+          description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans le catalogue de la carte.`}
         />
       );
     case 'invalid':
@@ -78,7 +67,7 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
           small
           as="h2"
           title="Lien invalide"
-          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans l’onglet « Données sols ».`}
+          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans le catalogue de la carte.`}
         />
       );
     case 'unsupported':
@@ -95,12 +84,12 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
                 Le lien désigne le style de tuiles vectorielles (TMS) «&nbsp;{status.style}&nbsp;»,
                 qui ne peut pas encore être affiché sur cette carte (
                 <a href={solsStyleUrl(status.style)}>fichier de style</a>). Les données sols
-                disponibles sont listées dans l’onglet « Données sols ».
+                disponibles sont listées dans le catalogue de la carte.
               </>
             ) : status.type === 'TMS' ? (
-              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans le catalogue de la carte.`
             ) : (
-              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans l’onglet « Données sols ».`
+              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans le catalogue de la carte.`
             )
           }
         />

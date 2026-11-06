@@ -8,6 +8,7 @@ import 'geopf-extensions-openlayers/src/packages/CSS/Controls/Zoom/DSFRzoomStyle
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/FullScreen/DSFRfullScreenStyle.css';
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/LayerSwitcher/DSFRlayerSwitcherStyle.css';
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/SearchEngine/DSFRsearchEngineStyle.css';
+import type Catalog from 'geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog';
 import type Drawing from 'geopf-extensions-openlayers/src/packages/Controls/Drawing/Drawing';
 import type ElevationPath from 'geopf-extensions-openlayers/src/packages/Controls/ElevationPath/ElevationPath';
 import type GetFeatureInfo from 'geopf-extensions-openlayers/src/packages/Controls/GetFeatureInfo/GetFeatureInfo';
@@ -27,6 +28,7 @@ export { default as GeoportalZoom } from 'geopf-extensions-openlayers/src/packag
 export { default as LayerSwitcher } from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';
 export type { LayerSwitcherOptions } from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';
 export type { SearchEngineOptions } from 'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngine';
+export type { CatalogOptions } from 'geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog';
 export type { ControlListOptions } from 'geopf-extensions-openlayers/src/packages/Controls/ControlList/ControlList';
 export type { DrawingOptions } from 'geopf-extensions-openlayers/src/packages/Controls/Drawing/Drawing';
 export type { LegendsOptions } from 'geopf-extensions-openlayers/src/packages/Controls/Legends/Legends';
@@ -47,6 +49,19 @@ export type ReverseGeocodeOptions = ConstructorParameters<typeof ReverseGeocode>
 export type LayerImportOptions = ConstructorParameters<typeof LayerImport>[0];
 export type GetFeatureInfoOptions = ConstructorParameters<typeof GetFeatureInfo>[0];
 export type DrawingControl = Drawing;
+export type CatalogControl = Catalog;
+
+/**
+ * Catalogue of the GIS Sol datasets (M9): the geopf Catalog control, in its own chunk, fed with a
+ * configuration built from sols-layers.json (src/map/catalogConfig.ts), never with `Gp.Config`.
+ */
+export async function loadCatalog() {
+  const [module] = await Promise.all([
+    import('geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog'),
+    import('./geopfCatalogStyles'),
+  ]);
+  return module.default;
+}
 
 /**
  * SearchEngine pulls geoportal-access-lib, proj4 and the geopf layer classes (~0.7 MB minified):

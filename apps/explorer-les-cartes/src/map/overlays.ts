@@ -101,6 +101,7 @@ export async function createOverlayLayer(
     const legendUrl = overlayLegendUrl(overlay, wmtsLegendUrl);
     return attachLayerInfo(layer, {
       name: overlay.name,
+      service: overlay.service === 'wmts' ? 'WMTS' : 'WMS',
       title: overlay.title,
       ...(legendUrl ? { legendUrl } : {}),
     });

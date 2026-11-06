@@ -41,11 +41,17 @@ const link = (protocol: string, linkage: string, name: string) => ({
   description: '',
 });
 
-const record = (id: string, title: string, links: CswRecord['links']): CswRecord => ({
+const record = (
+  id: string,
+  title: string,
+  links: CswRecord['links'],
+  thumbnail = '',
+): CswRecord => ({
   id,
   title,
   abstract: 'Résumé',
   organisation: 'INRAE - Info&Sols',
+  thumbnail,
   links,
 });
 
@@ -69,7 +75,24 @@ describe('serviceForLink', () => {
 describe('buildSolsLayersFile', () => {
   const file = buildSolsLayersFile(
     [
-      record('b', 'Zèbre', [link('OGC:WMS', 'https://data.geopf.fr/wms-v', 'couche_v')]),
+      record(
+        'b',
+        'Zèbre',
+        [link('OGC:WMS', 'https://data.geopf.fr/wms-v', 'couche_v')],
+        'https://data.geopf.fr/annexes/gissol-osf/thumbnail/b.png',
+      ),
+      record(
+        'c',
+        'Chouette',
+        [link('OGC:WMS', 'https://data.geopf.fr/wms-r/wms', 'COUCHE_R')],
+        'http://data.geopf.fr/annexes/non-https.png',
+      ),
+      record(
+        'd',
+        'Dauphin',
+        [link('OGC:WMS', 'https://data.geopf.fr/wms-r/wms', 'COUCHE_R')],
+        'https://exemple.org/ailleurs.png',
+      ),
       record('a', 'Abeille', [
         link('OGC:WMS', 'https://data.geopf.fr/wms-r/wms', 'COUCHE_R'),
         link('OGC:WMTS', 'https://data.geopf.fr/wmts', 'COUCHE_WMTS'),
@@ -87,9 +110,16 @@ describe('buildSolsLayersFile', () => {
   );
   const abeille = file.datasets[0];
 
-  it('produit un fichier conforme au schéma, fiches triées par titre', () => {
+  it('produit un fichier conforme au schéma, fiches triées par titre, vignette https d’un hôte de confiance seulement', () => {
     expect(isSolsLayersFile(file)).toBe(true);
-    expect(file.datasets.map((d) => d.title)).toEqual(['Abeille', 'Zèbre']);
+    expect(file.datasets.map((d) => d.title)).toEqual(['Abeille', 'Chouette', 'Dauphin', 'Zèbre']);
+    expect(file.datasets[3]?.thumbnail).toBe(
+      'https://data.geopf.fr/annexes/gissol-osf/thumbnail/b.png',
+    );
+    expect(file.datasets[0]).not.toHaveProperty('thumbnail');
+    // http, or another host: dropped (the map catalogue shows these images).
+    expect(file.datasets[1]).not.toHaveProperty('thumbnail');
+    expect(file.datasets[2]).not.toHaveProperty('thumbnail');
   });
 
   it('garde les couches publiées avec titre, point d’accès canonique, CRS WMTS et légende, sans doublon', () => {
@@ -137,7 +167,7 @@ describe('buildSolsLayersFile', () => {
 
   it('résume les fiches et les rejets', () => {
     const text = summarise(file);
-    expect(text).toContain('2 fiches');
+    expect(text).toContain('4 fiches');
     expect(text).toContain('✗ OGC:WMTS COUCHE_WMTS_INEXISTANTE (absent des capacités WMTS)');
   });
 });

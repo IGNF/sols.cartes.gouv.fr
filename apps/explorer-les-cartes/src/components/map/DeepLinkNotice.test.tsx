@@ -76,13 +76,12 @@ describe('DeepLinkNotice', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Lien invalide' })).toBeInTheDocument();
   });
 
-  it('signale une couche ajoutée par lien qui ne renvoie pas d’image', () => {
+  it('laisse l’avis « Couche indisponible » à MapNotices (un seul avis par couche)', () => {
     useMapStore.setState({ ...initialMapState, unavailableOverlays: ['wms-vector:rrp'] });
     status.current = { state: 'added', name: 'rrp', title: 'RRP du Loiret', key: 'wms-vector:rrp' };
     render(<DeepLinkNotice search={ONE_LAYER} />);
-    const alert = screen.getByRole('alert');
-    expect(alert).toHaveTextContent('Couche indisponible');
-    expect(alert).toHaveTextContent('« RRP du Loiret »');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('Couche « RRP du Loiret » ajoutée');
     useMapStore.setState(initialMapState);
   });
 

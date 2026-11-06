@@ -17,6 +17,11 @@ export function catalogueRecordPath(identifier: string): string {
   return `${SECTION_PATHS.catalogue}dataset/${encodeURIComponent(identifier)}`;
 }
 
+/** Search page of the catalogue brick filtered on an organisation (producer tags of the map catalogue). */
+export function catalogueSearchByOrganisationPath(organisation: string): string {
+  return `${SECTION_PATHS.catalogue}search?organization=${encodeURIComponent(organisation)}`;
+}
+
 /**
  * Non-map alternative of the carto page: `?vue=liste`. A query parameter rather than a path, so it works
  * on any static host without SPA fallback, and the page never loads the map bundle.
@@ -82,6 +87,22 @@ export function solsStyleUrl(file: string): string {
 
 /** Host of every GPF service: deep links to other hosts are refused. */
 export const GPF_HOST = 'data.geopf.fr';
+
+/** Hosts whose images the map may show (record thumbnails): the GPF annexes and the GIS Sol site. */
+export const TRUSTED_IMAGE_HOSTS: readonly string[] = [
+  GPF_HOST,
+  new URL(EXTERNAL_LINKS.gisSol).hostname,
+];
+
+/** True for an `https:` URL on a trusted image host (anything else is dropped by the generator). */
+export function isTrustedImageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && TRUSTED_IMAGE_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * CSW GetRecords request returning the 7 "sols" records (ISO 19115-3), see doc/agents/gpf-sols-data.md §1.
