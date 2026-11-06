@@ -146,7 +146,7 @@
 }
 
 /*
- * Below 48em the catalogue panel leaves the button column visible (layer switcher, « Mes outils »)
+ * Below 48em the catalogue panel leaves the button column visible (layer switcher, « Afficher tous les outils »)
  * instead of covering the screen: geopf keeps its `min-width: 450px` (size "lg") in its own mobile
  * rules and anchors the panel to the right edge of its button. Width = screen minus the column
  * (1w gutter + 5w buttons + 1w gap) and a half-w left margin; anchored 1w left of the button.

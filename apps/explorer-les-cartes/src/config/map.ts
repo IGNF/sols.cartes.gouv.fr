@@ -125,7 +125,7 @@ export type ControlPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom
 /**
  * Options every geopf-extensions control reads (`Controls/Control.js` constructor, `setMap`) but which the
  * `.d.ts` of most controls omit (upstream gap, doc/agents/geopf-ext.md §10): position container, button
- * glued to the previous one (`gutter: false`), entry in the ControlList ("Mes outils").
+ * glued to the previous one (`gutter: false`), entry in the ControlList (« Afficher tous les outils »).
  */
 export interface ControlPlacement {
   position?: ControlPosition;
@@ -421,6 +421,24 @@ export const PRINT_LABELS = {
 } as const;
 
 /**
+ * Accessible names of map controls whose visible content is a glyph (OL rotate "⇧") or
+ * which have no label (geopf search input), or whose geopf label is unclear ("Afficher plus" on the
+ * ControlList button). Set as aria-label before the control is added (RGAA 11.1). Also the visible texts
+ * the geopf controls hardcode and that the app replaces.
+ */
+export const CONTROL_LABELS = {
+  rotate: 'Réinitialiser l’orientation',
+  searchInput: 'Rechercher un lieu ou une adresse',
+  controlList: 'Afficher tous les outils',
+  /**
+   * Visible title of the ControlList panel, hardcoded « Mes outils » upstream (`ControlList._initContainer`,
+   * no option): replaced by src/map/labelControls.ts `labelPanelTitle`; also the panel's accessible name.
+   */
+  controlListTitle: 'Tous les outils',
+  catalog: 'Catalogue de cartes',
+} as const;
+
+/**
  * Accessible names of the geopf-extensions dialogs, keyed by their id prefix.
  * geopf-extensions 1.0.0-beta.16 renders them as DSFR `fr-modal` dialogs without a name.
  */
@@ -433,7 +451,7 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
   // Tools (M8)
   GPlegendsPanel: 'Légendes',
   GPterritoriesPanel: 'Sélectionner un territoire',
-  GPcontrolListPanel: 'Tous les outils',
+  GPcontrolListPanel: CONTROL_LABELS.controlListTitle,
   GPmousePositionPanel: 'Coordonnées du curseur',
   GPelevationPathPanel: 'Profil altimétrique',
   GProutePanel: 'Itinéraire',
@@ -464,18 +482,6 @@ export const TOOL_BUTTON_LABELS = {
   showBaseLayer: 'Afficher le fond de carte',
   /** Name of the catalogue's category tab list (rendered with `aria-label="presentation"`). */
   catalogCategories: 'Catégories du catalogue',
-} as const;
-
-/**
- * Accessible names of map controls whose visible content is a glyph (OL rotate "⇧") or
- * which have no label (geopf search input), or whose geopf label is unclear ("Afficher plus" on the
- * ControlList button). Set as aria-label before the control is added (RGAA 11.1).
- */
-export const CONTROL_LABELS = {
-  rotate: 'Réinitialiser l’orientation',
-  searchInput: 'Rechercher un lieu ou une adresse',
-  controlList: 'Afficher tous les outils',
-  catalog: 'Catalogue de cartes',
 } as const;
 
 /**
