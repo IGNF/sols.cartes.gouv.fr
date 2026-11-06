@@ -181,3 +181,9 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Illustrations : `cas-usage-2.jpg` représente une mairie (collectivités) et `cas-usage-3.jpg` un bureau (bureaux d'études), l'inverse de `packages/brand/README.md`. L'accueil utilise la correspondance visuelle ; corriger le README (ou renommer les fichiers) côté racine.
 
 - Décision (orchestrateur, propriétaire) : (a) confirmée pour la v1, faute de solution simple ; défaut appliqué.
+
+## E-5. Aide et contact vers cartes.gouv.fr (edito, E10, v1.1)
+
+- Constat : `fixes.md` (v1.1) demande que « Aide » et « Nous contacter » renvoient vers `https://cartes.gouv.fr/aide/<langue>/` et `.../nous-ecrire/`, en liens externes.
+- Défaut appliqué : `brand.json` porte ces liens (`href` en français pour catalogue et carto, `hrefTemplate` avec `{lang}` pour l'edito) ; la page locale `/<langue>/aide/` est conservée (FAQ provisoire, cible des liens « contact » de l'accueil) et sa section « Nous contacter » renvoie au formulaire de cartes.gouv.fr. Cela remplace l'adresse provisoire de E-3. À trancher : supprimer la page locale (et rediriger `/aide/` vers cartes.gouv.fr) si la FAQ ne doit pas être rédigée ici.
+- Note (revue E10) : « Nous contacter » vise toujours `https://cartes.gouv.fr/aide/fr/nous-ecrire/` (le formulaire n'existe qu'en français ; `hreflang="fr"` sur les pages anglaises). `brand.json` garde `sections.helpContact` = `/fr/aide/#contact` (section contact de la page d'aide locale, elle-même renvoyant au formulaire) : à retirer si la page locale est supprimée.

@@ -26,7 +26,13 @@ import {
   readUpstream,
   run,
 } from './lib.mjs'
-import { BRAND_DIR, readHeaderScript, readLayout, readSharedCss } from './layout.mjs'
+import {
+  BRAND_DIR,
+  readHeaderScript,
+  readLayout,
+  readSharedCss,
+  referencedDsfrIcons,
+} from './layout.mjs'
 
 const INSTALL_STAMP = join(UPSTREAM_DIR, 'node_modules', '.sols-install-stamp')
 
@@ -96,7 +102,15 @@ function applyOverlay(upstream) {
     writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${html}\n`)
   }
   const appSrc = join(UPSTREAM_DIR, 'apps', upstream.app, 'src')
-  writeFileSync(join(appSrc, 'sols-shared.css'), readSharedCss(upstream.baseHref))
+  const sharedCss = readSharedCss(upstream.baseHref)
+  writeFileSync(join(appSrc, 'sols-shared.css'), sharedCss)
+  // DSFR icons used by the shared CSS (chevron, external link...), from the installed DSFR
+  const dsfrIcons = join(UPSTREAM_DIR, 'node_modules', '@gouvfr', 'dsfr', 'dist', 'icons')
+  for (const icon of referencedDsfrIcons(sharedCss, upstream.baseHref)) {
+    const target = join(appSrc, 'assets', 'dsfr', 'icons', icon)
+    mkdirSync(dirname(target), { recursive: true })
+    copyFileSync(join(dsfrIcons, icon), target)
+  }
   // Mobile header Escape handler, loaded by index.html after the DSFR module (patch 0003)
   mkdirSync(join(appSrc, 'assets', 'sols'), { recursive: true })
   writeFileSync(join(appSrc, 'assets', 'sols', 'header.js'), readHeaderScript())

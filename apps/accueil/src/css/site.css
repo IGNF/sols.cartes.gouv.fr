@@ -57,21 +57,34 @@
   }
 }
 
-/* Dark theme: one white plate behind the whole operator group, so the separator stays visible.
-   #fff on purpose, not a DSFR token: the brand images are drawn for a white background. */
-[data-fr-theme='dark'] .sols-operator {
-  padding: 0.25rem 0.5rem;
-  background-color: #fff;
-}
-
 /* Header tool menus (Aide, Services): DSFR collapse menus placed like the translate menu. */
-.sols-tool-menu .fr-nav__link {
+.sols-tool-menu .sols-tool-menu__described {
   flex-direction: column;
   align-items: flex-start;
 }
 
-.sols-tool-menu .fr-nav__link .fr-hint-text {
+.sols-tool-menu .sols-tool-menu__described .fr-hint-text {
   margin-top: 0.25rem;
+}
+
+/* External links (cartes.gouv.fr help): icon before, label, DSFR « lien externe » icon right after. */
+.sols-tool-menu .sols-tool-menu__external {
+  justify-content: flex-start;
+}
+
+/* External-link icon (core DSFR icon). */
+.sols-tool-menu__external::after {
+  content: '';
+  flex: 0 0 auto;
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
+  background-color: currentColor;
+  -webkit-mask-image: url(../dsfr/icons/system/external-link-line.svg);
+  mask-image: url(../dsfr/icons/system/external-link-line.svg);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 /* Dropdown chevron, as on the translate button (core DSFR icon). */
@@ -94,6 +107,11 @@
 }
 
 @media (min-width: 62em) {
+  /* The translate button is smaller (2rem) than the menu buttons (2.5rem): centre them all. */
+  .fr-header__tools-links {
+    align-items: center;
+  }
+
   .sols-tool-menu {
     position: relative;
   }

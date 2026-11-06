@@ -1,8 +1,8 @@
 diff --git a/apps/datahub/project.json b/apps/datahub/project.json
-index c4dd0ba..dcd7aa6 100644
+index c4dd0ba..7c85d67 100644
 --- a/apps/datahub/project.json
 +++ b/apps/datahub/project.json
-@@ -38,6 +38,21 @@
+@@ -38,6 +38,16 @@
              "input": "node_modules/@gouvfr/dsfr/dist",
              "output": "assets/dsfr/"
            },
@@ -12,11 +12,6 @@ index c4dd0ba..dcd7aa6 100644
 +            "output": "assets/dsfr/artwork/pictograms/"
 +          },
 +          {
-+            "glob": "arrows/arrow-down-s-line.svg",
-+            "input": "node_modules/@gouvfr/dsfr/dist/icons",
-+            "output": "assets/dsfr/icons/"
-+          },
-+          {
 +            "glob": "favicon.*",
 +            "input": "node_modules/@gouvfr/dsfr/dist/favicon",
 +            "output": "assets/dsfr/favicon/"
@@ -24,7 +19,7 @@ index c4dd0ba..dcd7aa6 100644
            {
              "glob": "analytics.module.min.js",
              "input": "node_modules/@gouvfr/dsfr/dist/analytics",
-@@ -58,12 +73,17 @@
+@@ -58,12 +68,17 @@
            "./node_modules/@gouvfr/dsfr/dist/component/search/search.min.css",
            "./node_modules/@gouvfr/dsfr/dist/component/header/header.min.css",
            "./node_modules/@gouvfr/dsfr/dist/component/footer/footer.min.css",

@@ -10,7 +10,12 @@ const description =
 
 /** { href: label } (and description for services) of a brand tools menu. */
 const menuItems = (items) =>
-  Object.fromEntries(items.map(({ href, label, description: desc }) => [href, { label, desc }]));
+  Object.fromEntries(
+    items.map(({ href, hrefTemplate, label, description: desc }) => [
+      hrefTemplate ?? href,
+      { label, desc },
+    ]),
+  );
 
 export default {
   name: 'Observatoire des sols',
@@ -85,6 +90,7 @@ export default {
     description:
       'Référence technique : en-tête et pied de page communs aux briques de sols.cartes.gouv.fr.',
     body: 'Page technique non indexée : balisage commun repris par les briques catalogue et carto.',
+    badgesTitle: 'Titre du service avec badge (catalogue, carto)',
   },
   pages: {
     aide: {
@@ -108,8 +114,10 @@ export default {
         },
       ],
       contactTitle: 'Nous contacter',
-      contactText: 'Pour toute question sur le service, écrivez-nous à l’adresse',
-      contactNote: '(adresse provisoire)',
+      contactText:
+        'L’aide et le formulaire de contact sont communs à cartes.gouv.fr : écrivez-nous depuis le formulaire « Nous écrire », en précisant que votre question porte sur l’Observatoire des sols de France.',
+      contactButton: 'Nous écrire sur cartes.gouv.fr',
+      helpButton: 'Centre d’aide de cartes.gouv.fr',
     },
     accueil: { title: 'Observatoire des sols', description },
     accessibilite: {
