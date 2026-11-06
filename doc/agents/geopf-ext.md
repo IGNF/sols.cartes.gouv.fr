@@ -691,8 +691,9 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
 - **Catalogue renommé « Catalogue de cartes »** (`CONTROL_LABELS.catalog`, `titlePrimary`, `GEOPF_DIALOG_LABELS.GPcatalogPanel`) avec deux
   catégories (`CATALOG_CATEGORIES`) filtrées sur un champ `kind` des entrées (`CATALOG_KIND_FIELD`, valeurs `CATALOG_KINDS`) : « Données
   sols » (`sols`, producteur, tri) et **« Fonds de cartes »** (`fonds`, onglet `tabbutton-1_fonds`). Les entrées fonds sont les
-  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le contrôle
-  est reconstruit quand elles arrivent), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
+  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers, ready)` ; le
+  contrôle n'est créé qu'une fois les capacités arrivées ou en échec : le reconstruire à leur arrivée fermait un panneau déjà ouvert,
+  vu dans `check:map` quand la GPF est lente), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
   `createCatalogProducerLinks` renvoie `null` : le gabarit lit `producers[0].name` dès que la liste est définie). Cocher un fond →
   `setActiveBaseLayer` ; `syncCatalogTicks(root, overlays, datasets, baseLayers, activeBaseLayerId)` coche le seul fond actif (et le recoche
   après un décochage : un fond reste toujours affiché). Cases nommées « Afficher le fond de carte : <titre> » (`checkboxes-fonds`,
@@ -710,11 +711,24 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   ici le bouton est ajouté (demande du brief). Même comportement à toutes les largeurs (la règle mobile qui cachait tous les outils
   listables est retirée).
 
-### 12.5 Sélecteurs e2e (PR 2)
+### 12.3 Disposition des contrôles (PR 3)
+
+- **Plus de contrôle d'attribution** (`GeoportalAttribution`, bouton « Sources des données », `CONTROL_LABELS.attribution`) : demande du
+  brief ; cartes.gouv.fr n'en affiche pas non plus (`.ol-attribution` absent). Les attributions restent posées sur les sources
+  (`GPF_ATTRIBUTION`, `SOLS_ATTRIBUTION`) pour la feuille d'impression (`exportMap.mapSources`).
+- **Plein écran en bas à droite** (`MAP_TOOLS_OPTIONS.fullScreen.position: 'bottom-right'`, `#position-container-bottom-right`, comme sur
+  cartes.gouv.fr) ; **échelle** OL à sa gauche (`MapView.css` : `left: auto; right: 3.5rem` = 1w + 5w + 1w, `bottom: 0.5rem`), texte et
+  trait en `--text-action-high-blue-france` (`.ol-scale-line-inner`, OL les tirait de `--ol-foreground-color`/`--ol-subtle-foreground-color`,
+  gris) ; la colonne bas gauche garde légendes, territoires et mini-carte.
+- `check:map` : pas de `.ol-attribution`, plein écran dans la colonne bas droite à ≤ 16 px des bords, échelle à 4–24 px à sa gauche, couleurs
+  de l'échelle = jeton action dans les deux thèmes.
+
+### 12.5 Sélecteurs e2e (PR 2 et 3)
 
 | Élément | Sélecteur |
 |---|---|
 | Catalogue | `getByRole('button', { name: 'Catalogue de cartes', exact: true })` ; onglets `#tabbutton-0_sols`, `#tabbutton-1_fonds` ; fonds `input[name="checkboxes-fonds"][data-layer="<nom>:WMTS"]` nommés « Afficher le fond de carte : <titre> » |
 | Imprimer | `.map-print button` (`aria-label` « Imprimer »), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
 | Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
-| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte » |
+| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
+| Plein écran, échelle | `#position-container-bottom-right [id^="GPfullScreen-"] button` (« Plein écran ») ; `.ol-scale-line` en bas à droite, à gauche du plein écran |
