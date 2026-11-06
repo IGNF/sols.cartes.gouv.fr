@@ -80,6 +80,9 @@ test.describe('Accueil et en-tête v1', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
+    // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
+    if (isMobile)
+      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   const liens: [string, string][] = [

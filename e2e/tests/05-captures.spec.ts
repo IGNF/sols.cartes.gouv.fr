@@ -43,7 +43,7 @@ test.describe('Captures', () => {
     });
   }
 
-  // Carte avec le catalogue des données sols ouvert (couche carbone cochée), puis avec « Mes outils » ouvert.
+  // Carte avec le catalogue des données sols ouvert (recherche « carbone », entrée non cochée), puis avec « Mes outils » ouvert.
   test('capture de la carte, catalogue ouvert', async ({ page }, testInfo) => {
     await page.goto(PAGES.carto);
     await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });

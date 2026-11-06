@@ -34,14 +34,14 @@ BLOCKED : aucun. Note axe : l'axe tourne en desktop uniquement ; sur mobile en t
 - **carto**
   - D-carto-5 (visuel) : à 1280x900, le panneau du catalogue des données sols s'ouvre sur une hauteur d'environ 210 px quand on y filtre « carbone » : la première entrée est coupée (capture `carto-catalogue-desktop.jpg`). Sur mobile le panneau est plein écran et lisible.
   - Observation corrigée : la liste de « Mes outils » restait ouverte après Entrée avant le correctif de M8 (#56) ; depuis, elle se ferme et le focus revient sur « Mes outils » (test vert).
-  - Mobile : le catalogue ouvert recouvre le bouton du gestionnaire de couches ; il faut le fermer par « Fermer le panneau » avant d'ouvrir la liste des couches (comportement plein écran de geopf, non bloquant).
+  - D-carto-6 (mobile, 375×812) : le panneau du catalogue des données sols, ouvert en plein écran, recouvre le bouton « Ma sélection de cartes » : ouvrir « Catalogue des données sols », puis essayer d'atteindre « Ma sélection de cartes » (le clic est intercepté par « Fermer le panneau » du catalogue). Contournement du test : fermer le catalogue par son bouton « Fermer le panneau ».
+  - Correctif en cours : `fix/M12-catalogue-panel-size` traite D-carto-5 (hauteur du panneau) et D-carto-6.
 - **catalogue** : `heading-order` modérée sur la recherche (amont) et sur la fiche selon le chargement ; rien de nouveau.
 - **edito** : rien de nouveau.
 
 ### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
 
-- La maquette n'a pas de panneau « Fonds de carte » latéral : l'ajout de données et les outils passent par le catalogue et « Mes outils », comme dans la maquette ; le panneau latéral reste un ajout.
-- Les outils (mesures, légendes, partage, impression) sont présents ; le pied de page compact n'a toujours pas le lien « Conditions générales d'utilisation ».
+Depuis la partie 1 un seul point change : le panneau latéral ne contient plus que les fonds de carte (les onglets ont disparu, l'ajout de données passe par le catalogue et les outils par « Mes outils »). Aucune autre nouvelle divergence.
 
 ---
 

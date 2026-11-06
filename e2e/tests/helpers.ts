@@ -163,3 +163,14 @@ export async function shootJpeg(
 export async function waitForDsfr(page: Page): Promise<void> {
   await expect(page.locator('html')).toHaveAttribute('data-fr-js', 'true');
 }
+
+/** Ouvre le catalogue des données sols (contrôle geopf, M9) et attend son panneau. */
+export async function openCatalogue(page: Page): Promise<void> {
+  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
+  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
+  await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
+}
+
+export async function searchCatalogue(page: Page, text: string): Promise<void> {
+  await page.locator('#catalog-input-search-global').fill(text);
+}

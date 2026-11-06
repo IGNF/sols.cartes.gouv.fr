@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
   collectConsole,
+  openCatalogue,
+  searchCatalogue,
   openServicesMenu,
   waitForDsfr,
   MAP_STABILITY_RUNS,
@@ -35,17 +37,6 @@ async function ensurePanel(page: Page): Promise<void> {
   const hide = page.getByRole('button', { name: 'Masquer le panneau' });
   await expect(hide).toBeVisible();
   await expect(hide).toHaveAttribute('aria-expanded', 'true');
-}
-
-/** Ouvre le catalogue des données sols (contrôle geopf, M9). */
-async function openCatalogue(page: Page): Promise<void> {
-  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
-  if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
-  await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
-}
-
-async function searchCatalogue(page: Page, text: string): Promise<void> {
-  await page.locator('#catalog-input-search-global').fill(text);
 }
 
 async function openLayerList(page: Page): Promise<void> {
@@ -176,11 +167,7 @@ test.describe('Carto', () => {
   }) => {
     await openMap(page, DEEP_LINK_LOIRET);
     await expect(
-      page
-        .getByRole('alert')
-        .or(page.getByRole('status'))
-        .filter({ hasText: 'Couche indisponible' })
-        .first(),
+      page.getByRole('alert').filter({ hasText: 'Couche indisponible' }).first(),
     ).toBeVisible({ timeout: 45_000 });
   });
 
@@ -308,6 +295,9 @@ test.describe('Carto', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
+    // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
+    if (isMobile)
+      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6

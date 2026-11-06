@@ -163,6 +163,8 @@ test.describe('Carto : outils geopf, partage, impression', () => {
     await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
     await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
     await page.getByRole('button', { name: 'Légende', exact: true }).click();
+    await expect(page.locator('[id^="GPlegendsPanel-"]')).toBeVisible();
+    await expect(page.locator('.legend-entry-container').first()).toBeAttached();
     await page.getByRole('button', { name: 'Légende', exact: true }).click();
     expect(c.errors.filter((e) => !UPSTREAM_NOISE.some((n) => n.pattern.test(e)))).toEqual([]);
   });
