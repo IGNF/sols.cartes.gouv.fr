@@ -42,6 +42,12 @@ for (const app of APPS) {
     console.log(`[${app.id}] skipped: no build output at ${source}`);
     continue;
   }
+  if (!existsSync(join(source, 'index.html'))) {
+    console.error(
+      `[${app.id}] no index.html in ${source}: rebuild this brick before assembling dist`,
+    );
+    process.exit(1);
+  }
   const target = join(DIST_ROOT, app.publicPath);
   await mkdir(target, { recursive: true });
   await cp(source, target, { recursive: true });
