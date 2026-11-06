@@ -269,7 +269,7 @@ d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. 
 4. « Titre du service avec badge, catalogue » et « …, carto » (v1.1, en fin de document) : `p.fr-header__service-title`
    avec le badge de la brique, à substituer au titre sans badge du bloc « En-tête ».
 
-**Échap dans les menus d'outils (E9, E11)** : quand le focus est dans un menu d'outils ouvert (« Aide », « Services »,
+**Échap dans le menu mobile (E9, défaut D-edito-2), et dans les menus d'outils du bureau (E11)** : quand le focus est dans un menu d'outils ouvert (« Aide », « Services »,
 langue), sur son bouton ou sur un lien du menu, Échap ferme ce menu et rend le focus à son bouton, en bureau comme dans
 la modale mobile. DSFR 1.14.2 ne le fait lui-même qu'au point de rupture LG (`Navigation._keydown`, `hasOpenedMenu`) ;
 en dessous, `Modal._escape` ferme toute la modale `#menu-principal` (défaut D-edito-2, E9). La revue C13 a signalé
