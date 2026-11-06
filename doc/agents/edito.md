@@ -121,7 +121,9 @@ d'usage, partenaires), `--background-alt-green-emeraude` (agenda). Non repris : 
 
 Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Centre d'aide `/<langue>/aide/`
 (`layouts/aide.njk`, `i18n.pages.aide`) : introduction, trois accordéons DSFR (FAQ provisoire), section « Nous
-contacter » `#contact` avec un mailto provisoire (`site.contactEmail`, QUESTIONS E-3). Le plan du site
+contacter » `#contact` qui renvoie au formulaire « Nous écrire » et au centre d'aide de cartes.gouv.fr (v1.1, E10 ; plus
+d'adresse provisoire). Le menu « Aide » de l'en-tête ne pointe plus vers cette page mais vers cartes.gouv.fr ; elle reste
+servie (FAQ provisoire, cible des liens « contact » de l'accueil) avec sa page de renvoi `/aide/`. Le plan du site
 (`layouts/plan-du-site.njk`) liste la navigation, les articles et les liens bas de pied de page.
 
 ## Articles
@@ -166,7 +168,7 @@ via `url()` (polices Marianne / Spectral, ~60 icônes du cœur, dont celle du s�
 `dsfr.module.min.js`, `dsfr.nomodule.min.js` et les pictogrammes cités dans `src/_data/accueil.js` et
 `site.display.themes` (~2,6 Mo au lieu de 86 Mo). Icônes utilitaires (`fr-icon-*` hors cœur) : au lieu des feuilles
 par catégorie (~40 ko chacune), le build extrait la règle de chaque icône listée dans `DSFR_ICONS`
-(`eleventy.config.js` : icônes des menus d'outils de `brand.json` + `fr-icon-theme-fill`) et écrit `/dsfr/icons.css`
+(`eleventy.config.js` : icônes des menus d'outils et de leurs entrées, icônes des badges de `brand.json`, `fr-icon-theme-fill`, icônes de l'accueil) et écrit `/dsfr/icons.css`
 (3 règles) avec ses SVG ; une icône inconnue fait échouer le build. Pour une nouvelle icône, l'ajouter à
 `DSFR_ICONS`. Les classes utilitaires de couleur de fond (`fr-background-*`) ne sont pas dans `dsfr.min.css` :
 utiliser les jetons (`var(--background-alt-blue-france)`) dans `site.css`.
@@ -196,9 +198,24 @@ Source du contenu : le paquet `@sols/brand` (`packages/brand/brand.json`, spéci
 `/assets/brand/` (passthrough Eleventy depuis `packages/brand/assets/`).
 
 Les briques catalogue et carto sont en français et utilisent les **chemins sans langue** (`/`, `/aide/`,
-`/accessibilite/`, ...) : ce sont des pages de renvoi vers `/fr/...`. Exception : un lien avec ancre ne peut pas passer
-par une page de renvoi (le meta refresh perd l'ancre), d'où `/fr/aide/#contact` dans `brand.json` et dans le
-balisage partagé (QUESTIONS E-3). Elles n'affichent pas le sélecteur de langue.
+`/accessibilite/`, ...) : ce sont des pages de renvoi vers `/fr/...`. Un lien avec ancre ne peut pas passer par une page de
+renvoi (le meta refresh perd l'ancre) : le balisage partagé met alors la langue par défaut (`/fr/...#ancre`). Elles n'affichent pas le sélecteur de langue.
+
+### Ce qui change pour catalogue et carto (v1 → v1.1, E10)
+
+- **Menu « Aide »** : liens externes vers l'aide de cartes.gouv.fr (`brand.json` : `href` en français, `hrefTemplate`
+  avec `{lang}` pour une brique multilingue), nouvelle fenêtre (`target="_blank" rel="noopener external"`, `title`
+  « … - nouvelle fenêtre »), icône DSFR avant (`fr-link--icon-left` + `icon` de `brand.json` : `fr-icon-question-mark`,
+  `fr-icon-mail-line`) et icône « lien externe » après (`.sols-tool-menu__external::after`, icône du cœur DSFR
+  `icons/system/external-link-line.svg`), comme sur cartes.gouv.fr. Les entrées « Services » gardent
+  `.sols-tool-menu__described` (libellé + description empilés).
+- **Badge** : icône DSFR avant et couleur par brique (`brand.json` `badgeStyles.<brique>` : catalogue
+  `green-menthe` + `fr-icon-search-line`, carto `purple-glycine` + `fr-icon-map-pin-2-fill`) ; balisage exact dans les
+  blocs « Titre du service avec badge » en fin de document (`badges.<brique>` inchangé).
+- **Alignement** : en LG, `.fr-header__tools-links` centre verticalement ses enfants (le bouton de langue fait 2 rem,
+  les menus 2,5 rem).
+- **Mode sombre** : plus de plaque blanche derrière le logo GIS Sol et la marque Observatoire (images transparentes
+  depuis X14) ; les logos partenaires du pied de page gardent leur plaque blanche (règle DSFR).
 
 ### Ce qui change pour catalogue et carto (v0 → v1)
 
@@ -233,21 +250,23 @@ Identifiants d'ancrage communs : `#contenu` (main), `#pied-de-page` (footer), `#
 ### Blocs à extraire (catalogue, `apps/rechercher-une-donnee/scripts/layout.mjs`)
 
 Les blocs v0 (en-tête avec `fr-nav` et lien « Site du GIS Sol », pied de page sans partenaires) **n'existent plus**
-dans ce document. Trois blocs v1, dans cet ordre, chacun introduit par une ligne de libellé terminée par « : », suivie
+dans ce document. Trois blocs v1 (plus deux exemples de badge, v1.1), dans cet ordre, chacun introduit par une ligne de libellé terminée par « : », suivie
 d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. Les libellés commencent par :
 
 1. « Liens d'évitement » : `div.fr-skiplinks`, liens `#contenu` et `#pied-de-page` (plus de `#navigation-principale`).
    À placer en premier enfant de `body`.
 2. « En-tête » : `header.fr-header` complet, de `<header role="banner" class="fr-header">` à `</header>`. Il ne
    contient plus de lien `fr-nav__link` de section : la brique ne pose plus `aria-current` dans l'en-tête ; elle
-   ajoute son badge (`badges.catalogue` = « Rechercher ») dans `p.fr-header__service-title`, après le texte
-   `sols.cartes.gouv.fr`. `div.fr-header__menu-links` est vide : en mode Angular, la brique y recopie elle-même le
+   ajoute son badge dans `p.fr-header__service-title`, après le texte `sols.cartes.gouv.fr` et une espace, exactement
+   comme dans le bloc « Titre du service avec badge » de la brique. `div.fr-header__menu-links` est vide : en mode Angular, la brique y recopie elle-même le
    contenu de `div.fr-header__tools-links` (deux `div.fr-nav.sols-tool-menu`, plus de `ul.fr-btns-group`) en
    suffixant `-mobile` aux `id` et aux `aria-controls` correspondants (`menu-help`, `menu-services`), comme le JS DSFR
    le fait en mode statique.
 3. « Pied de page et modale « Paramètres d'affichage » » : de `<footer class="fr-footer" ...>` jusqu'à `</dialog>`
    inclus, c'est-à-dire `footer#pied-de-page` puis `dialog#fr-theme-modal`, frères, à insérer tels quels à la fin du
    `body` (avant les scripts).
+4. « Titre du service avec badge, catalogue » et « …, carto » (v1.1, en fin de document) : `p.fr-header__service-title`
+   avec le badge de la brique, à substituer au titre sans badge du bloc « En-tête ».
 
 **Échap dans le menu mobile (E9, défaut D-edito-2)** : en dessous du point de rupture LG, les menus d'outils sont
 recopiés dans la modale `#menu-principal`. DSFR 1.14.2 ne traite Échap pour un `fr-nav__item` ouvert qu'en LG
@@ -278,8 +297,8 @@ document.addEventListener(
 
 Ressources requises par ces blocs : `/assets/brand/*` (images de `@sols/brand`, copiées telles quelles depuis
 `packages/brand/assets/`, sans transformation, et republiées sous le chemin public de la brique), pictogrammes DSFR `artwork/pictograms/environment/{sun,moon}.svg` et `system/system.svg`, icônes
-utilitaires `fr-icon-question-fill`, `fr-icon-grid-fill`, `fr-icon-theme-fill`, et les règles `.sols-operator*`,
-`.sols-tool-menu*`, `.sols-partner-logo` de `apps/accueil/src/css/site.css`.
+utilitaires `fr-icon-question-fill`, `fr-icon-grid-fill`, `fr-icon-theme-fill`, `fr-icon-question-mark`, `fr-icon-mail-line`, `fr-icon-search-line` et `fr-icon-map-pin-2-fill` (badges), et les règles `.sols-operator*`,
+`.sols-tool-menu*`, `.fr-header__tools-links` (alignement), `.sols-partner-logo` de `apps/accueil/src/css/site.css`.
 
 Balisage de référence : page `/partage/en-tete-pied-de-page/` (`src/partage.njk`, `noindex`, hors sitemap), rendue
 avec les mêmes partiels que le site en mode `shared` (chemins sans langue, sans sélecteur de langue). Les blocs
@@ -336,10 +355,10 @@ En-tête :
                 <div class="fr-collapse fr-menu sols-tool-menu__menu" id="menu-help">
                   <ul class="fr-menu__list">
                     <li>
-                      <a class="fr-nav__link" href="/aide/">Centre d&#39;aide</a>
+                      <a class="fr-nav__link fr-link--icon-left fr-icon-question-mark sols-tool-menu__external" href="https://cartes.gouv.fr/aide/fr/" target="_blank" rel="noopener external" title="Centre d&#39;aide - nouvelle fenêtre">Centre d&#39;aide</a>
                     </li>
                     <li>
-                      <a class="fr-nav__link" href="/fr/aide/#contact">Nous contacter</a>
+                      <a class="fr-nav__link fr-link--icon-left fr-icon-mail-line sols-tool-menu__external" href="https://cartes.gouv.fr/aide/fr/nous-ecrire/" target="_blank" rel="noopener external" title="Nous contacter - nouvelle fenêtre">Nous contacter</a>
                     </li>
                   </ul>
                 </div>
@@ -351,13 +370,13 @@ En-tête :
                 <div class="fr-collapse fr-menu sols-tool-menu__menu" id="menu-services">
                   <ul class="fr-menu__list">
                     <li>
-                      <a class="fr-nav__link" href="/rechercher-une-donnee/">Rechercher une donnée<span class="fr-hint-text">Le catalogue des données sols</span></a>
+                      <a class="fr-nav__link sols-tool-menu__described" href="/rechercher-une-donnee/">Rechercher une donnée<span class="fr-hint-text">Le catalogue des données sols</span></a>
                     </li>
                     <li>
-                      <a class="fr-nav__link" href="/explorer-les-cartes/">Explorer les cartes<span class="fr-hint-text">Le visualiseur cartographique</span></a>
+                      <a class="fr-nav__link sols-tool-menu__described" href="/explorer-les-cartes/">Explorer les cartes<span class="fr-hint-text">Le visualiseur cartographique</span></a>
                     </li>
                     <li>
-                      <a class="fr-nav__link" href="/fr/">Découvrir<span class="fr-hint-text">L&#39;Observatoire des sols de France</span></a>
+                      <a class="fr-nav__link sols-tool-menu__described" href="/fr/">Découvrir<span class="fr-hint-text">L&#39;Observatoire des sols de France</span></a>
                     </li>
                   </ul>
                 </div>
@@ -518,4 +537,18 @@ Pied de page et modale « Paramètres d'affichage » (juste après le pied de pa
     </div>
   </div>
 </dialog>
+```
+
+Titre du service avec badge, catalogue :
+
+<!-- prettier-ignore -->
+```html
+<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line">Rechercher</span></p>
+```
+
+Titre du service avec badge, carto :
+
+<!-- prettier-ignore -->
+```html
+<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill">Explorer</span></p>
 ```
