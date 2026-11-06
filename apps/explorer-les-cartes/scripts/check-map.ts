@@ -16,6 +16,8 @@
  * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Mes outils ».
  * M11: axe at 375 px in the dark theme with the page idle (pointer off the header); with the pointer on the
  * header brand block, only the known DSFR hover contrast on the « Menu » button (QUESTIONS M-5) is tolerated.
+ * M13: the expandable footer (« Haut de page » expands it, the page scrolls, the map keeps ≥ 70 % of the
+ * viewport, axe clean; « Fermer » collapses it), at 1280 and 375 px; the whole header brand block links to « / ».
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -565,10 +567,11 @@ for (const width of [1024, 1440]) {
   );
   const footer = page.getByRole('contentinfo');
   check(
-    (await footer.locator('.fr-footer__body, .fr-footer__partners').count()) === 0 &&
+    !(await footer.locator('.fr-footer__body').isVisible()) &&
+      !(await footer.locator('.fr-footer__partners').isVisible()) &&
       (await footer.getByRole('button', { name: /paramètres d.affichage/i }).count()) === 1 &&
-      (await footer.getByRole('link', { name: 'Haut de page' }).count()) === 1,
-    'pied de page compact : liens bas, « Paramètres d’affichage », « Haut de page »',
+      (await footer.getByRole('button', { name: 'Haut de page' }).count()) === 1,
+    'pied de page replié : liens bas, « Paramètres d’affichage », bouton « Haut de page »',
   );
   await page.close();
 }
@@ -1139,6 +1142,147 @@ const TOOL_BUTTONS = [
     }`,
   );
   await context.close();
+}
+
+// M13: expandable footer (« Haut de page » / « Fermer »), whole header brand block links to « / », badge icon.
+{
+  // A context of its own: axe opens pages in the page's context (« Please use browser.newContext() »).
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.waitForTimeout(1000);
+
+  const brandHits = await page.evaluate(() =>
+    ['.fr-header__logo', '.fr-header__operator', '.fr-header__service'].map((selector) => {
+      const box = document.querySelector(selector)?.getBoundingClientRect();
+      if (!box) return false;
+      const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      return Boolean(hit?.closest('a[href="/"]'));
+    }),
+  );
+  check(
+    brandHits.every(Boolean),
+    `en-tête : logo, opérateur et titre mènent tous à « / » (enlarge-link non confiné : ${brandHits.join(', ')})`,
+  );
+  const header = await page.evaluate(() => {
+    const service = document.querySelector('.fr-header__service') as HTMLElement;
+    const badge = document.querySelector('.fr-header .fr-badge') as HTMLElement;
+    const before = getComputedStyle(badge, '::before');
+    return {
+      mark: getComputedStyle(service).backgroundImage,
+      positioned: getComputedStyle(service).position,
+      badgeIcon: before.maskImage || before.webkitMaskImage,
+      badgeContent: before.content,
+    };
+  });
+  check(
+    header.mark.includes('osf-carotte') && header.positioned === 'static',
+    `en-tête : marque Observatoire dessinée en fond du bloc service, sans positionnement (${header.positioned})`,
+  );
+  check(
+    header.badgeIcon.startsWith('url(') && header.badgeContent !== 'none',
+    `en-tête : icône DSFR du badge « ${brand.badges.carto} » présente (::before)`,
+  );
+
+  const footer = page.getByRole('contentinfo');
+  const toggle = footer.getByRole('button', { name: 'Haut de page' });
+  const metrics = () =>
+    page.evaluate(() => ({
+      scrollHeight: document.documentElement.scrollHeight,
+      innerHeight: window.innerHeight,
+      scrollY: window.scrollY,
+      map: document.querySelector('.map-view')?.getBoundingClientRect().height ?? 0,
+      canvas: document.querySelector<HTMLCanvasElement>('.map-view canvas')?.height ?? 0,
+      collapsed: document.querySelector('footer')?.classList.contains('compact-footer--collapsed'),
+    }));
+  const before = await metrics();
+  check(
+    before.scrollHeight <= before.innerHeight + 1 &&
+      before.collapsed === true &&
+      (await toggle.getAttribute('aria-expanded')) === 'false' &&
+      (await toggle.getAttribute('aria-controls')) === 'footer',
+    `pied de page replié : la page ne défile pas (${before.scrollHeight} / ${before.innerHeight} px), aria-expanded=false`,
+  );
+  await toggle.click();
+  await page.waitForTimeout(600);
+  const expanded = await metrics();
+  const close = footer.getByRole('button', { name: 'Fermer' });
+  const logos = footer.locator('.fr-footer__partners img');
+  const logosVisible = await logos.evaluateAll((images) =>
+    images.every(
+      (image) => (image as HTMLImageElement).naturalWidth > 0 && image.checkVisibility(),
+    ),
+  );
+  check(
+    (await close.getAttribute('aria-expanded')) === 'true' &&
+      expanded.collapsed === false &&
+      (await logos.count()) === brand.footer.partners.length &&
+      logosVisible &&
+      (await footer.getByText(brand.footer.licence.label).isVisible()),
+    `« Haut de page » déplie le pied de page : ${await logos.count()} logos partenaires, licence, bouton « Fermer »`,
+  );
+  check(
+    expanded.scrollHeight > expanded.innerHeight && expanded.scrollY > 0,
+    `pied de page déplié : la page défile (${expanded.scrollHeight} px) et descend (scrollY ${Math.round(expanded.scrollY)})`,
+  );
+  check(
+    expanded.map >= expanded.innerHeight * 0.7 && Math.abs(expanded.canvas - expanded.map) <= 2,
+    `pied de page déplié : la carte garde ${Math.round((expanded.map / expanded.innerHeight) * 100)} % de la hauteur (≥ 70 %), canvas à sa taille (${expanded.canvas} px)`,
+  );
+  check(
+    await close.evaluate((element) => element === document.activeElement),
+    'pied de page déplié : le focus reste sur le bouton',
+  );
+  const axe = await new AxeBuilder({ page }).analyze();
+  check(
+    axe.violations.length === 0,
+    `a11y 1280px, pied de page déplié : axe sans violation${
+      axe.violations.length
+        ? ` : ${axe.violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`).join(' | ')}`
+        : ''
+    }`,
+  );
+  await close.click();
+  await page.waitForTimeout(600);
+  const after = await metrics();
+  check(
+    after.collapsed === true &&
+      after.scrollY === 0 &&
+      after.scrollHeight <= after.innerHeight + 1 &&
+      !(await footer.locator('.fr-footer__partners').isVisible()) &&
+      Math.abs(after.canvas - after.map) <= 2 &&
+      Math.abs(after.map - before.map) <= 1,
+    `« Fermer » replie le pied de page, remonte en haut (scrollY ${after.scrollY}), carte à sa hauteur d’origine (${Math.round(after.map)} px)`,
+  );
+  const { messages, notes } = consoleReport();
+  check(
+    messages.length === 0,
+    `pied de page extensible : aucune erreur ni alerte console${notes} ${messages.join(' | ')}`,
+  );
+  await context.close();
+}
+
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  await page.goto(url, { waitUntil: 'load' });
+  const footer = page.getByRole('contentinfo');
+  await footer.getByRole('button', { name: 'Haut de page' }).click();
+  await page.waitForTimeout(600);
+  const close = footer.getByRole('button', { name: 'Fermer' });
+  const opened =
+    (await close.getAttribute('aria-expanded')) === 'true' &&
+    (await footer.locator('.fr-footer__partners').isVisible());
+  await close.click();
+  await page.waitForTimeout(400);
+  check(
+    opened &&
+      !(await footer.locator('.fr-footer__partners').isVisible()) &&
+      (await page.evaluate(() => window.scrollY)) === 0,
+    '375px : « Haut de page » déplie le pied de page, « Fermer » le replie et remonte',
+  );
+  await page.close();
 }
 
 await browser.close();
