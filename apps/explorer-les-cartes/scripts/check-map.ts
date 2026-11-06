@@ -869,7 +869,21 @@ const TOOL_BUTTONS = [
     column[0] === 'GPcatalog',
     `catalogue : premier widget de la colonne de droite (${column[0]})`,
   );
+  // M12: geopf draws the button icon as a masked ::after filled with a background colour; on our
+  // primary (blue) button it must be inverted, open or not.
+  const iconContrast = async () =>
+    page.evaluate(() => {
+      const button = document.querySelector('button[id^="GPshowCatalogPicto-"]');
+      if (!button) return false;
+      const icon = getComputedStyle(button, '::after').backgroundColor;
+      return icon !== getComputedStyle(button).backgroundColor && icon !== 'rgba(0, 0, 0, 0)';
+    });
+  const iconClosed = await iconContrast();
   await openCatalogue(page);
+  check(
+    iconClosed && (await iconContrast()),
+    'catalogue : icône du bouton primaire visible (couleur inversée), fermé et ouvert',
+  );
   const entries = await page.locator('[data-layeritem]').evaluateAll((items) =>
     items.map((item) => ({
       layer: item.querySelector('input')?.getAttribute('data-layer') ?? '',
@@ -924,6 +938,22 @@ const TOOL_BUTTONS = [
   await page.waitForTimeout(700);
   const visible = await visibleEntries();
   check(visible === 1, `catalogue : la recherche « carbone » ne laisse qu’une donnée (${visible})`);
+  // M12: the filtered panel keeps a usable height (DSFR tabs would shrink it to ~210 px) and the
+  // remaining record is entirely inside it.
+  const filtered = await page.evaluate(() => {
+    const dialog = document.querySelector('dialog[id^="GPcatalogPanel-"]');
+    const entry = Array.from(document.querySelectorAll('[data-layeritem]')).find(
+      (e) => (e as HTMLElement).offsetParent !== null,
+    );
+    if (!dialog || !entry) return null;
+    const d = dialog.getBoundingClientRect();
+    const r = entry.getBoundingClientRect();
+    return { height: Math.round(d.height), fits: r.top >= d.top && r.bottom <= d.bottom };
+  });
+  check(
+    filtered !== null && filtered.height >= 320 && filtered.fits,
+    `catalogue filtré : panneau d’au moins 20rem (${filtered?.height ?? '?'} px), donnée entière (${filtered?.fits ?? '?'})`,
+  );
   await page.locator(CARBONE_ENTRY).focus();
   await page.keyboard.press('Space');
   await page.waitForTimeout(3000);
@@ -995,6 +1025,29 @@ const TOOL_BUTTONS = [
   check(
     Boolean(panel && panel.x >= 0 && panel.width <= 375),
     `375px : le catalogue tient dans la largeur de l’écran (x = ${Math.round(panel?.x ?? -1)}, ${Math.round(panel?.width ?? 0)} px)`,
+  );
+  // M12: the open catalogue leaves the button column usable (layer switcher reachable without closing).
+  const switcherButton = page.getByRole('button', { name: 'Ma sélection de cartes' }).first();
+  const switcherBox = await switcherButton.boundingBox();
+  const hit = switcherBox
+    ? await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.id ?? '', {
+        x: switcherBox.x + switcherBox.width / 2,
+        y: switcherBox.y + switcherBox.height / 2,
+      })
+    : '';
+  check(
+    Boolean(panel && switcherBox && panel.x + panel.width <= switcherBox.x) &&
+      hit === (await switcherButton.getAttribute('id')),
+    `375px : catalogue ouvert, le gestionnaire de couches reste atteignable (panneau jusqu’à ${Math.round((panel?.x ?? 0) + (panel?.width ?? 0))} px, bouton à ${Math.round(switcherBox?.x ?? -1)} px)`,
+  );
+  await switcherButton.click();
+  await page.waitForTimeout(500);
+  check(
+    (await page
+      .locator('[id^="GPlayerSwitcherPanel-"], [id^="GPlayersListPanel-"]')
+      .first()
+      .isVisible()) || (await switcherButton.getAttribute('aria-pressed')) === 'true',
+    '375px : le gestionnaire s’ouvre par-dessus le catalogue ouvert',
   );
   await page.close();
 }

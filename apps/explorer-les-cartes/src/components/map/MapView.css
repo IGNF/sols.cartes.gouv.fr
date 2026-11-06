@@ -4,6 +4,8 @@
   height: 70dvh;
   min-height: 20rem;
   background-color: var(--background-alt-grey);
+  /* Size container: the panels bound their height on the map (100cqh), whatever gives it its height. */
+  container-type: size;
 
   /*
    * OpenLayers controls (attribution, scale line, rotate) follow the DSFR theme, like the geopf-ext
@@ -79,6 +81,11 @@
   color: var(--text-inverted-blue-france);
 }
 
+/* geopf draws the icon as a masked ::after whose background is the icon colour: inverted on the primary button (M12). */
+.map-view .map-catalog > .gpf-btn-icon::after {
+  background-color: var(--text-inverted-blue-france);
+}
+
 .map-view .map-catalog > .gpf-btn-icon:hover {
   background-color: var(--background-action-high-blue-france-hover);
 }
@@ -88,13 +95,38 @@
 }
 
 /*
- * Below 48em the catalogue panel takes the width of the screen like the tool panels: geopf keeps its
- * `min-width: 450px` (size "lg") in its own mobile rules, and anchors the panel to the right edge.
+ * Catalogue panel height (M12). DSFR tabs size themselves on their content (`--tabs-height`): filtered
+ * to one record the panel shrank to about 210 px and cut that record. Bounds on the DSFR spacing scale
+ * (1w = 0.5rem): at least 40w, at most 64w (geopf: 500px) and the map height minus a 2w gutter; the
+ * tabs follow their content and the panel body scrolls.
+ */
+.map-view button[id^='GPshowCatalogPicto-'][aria-pressed='true'] + dialog[id^='GPcatalogPanel-'] {
+  height: auto;
+  min-height: 20rem;
+  max-height: min(32rem, calc(100cqh - 1rem));
+}
+
+.map-view dialog[id^='GPcatalogPanel-'] .gpf-panel__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.map-view dialog[id^='GPcatalogPanel-'] .fr-tabs {
+  height: auto;
+}
+
+/*
+ * Below 48em the catalogue panel leaves the button column visible (layer switcher, « Mes outils »)
+ * instead of covering the screen: geopf keeps its `min-width: 450px` (size "lg") in its own mobile
+ * rules and anchors the panel to the right edge of its button. Width = screen minus the column
+ * (1w gutter + 5w buttons + 1w gap) and a half-w left margin; anchored 1w left of the button.
  */
 @media (max-width: 47.99em) {
   .map-view button[id^='GPshowCatalogPicto-'][aria-pressed='true'] + dialog[id^='GPcatalogPanel-'] {
-    width: 100vw !important;
+    width: calc(100vw - 4.25rem) !important;
     min-width: 0 !important;
-    max-width: 100vw !important;
+    max-width: calc(100vw - 4.25rem) !important;
+    right: calc(100% + 0.5rem) !important;
   }
 }
