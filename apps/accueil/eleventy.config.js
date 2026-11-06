@@ -23,7 +23,13 @@ const HOME_ICONS = [
   ...Object.values(accueil.agenda.icons),
 ];
 const DSFR_ICONS = [
-  ...new Set([...site.header.tools.map((tool) => tool.icon), 'fr-icon-theme-fill', ...HOME_ICONS]),
+  ...new Set([
+    ...site.header.tools.map((tool) => tool.icon),
+    ...site.header.tools.flatMap((tool) => tool.items.map((item) => item.icon).filter(Boolean)),
+    ...site.header.brickBadges.map((badge) => badge.icon),
+    'fr-icon-theme-fill',
+    ...HOME_ICONS,
+  ]),
 ];
 
 /** DSFR stylesheets served by the site; every file they reference through url() is copied too. */
@@ -121,7 +127,9 @@ export default function (eleventyConfig) {
   });
   // Localizes an internal link (path + optional #anchor). Shared markup (empty locale) keeps
   // language-independent paths, except anchored links: a rerouting page cannot keep the anchor.
-  eleventyConfig.addFilter('localize', function (href, locale) {
+  eleventyConfig.addFilter('localize', function (template, locale) {
+    // `{lang}` (external links such as the cartes.gouv.fr help) takes the page language.
+    const href = template.replaceAll('{lang}', locale || site.defaultLanguage);
     if (
       /^[a-z][a-z0-9+.-]*:/i.test(href) ||
       site.crossBrick.some((path) => href.startsWith(path))

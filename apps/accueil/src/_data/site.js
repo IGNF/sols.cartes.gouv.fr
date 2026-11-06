@@ -54,7 +54,13 @@ export default {
     serviceTitle: brand.service.title,
     brandLink: brand.header.brandLink,
     /** Badge next to the service title on edito pages (`badges.edito`, none in v1). */
-    badge: brand.badges.edito,
+    badge: brand.badges.edito ? { label: brand.badges.edito, ...brand.badgeStyles.edito } : null,
+    /** Badges of the other bricks (label, DSFR colour and icon), shown on the shared reference page. */
+    brickBadges: ['catalogue', 'carto'].map((brick) => ({
+      brick,
+      label: brand.badges[brick],
+      ...brand.badgeStyles[brick],
+    })),
     operator: {
       logo: brandAsset(brand.header.operator.logo),
       mark: brandAsset(brand.header.operator.mark),
@@ -65,7 +71,13 @@ export default {
       key,
       id: `menu-${key}`,
       icon: brand.header.tools[key].icon,
-      items: brand.header.tools[key].items.map((item) => item.href),
+      /** `key` indexes the labels in i18n; `href` may hold `{lang}` (replaced by the `localize` filter). */
+      items: brand.header.tools[key].items.map((item) => ({
+        key: item.hrefTemplate ?? item.href,
+        href: item.hrefTemplate ?? item.href,
+        icon: item.icon,
+        external: Boolean(item.external),
+      })),
     })),
   },
   footer: {
@@ -89,6 +101,4 @@ export default {
       { value: 'system', pictogram: 'system/system.svg' },
     ],
   },
-  /** Placeholder contact address of the help page (to be replaced, QUESTIONS E-3). */
-  contactEmail: 'contact@example.org',
 };
