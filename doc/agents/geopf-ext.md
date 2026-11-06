@@ -503,11 +503,11 @@ Non retenus : `ContextMenu` (dépend d'`ol-contextmenu`, ouvre le signalement da
 
 ### 10.2 Disposition
 
-Haut gauche : zoom, plein écran (M3), import, interrogation ; haut droite : gestionnaire de couches, « Mes outils », puis les neuf outils
+Haut gauche : zoom, plein écran (M3), import, interrogation ; haut droite : gestionnaire de couches, « Mes outils » (v1.1 : « Afficher tous les outils », en dernier, §12.2), puis les neuf outils
 listables ; bas gauche (geopf **prépose** les widgets du bas : le dernier ajouté est en haut) : mini-carte, territoires, légendes. L'échelle
 OL passe à `left: 3.5rem` (`MapView.css`). Sous 48em, les boutons des outils listables sont masqués (`.map-tool--listable > .gpf-btn-icon`) ;
-ils s'ouvrent depuis « Mes outils » (le panneau occupe la largeur de la carte, CSS mobile de geopf) et, la liste se vidant à la sélection,
-le focus revient au bouton « Mes outils » (`returnFocusOnCollapse`). Le panneau d'un outil de droite s'ouvre à gauche de sa colonne, en haut ;
+ils s'ouvrent depuis la liste d'outils (le panneau occupe la largeur de la carte, CSS mobile de geopf) et, la liste se vidant à la sélection,
+le focus revient au bouton de la liste (`returnFocusOnCollapse`). Le panneau d'un outil de droite s'ouvre à gauche de sa colonne, en haut ;
 **les panneaux de la colonne du bas (légendes, territoires) s'ouvrent en haut à gauche de la carte**, pas à côté de leur bouton
 (`PositionFactory`, mode DSFR : `top: 0`). Les feuilles DSFR des outils sont chargées avec eux (`src/map/geopfToolsStyles.ts`, ~26 kB gzip
 hors du chargement initial).
@@ -531,16 +531,17 @@ hors du chargement initial).
    Isocurve créent leurs panneaux dans `setMap` : `labelDialogsOnInit` enveloppe `_initContainer` sur l'instance (`src/map/labelToolButtons.ts`).
 6. Boutons sans nom : dépliage d'une légende (`GPcollapseLegend_ID_*`, `title=""`) et retrait d'un territoire
    (`gpf-territories-view-entry-button-id-*`) : `watchToolButtons` (observateur de mutations) pose « Afficher la légende : <titre> » et
-   « Retirer le territoire : <titre> ». Bouton de `ControlList` nommé « Afficher plus » : renommé.
-7. Les `<li>` de « Mes outils » ont `role="button"` et `tabindex="0"` (Entrée/Espace gérés), pas de `aria-pressed` : rôle interdit sur un
+   « Retirer le territoire : <titre> ». Bouton de `ControlList` nommé « Afficher plus » : renommé (« Afficher tous les outils » en v1.1) ;
+   titre du panneau codé en dur « Mes outils » : remplacé par « Tous les outils » (M14, §12.4).
+7. Les `<li>` de la liste d'outils (« Tous les outils ») ont `role="button"` et `tabindex="0"` (Entrée/Espace gérés), pas de `aria-pressed` : rôle interdit sur un
    `li` (axe `aria-allowed-role`) et `<ul>` sans élément de liste (axe `list`, sérieux). `fixToolButtons` en fait un menu (`ul`
    `role="menu"`, `li` `role="menuitem"`, rôles autorisés ; les éléments sont recréés à chaque ouverture, d'où l'observateur) et
    `menuKeyboard` (`useMapTools.ts`) applique le motif « menu button » : une seule entrée tabulable (première entrée focalisée à
    l'ouverture), flèches haut/bas en boucle, Début/Fin, Échap ferme la liste ; Entrée/Espace restent au contrôle (action par défaut
-   empêchée). L'activation d'une entrée se fait au `keydown` et vide la liste : le retour du focus au bouton « Mes outils »
+   empêchée). L'activation d'une entrée se fait au `keydown` et vide la liste : le retour du focus au bouton « Afficher tous les outils »
    (`returnFocusOnCollapse`) est **différé d'une tâche**, sinon Entrée active le bouton nouvellement focalisé dans le même évènement et
    rouvre la liste (observé à 375px : le panneau choisi s'ouvrait derrière la liste pleine largeur). Patch amont à signaler ; `check:map`
-   passe axe-core (jeu de règles par défaut, comme la suite e2e) avec « Mes outils » ouvert et rejoue l'activation au clavier à 375px.
+   passe axe-core (jeu de règles par défaut, comme la suite e2e) avec la liste d'outils ouverte et rejoue l'activation au clavier à 375px.
 8. `LayerSwitcher._updateLayerGrayScale` appelle `console.warn("Greyscale only implemented for raster and vector tiles")` pour **chaque**
    couche vecteur ajoutée (mesures, croquis, calculs), sans option pour l'éviter : `check:map` compte ces avertissements (`UPSTREAM_WARNINGS`)
    au lieu d'échouer ; à signaler aussi.
@@ -559,7 +560,7 @@ des panneaux, import WMS de `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` (`[id^="GPimport
 | Élément             | Sélecteur                                                                                                                                                             |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Boutons des outils  | `getByRole('button', { name, exact: true })` avec les libellés de `check-map.ts` (`TOOL_BUTTONS`)                                                                     |
-| « Mes outils »      | `getByRole('button', { name: 'Mes outils', exact: true })`, entrées `[id^="GPcontrolListPanel-"] li`                                                                  |
+| Liste d'outils      | v1.1 : `getByRole('button', { name: 'Afficher tous les outils', exact: true })`, panneau titré « Tous les outils », entrées `[id^="GPcontrolListPanel-"] li` (§12.5) |
 | Partager / Imprimer | boutons `Partager`, `Imprimer` de la barre d'outils ; champ `getByRole('textbox', { name: /^Lien permanent/ })` ; boutons `Télécharger en PNG`, `Lancer l’impression` |
 | Panneaux            | `[id^="GProutePanel-"]`, `[id^="GPisochronPanel-"]`, `[id^="GPgetFeatureInfoPanel-"]`, `[id^="GPlegendsPanel-"]`…                                                     |
 
@@ -621,7 +622,7 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
     Jusqu'à M12 `MapView.css` forçait `100vw` (panneau plein écran, qui recouvrait la colonne de boutons : gestionnaire de couches
     inaccessible sans fermer le panneau, rapport e2e v1 partie 2). **Depuis M12** : sous 48em le panneau laisse la colonne visible,
     `width: calc(100vw - 4.25rem)` (colonne 1w + 5w + 1w, marge gauche d'un demi-w) et `right: calc(100% + 0.5rem)` (1w à gauche du
-    bouton) ; le gestionnaire et « Mes outils » restent atteignables catalogue ouvert, le bouton du catalogue (`aria-pressed`) et le
+    bouton) ; le gestionnaire et la liste d'outils restent atteignables catalogue ouvert, le bouton du catalogue (`aria-pressed`) et le
     « Fermer le panneau » de l'en-tête le ferment. Aucune option du widget ne couvre la hauteur ni le placement du panneau (`size`
     n'agit que sur la largeur, `tabHeightAuto` retire une classe `gpf-catalog-tabs-fixe` qu'aucune feuille ne définit).
 15. **Hauteur du panneau (M12)** : les onglets DSFR se dimensionnent sur leur contenu (`.fr-tabs { height: var(--tabs-height) }`, posé par
@@ -732,9 +733,9 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   catégories (`CATALOG_CATEGORIES`) filtrées sur un champ `kind` des entrées (`CATALOG_KIND_FIELD`, valeurs `CATALOG_KINDS`) : « Données
   sols » (`sols`, producteur, tri) et **« Fonds de cartes »** (`fonds`, onglet `tabbutton-1_fonds`). Les entrées fonds sont les
   `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le
-  contrôle est créé aussitôt (le bouton n'attend pas une GPF lente) puis **reconstruit sur place** à l'arrivée des fonds, et si son panneau
-  est ouvert à ce moment-là la reconstruction attend sa fermeture (`whenCollapsed`, observateur de `aria-pressed`) : le reconstruire
-  panneau ouvert le fermait, vu dans `check:map` quand la GPF est lente), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
+  contrôle est créé aussitôt (le bouton n'attend pas une GPF lente) puis **reconstruit sur place** à l'arrivée des fonds, même panneau
+  ouvert, dans la même vue (M14, §12.4 ; en M13 la reconstruction attendait la fermeture du panneau, et l'onglet « Fonds de cartes »
+  restait vide tant qu'il était ouvert), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
   `createCatalogProducerLinks` renvoie `null` : le gabarit lit `producers[0].name` dès que la liste est définie). Cocher un fond →
   `setActiveBaseLayer` ; `syncCatalogTicks(root, overlays, datasets, baseLayers, activeBaseLayerId)` coche le seul fond actif (et le recoche
   après un décochage : un fond reste toujours affiché). Cases nommées « Afficher le fond de carte : <titre> » (`checkboxes-fonds`,
@@ -745,7 +746,8 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   et n'a pas de `GPsearchInputReset-` (bouton « Effacer la saisie » en flux, affiché seulement avec du texte).
 - **Outils à la demande** (`DEFAULT_TOOLS` = MeasureLength, MeasureArea, Drawing, Route, par `CLASSNAME` geopf) : les autres outils
   listables reçoivent `map-tool--on-demand` et leur bouton est masqué (`MapView.css`) jusqu'à ce que l'outil soit choisi dans
-  **« Afficher tous les outils »** (ControlList renommé, placé **en dernier** de la colonne de droite, panneau « Tous les outils ») :
+  **« Afficher tous les outils »** (ControlList renommé, placé **en dernier** de la colonne de droite, panneau titré « Tous les outils »,
+  M14) :
   l'entrée de la liste clique le bouton de l'outil (comportement amont, `ControlListDOM`), qui passe `aria-pressed="true"` ;
   `revealOnOpen` (observateur d'attribut) ajoute alors `map-tool--shown` et le bouton reste. Sur cartes.gouv.fr les six premiers outils
   sont dessinés et les autres repoussés hors écran par geopf (`margin-left: -9504px`) : la liste y ouvre l'outil sans ajouter son bouton ;
@@ -764,12 +766,55 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
 - `check:map` : pas de `.ol-attribution`, plein écran dans la colonne bas droite à ≤ 16 px des bords, échelle à 4–24 px à sa gauche, couleurs
   de l'échelle = jeton action dans les deux thèmes.
 
+### 12.4 Défauts mineurs de la passe e2e 4 (M14)
+
+Rapport `doc/e2e/REPORT.md` « Passe 4 » (PR #76) ; plan `doc/plans/M14.md`.
+
+- **D-carto-9, titre de la liste d'outils** : `ControlList._initContainer` écrit « Mes outils » en dur dans l'en-tête du panneau (aucune
+  option, à toutes les largeurs ; le rapport l'a vu sur mobile). `labelPanelTitle` (`src/map/labelControls.ts`) le remplace à la création
+  par `CONTROL_LABELS.controlListTitle` « Tous les outils », qui nomme aussi la fenêtre (`GEOPF_DIALOG_LABELS.GPcontrolListPanel`) ; le
+  bouton reste « Afficher tous les outils ». À signaler en amont (option de titre).
+- **D-carto-7, infobulle sur le titre du panneau** : geopf dessine le nom du bouton en infobulle CSS (`::before`,
+  `content: attr(aria-label)`, `DSFRgeneralWidget.css`) au survol et au focus clavier, à côté du bouton, là où s'ouvre son panneau : bouton
+  pressé, elle couvrait le titre et le bouton « Fermer le panneau » du catalogue (et la liste d'outils). `MapView.css` :
+  `.gpf-widget:has(> dialog) > .gpf-btn-icon[aria-pressed='true']::before { display: none }`. Nom accessible inchangé ; les boutons sans
+  panneau (mesures : pressées = actives) gardent leur infobulle ; aucun bouton geopf à panneau ne dessine son icône en `::before` (relevé
+  sur tous les widgets).
+- **Bouton « Imprimer »** (vu en vérifiant D-carto-7) : la classe d'icône DSFR posée sur le bouton (`fr-icon-printer-line`, icône en
+  `::before`) était écrasée par l'infobulle geopf : bouton vide au survol, infobulle masquée par l'icône. L'icône est un `span` décoratif
+  (`aria-hidden`) centré en absolu ; le bouton prend les classes des boutons geopf (`gpf-btn--tertiary` : `position: relative`, l'infobulle
+  s'ancre sur lui), garde leur boîte (l'infobulle part du `padding`, puis `translateX(24px)`) et perd son `title` (infobulle en double).
+- **D-carto-8, « Photographies aériennes » restée décochée** : deux causes, reproduites avec Playwright à 375 px (profil Pixel 5).
+  1. Catalogue ouvert avant les capacités WMTS (retardées de 2,5 s) : l'onglet « Fonds de cartes » restait **vide** tant que le panneau
+     restait ouvert (3/3), la reconstruction attendant sa fermeture. geopf ne sait pas ajouter d'entrées à un contrôle construit :
+     `addLayerConfig` (public) appelle une méthode absente (`createCatalogLinks`), trie un objet (`layersList.sort`) et passe `layersList`
+     comme `data` à `createCatalogContentEntries`, qui lit `data.layers` (même code sur `main` amont, à signaler). Le contrôle est donc
+     reconstruit **aussitôt**, construit ouvert (`collapsed: false`, appliqué par `setMap` : ni clic ni `PanelManager`, les autres
+     panneaux ne bougent pas), et `src/map/catalogView.ts` reporte la vue : onglet (clic sur `tabbutton-<n>_<id>`, ids stables), texte de
+     recherche (posé, puis bouton de recherche : filtre immédiat, à partir de trois caractères comme le champ geopf), défilement de
+     `.gpf-panel__body` et focus (id de l'élément ou de son ancêtre identifié, uid du widget remplacé, puis rang parmi les focusables).
+     geopf insère les entrées après un `setTimeout` (`_createCatalogContentCategoryTabContent`), après `catalog:loaded` : recherche,
+     défilement et focus d'une entrée attendent une case par entrée configurée (`entriesRendered`) ; bouton, onglets, recherche et
+     en-tête reçoivent le focus aussitôt. Le focus n'est rendu que s'il est perdu (sur `body`). Après correctif : 0/5 échec, console vide.
+  2. Cas du rapport (Plan IGN coché, puis Espace sans effet) : juste après le clic sur un onglet, le panneau DSFR passe de
+     `visibility: hidden` à `visible` par une transition (`transition: visibility 0.3s`) et reste caché **une image** (16 à 33 ms
+     mesurés) ; `locator.focus()` de Playwright n'attend pas la visibilité, le focus échoue sans erreur et Espace part sur l'onglet (1/10 à
+     375 px). Hors de portée d'un utilisateur, rien à corriger dans l'application : la suite e2e (`03-carto.spec.ts`) doit attendre
+     `toBeVisible()` avant `focus()`, comme `check:map`.
+- `check:map` (bloc M14) : titre de la liste à 375 et 1280 px ; infobulle du catalogue au survol bouton relâché, aucune panneau ouvert,
+  ni sur la liste d'outils ouverte au clavier, gardée sur une mesure active ; « Imprimer » survolé : infobulle et icône centrée ;
+  capacités WMTS retenues pendant qu'on ouvre le catalogue sur « Fonds de cartes » (vide), tape « photo » et garde le focus sur l'onglet :
+  un seul widget, reconstruit, resté ouvert et rempli, même onglet, recherche appliquée (Plan IGN masqué), focus rendu à l'onglet,
+  « Photographies aériennes » cochée au clavier, tuiles ORTHOIMAGERY demandées, console vide.
+
 ### 12.5 Sélecteurs e2e (PR 2 et 3)
 
 | Élément | Sélecteur |
 |---|---|
 | Catalogue | `getByRole('button', { name: 'Catalogue de cartes', exact: true })` ; onglets `#tabbutton-0_sols`, `#tabbutton-1_fonds` ; fonds `input[name="checkboxes-fonds"][data-layer="<nom>:WMTS"]` nommés « Afficher le fond de carte : <titre> » |
-| Imprimer | `.map-print button` (`aria-label` « Imprimer »), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
-| Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
+| Imprimer | `.map-print button` (`aria-label` « Imprimer », icône `span.fr-icon-printer-line`, sans `title`), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
+| Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; panneau `getByRole('dialog', { name: 'Tous les outils' })`, titre `[id^="GPcontrolListPanel-"] .gpf-panel__title` « Tous les outils » (M14) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
+| Infobulles | `getComputedStyle(bouton, '::before').content` = `"<nom>"` au survol bouton relâché ; `display: none` bouton pressé d'un widget à panneau (M14) |
+| Fonds de cartes juste après un changement d'onglet | attendre `toBeVisible()` sur la case avant `focus()` (panneau DSFR caché une image, §12.4) |
 | Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
 | Plein écran, échelle | `#position-container-bottom-right [id^="GPfullScreen-"] button` (« Plein écran ») ; `.ol-scale-line` en bas à droite, à gauche du plein écran |
