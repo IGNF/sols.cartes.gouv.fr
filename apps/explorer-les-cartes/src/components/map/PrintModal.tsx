@@ -1,8 +1,6 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
-import { Button } from '@codegouvfr/react-dsfr/Button';
 import { Input } from '@codegouvfr/react-dsfr/Input';
-import { createModal } from '@codegouvfr/react-dsfr/Modal';
 import type OlMap from 'ol/Map';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -10,21 +8,7 @@ import { PRINT_LABELS } from '../../config/map';
 import { downloadDataUrl, exportMapImage, fileSlug, mapSources } from '../../map/exportMap';
 import { useMapStore } from '../../store/useMapStore';
 
-const printModal = createModal({ id: 'imprimer-la-carte', isOpenedByDefault: false });
-
-/** Toolbar button opening the print dialog. */
-export function PrintButton() {
-  return (
-    <Button
-      priority="tertiary"
-      size="small"
-      iconId="fr-icon-printer-line"
-      nativeButtonProps={printModal.buttonProps}
-    >
-      {PRINT_LABELS.button}
-    </Button>
-  );
-}
+import { printModal } from './printModal';
 
 export interface PrintSheetContent {
   title: string;

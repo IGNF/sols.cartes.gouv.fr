@@ -1,8 +1,8 @@
 import type OlMap from 'ol/Map';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_BASE_LAYER_ID } from '../config/map';
 import type { OverlayRef } from '../map/overlays';
-import { initialBaseLayer, initialMapState, initialPanelOpen, useMapStore } from './useMapStore';
+import { initialBaseLayer, initialMapState, useMapStore } from './useMapStore';
 
 const LOIRET: OverlayRef = {
   key: 'wms-vector:rrp_loiret',
@@ -17,11 +17,10 @@ describe('useMapStore', () => {
     useMapStore.setState(initialMapState);
   });
 
-  it('démarre sans carte, sur le fond par défaut, panneau des fonds ouvert', () => {
+  it('démarre sans carte, sur le fond par défaut', () => {
     const state = useMapStore.getState();
     expect(state.map).toBeNull();
     expect(state.activeBaseLayerId).toBe(DEFAULT_BASE_LAYER_ID);
-    expect(state.isPanelOpen).toBe(true);
   });
 
   it('enregistre puis oublie l’instance de carte', () => {
@@ -30,13 +29,6 @@ describe('useMapStore', () => {
     expect(useMapStore.getState().map).toBe(fakeMap);
     useMapStore.getState().setMap(null);
     expect(useMapStore.getState().map).toBeNull();
-  });
-
-  it('bascule le panneau des fonds de carte', () => {
-    useMapStore.getState().togglePanel();
-    expect(useMapStore.getState().isPanelOpen).toBe(false);
-    useMapStore.getState().togglePanel();
-    expect(useMapStore.getState().isPanelOpen).toBe(true);
   });
 
   it('change le fond actif', () => {
@@ -69,15 +61,5 @@ describe('useMapStore', () => {
     );
     expect(initialBaseLayer('?l=x$GEOPORTAIL:OGC:WMS(1;1;1;0)')).toBe(DEFAULT_BASE_LAYER_ID);
     expect(initialBaseLayer('')).toBe(DEFAULT_BASE_LAYER_ID);
-  });
-
-  it('ferme le panneau par défaut sous le point de rupture DSFR md, l’ouvre au-delà', () => {
-    const media = (matches: boolean) => (query: string) =>
-      ({ matches, media: query }) as MediaQueryList;
-    const wide = vi.fn(media(true));
-    expect(initialPanelOpen(wide)).toBe(true);
-    expect(wide).toHaveBeenCalledWith('(min-width: 48em)');
-    expect(initialPanelOpen(media(false))).toBe(false);
-    expect(initialPanelOpen(undefined)).toBe(true);
   });
 });

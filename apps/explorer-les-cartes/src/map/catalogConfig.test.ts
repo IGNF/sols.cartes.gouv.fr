@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { SOLS_DATASETS } from '../data/solsLayers';
 import type { SolsDataset } from '../data/solsLayersSchema';
+import type { AvailableBaseLayer } from './baseLayerCatalogue';
 import {
   buildCatalogData,
   catalogLayerKey,
   catalogServiceType,
   datasetLayerKeys,
+  findCatalogBaseLayer,
   findCatalogDataset,
   findCatalogOverlay,
   syncCatalogTicks,
 } from './catalogConfig';
+
+const BASE_LAYERS: AvailableBaseLayer[] = [
+  { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+  { id: 'orthophotos', layerName: 'ORTHOIMAGERY.ORTHOPHOTOS', title: 'Photos & cartes' },
+];
 
 const dataset = (
   id: string,
@@ -45,6 +52,7 @@ describe('buildCatalogData', () => {
       'c_wmsr$GEOPORTAIL:OGC:WMS',
     ]);
     expect(data.layers['A_WMTS$GEOPORTAIL:OGC:WMTS']).toEqual({
+      kind: 'sols',
       name: 'A_WMTS',
       title: 'Titre a',
       description: 'Résumé a',
@@ -93,6 +101,42 @@ describe('buildCatalogData', () => {
     expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.search[2]).toBe(
       'INRAE - Info&Sols',
     );
+  });
+});
+
+describe('buildCatalogData : fonds de cartes', () => {
+  it('ajoute une entrée WMTS par fond disponible dans la catégorie « fonds », titre échappé, sans producteur', () => {
+    const data = buildCatalogData([], BASE_LAYERS);
+    expect(Object.keys(data.layers)).toEqual([
+      'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS',
+      'ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS',
+    ]);
+    expect(data.layers['ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS']).toEqual({
+      kind: 'fond',
+      name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+      title: 'Photos &amp; cartes',
+      description: '',
+      producer: [],
+      search: ['Photos & cartes'],
+      serviceParams: { id: 'OGC:WMTS' },
+      metadata_urls: [],
+    });
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'ORTHOIMAGERY.ORTHOPHOTOS', 'WMTS')?.id).toBe(
+      'orthophotos',
+    );
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'ORTHOIMAGERY.ORTHOPHOTOS', 'WMS')).toBeNull();
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'inconnu', 'WMTS')).toBeNull();
+  });
+
+  it('coche le fond actif seulement, à côté des fiches sols', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<input type="checkbox" data-layer="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2:WMTS" checked />
+      <input type="checkbox" data-layer="ORTHOIMAGERY.ORTHOPHOTOS:WMTS" />`;
+    const boxes = () =>
+      Array.from(root.querySelectorAll<HTMLInputElement>('input')).map((i) => i.checked);
+    expect(syncCatalogTicks(root, [], [], BASE_LAYERS, 'orthophotos')).toBe(2);
+    expect(boxes()).toEqual([false, true]);
+    expect(syncCatalogTicks(root, [], [], BASE_LAYERS, 'orthophotos')).toBe(0);
   });
 });
 

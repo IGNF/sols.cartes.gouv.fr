@@ -22,7 +22,6 @@ import type ReverseGeocode from 'geopf-extensions-openlayers/src/packages/Contro
 import type Route from 'geopf-extensions-openlayers/src/packages/Controls/Route/Route';
 import type { Territory } from 'geopf-extensions-openlayers/src/packages/Controls/Territories/Territories';
 
-export { default as GeoportalAttribution } from 'geopf-extensions-openlayers/src/packages/Controls/Attribution/GeoportalAttribution';
 export { default as GeoportalFullScreen } from 'geopf-extensions-openlayers/src/packages/Controls/FullScreen/GeoportalFullScreen';
 export { default as GeoportalZoom } from 'geopf-extensions-openlayers/src/packages/Controls/Zoom/GeoportalZoom';
 export { default as LayerSwitcher } from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';

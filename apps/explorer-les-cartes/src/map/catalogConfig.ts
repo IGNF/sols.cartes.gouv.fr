@@ -1,4 +1,6 @@
+import { CATALOG_KINDS, type BaseLayerId, type CatalogKind } from '../config/map';
 import { catalogueRecordPath } from '../config/urls';
+import type { AvailableBaseLayer } from './baseLayerCatalogue';
 import { solsLayerKey, type SolsDataset, type SolsService } from '../data/solsLayersSchema';
 import { escapeHtml } from '../text/escapeHtml';
 import { preferredLayer, toOverlayRef, type OverlayRef } from './overlays';
@@ -21,6 +23,8 @@ export function catalogServiceType(service: SolsService): 'WMS' | 'WMTS' | null 
 
 /** One layer of the configuration object the Catalog control reads (`configuration.data.layers[key]`). */
 export interface CatalogLayerConfig {
+  /** Category of the entry (CATALOG_CATEGORIES filter on this field, CATALOG_KIND_FIELD). */
+  kind: CatalogKind;
   /** Raw title, abstract and producer: what the control's search matches (the display fields are escaped). */
   search: string[];
   name: string;
@@ -49,13 +53,30 @@ export function catalogLayerKey(name: string, serviceType: 'WMS' | 'WMTS'): stri
  * (they stay in the list view). Display texts are HTML-escaped (the control builds its entries with
  * `innerHTML`); the search reads the raw texts from `search` (CATALOG_OPTIONS.search.criteria).
  */
-export function buildCatalogData(datasets: readonly SolsDataset[]): CatalogData {
+export function buildCatalogData(
+  datasets: readonly SolsDataset[],
+  baseLayers: readonly AvailableBaseLayer[] = [],
+): CatalogData {
   const layers: Record<string, CatalogLayerConfig> = {};
+  // « Fonds de cartes » tab: the GPF base layers published in the capabilities (one shown at a time).
+  for (const layer of baseLayers) {
+    layers[catalogLayerKey(layer.layerName, 'WMTS')] = {
+      kind: CATALOG_KINDS.baseLayer,
+      name: layer.layerName,
+      title: escapeHtml(layer.title),
+      description: '',
+      producer: [],
+      search: [layer.title],
+      serviceParams: { id: 'OGC:WMTS' },
+      metadata_urls: [],
+    };
+  }
   for (const dataset of datasets) {
     const layer = preferredLayer(dataset);
     const serviceType = layer ? catalogServiceType(layer.service) : null;
     if (!layer || !serviceType) continue;
     layers[catalogLayerKey(layer.name, serviceType)] = {
+      kind: CATALOG_KINDS.sols,
       name: layer.name,
       title: escapeHtml(dataset.title),
       description: escapeHtml(dataset.abstract),
@@ -98,6 +119,16 @@ export function findCatalogOverlay(
   return dataset && layer ? toOverlayRef(layer, dataset.title) : null;
 }
 
+/** The base layer a Catalog event (`name`, `service`) designates, if it is one of the « Fonds de cartes ». */
+export function findCatalogBaseLayer(
+  baseLayers: readonly AvailableBaseLayer[],
+  name: string,
+  service: string,
+): AvailableBaseLayer | null {
+  if (service.toUpperCase() !== 'WMTS') return null;
+  return baseLayers.find((layer) => layer.layerName === name) ?? null;
+}
+
 /** Keys of every layer of a dataset (store keys of its overlays). */
 export function datasetLayerKeys(dataset: SolsDataset): string[] {
   return dataset.layers.map(solsLayerKey);
@@ -112,6 +143,8 @@ export function syncCatalogTicks(
   root: HTMLElement,
   overlays: readonly Pick<OverlayRef, 'key'>[],
   datasets: readonly SolsDataset[],
+  baseLayers: readonly AvailableBaseLayer[] = [],
+  activeBaseLayerId?: BaseLayerId,
 ): number {
   let changed = 0;
   const onMap = new Set(overlays.map((overlay) => overlay.key));
@@ -119,10 +152,14 @@ export function syncCatalogTicks(
     // `data-layer` is `<name>:<service>` (the control splits on the last colon: names may hold one).
     const value = input.getAttribute('data-layer') ?? '';
     const at = value.lastIndexOf(':');
-    const dataset =
-      at < 0 ? null : findCatalogDataset(datasets, value.slice(0, at), value.slice(at + 1));
-    if (!dataset) return;
-    const checked = datasetLayerKeys(dataset).some((key) => onMap.has(key));
+    if (at < 0) return;
+    const [name, service] = [value.slice(0, at), value.slice(at + 1)];
+    const dataset = findCatalogDataset(datasets, name, service);
+    const baseLayer = dataset ? null : findCatalogBaseLayer(baseLayers, name, service);
+    if (!dataset && !baseLayer) return;
+    const checked = dataset
+      ? datasetLayerKeys(dataset).some((key) => onMap.has(key))
+      : baseLayer?.id === activeBaseLayerId;
     if (input.checked !== checked) {
       input.checked = checked;
       changed += 1;

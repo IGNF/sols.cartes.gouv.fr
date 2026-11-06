@@ -122,7 +122,7 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 | `src/hooks/useMap.ts`                               | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
 | `src/hooks/useBaseLayerCatalogue.ts`                | fonds candidats publiés dans les capacités (`availableBaseLayers`) et fond effectif dérivé (choix du store, sinon le premier disponible)           |
 | `src/hooks/useBaseLayer.ts`                         | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage (changement de fond compris)               |
-| `src/hooks/useMapControls.ts`                       | zoom, plein écran, attributions geopf + échelle OL dans un effet ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée  |
+| `src/hooks/useMapControls.ts`                       | zoom, plein écran geopf + échelle OL dans un effet (plus d'attributions depuis M13, §12.3) ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée  |
 | `src/components/map/BaseLayerPanel.tsx`             | panneau DSFR « Fonds de carte » : `RadioButtons` (flèches du clavier) → `setActiveBaseLayer`                                                       |
 | `src/components/map/MapExplorer.tsx`                | bouton « Masquer/Afficher les fonds de carte » (`aria-expanded`, `aria-controls`, `togglePanel`) + grille panneau/carte                            |
 | `src/hooks/useLayerSwitcher.ts`                     | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage                                                                              |
@@ -146,7 +146,7 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 | --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Zoom                        | `GeoportalZoom` (étend `ol/control/Zoom`)               | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`)                                                                                                          |
 | Plein écran                 | `GeoportalFullScreen` (étend `ol/control/FullScreen`)   | `position`, `tipLabel`                                                                                                                                                                            |
-| Attributions                | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
+| Attributions (retirées M13) | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
 | Échelle                     | `ol/control/ScaleLine`                                  | geopf-ext n'en fournit pas ; `units: 'metric'`                                                                                                                                                    |
 | Recherche + géolocalisation | `SearchEngine`                                          | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
 | Rotation                    | `ol/control/Rotate` (via `defaults`)                    | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults`                                                                                                                         |
@@ -356,7 +356,7 @@ Issue commune :
 | Vue liste                   | `?vue=liste`, `getByRole('heading', { level: 1, name: 'Liste des données sols' })`, `getByRole('article')` (7)                                                                                                                                                                                                                                                   |
 | Lien vers la vue liste      | `getByRole('link', { name: 'Version accessible de la liste des données' })`                                                                                                                                                                                                                                                                                      |
 | Recherche                   | `getByRole('textbox', { name: 'Rechercher un lieu ou une adresse' })`                                                                                                                                                                                                                                                                                            |
-| Contrôles                   | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée)                                                                                                                                                                                                                 |
+| Contrôles                   | « Zoomer », « Dézoomer », « Plein écran », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée) ; « Sources des données » retiré en M13                                                                                                                                                                                                                 |
 
 Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lente peut retarder l'inactivité réseau de plus de 30 s.
 
@@ -673,3 +673,103 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   un avis par-dessus la carte recouvrirait ses widgets) et revient si la couche est retirée puis remise.
 - `check:map` : donnée Loiret ajoutée depuis le catalogue → avis « Couche indisponible » puis retrait ; lien `l=` vers `rrp_loiret_…` →
   entrée `rrp_dept_loiret_…` cochée, décocher retire la couche et l'avis.
+
+## 12. v1.1 (M13)
+
+### 12.1 Pied de page extensible et en-tête
+
+- **Motif d'origine** : `CgfrFooter.vue` (IGNF/cartes.gouv.fr-vue-components, utilisé par cartes.gouv.fr-entree-carto). Le pied de page
+  DSFR complet est rendu (`SiteFooter.tsx`, balisage calqué sur `apps/accueil/src/_includes/partials/footer.njk`, contenu de
+  `@sols/brand`) ; replié, la classe `compact-footer--collapsed` ne laisse que `.fr-footer__bottom` et les blocs `.fr-footer__body`,
+  `.fr-footer__partners`, `.fr-footer__bottom-copy` portent `hidden` (une règle `.compact-footer [hidden] { display: none }` est
+  nécessaire : le `display: flex` du DSFR l'emporte sur la feuille de style du navigateur). Le bouton bascule l'état puis
+  `setTimeout(() => window.scrollTo({ top: open ? document.body.scrollHeight : 0, behavior }), 0)` ; `behavior: 'smooth'` à l'ouverture
+  sauf `prefers-reduced-motion: reduce`. Le focus reste sur le bouton (même élément, libellé changé).
+- **`Footer` de react-dsfr écarté** : il impose ses liens bas (libellé d'accessibilité, ordre), réduit les liens de contenu à des domaines
+  (`domains`) et ne peut pas accueillir le bouton hors de `fr-footer__bottom-list`. `fr-footer__content-item` est une classe DSFR sans CSS
+  absente de la liste typée de `fr.cx` : chaîne brute.
+- **Mise en page (`App.css`, ≥ 48em)** : `display: grid; grid-template-rows: auto minmax(20rem, 1fr) auto; min-height: 100dvh`.
+  `min-height` et non `height` : un `height: 100dvh` (v1, flex) rognait le pied déplié au lieu d'agrandir le document. La rangée `1fr` se
+  résout contre le `min-height` (CSS Grid §12.7.1) : `main` a une hauteur définie, la chaîne flex de la carte (`.map-view { height: 100% }`)
+  fonctionne et OpenLayers suit par son ResizeObserver (canvas = hauteur de `.map-view`, vérifié). Pied déplié :
+  `.app-layout--map:has(> .compact-footer:not(.compact-footer--collapsed))` passe la rangée à `minmax(80dvh, 1fr)` : à 1280×900 la carte
+  passe de 683 à 679 px (75 %) au lieu de tomber à 589 px avec un plancher de 70dvh (la barre d'outils au-dessus de la carte prend ~40 px).
+  Le plancher replié (20rem) évite tout défilement sur les écrans bas. Les liens d'évitement DSFR sont en `position: absolute` : pas de rangée.
+- **Piège `fr-enlarge-link`** : le DSFR étend le lien de la marque par `a::before { position: absolute; inset: 0 }` jusqu'au premier ancêtre
+  positionné, normalement `.fr-header__brand.fr-enlarge-link`. Le `position: relative` posé en M7 sur `.fr-header__service` (pour la marque
+  Observatoire en `::after`) confinait ce calque au bloc titre : Marianne et logo GIS Sol n'étaient pas cliquables. La marque est désormais
+  un fond (`background: var(--osf-mark) 1.25rem center / 3rem 3rem no-repeat`, ≥ 62em) ; ne jamais repositionner un descendant de
+  `.fr-header__brand`. Vérifié par `elementFromPoint` (l'ancien CSS réinjecté donne `false, false`).
+- **Menus « Aide » (contrat E10, PR #70)** : items `{ label, href, hrefTemplate?, external?, icon?, description? }` (`HeaderMenuItem`,
+  champs facultatifs : la marque de `main` reste valide). `itemHref` résout `{lang}` en `fr` (pas de sélecteur de langue ici) ; un item
+  `external` ou à `href` absolu reçoit `target="_blank" rel="noopener external"` et `title="<libellé> - nouvelle fenêtre"`. Icône de l'item
+  avant le libellé (`fr-link--icon-left` + classe d'icône, si listée dans `HEADER_MENU_ICONS`, sinon rien) ; l'icône « lien externe » après
+  est celle du DSFR (`[target=_blank]::after`), poussée à droite comme sur cartes.gouv.fr (`.header-menu__label { flex: 1 }`). Badge :
+  `badgeStyles.carto` (E10) → `SERVICE_BADGE_CLASSES`, liste blanche de couleurs et d'icônes, repli violet glycine + `fr-icon-map-pin-2-fill`.
+  `check:map` ne cherche plus `cartes.gouv.fr` que dans `.fr-header__brand` (les liens « Aide » y mènent depuis E10) et vérifie les liens
+  externes de « Aide ». Les icônes DSFR étant des data URI inlinées, comparer les `mask-image` de `::before` et `::after`, pas leur nom.
+- **Icônes et build parallèles** : `react-dsfr update-icons` réécrit `dsfr/utility/icons/icons.min.css` dans `node_modules` ; avec bun, ce
+  fichier est un lien physique partagé par tous les worktrees (7 liens observés) : un build lancé en parallèle dans une autre brique peut
+  retirer les icônes `ri-*` du bundle. Relancer `bun run build` juste avant `check:map` et vérifier `grep ri-share-line dist/assets/*.css`.
+- **Sélecteurs e2e** : bouton `getByRole('contentinfo').getByRole('button', { name: 'Haut de page' })` (replié) /
+  `{ name: 'Fermer' }` (déplié), `aria-expanded`, `aria-controls="footer"` ; état `footer.compact-footer--collapsed` ; logos
+  `.fr-footer__partners img`. `check:map` (bloc M13) : hauteur de document, `scrollY`, hauteur de `.map-view` et du canvas, axe déplié,
+  bascule à 375 px, test de clic sur `.fr-header__logo`, `.fr-header__operator`, `.fr-header__service`.
+
+### 12.2 Barre d'outils retirée, catalogue de cartes, outils à la demande (PR 2)
+
+- **Plus de `map-explorer__toolbar` ni de panneau latéral** (`MapExplorer` = avis + carte) : la vue carte occupe toute la largeur. Le
+  bouton « Imprimer » est un contrôle OpenLayers maison (`src/map/printControl.ts`, `usePrintControl`) habillé comme les boutons geopf
+  (`gpf-widget gpf-widget-button`, `gpf-btn gpf-btn-icon fr-btn fr-btn--tertiary fr-icon-printer-line`, `aria-label` « Imprimer »), déplacé
+  dans `#position-container-top-left` après les contrôles geopf (zoom, plein écran, import, GetFeatureInfo) ; **id `GPprint-<n>` obligatoire**
+  (le `PanelManager` de `Controls/Widget.js` lit `element.id.match(/(\w+)-[0-9]+/)[1]` sur chaque widget d'une colonne à l'ouverture d'un
+  panneau : sans id, `TypeError` et GetFeatureInfo/Légendes ne s'ouvrent plus) et `position: static` (OL pose `absolute` : le bouton
+  recouvrait le zoom) ; il ouvre la modale DSFR
+  `printModal` (`src/components/map/printModal.ts`, `openPrintModal`). **Partage retiré** (`ShareModal`, `mapPermalink`, `SHARE_LABELS`) ;
+  la lecture des permaliens/liens profonds (`permalink.ts`, `deepLink.ts`) reste. **Vue liste conservée mais plus liée** depuis la carte
+  (`?vue=liste` ; l'avis « Catalogue indisponible » y renvoie encore) ; le magasin perd `isPanelOpen`/`togglePanel`.
+- **Catalogue renommé « Catalogue de cartes »** (`CONTROL_LABELS.catalog`, `titlePrimary`, `GEOPF_DIALOG_LABELS.GPcatalogPanel`) avec deux
+  catégories (`CATALOG_CATEGORIES`) filtrées sur un champ `kind` des entrées (`CATALOG_KIND_FIELD`, valeurs `CATALOG_KINDS`) : « Données
+  sols » (`sols`, producteur, tri) et **« Fonds de cartes »** (`fonds`, onglet `tabbutton-1_fonds`). Les entrées fonds sont les
+  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le
+  contrôle est créé aussitôt (le bouton n'attend pas une GPF lente) puis **reconstruit sur place** à l'arrivée des fonds, et si son panneau
+  est ouvert à ce moment-là la reconstruction attend sa fermeture (`whenCollapsed`, observateur de `aria-pressed`) : le reconstruire
+  panneau ouvert le fermait, vu dans `check:map` quand la GPF est lente), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
+  `createCatalogProducerLinks` renvoie `null` : le gabarit lit `producers[0].name` dès que la liste est définie). Cocher un fond →
+  `setActiveBaseLayer` ; `syncCatalogTicks(root, overlays, datasets, baseLayers, activeBaseLayerId)` coche le seul fond actif (et le recoche
+  après un décochage : un fond reste toujours affiché). Cases nommées « Afficher le fond de carte : <titre> » (`checkboxes-fonds`,
+  `fixToolButtons`). La recherche globale du widget couvre les deux onglets.
+- **Barre de recherche centrée** (≥ 48em : `left: 50%; transform: translateX(-50%)`, largeur bornée par les deux colonnes de boutons) ;
+  **bouton d'effacement** `GPsearchInputReset-` masqué tant que le champ est vide (`:has(> input:placeholder-shown)` sur son parent, le
+  bouton n'est pas dans `.GPInputGroup` mais frère du champ dans `.gpf-panel__content`). cartes.gouv.fr garde sa barre en haut à gauche
+  et n'a pas de `GPsearchInputReset-` (bouton « Effacer la saisie » en flux, affiché seulement avec du texte).
+- **Outils à la demande** (`DEFAULT_TOOLS` = MeasureLength, MeasureArea, Drawing, Route, par `CLASSNAME` geopf) : les autres outils
+  listables reçoivent `map-tool--on-demand` et leur bouton est masqué (`MapView.css`) jusqu'à ce que l'outil soit choisi dans
+  **« Afficher tous les outils »** (ControlList renommé, placé **en dernier** de la colonne de droite, panneau « Tous les outils ») :
+  l'entrée de la liste clique le bouton de l'outil (comportement amont, `ControlListDOM`), qui passe `aria-pressed="true"` ;
+  `revealOnOpen` (observateur d'attribut) ajoute alors `map-tool--shown` et le bouton reste. Sur cartes.gouv.fr les six premiers outils
+  sont dessinés et les autres repoussés hors écran par geopf (`margin-left: -9504px`) : la liste y ouvre l'outil sans ajouter son bouton ;
+  ici le bouton est ajouté (demande du brief). Même comportement à toutes les largeurs (la règle mobile qui cachait tous les outils
+  listables est retirée).
+
+### 12.3 Disposition des contrôles (PR 3)
+
+- **Plus de contrôle d'attribution** (`GeoportalAttribution`, bouton « Sources des données », `CONTROL_LABELS.attribution`) : demande du
+  brief ; cartes.gouv.fr n'en affiche pas non plus (`.ol-attribution` absent). Les attributions restent posées sur les sources
+  (`GPF_ATTRIBUTION`, `SOLS_ATTRIBUTION`) pour la feuille d'impression (`exportMap.mapSources`).
+- **Plein écran en bas à droite** (`MAP_TOOLS_OPTIONS.fullScreen.position: 'bottom-right'`, `#position-container-bottom-right`, comme sur
+  cartes.gouv.fr) ; **échelle** OL à sa gauche (`MapView.css` : `left: auto; right: 4rem` = 2w + 5w + 1w, `bottom: 0.5rem`), texte et
+  trait en `--text-action-high-blue-france` (`.ol-scale-line-inner`, OL les tirait de `--ol-foreground-color`/`--ol-subtle-foreground-color`,
+  gris) ; la colonne bas gauche garde légendes, territoires et mini-carte.
+- `check:map` : pas de `.ol-attribution`, plein écran dans la colonne bas droite à ≤ 16 px des bords, échelle à 4–24 px à sa gauche, couleurs
+  de l'échelle = jeton action dans les deux thèmes.
+
+### 12.5 Sélecteurs e2e (PR 2 et 3)
+
+| Élément | Sélecteur |
+|---|---|
+| Catalogue | `getByRole('button', { name: 'Catalogue de cartes', exact: true })` ; onglets `#tabbutton-0_sols`, `#tabbutton-1_fonds` ; fonds `input[name="checkboxes-fonds"][data-layer="<nom>:WMTS"]` nommés « Afficher le fond de carte : <titre> » |
+| Imprimer | `.map-print button` (`aria-label` « Imprimer »), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
+| Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
+| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
+| Plein écran, échelle | `#position-container-bottom-right [id^="GPfullScreen-"] button` (« Plein écran ») ; `.ol-scale-line` en bas à droite, à gauche du plein écran |

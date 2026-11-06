@@ -1,11 +1,13 @@
 import type OlMap from 'ol/Map';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import type { AvailableBaseLayer } from '../map/baseLayerCatalogue';
 import { CATALOG_OPTIONS, CONTROL_LABELS } from '../config/map';
 import { catalogueSearchByOrganisationPath } from '../config/urls';
 import { SOLS_DATASETS } from '../data/solsLayers';
 import {
   buildCatalogData,
   datasetLayerKeys,
+  findCatalogBaseLayer,
   findCatalogDataset,
   findCatalogOverlay,
   syncCatalogTicks,
@@ -52,11 +54,14 @@ const patchedPrototypes = new WeakSet<object>();
 export function patchProducerLinks(Catalog: CatalogClass): void {
   const prototype = Catalog.prototype as unknown as ProducerLinksPrototype;
   if (patchedPrototypes.has(prototype)) return;
+  // Null (not []) without producers: the entry template reads `producers[0].name` when the list is set.
   prototype.createCatalogProducerLinks = (producers) =>
-    producers?.map((name) => ({
-      name,
-      url: catalogueSearchByOrganisationPath(unescapeHtml(name)),
-    })) ?? null;
+    producers?.length
+      ? producers.map((name) => ({
+          name,
+          url: catalogueSearchByOrganisationPath(unescapeHtml(name)),
+        }))
+      : null;
   patchedPrototypes.add(prototype);
 }
 
@@ -69,11 +74,12 @@ export function createCatalog(
   Catalog: CatalogClass,
   onAdd: (event: CatalogLayerEvent) => void,
   onRemove: (event: CatalogLayerEvent) => void,
+  baseLayers: readonly AvailableBaseLayer[] = [],
 ): CatalogControl {
   patchProducerLinks(Catalog);
   const control = new Catalog({
     ...CATALOG_OPTIONS,
-    configuration: { type: 'json', data: buildCatalogData(SOLS_DATASETS) },
+    configuration: { type: 'json', data: buildCatalogData(SOLS_DATASETS, baseLayers) },
   });
   const element = controlElement(control);
   labelGeopfDialogs(element);
@@ -92,9 +98,18 @@ export function createCatalog(
 /**
  * Puts the dataset of a ticked entry on the map (its preferred layer), unless one of its layers is
  * already there: a « Voir sur la carte » link may have added another layer of the same dataset, and the
- * entry then stands for it.
+ * entry then stands for it. A « Fonds de cartes » entry becomes the base layer (the other base entries
+ * are unticked by the sync).
  */
-export function addCatalogEntry({ name, service }: CatalogLayerEvent): void {
+export function addCatalogEntry(
+  { name, service }: CatalogLayerEvent,
+  baseLayers: readonly AvailableBaseLayer[] = [],
+): void {
+  const baseLayer = findCatalogBaseLayer(baseLayers, name, service);
+  if (baseLayer) {
+    useMapStore.getState().setActiveBaseLayer(baseLayer.id);
+    return;
+  }
   const dataset = findCatalogDataset(SOLS_DATASETS, name, service);
   const overlay = findCatalogOverlay(SOLS_DATASETS, name, service);
   if (!dataset || !overlay) return;
@@ -112,46 +127,140 @@ export function removeCatalogEntry({ name, service }: CatalogLayerEvent): void {
   for (const key of datasetLayerKeys(dataset)) removeOverlay(key);
 }
 
+/** A mounted catalogue control and what it was built with. */
+interface MountedCatalog {
+  control: CatalogControl;
+  element: HTMLElement;
+  baseLayers: readonly AvailableBaseLayer[];
+  dispose: () => void;
+}
+
+/** True while the catalogue panel is open (its toggle button is pressed). */
+function isOpen(element: HTMLElement): boolean {
+  return element.querySelector('button')?.getAttribute('aria-pressed') === 'true';
+}
+
+/** Calls `done` once the toggle button of the control is released; returns a function to give up. */
+function whenCollapsed(element: HTMLElement, done: () => void): () => void {
+  const button = element.querySelector('button');
+  if (!button) return () => undefined;
+  const observer = new MutationObserver(() => {
+    if (button.getAttribute('aria-pressed') !== 'true') {
+      observer.disconnect();
+      done();
+    }
+  });
+  observer.observe(button, { attributes: true, attributeFilter: ['aria-pressed'] });
+  return () => observer.disconnect();
+}
+
 /**
  * Adds the catalogue once the map exists (own chunk, after the map is displayed) as the first widget of
  * the right column, like the cartes.gouv.fr map viewer; removed on cleanup. The entries are ticked per
- * dataset from the store (`auto: false`: the control would only tick its own layer). When the chunk
- * fails, the store reports it (notice pointing to the list view).
+ * dataset from the store (`auto: false`: the control would only tick its own layer); the « Fonds de
+ * cartes » entries (GPF base layers of the capabilities) follow the active base layer, which always
+ * stays ticked. The control is created at once (the button must not wait for a slow GPF) and rebuilt
+ * when the base layers arrive, in place; if its panel is open at that moment, the rebuild waits for it
+ * to be closed. When the chunk fails, the store reports it (notice pointing to the list view).
  */
-export default function useCatalog(map: OlMap | null): void {
+export default function useCatalog(
+  map: OlMap | null,
+  baseLayers: readonly AvailableBaseLayer[] = [],
+): void {
   const setCatalogueUnavailable = useMapStore((state) => state.setCatalogueUnavailable);
+  const catalogClass = useRef<CatalogClass | null>(null);
+  const mounted = useRef<MountedCatalog | null>(null);
+  const wanted = useRef(baseLayers);
+  const rebuildRequest = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     if (!map) return undefined;
     let active = true;
-    let control: CatalogControl | null = null;
-    let stopWatching: (() => void) | undefined;
-    let unsubscribe: (() => void) | undefined;
+    const mount = (Catalog: CatalogClass, layers: readonly AvailableBaseLayer[]) => {
+      let sync = () => 0;
+      const control = createCatalog(
+        Catalog,
+        (event) => addCatalogEntry(event, layers),
+        (event) => {
+          removeCatalogEntry(event);
+          sync(); // an unticked base layer stays the base layer: tick it again
+        },
+        layers,
+      );
+      map.addControl(control);
+      // geopf appends to the position container: put the catalogue first (the switcher came earlier).
+      const element = controlElement(control);
+      element.parentElement?.prepend(element);
+      sync = () => {
+        const { overlays, activeBaseLayerId } = useMapStore.getState();
+        return syncCatalogTicks(element, overlays, SOLS_DATASETS, layers, activeBaseLayerId);
+      };
+      // Entries are rendered once the configuration is loaded: name their checkboxes and tick them as
+      // they appear, then follow the store (layers removed from the switcher, links, base layer).
+      const stopWatching = watchToolButtons(element, sync);
+      const unsubscribe = useMapStore.subscribe((state, previous) => {
+        if (
+          state.overlays !== previous.overlays ||
+          state.activeBaseLayerId !== previous.activeBaseLayerId
+        )
+          sync();
+      });
+      mounted.current = {
+        control,
+        element,
+        baseLayers: layers,
+        dispose: () => {
+          stopWatching();
+          unsubscribe();
+          map.removeControl(control);
+          mounted.current = null;
+        },
+      };
+    };
+    const remountIfStale = (): (() => void) | undefined => {
+      const current = mounted.current;
+      const Catalog = catalogClass.current;
+      if (!current || !Catalog || current.baseLayers === wanted.current) return undefined;
+      const rebuild = () => {
+        // The old control takes the focus away with it (to the body): give it to the new button.
+        const hadFocus = current.element.contains(document.activeElement);
+        current.dispose();
+        mount(Catalog, wanted.current);
+        if (hadFocus) mounted.current?.element.querySelector('button')?.focus();
+      };
+      if (!isOpen(current.element)) {
+        rebuild();
+        return undefined;
+      }
+      return whenCollapsed(current.element, rebuild);
+    };
+    let cancelDeferred: (() => void) | undefined;
     loadCatalog()
       .then((Catalog) => {
         if (!active) return;
-        control = createCatalog(Catalog, addCatalogEntry, removeCatalogEntry);
-        map.addControl(control);
-        // geopf appends to the position container: put the catalogue first (the switcher came earlier).
-        const element = controlElement(control);
-        element.parentElement?.prepend(element);
-        const sync = () =>
-          syncCatalogTicks(element, useMapStore.getState().overlays, SOLS_DATASETS);
-        // Entries are rendered once the configuration is loaded: name their checkboxes and tick them as
-        // they appear, then follow the store (layers removed from the switcher, links).
-        stopWatching = watchToolButtons(element, sync);
-        unsubscribe = useMapStore.subscribe((state, previous) => {
-          if (state.overlays !== previous.overlays) sync();
-        });
+        catalogClass.current = Catalog;
+        mount(Catalog, wanted.current);
+        // Base layers may have arrived while the chunk was loading.
+        cancelDeferred = remountIfStale();
       })
       .catch(() => {
         // The map stays usable without the catalogue; the list view keeps every dataset.
         if (active) setCatalogueUnavailable(true);
       });
+    rebuildRequest.current = () => {
+      cancelDeferred?.();
+      cancelDeferred = remountIfStale();
+    };
     return () => {
       active = false;
-      stopWatching?.();
-      unsubscribe?.();
-      if (control) map.removeControl(control);
+      cancelDeferred?.();
+      rebuildRequest.current = null;
+      mounted.current?.dispose();
     };
   }, [map, setCatalogueUnavailable]);
+
+  useEffect(() => {
+    wanted.current = baseLayers;
+    rebuildRequest.current?.();
+  }, [baseLayers]);
 }

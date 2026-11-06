@@ -5,7 +5,7 @@ import type React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRINT_LABELS } from '../../config/map';
 import { initialMapState, useMapStore } from '../../store/useMapStore';
-import PrintModal, { PrintButton, PrintSheet } from './PrintModal';
+import PrintModal, { PrintSheet } from './PrintModal';
 
 const IMAGE = 'data:image/png;base64,iVBORw0KGgo=';
 
@@ -49,13 +49,7 @@ describe('PrintModal', () => {
   });
 
   it('propose un titre modifiable et deux actions', () => {
-    renderOpen(
-      <>
-        <PrintButton />
-        <PrintModal renderImage={() => Promise.resolve(IMAGE)} print={() => {}} />
-      </>,
-    );
-    expect(screen.getByRole('button', { name: PRINT_LABELS.button })).toBeInTheDocument();
+    renderOpen(<PrintModal renderImage={() => Promise.resolve(IMAGE)} print={() => {}} />);
     expect(screen.getByRole('textbox', { name: PRINT_LABELS.titleLabel })).toHaveValue(
       PRINT_LABELS.defaultTitle,
     );

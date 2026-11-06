@@ -1,8 +1,8 @@
 import { screen } from '@testing-library/react';
-import Attribution from 'ol/control/Attribution';
 import Rotate from 'ol/control/Rotate';
+import Zoom from 'ol/control/Zoom';
 import { afterEach, describe, expect, it } from 'vitest';
-import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
+import { CONTROL_LABELS } from '../config/map';
 import {
   controlElement,
   fixLayerMoveArrows,
@@ -16,15 +16,13 @@ describe('labelControls', () => {
     document.body.innerHTML = '';
   });
 
-  it('nomme le bouton des attributions et celui de la rotation au lieu de leur glyphe', () => {
-    const attribution = new Attribution({ ...MAP_TOOLS_OPTIONS.attribution });
+  it('nomme tous les boutons d’un contrôle (zoom) et celui de la rotation au lieu de leur glyphe', () => {
+    const zoom = new Zoom({ zoomInTipLabel: '+', zoomOutTipLabel: '-' });
     const rotate = new Rotate({ autoHide: false });
-    labelControlButtons(attribution, CONTROL_LABELS.attribution);
+    labelControlButtons(zoom, 'Zoom');
     labelControlButtons(rotate, CONTROL_LABELS.rotate);
-    document.body.append(controlElement(attribution), controlElement(rotate));
-    expect(screen.getByRole('button', { name: 'Sources des données' })).toBe(
-      controlElement(attribution).querySelector('button'),
-    );
+    document.body.append(controlElement(zoom), controlElement(rotate));
+    expect(screen.getAllByRole('button', { name: 'Zoom' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Réinitialiser l’orientation' })).toBe(
       controlElement(rotate).querySelector('button'),
     );

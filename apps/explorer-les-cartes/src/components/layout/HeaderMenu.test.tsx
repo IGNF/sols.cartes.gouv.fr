@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { BRAND, HEADER_MENU_ICONS } from '../../config/site';
+import { BRAND, HEADER_MENU_ICONS, itemHref, type HeaderMenuSpec } from '../../config/site';
 import HeaderMenu from './HeaderMenu';
 
 const menu = BRAND.header.tools.services;
@@ -37,9 +37,8 @@ describe('HeaderMenu', () => {
     await user.click(button);
     for (const item of menu.items) {
       const link = screen.getByRole('link', { name: new RegExp(item.label) });
-      expect(link).toHaveAttribute('href', item.href);
-      if ('description' in item && item.description)
-        expect(link).toHaveTextContent(item.description);
+      expect(link).toHaveAttribute('href', itemHref(item));
+      if (item.description) expect(link).toHaveTextContent(item.description);
     }
   });
 
@@ -81,6 +80,63 @@ describe('HeaderMenu', () => {
   it('connaît les icônes des menus de la marque', () => {
     for (const tool of [BRAND.header.tools.help, BRAND.header.tools.services]) {
       expect(HEADER_MENU_ICONS).toContain(tool.icon);
+    }
+  });
+
+  it('rend les items E10 : lien externe localisé, icône avant, nouvelle fenêtre ; lien interne inchangé', async () => {
+    // Shape of packages/brand/brand.json on feat/E10-header-v1.1 (PR #70), plus one internal item.
+    const fixture: HeaderMenuSpec = {
+      label: 'Aide',
+      icon: 'fr-icon-question-fill',
+      items: [
+        {
+          label: "Centre d'aide",
+          href: 'https://cartes.gouv.fr/aide/fr/',
+          hrefTemplate: 'https://cartes.gouv.fr/aide/{lang}/',
+          icon: 'fr-icon-question-mark',
+          external: true,
+        },
+        { label: 'Nous contacter', href: '/fr/aide/#contact' },
+        { label: 'Absolu sans drapeau', href: 'https://example.org/', icon: 'fr-icon-inconnue' },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<HeaderMenu menu={fixture} />);
+    await user.click(screen.getByRole('button', { name: 'Aide' }));
+    const external = screen.getByRole('link', { name: "Centre d'aide" });
+    expect(external).toHaveAttribute('href', 'https://cartes.gouv.fr/aide/fr/');
+    expect(external).toHaveAttribute('target', '_blank');
+    expect(external).toHaveAttribute('rel', 'noopener external');
+    expect(external).toHaveAttribute('title', "Centre d'aide - nouvelle fenêtre");
+    expect(external).toHaveClass('fr-nav__link', 'fr-icon-question-mark', 'fr-link--icon-left');
+
+    const internal = screen.getByRole('link', { name: 'Nous contacter' });
+    expect(internal).toHaveAttribute('href', '/fr/aide/#contact');
+    expect(internal).not.toHaveAttribute('target');
+    expect(internal).not.toHaveAttribute('rel');
+    expect(internal).not.toHaveAttribute('title');
+    expect(internal.className).not.toMatch(/fr-icon-|fr-link--icon-left/);
+
+    const absolute = screen.getByRole('link', { name: 'Absolu sans drapeau' });
+    expect(absolute).toHaveAttribute('target', '_blank');
+    expect(absolute.className).not.toMatch(/fr-icon-|fr-link--icon-left/);
+  });
+
+  it('résout le gabarit {lang} en français', () => {
+    expect(
+      itemHref({
+        label: 'x',
+        href: '/a/',
+        hrefTemplate: 'https://cartes.gouv.fr/aide/{lang}/nous-ecrire/',
+      }),
+    ).toBe('https://cartes.gouv.fr/aide/fr/nous-ecrire/');
+    expect(itemHref({ label: 'x', href: '/fr/aide/#contact' })).toBe('/fr/aide/#contact');
+  });
+
+  it('connaît les icônes des items de la marque', () => {
+    for (const tool of [BRAND.header.tools.help, BRAND.header.tools.services]) {
+      for (const item of tool.items as HeaderMenuSpec['items'])
+        if (item.icon) expect(HEADER_MENU_ICONS).toContain(item.icon);
     }
   });
 });

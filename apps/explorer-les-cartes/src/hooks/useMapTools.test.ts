@@ -11,7 +11,10 @@ import useMapTools, {
   createMapTools,
   LISTABLE_TOOL_CLASS,
   menuKeyboard,
+  ON_DEMAND_TOOL_CLASS,
   returnFocusOnCollapse,
+  revealOnOpen,
+  SHOWN_TOOL_CLASS,
   TOOL_CLASS,
 } from './useMapTools';
 
@@ -29,6 +32,8 @@ const geopf = vi.hoisted(() => {
       options: Record<string, unknown>;
       element: HTMLElement;
       listable: boolean;
+      /** geopf class name, as the real controls expose it (DEFAULT_TOOLS reads it). */
+      CLASSNAME = kind.charAt(0).toUpperCase() + kind.slice(1);
       listeners = new Map<string, (event: unknown) => void>();
       constructor(options: Record<string, unknown>) {
         this.options = options;
@@ -140,7 +145,39 @@ describe('createMapTools', () => {
     expect(EXCLUDED_TERRITORY_IDS).toEqual(['ATF', 'IDF']);
   });
 
-  it('nomme les fenêtres et le bouton « Mes outils », et marque les outils listables', () => {
+  it('place « Afficher tous les outils » en dernier dans la colonne de droite et cache les outils à la demande', () => {
+    const controls = createMapTools(geopf.tools as unknown as Tools);
+    const topRight = controls.filter(
+      (control) =>
+        (control as unknown as { options: { position?: string } }).options.position === 'top-right',
+    );
+    expect((topRight.at(-1) as unknown as { CLASSNAME: string } | undefined)?.CLASSNAME).toBe(
+      'ControlList',
+    );
+    const byKind = (kind: string) => geopf.created.find((c) => c.kind === kind)?.element;
+    for (const kind of ['measureLength', 'measureArea', 'drawing', 'route']) {
+      expect(byKind(kind)).not.toHaveClass(ON_DEMAND_TOOL_CLASS);
+    }
+    for (const kind of ['isocurve', 'elevationPath', 'mousePosition', 'reverseGeocode']) {
+      expect(byKind(kind)).toHaveClass(LISTABLE_TOOL_CLASS, ON_DEMAND_TOOL_CLASS);
+    }
+    expect(byKind('legends')).not.toHaveClass(ON_DEMAND_TOOL_CLASS);
+  });
+
+  it('révèle un outil à la demande quand son bouton passe à aria-pressed="true"', async () => {
+    const element = document.createElement('div');
+    element.innerHTML = '<button type="button" aria-pressed="false">Isochrone</button>';
+    const stop = revealOnOpen(element);
+    expect(element).not.toHaveClass(SHOWN_TOOL_CLASS);
+    element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(element).toHaveClass(SHOWN_TOOL_CLASS));
+    element.querySelector('button')?.setAttribute('aria-pressed', 'false');
+    await Promise.resolve();
+    expect(element).toHaveClass(SHOWN_TOOL_CLASS);
+    stop();
+  });
+
+  it('nomme les fenêtres et le bouton « Afficher tous les outils », et marque les outils listables', () => {
     createMapTools(geopf.tools as unknown as Tools);
     const controlList = geopf.created.find((c) => c.kind === 'controlList');
     expect(controlList?.element.querySelector('button')).toHaveAttribute(
