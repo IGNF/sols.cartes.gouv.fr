@@ -164,6 +164,10 @@ const switcherTitles = (page: import('playwright').Page) =>
 
 const CATALOGUE = 'Catalogue des données sols';
 const CARBONE_ENTRY = 'input[data-layer="stock_carbone_fao_fr_wmsv:WMS"]';
+/** Entry of the Loiret record (M-4: its GetMap answers 200 text/xml, the layer is reported unavailable). */
+const LOIRET_ENTRY = 'input[data-layer="rrp_dept_loiret_gpkg_11-09-2026_wmsv:WMS"]';
+const unavailableNotice = (page: import('playwright').Page) =>
+  page.getByRole('alert').filter({ hasText: 'Couche indisponible' });
 /** Opens the catalogue (geopf Catalog control, M9) and waits for its entries. */
 async function openCatalogue(page: import('playwright').Page) {
   await page.getByRole('button', { name: CATALOGUE, exact: true }).click();
@@ -258,9 +262,11 @@ const deepLinks: Array<
       ),
   ],
   [
+    // Not the preferred layer of its record: the record's entry must still be ticked.
     'lien l= WMS du RRP du Loiret (erreur serveur M-4)',
     '?l=rrp_loiret_gpkg_11-09-2026_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
     alertWith('Couche indisponible'),
+    'rrp_dept_loiret_gpkg_11-09-2026_wmsv:WMS',
   ],
   // Secondary alias: layer/type/url.
   [
@@ -283,11 +289,19 @@ for (const [label, query, assertion, entry] of deepLinks) {
   await page.waitForTimeout(4000);
   check(await assertion(page), label);
   if (entry) {
-    // The catalogue ticks the entry of a layer already on the map (own `name`/`service` of the layer).
+    // The entry of a record with any layer on the map is ticked; unticking it removes that layer.
     await openCatalogue(page);
+    const input = page.locator(`input[data-layer="${entry}"]`);
+    check(await input.isChecked(), `${label} : entrée cochée dans le catalogue`);
+    const before = (await switcherTitles(page)).length;
+    await input.focus();
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(800);
+    // The switcher keeps the base layer: one entry fewer, and no notice left.
     check(
-      await page.locator(`input[data-layer="${entry}"]`).isChecked(),
-      `${label} : entrée cochée dans le catalogue`,
+      (await switcherTitles(page)).length === before - 1 &&
+        (await unavailableNotice(page).count()) === 0,
+      `${label} : décocher l’entrée retire la couche du lien (et son avis éventuel)`,
     );
   }
   const { messages, notes } = consoleReport();
@@ -872,9 +886,14 @@ const TOOL_BUTTONS = [
           e.name.startsWith('Ajouter à la carte : ') &&
           e.thumbnail.startsWith('https://data.geopf.fr/annexes/gissol-osf/thumbnail/') &&
           e.record.startsWith('/rechercher-une-donnee/dataset/') &&
-          e.producer.startsWith('/rechercher-une-donnee/search?organization='),
+          e.producer === '/rechercher-une-donnee/search?organization=INRAE%20-%20Info%26Sols',
       ),
-    `catalogue : 7 données nommées, avec vignette, lien de la fiche et étiquette producteur vers notre catalogue (${entries.length})`,
+    `catalogue : 7 données nommées, avec vignette, lien de la fiche et étiquette producteur « organization=INRAE%20-%20Info%26Sols » (${entries.length}, ${entries[0]?.producer})`,
+  );
+  const producerText = (await page.locator('.catalog-layer-producer').first().innerText()).trim();
+  check(
+    producerText === 'INRAE - Info&Sols',
+    `catalogue : producteur affiché « INRAE - Info&Sols » (${producerText})`,
   );
   const axe = await new AxeBuilder({ page }).analyze();
   check(
@@ -889,11 +908,21 @@ const TOOL_BUTTONS = [
         : ''
     }`,
   );
+  const visibleEntries = () =>
+    page
+      .locator('[data-layeritem]')
+      .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  // The search reads the raw texts (not the escaped display strings): « Info&Sols » matches all.
+  await page.locator('#catalog-input-search-global').fill('Info&Sols');
+  await page.waitForTimeout(700);
+  const byProducer = await visibleEntries();
+  check(
+    byProducer === 7,
+    `catalogue : la recherche « Info&Sols » garde les 7 données (${byProducer})`,
+  );
   await page.locator('#catalog-input-search-global').fill('carbone');
   await page.waitForTimeout(700);
-  const visible = await page
-    .locator('[data-layeritem]')
-    .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
+  const visible = await visibleEntries();
   check(visible === 1, `catalogue : la recherche « carbone » ne laisse qu’une donnée (${visible})`);
   await page.locator(CARBONE_ENTRY).focus();
   await page.keyboard.press('Space');
@@ -926,6 +955,36 @@ const TOOL_BUTTONS = [
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `catalogue : console vide${notes} ${messages.join(' | ')}`);
   await context.close();
+}
+// A layer added from the catalogue whose service returns no image gets the same notice as a link.
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  await page.getByRole('button', { name: CATALOGUE, exact: true }).waitFor({ timeout: 30_000 });
+  await openCatalogue(page);
+  await page.locator(LOIRET_ENTRY).focus();
+  await page.keyboard.press('Space');
+  const noticed = await unavailableNotice(page)
+    .waitFor({ timeout: 30_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(
+    noticed && (await unavailableNotice(page).innerText()).includes('Loiret'),
+    'catalogue : une donnée ajoutée dont le service ne renvoie pas d’image est signalée (« Couche indisponible »)',
+  );
+  const before = (await switcherTitles(page)).length;
+  await page.locator(LOIRET_ENTRY).focus();
+  await page.keyboard.press('Space');
+  await page.waitForTimeout(800);
+  check(
+    (await unavailableNotice(page).count()) === 0 &&
+      (await switcherTitles(page)).length === before - 1,
+    'catalogue : décocher la donnée retire la couche et son avis',
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `catalogue (Loiret) : console vide${notes} ${messages.join(' | ')}`);
+  await page.close();
 }
 {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 } });

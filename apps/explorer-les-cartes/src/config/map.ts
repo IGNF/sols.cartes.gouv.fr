@@ -348,12 +348,13 @@ export const CATALOG_OPTIONS = {
   size: 'lg',
   tabHeightAuto: false,
   addToMap: false, // the store adds the layers (legend, retry, availability as for every sols layer)
-  auto: true, // ticks the entries of the layers present on the map (deep links, permalinks)
+  auto: false, // tick state kept by the app per dataset (src/map/catalogConfig.ts, syncCatalogTicks)
   optimisation: 'none',
   search: {
     display: true,
     label: 'Rechercher une donnée',
-    criteria: ['title', 'description', 'producer', 'name'],
+    // Raw title, abstract and producer (`search` in catalogConfig.ts), then the layer name.
+    criteria: ['search', 'name'],
   },
   categories: CATALOG_CATEGORIES,
 } satisfies CatalogOptions & ControlPlacement;
@@ -368,6 +369,16 @@ export const PERMALINK_PARAMS = {
 
 /** Value of `permalink` in the links this map emits (`no` in the catalogue's links, both ignored on reading). */
 export const PERMALINK_FLAG = 'yes';
+
+/** Notices of the map page about its layers and the catalogue. */
+export const MAP_NOTICES = {
+  unavailableTitle: 'Couche indisponible',
+  unavailable: (title: string) =>
+    `La Géoplateforme ne renvoie pas d’image pour la couche « ${title} » pour le moment : retirez-la depuis le catalogue de la carte ou réessayez plus tard.`,
+  catalogueUnavailableTitle: 'Catalogue indisponible',
+  catalogueUnavailable:
+    'Le catalogue des données sols n’a pas pu être chargé sur la carte. Toutes les données restent consultables ici :',
+} as const;
 
 /** Strings of the "Partager la carte" dialog. */
 export const SHARE_LABELS = {
@@ -473,5 +484,5 @@ export const SOLS_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.gisSol}" target="_bla
 /** An overlay is reported unavailable after this many tile errors without any loaded tile. */
 export const OVERLAY_UNAVAILABLE_AFTER_ERRORS = 3;
 
-/** Length of the abstract excerpt shown in the "Données sols" panel. */
+/** Length of the abstract excerpt shown in the list view (src/text/excerpt.ts). */
 export const ABSTRACT_EXCERPT_LENGTH = 180;

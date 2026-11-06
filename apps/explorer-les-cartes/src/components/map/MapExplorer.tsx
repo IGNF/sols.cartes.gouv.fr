@@ -5,14 +5,15 @@ import { useMapStore } from '../../store/useMapStore';
 import ListViewLink from '../list/ListViewLink';
 import BaseLayerPanel from './BaseLayerPanel';
 import DeepLinkNotice from './DeepLinkNotice';
+import MapNotices from './MapNotices';
 import MapView from './MapView';
 import PrintModal, { PrintButton } from './PrintModal';
 import ShareModal, { ShareButton } from './ShareModal';
 import './MapExplorer.css';
 
 /**
- * Map page body: a slim toolbar (panel toggle, share and print dialogs, link to the list view), deep-link
- * notices, then the side panel (base layers) docked left of the map. The sols datasets are added from the
+ * Map page body: a slim toolbar (panel toggle, share and print dialogs, link to the list view), the
+ * notices (deep links, unavailable layers, catalogue), then the side panel (base layers) docked left of the map. The sols datasets are added from the
  * catalogue widget on the map (M9) and listed in full in the list view. The panel width is bounded so
  * the map keeps most of the width on desktop; on small screens the map comes first and the panel below it.
  */
@@ -42,6 +43,7 @@ export default function MapExplorer() {
       <ShareModal />
       <PrintModal />
       <DeepLinkNotice />
+      <MapNotices />
       <div className="map-explorer__body">
         <div id={SIDE_PANEL_ID} hidden={!isPanelOpen} className="map-explorer__panel">
           <BaseLayerPanel />

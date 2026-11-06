@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { solsStyleUrl } from '../../config/urls';
 import { useDeepLinkLayer } from '../../hooks/useDeepLink';
 import { readDeepLinks, type DeepLinkRequest } from '../../map/deepLink';
-import { useMapStore } from '../../store/useMapStore';
 
 interface DeepLinkNoticeProps {
   /** Query string; defaults to the current location. */
@@ -30,10 +29,12 @@ interface DeepLinkLayerNoticeProps {
   request: DeepLinkRequest;
 }
 
-/** Follows one layer and reports its outcome. */
+/**
+ * Follows one layer and reports its outcome. A layer added but returning no image is reported by
+ * `MapNotices` (same notice whatever added the layer).
+ */
 export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
   const status = useDeepLinkLayer(request);
-  const unavailable = useMapStore((state) => state.unavailableOverlays);
   switch (status.state) {
     case 'checking':
       return (
@@ -42,18 +43,6 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
         </p>
       );
     case 'added':
-      if (unavailable.includes(status.key)) {
-        return (
-          <Alert
-            className={fr.cx('fr-mb-2w')}
-            severity="warning"
-            small
-            as="h2"
-            title="Couche indisponible"
-            description={`La couche « ${status.title} » a été ajoutée à la carte, mais la Géoplateforme ne renvoie pas d’image pour cette couche pour le moment.`}
-          />
-        );
-      }
       return (
         <p role="status" className={fr.cx('fr-sr-only')}>
           Couche « {status.title} » ajoutée à la carte.

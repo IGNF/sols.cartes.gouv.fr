@@ -1,5 +1,6 @@
 import { catalogueRecordPath } from '../config/urls';
-import type { SolsDataset, SolsService } from '../data/solsLayersSchema';
+import { solsLayerKey, type SolsDataset, type SolsService } from '../data/solsLayersSchema';
+import { escapeHtml } from '../text/escapeHtml';
 import { preferredLayer, toOverlayRef, type OverlayRef } from './overlays';
 
 /**
@@ -20,6 +21,8 @@ export function catalogServiceType(service: SolsService): 'WMS' | 'WMTS' | null 
 
 /** One layer of the configuration object the Catalog control reads (`configuration.data.layers[key]`). */
 export interface CatalogLayerConfig {
+  /** Raw title, abstract and producer: what the control's search matches (the display fields are escaped). */
+  search: string[];
   name: string;
   title: string;
   description: string;
@@ -43,7 +46,8 @@ export function catalogLayerKey(name: string, serviceType: 'WMS' | 'WMTS'): stri
  * Builds the Catalog configuration from the GIS Sol datasets: one entry per dataset, for its preferred
  * displayable layer (same choice as the deep links), with the record's title, abstract, producer,
  * thumbnail and the link to its page in our catalogue. Datasets without a drawable layer are left out
- * (they stay in the list view).
+ * (they stay in the list view). Display texts are HTML-escaped (the control builds its entries with
+ * `innerHTML`); the search reads the raw texts from `search` (CATALOG_OPTIONS.search.criteria).
  */
 export function buildCatalogData(datasets: readonly SolsDataset[]): CatalogData {
   const layers: Record<string, CatalogLayerConfig> = {};
@@ -53,15 +57,31 @@ export function buildCatalogData(datasets: readonly SolsDataset[]): CatalogData 
     if (!layer || !serviceType) continue;
     layers[catalogLayerKey(layer.name, serviceType)] = {
       name: layer.name,
-      title: dataset.title,
-      description: dataset.abstract,
-      producer: [dataset.organisation],
+      title: escapeHtml(dataset.title),
+      description: escapeHtml(dataset.abstract),
+      producer: [escapeHtml(dataset.organisation)],
+      search: [dataset.title, dataset.abstract, dataset.organisation],
       ...(dataset.thumbnail ? { thumbnail: dataset.thumbnail } : {}),
       serviceParams: { id: `OGC:${serviceType}` },
       metadata_urls: [catalogueRecordPath(dataset.id)],
     };
   }
   return { layers };
+}
+
+/** The dataset whose catalogue entry (preferred layer) a Catalog event (`name`, `service`) designates. */
+export function findCatalogDataset(
+  datasets: readonly SolsDataset[],
+  name: string,
+  service: string,
+): SolsDataset | null {
+  for (const dataset of datasets) {
+    const layer = preferredLayer(dataset);
+    if (!layer || layer.name !== name) continue;
+    if (catalogServiceType(layer.service) !== service.toUpperCase()) continue;
+    return dataset;
+  }
+  return null;
 }
 
 /**
@@ -73,11 +93,40 @@ export function findCatalogOverlay(
   name: string,
   service: string,
 ): OverlayRef | null {
-  for (const dataset of datasets) {
-    const layer = preferredLayer(dataset);
-    if (!layer || layer.name !== name) continue;
-    if (catalogServiceType(layer.service) !== service.toUpperCase()) continue;
-    return toOverlayRef(layer, dataset.title);
-  }
-  return null;
+  const dataset = findCatalogDataset(datasets, name, service);
+  const layer = dataset ? preferredLayer(dataset) : null;
+  return dataset && layer ? toOverlayRef(layer, dataset.title) : null;
+}
+
+/** Keys of every layer of a dataset (store keys of its overlays). */
+export function datasetLayerKeys(dataset: SolsDataset): string[] {
+  return dataset.layers.map(solsLayerKey);
+}
+
+/**
+ * Ticks the catalogue entries of the datasets with any layer on the map (a deep link may have added a
+ * layer other than the preferred one) and unticks the others. The control only knows the entry's own
+ * layer, hence this sync on the store. Returns the number of entries changed.
+ */
+export function syncCatalogTicks(
+  root: HTMLElement,
+  overlays: readonly Pick<OverlayRef, 'key'>[],
+  datasets: readonly SolsDataset[],
+): number {
+  let changed = 0;
+  const onMap = new Set(overlays.map((overlay) => overlay.key));
+  root.querySelectorAll<HTMLInputElement>('input[data-layer]').forEach((input) => {
+    // `data-layer` is `<name>:<service>` (the control splits on the last colon: names may hold one).
+    const value = input.getAttribute('data-layer') ?? '';
+    const at = value.lastIndexOf(':');
+    const dataset =
+      at < 0 ? null : findCatalogDataset(datasets, value.slice(0, at), value.slice(at + 1));
+    if (!dataset) return;
+    const checked = datasetLayerKeys(dataset).some((key) => onMap.has(key));
+    if (input.checked !== checked) {
+      input.checked = checked;
+      changed += 1;
+    }
+  });
+  return changed;
 }
