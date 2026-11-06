@@ -891,7 +891,10 @@ Demande du propriétaire (fin de v1.1) ; plan `doc/plans/M16.md`.
   `gpfThumbnailUrl` (`src/config/urls.ts`), champ `thumbnail` de `BASE_LAYER_CANDIDATES`, repris par `availableBaseLayers` puis
   `buildCatalogData` (seulement si `isTrustedImageUrl`). **Repli sans image** : `MapView.css` masque `.catalog-thumbnail-container`
   sans `<img>` (plus de vignette vide), et `dropBrokenThumbnails` (`src/map/catalogThumbnails.ts`, évènement `error` capturé sur le
-  widget : geopf crée les `<img>` par `innerHTML`) retire une image qui ne se charge pas (plus d'image cassée). Les sept fiches
+  widget : geopf crée les `<img>` par `innerHTML`) retire une image qui ne se charge pas (plus d'image cassée) **ou qui n'est toujours pas chargée au bout de
+  `THUMBNAIL_LOAD_TIMEOUT_MS` (10 s)** : une requête de vignette CSW bloquée laissait une case vide (revue M16). Les vignettes se
+  chargent même panneau fermé ou onglet masqué (mesuré : 12/12 en moins de 6 s au bureau), le délai part donc de leur insertion ;
+  `check:map` retient une vignette CSW et vérifie qu'elle est retirée sans case vide. Les sept fiches
   « Données sols » gardent leurs vignettes CSW (`check:map`).
 - **Catalogue geonetwork** (`/rechercher-une-donnee/`, vérifié sur la page de recherche et la fiche des stocks de carbone) : pas de
   vignette vide équivalente. L'aperçu carte d'une fiche n'a pas de choix de fond : un seul fond XYZ configuré (`[[map_layer]]` de
