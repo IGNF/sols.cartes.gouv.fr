@@ -600,7 +600,8 @@ dans `src/composables/controls.js`) ; plan `doc/plans/M9.md`.
 'name'] }` (sous-chaîne normalisée, sans accents, sur les textes bruts du champ `search`, §11.3 point 14), `categories: [{ title: 'Données sols', id: 'sols',
 producer: true, order: true, filter: null }]` (le type `Categories` déclare `field`, `value`, `clusterOptions` obligatoires : cast).
 Bouton « Catalogue de cartes » renommé « Catalogue des données sols » (`labelToggleButton`), bouton primaire (`.map-catalog`, comme
-l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogStyles.ts`).
+l'entrée carto ; **M12** : l'icône geopf est un `::after` masqué dont le `background-color` est la couleur de l'icône, bleu France
+comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'icône est invisible, surtout bouton pressé). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogStyles.ts`).
 
 ### 11.3 Contournements amont (à ajouter au ticket du §5.7)
 
@@ -616,8 +617,20 @@ l'entrée carto). Chargé à la demande (`loadCatalog`, feuille `geopfCatalogSty
     qu'à la construction du panneau), `aria-label` « Catégories du catalogue », `<h5>` vide retiré, `aria-label` « Ajouter à la carte :
     <titre> » sur chaque case. axe : 0 violation catalogue ouvert (`check:map`).
 12. Le `<label for>` vide recouvre la case : au clic souris c'est le label qui reçoit l'évènement (il coche la case) ; au clavier, Espace.
-13. Sous 576px geopf garde `min-width: 450px` sur le panneau (`DSFRcatalogStyle.css`) : `MapView.css` force `100vw` (le panneau est ancré
-    à droite de l'écran, `right: -4px`).
+13. Sous 576px geopf garde `min-width: 450px` sur le panneau (`DSFRcatalogStyle.css`) et l'ancre à droite de son bouton (`right: -4px`).
+    Jusqu'à M12 `MapView.css` forçait `100vw` (panneau plein écran, qui recouvrait la colonne de boutons : gestionnaire de couches
+    inaccessible sans fermer le panneau, rapport e2e v1 partie 2). **Depuis M12** : sous 48em le panneau laisse la colonne visible,
+    `width: calc(100vw - 4.25rem)` (colonne 1w + 5w + 1w, marge gauche d'un demi-w) et `right: calc(100% + 0.5rem)` (1w à gauche du
+    bouton) ; le gestionnaire et « Mes outils » restent atteignables catalogue ouvert, le bouton du catalogue (`aria-pressed`) et le
+    « Fermer le panneau » de l'en-tête le ferment. Aucune option du widget ne couvre la hauteur ni le placement du panneau (`size`
+    n'agit que sur la largeur, `tabHeightAuto` retire une classe `gpf-catalog-tabs-fixe` qu'aucune feuille ne définit).
+15. **Hauteur du panneau (M12)** : les onglets DSFR se dimensionnent sur leur contenu (`.fr-tabs { height: var(--tabs-height) }`, posé par
+    le script DSFR) et le `<dialog>` geopf n'a qu'un `max-height: 500px` : filtré sur une fiche (« carbone »), le panneau tombait à
+    ≈ 210 px et coupait la fiche (D-carto-5, 1280×900). `MapView.css` : `.map-view { container-type: size }` puis sur le panneau ouvert
+    `min-height: 20rem`, `max-height: min(32rem, calc(100cqh - 1rem))` (bornes sur l'échelle DSFR, 40w/64w, dans la carte quelle que
+    soit sa hauteur), `.gpf-panel__body { flex: 1 1 auto; min-height: 0; overflow-y: auto }` et `.fr-tabs { height: auto }` (les
+    onglets suivent leur contenu, le corps défile). `check:map` : panneau filtré ≥ 320 px avec la fiche entière ; à 375 px, gestionnaire
+    atteignable (`elementFromPoint`) et ouvrable par-dessus le catalogue.
 14. `CatalogDOM.tmplElement` insère `title`, `description` et `producer` en **`innerHTML`** (et `title`/producteur dans des attributs
     `title="…"`) : échappés (`src/text/escapeHtml.ts`) dans `buildCatalogData`. Deux fuites à contourner : la **recherche** du
     contrôle lit `layer[critère]` sur les objets de configuration (chaînes échappées : « Info&Sols » ne trouverait pas
