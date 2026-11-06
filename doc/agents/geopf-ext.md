@@ -144,7 +144,7 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 
 | Outil                       | Classe                                                  | Options (vérifiées dans les `.d.ts` / sources)                                                                                                                                                    |
 | --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Zoom                        | `GeoportalZoom` (étend `ol/control/Zoom`)               | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`)                                                                                                          |
+| Zoom                        | `GeoportalZoom` (étend `ol/control/Zoom`)               | `position: 'top-left'` (M16 : `'bottom-right'`, sous le plein écran, §12.7) ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`)                                                                                                          |
 | Plein écran                 | `GeoportalFullScreen` (étend `ol/control/FullScreen`)   | `position`, `tipLabel`                                                                                                                                                                            |
 | Attributions (retirées M13) | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
 | Échelle                     | `ol/control/ScaleLine`                                  | geopf-ext n'en fournit pas ; `units: 'metric'`                                                                                                                                                    |
@@ -817,4 +817,51 @@ Rapport `doc/e2e/REPORT.md` « Passe 4 » (PR #76) ; plan `doc/plans/M14.md`.
 | Infobulles | `getComputedStyle(bouton, '::before').content` = `"<nom>"` au survol bouton relâché ; `display: none` bouton pressé d'un widget à panneau (M14) |
 | Fonds de cartes juste après un changement d'onglet | attendre `toBeVisible()` sur la case avant `focus()` (panneau DSFR caché une image, §12.4) |
 | Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
-| Plein écran, échelle | `#position-container-bottom-right [id^="GPfullScreen-"] button` (« Plein écran ») ; `.ol-scale-line` en bas à droite, à gauche du plein écran |
+| Plein écran, zoom, échelle (M16) | `#position-container-bottom-right` contient, dans l'ordre, `[id^="GPfullScreen-"]` (bouton « Plein écran ») puis `[id^="GPzoom-"]` (`#GPzoomIn` « Zoomer », `#GPzoomOut` « Dézoomer ») ; `.ol-scale-line` à leur gauche ; conteneurs `[id^="position-container-"]` dans l'ordre top-left, top-right, bottom-left, bottom-right (ordre du clavier) |
+| Vignettes du catalogue (M16) | `[data-layeritem] .catalog-thumbnail-container img` ; fonds : `src` sous `https://data.geopf.fr/annexes/ressources/metadata/thumbnail/` ; entrée sans image : conteneur masqué (`display: none`) |
+
+### 12.7 Vignettes des fonds de cartes, zoom sous le plein écran (M16)
+
+Demande du propriétaire (fin de v1.1) ; plan `doc/plans/M16.md`.
+
+- **Vignettes vides** : les entrées « Fonds de cartes » n'avaient pas de `thumbnail` ; avec `layerThumbnail: true`, `Catalog.js`
+  (`initConfigData`) met `"default"`, `CatalogDOM.tmplThumbnail` ne rend alors aucune `<img>` et `DSFRcatalogStyle.css` peint une
+  vignette d'attente vide (fond SVG de `.catalog-thumbnail-default`). cartes.gouv.fr tire les vignettes de sa configuration de
+  couches (`IGNF/cartes.gouv.fr-entree-carto`, `public/data/entreeCarto.json`, champ `thumbnail`, clé `<nom>$GEOPORTAIL:OGC:WMTS`),
+  fichiers des annexes GPF `annexes/ressources/metadata/thumbnail/` ; geopf-ext n'en dérive aucune. Relevé et vérifié en `curl`
+  le 2026-11-06 (200 `image/jpeg`) :
+
+  | Fond | Couche | Vignette |
+  |---|---|---|
+  | Plan IGN | `GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2` | `vignette-plan-ign.jpg` |
+  | Photographies aériennes | `ORTHOIMAGERY.ORTHOPHOTOS` | `vignette-bd-ortho.jpg` |
+  | Cartes IGN (non publiée) | `GEOGRAPHICALGRIDSYSTEMS.MAPS` | `vignette-scan-25.jpg` |
+  | Relief du terrain | `ELEVATION.SLOPES` | `vignette-bd-alti.jpg` |
+  | Carte de l'état-major | `GEOGRAPHICALGRIDSYSTEMS.ETATMAJOR40` | `vignette-scan-EM-40k.jpg` |
+  | Photographies aériennes 1950-1965 | `ORTHOIMAGERY.ORTHOPHOTOS.1950-1965` | `vignette-bd-orthohisto.jpg` |
+
+  `gpfThumbnailUrl` (`src/config/urls.ts`), champ `thumbnail` de `BASE_LAYER_CANDIDATES`, repris par `availableBaseLayers` puis
+  `buildCatalogData` (seulement si `isTrustedImageUrl`). **Repli sans image** : `MapView.css` masque `.catalog-thumbnail-container`
+  sans `<img>` (plus de vignette vide), et `dropBrokenThumbnails` (`src/map/catalogThumbnails.ts`, évènement `error` capturé sur le
+  widget : geopf crée les `<img>` par `innerHTML`) retire une image qui ne se charge pas (plus d'image cassée). Les sept fiches
+  « Données sols » gardent leurs vignettes CSW (`check:map`).
+- **Catalogue geonetwork** (`/rechercher-une-donnee/`, vérifié sur la page de recherche et la fiche des stocks de carbone) : pas de
+  vignette vide équivalente. L'aperçu carte d'une fiche n'a pas de choix de fond : un seul fond XYZ configuré (`[[map_layer]]` de
+  `apps/rechercher-une-donnee/config/default.toml`, Plan IGN en tuiles WMTS), sans vignette ; les cartes de résultats montrent les
+  vignettes CSW (toutes chargées). Rien à signaler au catalogue.
+- **Zoom sous le plein écran** : `MAP_TOOLS_OPTIONS.zoom.position: 'bottom-right'`, comme cartes.gouv.fr (`zoomOptions` et
+  `fullscreenOptions` à `bottom-right`, plein écran déclaré avant le zoom dans `Controls.vue`). `createMapControls` ajoute le plein
+  écran puis le zoom : `GeoportalZoom` cible son conteneur et s'y ajoute à la suite (`appendChild`), sous le plein écran (le
+  `PositionFactory` de geopf, lui, *préfixe* dans les colonnes du bas). Aucune règle CSS nouvelle : l'échelle (`right: 4rem`,
+  `bottom: 0.5rem`) reste à gauche de la colonne, à côté de « Dézoomer ». Mesuré à 375, 768 et 1280 px : « Dézoomer » à 6 px du bas,
+  plein écran 4 px au-dessus de « Zoomer », échelle 8 px à gauche.
+- **Ordre du clavier** : `GeoportalZoom` et `GeoportalFullScreen` créent chacun leur propre conteneur de position s'il manque ; créé
+  en premier, `position-container-bottom-right` passait avant les autres dans le DOM (sur `main` déjà : haut gauche, bas droite, haut
+  droite, bas gauche). `ensurePositionContainers` (`src/map/positionContainers.ts`, appelé avant les premiers contrôles) crée les
+  quatre conteneurs dans l'ordre de lecture (mêmes id et classes que geopf, qui les réutilise). Tab depuis la carte : outils du haut
+  à gauche, du haut à droite, du bas à gauche, puis « Plein écran », « Zoomer », « Dézoomer », puis la recherche (chargée après).
+- `check:map` : pile plein écran puis zoom dans `#position-container-bottom-right`, alignés, « Dézoomer » à ≤ 16 px du bas, échelle
+  à 4–24 px à gauche, conteneurs dans l'ordre de lecture, la recherche ne recouvre pas le zoom (375, 768, 1280 px) ; vignettes GPF des
+  fonds et CSW des sept données sols chargées, aucune vignette vide, image forcée en échec retirée (1280 et 375 px), console vide.
+  Captures `doc/screenshots/M16/`.
+
