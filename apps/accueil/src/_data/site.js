@@ -77,6 +77,8 @@ export default {
         href: item.hrefTemplate ?? item.href,
         icon: item.icon,
         external: Boolean(item.external),
+        /** External page that exists only in French (no `hrefTemplate`): marked hreflang="fr" elsewhere. */
+        frenchOnly: Boolean(item.external) && !item.hrefTemplate,
       })),
     })),
   },

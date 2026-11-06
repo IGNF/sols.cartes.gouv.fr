@@ -73,18 +73,22 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
         expect(header).toContain(`>${html(t.header.tools[tool.key].items[entry.key].label)}`);
       }
     }
-    // « Aide » links to the cartes.gouv.fr help in the page language, opened in a new window,
-    // with the DSFR icon before and the external-link icon after (sols-tool-menu__external).
-    for (const path of [
-      `https://cartes.gouv.fr/aide/${locale}/`,
-      `https://cartes.gouv.fr/aide/${locale}/nous-ecrire/`,
+    // « Centre d'aide » follows the page language; « Nous contacter » exists only in French
+    // (cartes.gouv.fr/aide/en/nous-ecrire/ is a 404), hence hreflang="fr" on English pages.
+    // Both open in a new window, with the DSFR icon before and the external-link icon after.
+    const contactHreflang =
+      locale === site.defaultLanguage ? '' : ` hreflang="${site.defaultLanguage}"`;
+    for (const [path, hreflang] of [
+      [`https://cartes.gouv.fr/aide/${locale}/`, ''],
+      ['https://cartes.gouv.fr/aide/fr/nous-ecrire/', contactHreflang],
     ]) {
       expect(header).toMatch(
         new RegExp(
-          `class="fr-nav__link fr-link--icon-left fr-icon-[a-z-]+ sols-tool-menu__external" href="${escape(path)}" target="_blank" rel="noopener external"`,
+          `class="fr-nav__link fr-link--icon-left fr-icon-[a-z-]+ sols-tool-menu__external" href="${escape(path)}"${escape(hreflang)} target="_blank" rel="noopener external"`,
         ),
       );
     }
+    expect(header).not.toContain('/aide/en/nous-ecrire/');
     expect(header).not.toContain(`href="/${locale}${site.sections.aide}`);
     for (const path of site.crossBrick) expect(header).toContain(`href="${path}"`);
   });
@@ -235,7 +239,7 @@ describe.each(LOCALES)('aide /%s/', (locale) => {
     expect(html.match(/class="fr-accordion"/g)).toHaveLength(i18n[locale].pages.aide.faq.length);
     expect(html).toContain(`<h2 id="contact"`);
     expect(html).toContain(
-      `href="https://cartes.gouv.fr/aide/${locale}/nous-ecrire/" target="_blank"`,
+      `href="https://cartes.gouv.fr/aide/fr/nous-ecrire/"${locale === site.defaultLanguage ? '' : ` hreflang="${site.defaultLanguage}"`} target="_blank"`,
     );
   });
 });

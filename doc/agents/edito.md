@@ -204,7 +204,8 @@ renvoi (le meta refresh perd l'ancre) : le balisage partagé met alors la langue
 ### Ce qui change pour catalogue et carto (v1 → v1.1, E10)
 
 - **Menu « Aide »** : liens externes vers l'aide de cartes.gouv.fr (`brand.json` : `href` en français, `hrefTemplate`
-  avec `{lang}` pour une brique multilingue), nouvelle fenêtre (`target="_blank" rel="noopener external"`, `title`
+  avec `{lang}` pour une brique multilingue, sur « Centre d'aide » seulement : le formulaire « Nous écrire » n'existe
+  qu'en français, `/aide/en/nous-ecrire/` répond 404 ; sur une page anglaise ce lien porte `hreflang="fr"`), nouvelle fenêtre (`target="_blank" rel="noopener external"`, `title`
   « … - nouvelle fenêtre »), icône DSFR avant (`fr-link--icon-left` + `icon` de `brand.json` : `fr-icon-question-mark`,
   `fr-icon-mail-line`) et icône « lien externe » après (`.sols-tool-menu__external::after`, icône du cœur DSFR
   `icons/system/external-link-line.svg`), comme sur cartes.gouv.fr. Les entrées « Services » gardent
