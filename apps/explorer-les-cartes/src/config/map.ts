@@ -87,9 +87,6 @@ export const GPF_REQUEST_TIMEOUT_MS = 3_000;
 export const GPF_REQUEST_RETRIES = 4;
 export const GPF_REQUEST_RETRY_DELAY_MS = 300;
 
-/** DSFR `md` breakpoint: below it the side panel starts closed so the map stays above the fold. */
-export const SIDE_PANEL_OPEN_MEDIA_QUERY = '(min-width: 48em)';
-
 /** Initial view: metropolitan France, Web Mercator. */
 export const INITIAL_VIEW = {
   centerLonLat: [2.5, 46.6],
@@ -160,6 +157,17 @@ const TOOL_LAYERS = {
 export const NAVIGATION_RESOURCE = 'bdtopo-pgr';
 
 /** Built-in territories of the Territories control left out, as in cartes.gouv.fr (TAAF, Paris petite couronne). */
+/**
+ * Tools whose button is on the map from the start (v1.1, as on cartes.gouv.fr); the other listable tools
+ * get their button once chosen in « Afficher tous les outils » (src/hooks/useMapTools.ts).
+ */
+export const DEFAULT_TOOLS: readonly string[] = [
+  'MeasureLength',
+  'MeasureArea',
+  'Drawing',
+  'Route',
+];
+
 export const EXCLUDED_TERRITORY_IDS: readonly string[] = ['ATF', 'IDF'];
 
 /**
@@ -334,15 +342,33 @@ export const MAP_TOOLS_OPTIONS = {
  * `Categories` type declares `field`, `value` and `clusterOptions` as required although a category with
  * `filter: null` needs none of them (upstream typing gap): the list is cast.
  */
+/** Field of the catalogue entries that tells the category they belong to (src/map/catalogConfig.ts). */
+export const CATALOG_KIND_FIELD = 'kind';
+export const CATALOG_KINDS = { sols: 'sols', baseLayer: 'fond' } as const;
+export type CatalogKind = (typeof CATALOG_KINDS)[keyof typeof CATALOG_KINDS];
+
 export const CATALOG_CATEGORIES = [
-  { title: 'Données sols', id: 'sols', producer: true, order: true, filter: null },
+  {
+    title: 'Données sols',
+    id: 'sols',
+    producer: true,
+    order: true,
+    filter: { field: CATALOG_KIND_FIELD, value: CATALOG_KINDS.sols },
+  },
+  {
+    title: 'Fonds de cartes',
+    id: 'fonds',
+    producer: false,
+    order: false,
+    filter: { field: CATALOG_KIND_FIELD, value: CATALOG_KINDS.baseLayer },
+  },
 ] as unknown as NonNullable<CatalogOptions['categories']>;
 
 export const CATALOG_OPTIONS = {
   position: 'top-right',
   gutter: true,
   collapsed: true,
-  titlePrimary: 'Catalogue des données sols',
+  titlePrimary: 'Catalogue de cartes',
   layerLabel: 'title',
   layerThumbnail: true,
   size: 'lg',
@@ -380,22 +406,6 @@ export const MAP_NOTICES = {
     'Le catalogue des données sols n’a pas pu être chargé sur la carte. Toutes les données restent consultables ici :',
 } as const;
 
-/** Strings of the "Partager la carte" dialog. */
-export const SHARE_LABELS = {
-  button: 'Partager',
-  title: 'Partager la carte',
-  linkLabel: 'Lien permanent vers la carte',
-  linkHint:
-    'Toute personne ayant ce lien retrouve la même vue, le même fond de carte et les mêmes données sols.',
-  copy: 'Copier le lien',
-  copied: 'Lien copié dans le presse-papiers.',
-  copyFailed: 'La copie automatique a échoué : sélectionnez le lien puis copiez-le.',
-  mail: 'Envoyer par courriel',
-  mailSubject: 'Carte à consulter sur sols.cartes.gouv.fr',
-  mailBody: 'Bonjour,\nJe vous invite à consulter cette carte :',
-  limits: 'Les données importées et les annotations ne font pas partie du lien.',
-} as const;
-
 /** Strings of the "Imprimer la carte" dialog and print sheet. */
 export const PRINT_LABELS = {
   button: 'Imprimer',
@@ -425,7 +435,7 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
   // Tools (M8)
   GPlegendsPanel: 'Légendes',
   GPterritoriesPanel: 'Sélectionner un territoire',
-  GPcontrolListPanel: 'Mes outils',
+  GPcontrolListPanel: 'Tous les outils',
   GPmousePositionPanel: 'Coordonnées du curseur',
   GPelevationPathPanel: 'Profil altimétrique',
   GProutePanel: 'Itinéraire',
@@ -441,7 +451,7 @@ export const GEOPF_DIALOG_LABELS: Readonly<Record<string, string>> = {
   GPimportMapBoxPanel: 'Style de la couche importée',
   GPgetFeatureInfoPanel: 'Informations sur les couches',
   GPlocationAutoCompleteList: 'Suggestions de lieux',
-  GPcatalogPanel: 'Catalogue des données sols',
+  GPcatalogPanel: 'Catalogue de cartes',
   // Sub-dialog of the Territories panel (fixed id, no uid).
   'gpf-territories-views-container-id': 'Vues des territoires',
 };
@@ -452,6 +462,8 @@ export const TOOL_BUTTON_LABELS = {
   removeTerritory: 'Retirer le territoire',
   /** Checkbox of a catalogue entry (its visible label is not associated with the input). */
   addToMap: 'Ajouter à la carte',
+  /** Checkbox of a « Fonds de cartes » entry (one base layer at a time). */
+  showBaseLayer: 'Afficher le fond de carte',
   /** Name of the catalogue's category tab list (rendered with `aria-label="presentation"`). */
   catalogCategories: 'Catégories du catalogue',
 } as const;
@@ -465,12 +477,9 @@ export const CONTROL_LABELS = {
   attribution: 'Sources des données',
   rotate: 'Réinitialiser l’orientation',
   searchInput: 'Rechercher un lieu ou une adresse',
-  controlList: 'Mes outils',
-  catalog: 'Catalogue des données sols',
+  controlList: 'Afficher tous les outils',
+  catalog: 'Catalogue de cartes',
 } as const;
-
-/** Id of the side panel (target of the toggle button). */
-export const SIDE_PANEL_ID = 'panneau-lateral';
 
 /**
  * Display preference for "Ajouter à la carte": WMTS first (EPSG:2154 layers are reprojected after

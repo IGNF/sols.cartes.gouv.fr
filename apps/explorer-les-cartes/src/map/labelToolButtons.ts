@@ -21,7 +21,7 @@ export function fixToolButtons(root: HTMLElement): number {
           ?.textContent?.trim() ?? '';
       input.setAttribute(
         'aria-label',
-        `${TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
+        `${input.name.endsWith('-fonds') ? TOOL_BUTTON_LABELS.showBaseLayer : TOOL_BUTTON_LABELS.addToMap}${title ? ` : ${title}` : ''}`,
       );
       fixed += 1;
     });

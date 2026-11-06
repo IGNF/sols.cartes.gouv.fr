@@ -3,6 +3,7 @@ import type OlMap from 'ol/Map';
 import { useEffect } from 'react';
 import {
   CONTROL_LABELS,
+  DEFAULT_TOOLS,
   EXCLUDED_TERRITORY_IDS,
   MAP_TOOLS_OPTIONS,
   TOOL_PROJECTIONS,
@@ -20,6 +21,26 @@ interface CustomEventSource {
 /** CSS hooks on the tool widgets (layout rules in MapView.css). */
 export const TOOL_CLASS = 'map-tool';
 export const LISTABLE_TOOL_CLASS = 'map-tool--listable';
+/** Listable tool that is not in DEFAULT_TOOLS: its button is hidden until the tool is chosen in the list. */
+export const ON_DEMAND_TOOL_CLASS = 'map-tool--on-demand';
+/** On-demand tool chosen once in « Afficher tous les outils »: its button stays on the map. */
+export const SHOWN_TOOL_CLASS = 'map-tool--shown';
+
+/**
+ * An on-demand tool shows its button once it is opened (the list entry clicks the tool's own button,
+ * which turns `aria-pressed` on). Returns a function to stop observing.
+ */
+export function revealOnOpen(element: HTMLElement): () => void {
+  const button = element.querySelector('button');
+  if (!button) return () => undefined;
+  const reveal = () => {
+    if (button.getAttribute('aria-pressed') === 'true') element.classList.add(SHOWN_TOOL_CLASS);
+  };
+  reveal();
+  const observer = new MutationObserver(reveal);
+  observer.observe(button, { attributes: true, attributeFilter: ['aria-pressed'] });
+  return () => observer.disconnect();
+}
 
 /** Entries of the « Mes outils » list (upstream `li[role=button]`, made `menuitem` by fixToolButtons). */
 const MENU_ITEMS =
@@ -98,11 +119,12 @@ export function menuKeyboard(controlList: object, element: HTMLElement): void {
 }
 
 /**
- * Instantiates the tool set of the cartes.gouv.fr map viewer (doc/agents/geopf-ext.md §10), in the order
- * the position containers show them: top-left after the zoom (import, feature info); top-right after the
- * layer switcher ("Mes outils" list, then the listable tools); bottom-left (legends, territories, overview
- * map; geopf prepends bottom widgets, so the last one added is on top). Dialogs and the list button are
- * named before the controls reach the map.
+ * Instantiates the tool set of the cartes.gouv.fr map viewer (doc/agents/geopf-ext.md §10 and §12), in
+ * the order the position containers show them: top-left after the zoom (import, feature info); top-right
+ * after the layer switcher (the default tools, the on-demand ones hidden until chosen, then « Afficher
+ * tous les outils » last); bottom-left (legends, territories, overview map; geopf prepends bottom
+ * widgets, so the last one added is on top). Dialogs and the list button are named before the controls
+ * reach the map.
  */
 export function createMapTools(tools: MapToolsModule): Control[] {
   const options = MAP_TOOLS_OPTIONS;
@@ -117,7 +139,6 @@ export function createMapTools(tools: MapToolsModule): Control[] {
   const controls: Control[] = [
     new tools.LayerImport({ ...options.layerImport }),
     new tools.GetFeatureInfo({ ...options.getFeatureInfo }),
-    controlList,
     new tools.MeasureLength({ ...options.measureLength }),
     new tools.MeasureArea({ ...options.measureArea }),
     new tools.MeasureAzimuth({ ...options.measureAzimuth }),
@@ -127,6 +148,7 @@ export function createMapTools(tools: MapToolsModule): Control[] {
     new tools.Isocurve({ ...options.isocurve }),
     new tools.ReverseGeocode({ ...options.reverseGeocode }),
     new tools.Drawing({ ...options.drawing }),
+    controlList,
     new tools.GeoportalOverviewMap({ ...options.overviewMap }),
     new tools.Territories({ ...options.territories, territories }),
     new tools.Legends({ ...options.legends }),
@@ -136,7 +158,11 @@ export function createMapTools(tools: MapToolsModule): Control[] {
     labelGeopfDialogs(element);
     labelDialogsOnInit(control, labelGeopfDialogs);
     element.classList.add(TOOL_CLASS);
-    if ((control as { listable?: boolean }).listable) element.classList.add(LISTABLE_TOOL_CLASS);
+    const { listable, CLASSNAME } = control as { listable?: boolean; CLASSNAME?: string };
+    if (listable) element.classList.add(LISTABLE_TOOL_CLASS);
+    if (listable && !DEFAULT_TOOLS.includes(CLASSNAME ?? '')) {
+      element.classList.add(ON_DEMAND_TOOL_CLASS);
+    }
   }
   return controls;
 }
@@ -152,11 +178,16 @@ export default function useMapTools(map: OlMap | null): void {
     let active = true;
     let controls: Control[] = [];
     let stopWatching: (() => void) | undefined;
+    let stopRevealing: Array<() => void> = [];
     Promise.all([loadMapTools(), ...TOOL_PROJECTIONS.map((name) => loadCrs(name))])
       .then(([tools]) => {
         if (!active) return;
         controls = createMapTools(tools);
         controls.forEach((control) => map.addControl(control));
+        stopRevealing = controls
+          .map((control) => controlElement(control))
+          .filter((element) => element.classList.contains(ON_DEMAND_TOOL_CLASS))
+          .map((element) => revealOnOpen(element));
         // Legend entries follow the map layers; territory entries appear when their view opens.
         const overlays = map.getOverlayContainerStopEvent();
         if (overlays) stopWatching = watchToolButtons(overlays);
@@ -167,6 +198,7 @@ export default function useMapTools(map: OlMap | null): void {
     return () => {
       active = false;
       stopWatching?.();
+      stopRevealing.forEach((stop) => stop());
       controls.forEach((control) => map.removeControl(control));
     };
   }, [map]);
