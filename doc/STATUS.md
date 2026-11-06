@@ -53,4 +53,4 @@
 | X16  | root      | done               | #63      | v1 report (doc/v1/REPORT.md) and status at the session cut.                                                                                    |
 | X17  | root      | done               | #64      | Status after M9 and M11 merged; report §5 refreshed.                                                                                           |
 | M12  | carto     | done               | #66      | Catalogue panel bounded height (container query) and mobile placement; catalogue button icon contrast.                                         |
-| X18  | root      | done               |          | v1 closing update of STATUS and REPORT.                                                                                                        |
+| X18  | root      | done               | #67      | v1 closing update of STATUS and REPORT.                                                                                                        |
