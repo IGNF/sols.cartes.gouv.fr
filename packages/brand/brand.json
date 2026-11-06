@@ -50,7 +50,6 @@
           {
             "label": "Nous contacter",
             "href": "https://cartes.gouv.fr/aide/fr/nous-ecrire/",
-            "hrefTemplate": "https://cartes.gouv.fr/aide/{lang}/nous-ecrire/",
             "icon": "fr-icon-mail-line",
             "external": true
           }

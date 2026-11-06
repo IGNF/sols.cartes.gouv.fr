@@ -115,7 +115,7 @@ export default {
       ],
       contactTitle: 'Nous contacter',
       contactText:
-        'L’aide et le formulaire de contact sont communs à cartes.gouv.fr : écrivez-nous depuis le formulaire « Nous écrire », en précisant que votre question porte sur l’Observatoire des sols.',
+        'L’aide et le formulaire de contact sont communs à cartes.gouv.fr : écrivez-nous depuis le formulaire « Nous écrire », en précisant que votre question porte sur l’Observatoire des sols de France.',
       contactButton: 'Nous écrire sur cartes.gouv.fr',
       helpButton: 'Centre d’aide de cartes.gouv.fr',
     },
