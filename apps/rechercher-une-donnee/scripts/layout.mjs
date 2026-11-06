@@ -120,8 +120,28 @@ export function buildLayout(markdown, { baseHref }) {
   return blocks
 }
 
+/**
+ * Cross-check of the injected header with packages/brand/brand.json: badge label, colour and icon
+ * (`badges.catalogue`, `badgeStyles.catalogue`) and external help links (new window, rel external).
+ */
+export function checkHeaderAgainstBrand(header, brand) {
+  const problems = []
+  const style = brand.badgeStyles?.catalogue
+  const badge = `<span class="fr-badge fr-badge--sm fr-badge--${style?.color} fr-badge--icon-left ${style?.icon}">${brand.badges?.catalogue}</span>`
+  if (!header.includes(badge)) problems.push(`badge: expected ${badge}`)
+  for (const item of brand.header?.tools?.help?.items ?? []) {
+    if (!item.external) continue
+    const link = new RegExp(`<a class="[^"]*${item.icon}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
+    if (!link.test(header)) problems.push(`help link: ${item.label} (${item.href}) not found as an external link`)
+  }
+  if (problems.length) throw new Error(`header differs from brand.json: ${problems.join('; ')}`)
+  return header
+}
+
 export function readLayout(baseHref) {
-  return buildLayout(readFileSync(EDITO_DOC, 'utf8'), { baseHref })
+  const layout = buildLayout(readFileSync(EDITO_DOC, 'utf8'), { baseHref })
+  checkHeaderAgainstBrand(layout.header, JSON.parse(readFileSync(join(BRAND_DIR, 'brand.json'), 'utf8')))
+  return layout
 }
 
 /** Splits a stylesheet into top-level blocks ("prelude { body }"), comments dropped. */

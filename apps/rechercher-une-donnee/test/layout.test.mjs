@@ -7,6 +7,7 @@ import {
   addBadge,
   assertStaticTemplate,
   buildLayout,
+  checkHeaderAgainstBrand,
   duplicateToolLinks,
   extractBlock,
   extractHeaderScript,
@@ -216,4 +217,21 @@ test('referencedDsfrIcons lists the DSFR icons the shared CSS needs (C13)', () =
     'system/external-link-line.svg',
   ])
   assert.match(css, /\.fr-header__tools-links \{/)
+})
+
+test('checkHeaderAgainstBrand compares badge and help links with brand.json (C13)', () => {
+  const brand = {
+    badges: { catalogue: 'Rechercher' },
+    badgeStyles: { catalogue: { color: 'green-menthe', icon: 'fr-icon-search-line' } },
+    header: { tools: { help: { items: [{ label: 'Aide', href: 'https://x.fr/aide/', icon: 'fr-icon-q', external: true }] } } },
+  }
+  const ok =
+    badgeTitle +
+    '<a class="fr-nav__link fr-link--icon-left fr-icon-q sols-tool-menu__external" href="https://x.fr/aide/" target="_blank" rel="noopener external">'
+  assert.equal(checkHeaderAgainstBrand(ok, brand), ok)
+  assert.throws(() => checkHeaderAgainstBrand(badgeTitle, brand), /help link/)
+  assert.throws(
+    () => checkHeaderAgainstBrand(ok, { ...brand, badgeStyles: { catalogue: { color: 'blue', icon: 'x' } } }),
+    /badge/
+  )
 })
