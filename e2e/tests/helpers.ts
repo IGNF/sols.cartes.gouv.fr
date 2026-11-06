@@ -138,8 +138,11 @@ export async function openServicesMenu(page: Page, isMobile: boolean) {
     .locator('header')
     .getByRole('button', { name: 'Services' })
     .locator('visible=true');
-  await button.click();
-  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  // Le JS DSFR pose `data-fr-js` avant d'attacher tous ses gestionnaires : on réessaie le clic jusqu'à l'ouverture.
+  await expect(async () => {
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true', { timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
   return button;
 }
 
@@ -182,12 +185,17 @@ export const AIDE_CONTACT_URL = 'https://cartes.gouv.fr/aide/fr/nous-ecrire/';
 export async function openAideMenu(page: Page, isMobile: boolean, label = 'Aide') {
   await waitForDsfr(page);
   if (isMobile) await page.locator('header .fr-btn--menu').click();
+  // `visible=true` : l'en-tête contient deux copies du menu (bureau et modale mobile, ids suffixés `-mobile`) ;
+  // on ne garde que celle qui est affichée dans le viewport courant.
   const button = page
     .locator('header')
     .getByRole('button', { name: label })
     .locator('visible=true');
-  await button.click();
-  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  // Le JS DSFR pose `data-fr-js` avant d'attacher tous ses gestionnaires : on réessaie le clic jusqu'à l'ouverture.
+  await expect(async () => {
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true', { timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
   return button;
 }
 

@@ -4,18 +4,18 @@
 
 Date : 2026-11-06. Base : `origin/main` 7759161 (E10 #70, C13 #71, E11 #72, M13 #73, #74, #75 fusionnés), les trois briques reconstruites (`bun run build:all`, sans erreur), suite complète sur le port 8142 (arrêté ensuite).
 
-Résultat : **128 réussis, 12 ignorés, 0 échec, 0 flaky** (rapport JSON). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile, Échap dans « Aide » sur mobile (couvert par le test Services). Un passage partiel intermédiaire avait vu, une fois sur mobile, la case « Photographies aériennes » du catalogue ne pas se cocher au premier essai (réussie au nouvel essai) : à surveiller (D-carto-8). Test de stabilité du rendu : 0/20 sans canvas, 0/20 Plan IGN absent (desktop et mobile).
+Résultat mesuré : auteur, un passage complet : 128 réussis, 12 ignorés, 0 échec, 0 flaky ; relecteur, deux passages complets : 126 réussis, 12 ignorés, 0 échec, **2 flaky** à chaque fois (réussis au nouvel essai) : l'onglet « Fonds de cartes » sur mobile (`03-carto.spec.ts`, premier essai en échec dans les deux passages, D-carto-8 fréquent sur mobile) et, une fois, les filtres du catalogue sur desktop (délai dépassé, lenteur réseau). Sur des passages partiels antérieurs, le test « Aide » du catalogue et le test de stabilité ont aussi échoué au premier essai : lenteur réseau (GPF, API du catalogue), pas un défaut reproductible. Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile. Stabilité du rendu : 0/20 sans canvas, 0/20 Plan IGN absent (desktop et mobile) sur mon passage. Après ce passage : attente explicite de la case « Photographies aériennes » (`toBeVisible()`, le panneau d'onglet DSFR reste masqué une image après le clic), réessai du clic d'ouverture des menus (le JS DSFR pose `data-fr-js` avant d'attacher ses gestionnaires), délai du test de stabilité porté à 40 s par chargement, et Échap dans « Aide » vérifié aussi sur mobile (le menu burger reste ouvert). La passe complète finale attend la fusion de #77 (M14).
 
 | # | Scénario | Statut | Preuve |
 |---|---|---|---|
 | 1m | Menu « Aide » fr, en (« Help ») : deux liens externes `https://cartes.gouv.fr/aide/<lang>/` et `.../aide/fr/nous-ecrire/`, `target="_blank"`, `rel="noopener external"`, icône avant (masque) et icône « lien externe » après | PASS | edito fr/en, catalogue, carte ; desktop et mobile |
 | 1n | Seuls les liens d'aide pointent vers cartes.gouv.fr dans l'en-tête ; pied de page sans lien cartes.gouv.fr | PASS | |
-| 1o | Échap depuis l'intérieur du menu « Aide » le ferme, focus rendu (desktop) | PASS | correctif E11 |
+| 1o | Échap depuis l'intérieur du menu « Aide » le ferme, focus rendu ; sur mobile le menu burger reste ouvert | PASS | correctif E11 ; desktop et mobile |
 | 1p | Thème sombre : logos de l'en-tête sans fond (`.fr-header__operator`, `.sols-operator*` transparents) | PASS | |
 | 2h | Badge « Rechercher » : `fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line` | PASS | |
 | 3o | Badge « Explorer » : `fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` | PASS | |
 | 3p | Carte v1.1 : plus de panneau latéral, de « Partager », de « Sources des données », de lien vers la vue liste ; bouton « Imprimer » en haut à gauche ; pas de défilement de page | PASS | desktop et mobile |
-| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | une réussite au nouvel essai observée sur mobile lors d'un passage partiel (D-carto-8) |
+| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS (mobile : flaky) | mobile : échec au premier essai dans les deux passages du relecteur, réussi au nouvel essai (D-carto-8) |
 | 3r | Catalogue : ajout (GetMap 200 image) et retrait d'une couche sols, lien profond coche l'entrée | PASS | |
 | 3s | Outils par défaut (distance, surface, itinéraire, annoter) visibles ; autres cachés ; « Afficher tous les outils » dernier de la colonne ; sélection au clavier ajoute le bouton, ferme la liste, rend le focus | PASS | |
 | 3t | Mesure de distance, Imprimer (PNG), Légendes (image), console propre hors bruits amont, partage retiré | PASS | |
@@ -33,9 +33,10 @@ BLOCKED : aucun.
 - **edito** : rien de nouveau.
 - **catalogue** : `heading-order` modérée (amont) ; rien de nouveau.
 - **carto**
-  - D-carto-7 (mineur, visuel) : l'infobulle « Catalogue de cartes » du bouton recouvre le titre du panneau tant que le bouton garde le survol (capture `carto-catalogue-desktop.jpg`).
-  - D-carto-8 (mineur, intermittent) : à 375 px, cocher un fond (« Photographies aériennes ») juste après l'ouverture de l'onglet « Fonds de cartes » a une fois échoué : la case restait décochée (probable course avec la reconstruction du catalogue à l'arrivée des fonds, §12.2). Réussi au nouvel essai.
-  - D-carto-9 (mineur) : sur mobile, le panneau de la liste d'outils s'intitule « Mes outils » alors que la documentation (§12.2) annonce « Tous les outils » (`carto-outils-mobile.jpg`).
+  - D-carto-7 (mineur, visuel) : à 1280×900, survoler le bouton « Catalogue de cartes » avec le panneau ouvert : l'infobulle recouvre le titre du panneau (capture `carto-catalogue-desktop.jpg`).
+  - D-carto-8 (fréquent sur mobile, projet 375 px) : ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » juste après : la case reste décochée au premier essai. Deux causes (PR #77 / M14) : course applicative (catalogue reconstruit à l'arrivée des fonds) et cadence du test (panneau d'onglet masqué une image, désormais attendu).
+  - D-carto-9 (mineur) : à 375 px, le panneau de la liste d'outils s'intitule « Mes outils » ; « Tous les outils » après #77 (`carto-outils-mobile.jpg`).
+  - D-carto-7/8/9 sont traités par #77 (M14, en revue) : à confirmer à la fusion.
 
 ### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
 

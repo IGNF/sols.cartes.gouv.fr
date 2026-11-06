@@ -93,6 +93,8 @@ test.describe('Carto', () => {
       );
     await expect(fond('Plan IGN')).toBeChecked();
     const ortho = fond('Photographies aériennes');
+    // Après le clic d'onglet, le panneau DSFR reste masqué une image : attendre la case avant focus() + Espace.
+    await expect(ortho).toBeVisible();
     await ortho.focus();
     await page.keyboard.press('Space');
     await expect(ortho).toBeChecked();
@@ -370,7 +372,7 @@ test.describe('Carto', () => {
   test('stabilité du rendu : la carte a un canvas à chaque chargement (D-carto-1)', async ({
     browser,
   }, testInfo) => {
-    test.setTimeout(MAP_STABILITY_RUNS * 25_000);
+    test.setTimeout(MAP_STABILITY_RUNS * 40_000);
     let sansCanvas = 0;
     let sansFond = 0;
     for (let i = 0; i < MAP_STABILITY_RUNS; i++) {

@@ -177,13 +177,12 @@ test.describe('Accueil et en-tête v1', () => {
     });
   }
 
-  test('Échap depuis l’intérieur du menu « Aide » le ferme (desktop)', async ({
+  test('Échap depuis l’intérieur du menu « Aide » le ferme, focus rendu (mobile : le menu burger reste ouvert)', async ({
     page,
     isMobile,
   }) => {
-    test.skip(isMobile, 'Échap du sous-menu : couvert séparément sur mobile');
     await page.goto('/fr/');
-    const button = await openAideMenu(page, false);
+    const button = await openAideMenu(page, isMobile);
     await page
       .locator('header a[href^="https://cartes.gouv.fr/aide/"]')
       .locator('visible=true')
@@ -192,6 +191,8 @@ test.describe('Accueil et en-tête v1', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
+    if (isMobile)
+      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   test('thème sombre : les logos de l’en-tête n’ont pas de plaque de fond', async ({ page }) => {
