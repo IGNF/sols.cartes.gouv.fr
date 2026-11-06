@@ -2,25 +2,21 @@ import type Control from 'ol/control/Control';
 import ScaleLine from 'ol/control/ScaleLine';
 import type OlMap from 'ol/Map';
 import { useEffect } from 'react';
-import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
-import {
-  GeoportalAttribution,
-  GeoportalFullScreen,
-  GeoportalZoom,
-  loadSearchEngine,
-} from '../map/geopf';
-import { labelControlButtons, labelSearchInput } from '../map/labelControls';
+import { MAP_TOOLS_OPTIONS } from '../config/map';
+import { GeoportalFullScreen, GeoportalZoom, loadSearchEngine } from '../map/geopf';
+import { labelSearchInput } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 
-/** Map tools available immediately: geopf-extensions zoom, full screen, attribution; OL scale line. */
+/**
+ * Map tools available immediately: geopf-extensions zoom (top left) and full screen (bottom right, v1.1),
+ * OL scale line (bottom right too, MapView.css). No attribution control since v1.1 (brief): the sources
+ * stay on the layer sources for the print sheet (exportMap.mapSources).
+ */
 export function createMapControls(): Control[] {
-  const attribution = new GeoportalAttribution({ ...MAP_TOOLS_OPTIONS.attribution });
-  labelControlButtons(attribution, CONTROL_LABELS.attribution);
   return [
     new GeoportalZoom({ ...MAP_TOOLS_OPTIONS.zoom }),
     new GeoportalFullScreen({ ...MAP_TOOLS_OPTIONS.fullScreen }),
     new ScaleLine({ ...MAP_TOOLS_OPTIONS.scaleLine }),
-    attribution,
   ];
 }
 

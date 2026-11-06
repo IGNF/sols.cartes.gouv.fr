@@ -3,6 +3,7 @@ import type OlMap from 'ol/Map';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CATALOG_OPTIONS, CONTROL_LABELS, GEOPF_DIALOG_LABELS } from '../config/map';
 import { initialMapState, useMapStore } from '../store/useMapStore';
+import type { AvailableBaseLayer } from '../map/baseLayerCatalogue';
 import useCatalog, { CATALOG_CLASS, createCatalog, patchProducerLinks } from './useCatalog';
 
 const geopf = vi.hoisted(() => {
@@ -252,6 +253,74 @@ describe('useCatalog', () => {
     });
     expect(useMapStore.getState().activeBaseLayerId).toBe('orthophotos');
     expect(inputs()).toEqual([false, true]);
+  });
+
+  it('crée le catalogue aussitôt, puis le reconstruit à l’arrivée des fonds, une fois son panneau refermé', async () => {
+    const { map, addControl, removeControl } = createFakeMap();
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const first = geopf.created[0];
+    const layersOf = (catalog: (typeof geopf.created)[number] | undefined) =>
+      Object.keys((catalog?.options['configuration'] as { data: { layers: object } }).data.layers);
+    expect(layersOf(first)).toHaveLength(7);
+    // The panel is open when the capabilities arrive: nothing moves until it is closed.
+    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'true');
+    const baseLayers: AvailableBaseLayer[] = [
+      { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+    ];
+    rerender({ layers: baseLayers });
+    await Promise.resolve();
+    expect(removeControl).not.toHaveBeenCalled();
+    expect(geopf.created).toHaveLength(1);
+    first?.element.querySelector('button')?.setAttribute('aria-pressed', 'false');
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(removeControl).toHaveBeenCalledWith(first);
+    expect(layersOf(geopf.created[1])).toHaveLength(8);
+  });
+
+  it('rend le focus au nouveau bouton quand le catalogue est reconstruit depuis son bouton', async () => {
+    const { map, addControl, container } = createFakeMap();
+    document.body.append(container);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const firstButton = geopf.created[0]?.element.querySelector('button');
+    firstButton?.focus();
+    expect(document.activeElement).toBe(firstButton);
+    rerender({
+      layers: [
+        { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+      ],
+    });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    const secondButton = geopf.created[1]?.element.querySelector('button');
+    expect(secondButton).not.toBe(firstButton);
+    expect(document.activeElement).toBe(secondButton);
+    container.remove();
+  });
+
+  it('laisse le focus là où il est quand le catalogue est reconstruit sans l’avoir', async () => {
+    const { map, addControl, container } = createFakeMap();
+    document.body.append(container);
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    outside.focus();
+    rerender({
+      layers: [
+        { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+      ],
+    });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+    container.remove();
   });
 
   it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {

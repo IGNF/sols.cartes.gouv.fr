@@ -17,7 +17,6 @@ const geopf = vi.hoisted(() => {
         if (withDialog)
           this.element.innerHTML =
             '<dialog id="GPautoCompleteList-1"></dialog><input id="GPsearchInputText-1" />';
-        if (kind === 'attribution') this.element.innerHTML = '<button title="Sources">›</button>';
         created.push({ kind, options, element: this.element });
       }
     };
@@ -26,14 +25,12 @@ const geopf = vi.hoisted(() => {
     search: make('search', true),
     zoom: make('zoom'),
     fullScreen: make('fullScreen'),
-    attribution: make('attribution'),
   };
 });
 
 vi.mock('../map/geopf', () => ({
   GeoportalZoom: geopf.zoom,
   GeoportalFullScreen: geopf.fullScreen,
-  GeoportalAttribution: geopf.attribution,
   loadSearchEngine: () => Promise.resolve(geopf.search),
 }));
 
@@ -44,23 +41,21 @@ function createFakeMap() {
 }
 
 describe('useMapControls', () => {
-  it('ajoute zoom, plein écran, échelle et attributions, puis la recherche chargée à la demande', async () => {
+  it('ajoute zoom, plein écran (en bas à droite) et échelle, sans attributions, puis la recherche chargée à la demande', async () => {
     geopf.created.length = 0;
     const { map, addControl } = createFakeMap();
     renderHook(() => useMapControls(map));
-    expect(geopf.created.map((c) => c.kind).sort()).toEqual(['attribution', 'fullScreen', 'zoom']);
+    expect(geopf.created.map((c) => c.kind).sort()).toEqual(['fullScreen', 'zoom']);
+    expect(geopf.created.find((c) => c.kind === 'fullScreen')?.options).toMatchObject({
+      position: 'bottom-right',
+    });
     expect(addControl.mock.calls.some(([c]) => c instanceof ScaleLine)).toBe(true);
-    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(5));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(4));
     const search = geopf.created.find((c) => c.kind === 'search');
     expect(search?.options).toEqual(MAP_TOOLS_OPTIONS.search);
     expect(search?.element.querySelector('input')).toHaveAttribute(
       'aria-label',
       CONTROL_LABELS.searchInput,
-    );
-    const attribution = geopf.created.find((c) => c.kind === 'attribution');
-    expect(attribution?.element.querySelector('button')).toHaveAttribute(
-      'aria-label',
-      CONTROL_LABELS.attribution,
     );
     expect(search?.element.querySelector('dialog')).toHaveAttribute(
       'aria-label',
@@ -71,9 +66,9 @@ describe('useMapControls', () => {
   it('retire tous les outils au démontage', async () => {
     const { map, addControl, removeControl } = createFakeMap();
     const { unmount } = renderHook(() => useMapControls(map));
-    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(5));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(4));
     unmount();
-    expect(removeControl).toHaveBeenCalledTimes(5);
+    expect(removeControl).toHaveBeenCalledTimes(4);
   });
 
   it('n’ajoute pas la recherche si la carte a été démontée avant son chargement', async () => {
@@ -82,7 +77,7 @@ describe('useMapControls', () => {
     unmount();
     await Promise.resolve();
     await Promise.resolve();
-    expect(addControl).toHaveBeenCalledTimes(4);
+    expect(addControl).toHaveBeenCalledTimes(3);
   });
 
   it('ne fait rien sans carte', () => {

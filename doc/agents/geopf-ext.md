@@ -122,7 +122,7 @@ IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`src/features/navig
 | `src/hooks/useMap.ts`                               | crée **une** carte dans un effet, la publie dans le store, `setTarget(undefined)` + `dispose()` au démontage (couvre le double montage StrictMode) |
 | `src/hooks/useBaseLayerCatalogue.ts`                | fonds candidats publiés dans les capacités (`availableBaseLayers`) et fond effectif dérivé (choix du store, sinon le premier disponible)           |
 | `src/hooks/useBaseLayer.ts`                         | `useMemo` crée la couche depuis les capacités, l'effet l'insère en position 0 et la retire au nettoyage (changement de fond compris)               |
-| `src/hooks/useMapControls.ts`                       | zoom, plein écran, attributions geopf + échelle OL dans un effet ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée  |
+| `src/hooks/useMapControls.ts`                       | zoom, plein écran geopf + échelle OL dans un effet (plus d'attributions depuis M13, §12.3) ; `SearchEngine` chargé à la demande puis ajouté si la carte est toujours montée  |
 | `src/components/map/BaseLayerPanel.tsx`             | panneau DSFR « Fonds de carte » : `RadioButtons` (flèches du clavier) → `setActiveBaseLayer`                                                       |
 | `src/components/map/MapExplorer.tsx`                | bouton « Masquer/Afficher les fonds de carte » (`aria-expanded`, `aria-controls`, `togglePanel`) + grille panneau/carte                            |
 | `src/hooks/useLayerSwitcher.ts`                     | ajoute le `LayerSwitcher` dans un effet, `removeControl` au nettoyage                                                                              |
@@ -146,7 +146,7 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 | --------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Zoom                        | `GeoportalZoom` (étend `ol/control/Zoom`)               | `position: 'top-left'` ; libellés « Zoomer »/« Dézoomer » posés par geopf (`aria-label`)                                                                                                          |
 | Plein écran                 | `GeoportalFullScreen` (étend `ol/control/FullScreen`)   | `position`, `tipLabel`                                                                                                                                                                            |
-| Attributions                | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
+| Attributions (retirées M13) | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
 | Échelle                     | `ol/control/ScaleLine`                                  | geopf-ext n'en fournit pas ; `units: 'metric'`                                                                                                                                                    |
 | Recherche + géolocalisation | `SearchEngine`                                          | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
 | Rotation                    | `ol/control/Rotate` (via `defaults`)                    | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults`                                                                                                                         |
@@ -356,7 +356,7 @@ Issue commune :
 | Vue liste                   | `?vue=liste`, `getByRole('heading', { level: 1, name: 'Liste des données sols' })`, `getByRole('article')` (7)                                                                                                                                                                                                                                                   |
 | Lien vers la vue liste      | `getByRole('link', { name: 'Version accessible de la liste des données' })`                                                                                                                                                                                                                                                                                      |
 | Recherche                   | `getByRole('textbox', { name: 'Rechercher un lieu ou une adresse' })`                                                                                                                                                                                                                                                                                            |
-| Contrôles                   | « Zoomer », « Dézoomer », « Plein écran », « Sources des données », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée)                                                                                                                                                                                                                 |
+| Contrôles                   | « Zoomer », « Dézoomer », « Plein écran », « Réinitialiser l'orientation » (masqué tant que la carte n'est pas tournée) ; « Sources des données » retiré en M13                                                                                                                                                                                                                 |
 
 Attendre `load` puis un délai plutôt que `networkidle` : une requête GPF lente peut retarder l'inactivité réseau de plus de 30 s.
 
@@ -731,8 +731,10 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
 - **Catalogue renommé « Catalogue de cartes »** (`CONTROL_LABELS.catalog`, `titlePrimary`, `GEOPF_DIALOG_LABELS.GPcatalogPanel`) avec deux
   catégories (`CATALOG_CATEGORIES`) filtrées sur un champ `kind` des entrées (`CATALOG_KIND_FIELD`, valeurs `CATALOG_KINDS`) : « Données
   sols » (`sols`, producteur, tri) et **« Fonds de cartes »** (`fonds`, onglet `tabbutton-1_fonds`). Les entrées fonds sont les
-  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le contrôle
-  est reconstruit quand elles arrivent), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
+  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le
+  contrôle est créé aussitôt (le bouton n'attend pas une GPF lente) puis **reconstruit sur place** à l'arrivée des fonds, et si son panneau
+  est ouvert à ce moment-là la reconstruction attend sa fermeture (`whenCollapsed`, observateur de `aria-pressed`) : le reconstruire
+  panneau ouvert le fermait, vu dans `check:map` quand la GPF est lente), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
   `createCatalogProducerLinks` renvoie `null` : le gabarit lit `producers[0].name` dès que la liste est définie). Cocher un fond →
   `setActiveBaseLayer` ; `syncCatalogTicks(root, overlays, datasets, baseLayers, activeBaseLayerId)` coche le seul fond actif (et le recoche
   après un décochage : un fond reste toujours affiché). Cases nommées « Afficher le fond de carte : <titre> » (`checkboxes-fonds`,
@@ -750,11 +752,24 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   ici le bouton est ajouté (demande du brief). Même comportement à toutes les largeurs (la règle mobile qui cachait tous les outils
   listables est retirée).
 
-### 12.5 Sélecteurs e2e (PR 2)
+### 12.3 Disposition des contrôles (PR 3)
+
+- **Plus de contrôle d'attribution** (`GeoportalAttribution`, bouton « Sources des données », `CONTROL_LABELS.attribution`) : demande du
+  brief ; cartes.gouv.fr n'en affiche pas non plus (`.ol-attribution` absent). Les attributions restent posées sur les sources
+  (`GPF_ATTRIBUTION`, `SOLS_ATTRIBUTION`) pour la feuille d'impression (`exportMap.mapSources`).
+- **Plein écran en bas à droite** (`MAP_TOOLS_OPTIONS.fullScreen.position: 'bottom-right'`, `#position-container-bottom-right`, comme sur
+  cartes.gouv.fr) ; **échelle** OL à sa gauche (`MapView.css` : `left: auto; right: 4rem` = 2w + 5w + 1w, `bottom: 0.5rem`), texte et
+  trait en `--text-action-high-blue-france` (`.ol-scale-line-inner`, OL les tirait de `--ol-foreground-color`/`--ol-subtle-foreground-color`,
+  gris) ; la colonne bas gauche garde légendes, territoires et mini-carte.
+- `check:map` : pas de `.ol-attribution`, plein écran dans la colonne bas droite à ≤ 16 px des bords, échelle à 4–24 px à sa gauche, couleurs
+  de l'échelle = jeton action dans les deux thèmes.
+
+### 12.5 Sélecteurs e2e (PR 2 et 3)
 
 | Élément | Sélecteur |
 |---|---|
 | Catalogue | `getByRole('button', { name: 'Catalogue de cartes', exact: true })` ; onglets `#tabbutton-0_sols`, `#tabbutton-1_fonds` ; fonds `input[name="checkboxes-fonds"][data-layer="<nom>:WMTS"]` nommés « Afficher le fond de carte : <titre> » |
 | Imprimer | `.map-print button` (`aria-label` « Imprimer »), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
 | Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
-| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte » |
+| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte », bouton « Sources des données » (`.ol-attribution`) |
+| Plein écran, échelle | `#position-container-bottom-right [id^="GPfullScreen-"] button` (« Plein écran ») ; `.ol-scale-line` en bas à droite, à gauche du plein écran |

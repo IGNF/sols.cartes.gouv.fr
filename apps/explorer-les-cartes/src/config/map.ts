@@ -4,7 +4,6 @@
  * and were validated on 2026-11-05 (doc/agents/gpf-sols-data.md).
  */
 import type { DefaultsOptions } from 'ol/control/defaults';
-import type { Options as AttributionOptions } from 'ol/control/Attribution';
 import type { Options as FullScreenOptions } from 'ol/control/FullScreen';
 import type { Options as OverviewMapOptions } from 'ol/control/OverviewMap';
 import type { Options as ScaleLineOptions } from 'ol/control/ScaleLine';
@@ -189,7 +188,7 @@ export const MOUSE_POSITION_SYSTEMS = [
 export const TOOL_PROJECTIONS: readonly string[] = ['EPSG:2154', 'EPSG:27572'];
 
 /**
- * Options of the map tools; geopf-ext Zoom/FullScreen/Attribution take OL options plus `position`.
+ * Options of the map tools; geopf-ext Zoom/FullScreen take OL options plus `position`.
  * Names and values checked in the `.d.ts` of 1.0.0-beta.16 and in IGNF/cartes.gouv.fr-entree-carto
  * (`src/components/carte/Controls.vue`); the GPF service URLs come from GPF_ENDPOINTS.
  * `altitude` (MousePosition), `noDataMessage` (GetFeatureInfo) and `export` payloads are documented in the
@@ -197,15 +196,11 @@ export const TOOL_PROJECTIONS: readonly string[] = ['EPSG:2154', 'EPSG:27572'];
  */
 export const MAP_TOOLS_OPTIONS = {
   zoom: { position: 'top-left' } satisfies ZoomOptions & { position: ControlPosition },
+  // v1.1: bottom right, next to the scale line (as on cartes.gouv.fr).
   fullScreen: {
-    position: 'top-left',
+    position: 'bottom-right',
     tipLabel: 'Plein écran',
   } satisfies FullScreenOptions & { position: ControlPosition },
-  attribution: {
-    collapsible: true,
-    collapsed: false,
-    tipLabel: 'Sources des données', // same text as CONTROL_LABELS.attribution
-  } satisfies AttributionOptions,
   scaleLine: { units: 'metric', minWidth: 80 } satisfies ScaleLineOptions,
   search: {
     collapsed: false,
@@ -472,12 +467,11 @@ export const TOOL_BUTTON_LABELS = {
 } as const;
 
 /**
- * Accessible names of map controls whose visible content is a glyph (OL attribution "›", rotate "⇧") or
+ * Accessible names of map controls whose visible content is a glyph (OL rotate "⇧") or
  * which have no label (geopf search input), or whose geopf label is unclear ("Afficher plus" on the
  * ControlList button). Set as aria-label before the control is added (RGAA 11.1).
  */
 export const CONTROL_LABELS = {
-  attribution: 'Sources des données',
   rotate: 'Réinitialiser l’orientation',
   searchInput: 'Rechercher un lieu ou une adresse',
   controlList: 'Afficher tous les outils',

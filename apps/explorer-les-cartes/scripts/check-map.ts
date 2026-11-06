@@ -134,14 +134,34 @@ for (const width of [375, 768, 1280]) {
     overlap === 0,
     `${width}px : la recherche ne recouvre pas la colonne de zoom (${overlap} px)`,
   );
-  // The attribution control is hidden until a source has attributions (first tiles): check the name only.
+  // v1.1: no attribution control any more (brief); full screen and the scale line sit bottom right.
+  await page.locator('[id^="GPfullScreen-"]').waitFor({ state: 'attached', timeout: 15_000 });
+  const bottomRight = await page.evaluate(() => {
+    const map = document.querySelector('.map-view')?.getBoundingClientRect();
+    const full = document.querySelector('[id^="GPfullScreen-"]');
+    const scale = document.querySelector('.ol-scale-line')?.getBoundingClientRect();
+    // The geopf widget div is wider than its 40 px button: measure the button.
+    const fullBox = full?.querySelector('button')?.getBoundingClientRect();
+    if (!map || !full || !scale || !fullBox) return null;
+    return {
+      attribution: document.querySelector('.ol-attribution') !== null,
+      fullInColumn: full.parentElement?.id === 'position-container-bottom-right',
+      fullBottom: Math.round(map.bottom - fullBox.bottom),
+      fullRight: Math.round(map.right - fullBox.right),
+      scaleBottom: Math.round(map.bottom - scale.bottom),
+      scaleGap: Math.round(fullBox.left - scale.right),
+    };
+  });
   check(
-    await page
-      .getByRole('button', { name: CONTROL_LABELS.attribution, includeHidden: true })
-      .waitFor({ state: 'attached', timeout: 15_000 })
-      .then(() => true)
-      .catch(() => false),
-    `${width}px : bouton « ${CONTROL_LABELS.attribution} » nommé`,
+    bottomRight !== null &&
+      !bottomRight.attribution &&
+      bottomRight.fullInColumn &&
+      bottomRight.fullBottom <= 16 &&
+      bottomRight.fullRight <= 16 &&
+      bottomRight.scaleBottom <= 16 &&
+      bottomRight.scaleGap >= 4 &&
+      bottomRight.scaleGap <= 24,
+    `${width}px : pas de bouton « Sources des données », plein écran en bas à droite et échelle à sa gauche (${JSON.stringify(bottomRight)})`,
   );
   check(
     (await page
@@ -534,29 +554,38 @@ for (const scheme of ['light', 'dark'] as const) {
   const page = await context.newPage();
   await page.goto(url, { waitUntil: 'load' });
   await page.locator('#GPzoomIn').waitFor({ timeout: 20_000 });
-  await page.locator('.ol-attribution').waitFor({ state: 'attached', timeout: 20_000 });
+  await page.locator('.ol-scale-line-inner').waitFor({ state: 'attached', timeout: 20_000 });
   const colours = await page.evaluate(() => {
     const background = (selector: string) => {
       const element = document.querySelector(selector);
       return element ? getComputedStyle(element).backgroundColor : null;
     };
-    const probe = document.createElement('div');
-    probe.style.backgroundColor = 'var(--background-default-grey)';
-    document.body.append(probe);
-    const token = getComputedStyle(probe).backgroundColor;
-    probe.remove();
+    const resolve = (variable: string) => {
+      const probe = document.createElement('div');
+      probe.style.backgroundColor = `var(${variable})`;
+      document.body.append(probe);
+      const value = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return value;
+    };
+    const scale = document.querySelector('.ol-scale-line-inner');
     return {
       theme: document.documentElement.getAttribute('data-fr-theme'),
-      token,
+      token: resolve('--background-default-grey'),
       zoom: background('#GPzoomIn'),
-      attribution: background('.ol-attribution button'),
+      fullScreen: background('[id^="GPfullScreen-"] button'),
+      action: resolve('--text-action-high-blue-france'),
+      scaleColor: scale ? getComputedStyle(scale).color : null,
+      scaleBorder: scale ? getComputedStyle(scale).borderBottomColor : null,
     };
   });
   check(
     colours.theme === scheme &&
       colours.zoom === colours.token &&
-      colours.attribution === colours.token,
-    `thème ${scheme} : zoom et attributions sur le fond DSFR (${colours.token} ; zoom ${colours.zoom}, attributions ${colours.attribution})`,
+      colours.fullScreen === colours.token &&
+      colours.scaleColor === colours.action &&
+      colours.scaleBorder === colours.action,
+    `thème ${scheme} : zoom et plein écran sur le fond DSFR, échelle en bleu France action (${colours.action} ; échelle ${colours.scaleColor})`,
   );
   await context.close();
 }
@@ -865,6 +894,14 @@ const TOOL_BUTTONS = [
       .locator('[data-layeritem]')
       .evaluateAll((items) => items.filter((e) => (e as HTMLElement).offsetParent !== null).length);
   // The search reads the raw texts (not the escaped display strings): « Info&Sols » matches all.
+  // (axe can take a while: make sure the panel is still open before typing.)
+  if (
+    (await page
+      .getByRole('button', { name: CATALOGUE, exact: true })
+      .getAttribute('aria-pressed')) !== 'true'
+  ) {
+    await openCatalogue(page);
+  }
   await page.locator('#catalog-input-search-global').fill('Info&Sols');
   await page.waitForTimeout(700);
   const byProducer = await visibleEntries();

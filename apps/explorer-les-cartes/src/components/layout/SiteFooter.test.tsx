@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FOOTER_ID } from '../../config/landmarks';
@@ -66,6 +66,15 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
         behavior: 'smooth',
       }),
     );
+  });
+
+  it('oublie le défilement différé quand le pied de page est démonté aussitôt', async () => {
+    const { unmount } = render(<SiteFooter />);
+    // Synchronous click: user-event would let the 0 ms timer fire before returning.
+    fireEvent.click(screen.getByRole('button', { name: FOOTER_LABELS.expand }));
+    unmount();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 
   it('« Fermer » replie le pied de page et remonte en haut de page', async () => {

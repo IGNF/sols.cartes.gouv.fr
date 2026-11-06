@@ -1,7 +1,7 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { FooterBottomItem } from '@codegouvfr/react-dsfr/Footer';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BRAND, FOOTER_LABELS, FOOTER_PARTNERS, newWindowTitle } from '../../config/site';
 import { FOOTER_ID } from '../../config/landmarks';
 import BrandTop from './BrandTop';
@@ -30,12 +30,17 @@ const newWindow = (label: string) =>
  */
 export default function SiteFooter() {
   const [expanded, setExpanded] = useState(false);
+  const scrollTimer = useRef<number | undefined>(undefined);
+
+  // A pending scroll must not fire after the footer is gone (unmount, tests).
+  useEffect(() => () => window.clearTimeout(scrollTimer.current), []);
 
   const toggle = () => {
     const open = !expanded;
     setExpanded(open);
     // After the render: the expanded footer has made the page taller.
-    setTimeout(() => {
+    window.clearTimeout(scrollTimer.current);
+    scrollTimer.current = window.setTimeout(() => {
       window.scrollTo({
         top: open ? document.body.scrollHeight : 0,
         behavior: open && !prefersReducedMotion() ? 'smooth' : 'auto',
