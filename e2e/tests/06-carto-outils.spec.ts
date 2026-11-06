@@ -10,23 +10,29 @@ import {
   waitForDsfr,
 } from './helpers';
 
-// Les 15 boutons d'outils de l'entrée carto (libellés de apps/explorer-les-cartes/scripts/check-map.ts).
-const TOOL_BUTTONS = [
-  "Ouvrir l'import de couches",
-  "Activer/désactiver l'interrogation des couches",
-  'Mes outils',
+// Outils affichés par défaut (M13, DEFAULT_TOOLS) et outils ajoutés à la demande par « Afficher tous les outils ».
+const DEFAULT_TOOL_BUTTONS = [
   'Mesurer une distance',
   'Mesurer une surface',
+  'Itinéraire',
+  'Annoter la carte',
+];
+const ON_DEMAND_TOOLS = [
   'Mesurer un angle',
   'Afficher les coordonnées du curseur',
   'Profil altimétrique',
-  'Itinéraire',
   'Zone selon le temps de trajet ou distance',
   'Trouver une adresse',
-  'Annoter la carte',
+];
+const FIXED_BUTTONS = [
+  "Ouvrir l'import de couches",
+  "Activer/désactiver l'interrogation des couches",
+  'Imprimer',
   'Légende',
   'Sélectionner un territoire',
   'Mini-carte',
+  'Catalogue de cartes',
+  'Afficher tous les outils',
 ];
 
 // Bruits amont documentés (doc/agents/geopf-ext.md §10.4) : avertissement « Greyscale » de geopf et
@@ -50,7 +56,7 @@ async function openMap(page: Page, url: string = PAGES.carto): Promise<void> {
 }
 
 async function addCarbone(page: Page): Promise<void> {
-  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
+  const button = page.getByRole('button', { name: 'Catalogue de cartes', exact: true });
   await button.click();
   await page.locator('#catalog-input-search-global').fill('carbone');
   const box = page.getByRole('checkbox', {
@@ -69,16 +75,25 @@ async function layerTitlesText(page: Page): Promise<string[]> {
   return page.locator('[id^="GPtitle_ID_"]').allInnerTexts();
 }
 
-test.describe('Carto : outils geopf, partage, impression', () => {
-  test.skip(
-    ({ isMobile }) => isMobile,
-    'boutons des outils masqués sous 48em : vérifié sur desktop',
-  );
-
-  test('les quinze boutons d’outils ont un nom accessible', async ({ page }) => {
+test.describe('Carto : outils geopf, impression', () => {
+  test('boutons : outils par défaut visibles, autres outils cachés jusqu’à « Afficher tous les outils »', async ({
+    page,
+  }) => {
     await openMap(page);
-    for (const name of TOOL_BUTTONS)
-      await expect(page.getByRole('button', { name, exact: true }), name).toHaveCount(1);
+    for (const name of [...DEFAULT_TOOL_BUTTONS, ...FIXED_BUTTONS])
+      await expect(page.getByRole('button', { name, exact: true }), name).toBeVisible();
+    // « Afficher tous les outils » est le dernier bouton de la colonne de droite.
+    const derniers = await page
+      .locator('#position-container-top-right button:visible')
+      .evaluateAll((b) =>
+        b.map((x) => x.getAttribute('aria-label') || x.textContent?.trim() || ''),
+      );
+    expect(derniers.at(-1)).toBe('Afficher tous les outils');
+    expect(
+      await page.locator('.map-tool--on-demand:not(.map-tool--shown)').count(),
+    ).toBeGreaterThan(0);
+    for (const name of ON_DEMAND_TOOLS)
+      await expect(page.getByRole('button', { name, exact: true }), `${name} caché`).toBeHidden();
     const unnamed = await page.evaluate(() =>
       Array.from(document.querySelectorAll('.map-view dialog, .map-view .fr-modal'))
         .filter((d) => !d.hasAttribute('aria-label') && !d.hasAttribute('aria-labelledby'))
@@ -87,12 +102,31 @@ test.describe('Carto : outils geopf, partage, impression', () => {
     expect(unnamed, 'fenêtres sans nom').toEqual([]);
   });
 
-  test('la mesure de distance renvoie une valeur', async ({ page }) => {
+  test('« Afficher tous les outils » : activation clavier ajoute le bouton de l’outil et rend le focus', async ({
+    page,
+  }) => {
+    await openMap(page);
+    const tous = page.getByRole('button', { name: 'Afficher tous les outils', exact: true });
+    await tous.click();
+    const panel = page.locator('[id^="GPcontrolListPanel-"]');
+    const entry = panel.locator('li', { hasText: 'Mesurer un angle' });
+    await expect(entry).toBeVisible();
+    await entry.focus();
+    await page.keyboard.press('Enter');
+    await expect(panel).toBeHidden();
+    await expect(tous).toBeFocused();
+    const angle = page.getByRole('button', { name: 'Mesurer un angle', exact: true });
+    await expect(angle).toBeVisible();
+    await expect(angle).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('la mesure de distance renvoie une valeur', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'tracé à la souris sur la carte : desktop');
     await openMap(page);
     await page.getByRole('button', { name: 'Mesurer une distance', exact: true }).click();
-    await page.mouse.click(700, 500);
-    await page.mouse.click(800, 520);
-    await page.mouse.dblclick(900, 560);
+    await page.mouse.click(600, 500);
+    await page.mouse.click(700, 520);
+    await page.mouse.dblclick(800, 560);
     await expect
       .poll(async () =>
         (await page.locator('.ol-overlay-container').allInnerTexts())
@@ -102,30 +136,12 @@ test.describe('Carto : outils geopf, partage, impression', () => {
       .toBeTruthy();
   });
 
-  test('Partager génère un permalien qui rouvre le même fond et la même couche', async ({
-    page,
-    context,
-  }) => {
+  test('le partage a été retiré (aucun bouton « Partager »)', async ({ page }) => {
     await openMap(page);
-    await addCarbone(page);
-    const avant = await layerTitlesText(page);
-    await page.getByRole('button', { name: 'Partager', exact: true }).click();
-    const lien = await page.getByRole('textbox', { name: /^Lien permanent/ }).inputValue();
-    const query = new URL(lien).searchParams;
-    expect(query.get('permalink')).toBe('yes');
-    expect(query.get('l') ?? '').toContain(
-      'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS(',
-    );
-    expect(query.get('l') ?? '').toContain(`${SOLS_LAYER}$GEOPORTAIL:OGC:WMS(`);
-    expect(query.get('c') ?? '').toMatch(/^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/);
-    const neuve = await context.newPage();
-    await neuve.goto(lien);
-    await expect(neuve.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
-    const apres = await layerTitlesText(neuve);
-    expect([...apres].sort()).toEqual([...avant].sort());
+    await expect(page.getByRole('button', { name: 'Partager' })).toHaveCount(0);
   });
 
-  test('Imprimer télécharge un PNG', async ({ page }) => {
+  test('Imprimer (bouton de la carte) télécharge un PNG', async ({ page }) => {
     await openMap(page);
     await page.getByRole('button', { name: 'Imprimer', exact: true }).click();
     const download = page.waitForEvent('download', { timeout: 30_000 });
@@ -141,7 +157,6 @@ test.describe('Carto : outils geopf, partage, impression', () => {
     await page.getByRole('button', { name: 'Légende', exact: true }).click();
     const entry = page.locator(`.legend-entry-container[id="${SOLS_LAYER}"]`);
     await expect(entry).toBeAttached();
-    // L'entrée est un accordéon replié : on le déplie (bouton nommé par M8) pour voir l'image de légende.
     await page
       .getByRole('button', { name: /^Afficher la légende : Carte nationale des stocks/ })
       .click();
@@ -167,30 +182,6 @@ test.describe('Carto : outils geopf, partage, impression', () => {
     await expect(page.locator('.legend-entry-container').first()).toBeAttached();
     await page.getByRole('button', { name: 'Légende', exact: true }).click();
     expect(c.errors.filter((e) => !UPSTREAM_NOISE.some((n) => n.pattern.test(e)))).toEqual([]);
-  });
-});
-
-test.describe('Carto : « Mes outils »', () => {
-  test('« Mes outils » : activation clavier d’une entrée lance l’outil et rend le focus', async ({
-    page,
-    isMobile,
-  }) => {
-    await openMap(page);
-    const mesOutils = page.getByRole('button', { name: 'Mes outils', exact: true });
-    await mesOutils.click();
-    const panel = page.locator('[id^="GPcontrolListPanel-"]');
-    const entry = panel.locator('li', { hasText: 'Mesurer une distance' });
-    await expect(entry).toBeVisible();
-    await entry.focus();
-    await page.keyboard.press('Enter');
-    // L'outil est activé (bouton enfoncé ; sur mobile le bouton est masqué) et le focus revient sur « Mes outils ».
-    if (!isMobile)
-      await expect(
-        page.getByRole('button', { name: 'Mesurer une distance', exact: true }),
-      ).toHaveAttribute('aria-pressed', 'true');
-    await expect(mesOutils).toBeFocused();
-    // Depuis le correctif de M8 (#56) : l'activation clavier d'une entrée vide la liste, sur desktop comme sur mobile.
-    await expect(panel).toBeHidden();
   });
 });
 

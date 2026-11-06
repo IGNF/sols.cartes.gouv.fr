@@ -1,4 +1,51 @@
+# Rapport e2e (T4, passe 4)
+
+## Passe 4 : v1.1 (en-tête, carte M13)
+
+Date : 2026-11-06. Base : `origin/main` 7759161 (E10 #70, C13 #71, E11 #72, M13 #73, #74, #75 fusionnés), les trois briques reconstruites (`bun run build:all`, sans erreur), suite complète sur le port 8142 (arrêté ensuite).
+
+Résultat : **128 réussis, 12 ignorés, 0 échec, 0 flaky** (rapport JSON). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile, Échap dans « Aide » sur mobile (couvert par le test Services). Un passage partiel intermédiaire avait vu, une fois sur mobile, la case « Photographies aériennes » du catalogue ne pas se cocher au premier essai (réussie au nouvel essai) : à surveiller (D-carto-8). Test de stabilité du rendu : 0/20 sans canvas, 0/20 Plan IGN absent (desktop et mobile).
+
+| # | Scénario | Statut | Preuve |
+|---|---|---|---|
+| 1m | Menu « Aide » fr, en (« Help ») : deux liens externes `https://cartes.gouv.fr/aide/<lang>/` et `.../aide/fr/nous-ecrire/`, `target="_blank"`, `rel="noopener external"`, icône avant (masque) et icône « lien externe » après | PASS | edito fr/en, catalogue, carte ; desktop et mobile |
+| 1n | Seuls les liens d'aide pointent vers cartes.gouv.fr dans l'en-tête ; pied de page sans lien cartes.gouv.fr | PASS | |
+| 1o | Échap depuis l'intérieur du menu « Aide » le ferme, focus rendu (desktop) | PASS | correctif E11 |
+| 1p | Thème sombre : logos de l'en-tête sans fond (`.fr-header__operator`, `.sols-operator*` transparents) | PASS | |
+| 2h | Badge « Rechercher » : `fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line` | PASS | |
+| 3o | Badge « Explorer » : `fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` | PASS | |
+| 3p | Carte v1.1 : plus de panneau latéral, de « Partager », de « Sources des données », de lien vers la vue liste ; bouton « Imprimer » en haut à gauche ; pas de défilement de page | PASS | desktop et mobile |
+| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | une réussite au nouvel essai observée sur mobile lors d'un passage partiel (D-carto-8) |
+| 3r | Catalogue : ajout (GetMap 200 image) et retrait d'une couche sols, lien profond coche l'entrée | PASS | |
+| 3s | Outils par défaut (distance, surface, itinéraire, annoter) visibles ; autres cachés ; « Afficher tous les outils » dernier de la colonne ; sélection au clavier ajoute le bouton, ferme la liste, rend le focus | PASS | |
+| 3t | Mesure de distance, Imprimer (PNG), Légendes (image), console propre hors bruits amont, partage retiré | PASS | |
+| 3u | Plein écran en bas à droite, échelle à sa gauche (≤ 24 px) en bleu action | PASS | |
+| 3v | Pied de page : « Haut de page » déplie (partenaires visibles, page défilable), « Fermer » replie (défilement restauré) | PASS | |
+| 3w | Bloc marque de l'en-tête cliquable (centre du logo, de l'opérateur et du service : lien `/`) | PASS | |
+| 3n' | Stabilité du rendu de la carte (20 chargements) | PASS | 0/20 |
+| 4 | axe : `/fr/`, `/fr/aide/`, catalogue, fiche, carte, liste, carte catalogue ouvert, carte liste d'outils ouverte, carte pied de page déplié : 0 critical/serious | PASS | seule `heading-order` (modérée) sur le catalogue ; axe en desktop (survol de la marque évité par `page.mouse.move`) |
+| 5 | Captures desktop + mobile, y compris carte catalogue ouvert, liste d'outils, pied de page déplié | PASS | `doc/e2e/*.jpg` < 300 kB |
+
+BLOCKED : aucun.
+
+### Défauts par brique
+
+- **edito** : rien de nouveau.
+- **catalogue** : `heading-order` modérée (amont) ; rien de nouveau.
+- **carto**
+  - D-carto-7 (mineur, visuel) : l'infobulle « Catalogue de cartes » du bouton recouvre le titre du panneau tant que le bouton garde le survol (capture `carto-catalogue-desktop.jpg`).
+  - D-carto-8 (mineur, intermittent) : à 375 px, cocher un fond (« Photographies aériennes ») juste après l'ouverture de l'onglet « Fonds de cartes » a une fois échoué : la case restait décochée (probable course avec la reconstruction du catalogue à l'arrivée des fonds, §12.2). Réussi au nouvel essai.
+  - D-carto-9 (mineur) : sur mobile, le panneau de la liste d'outils s'intitule « Mes outils » alors que la documentation (§12.2) annonce « Tous les outils » (`carto-outils-mobile.jpg`).
+
+### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
+
+La mise en page se rapproche de la maquette (carte pleine page, pied de page compact, badge à icône). Restent : pas de « Se connecter » (voulu), le pied de page compact n'a pas « Conditions générales d'utilisation » et l'ordre des liens diffère (déjà noté en partie 1 : non répété) ; nouveau : le pied de page se déplie par un bouton « Haut de page » (la maquette montre un simple chevron) et la carte porte des colonnes d'outils à gauche et à droite que la maquette ne détaille pas.
+
+---
+
 # Rapport e2e (T3, passe 3)
+
+(Rapport de la passe 3 ci-dessous ; la passe 4 est en tête de fichier.)
 
 ## Passe 3, vérification finale (après M12)
 

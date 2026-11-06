@@ -29,18 +29,6 @@ async function openMap(page: Page, url: string = PAGES.carto): Promise<void> {
   await expect(page.locator('.map-view canvas, canvas').first()).toBeVisible({ timeout: 30_000 });
 }
 
-/** Ouvre le panneau latéral s'il est masqué. */
-async function ensurePanel(page: Page): Promise<void> {
-  const show = page.getByRole('button', { name: 'Afficher le panneau' });
-  if (await show.isVisible().catch(() => false)) {
-    await expect(show).toHaveAttribute('aria-expanded', 'false');
-    await show.click();
-  }
-  const hide = page.getByRole('button', { name: 'Masquer le panneau' });
-  await expect(hide).toBeVisible();
-  await expect(hide).toHaveAttribute('aria-expanded', 'true');
-}
-
 async function openLayerList(page: Page): Promise<void> {
   // Sur mobile le catalogue recouvre le bouton du gestionnaire : on le referme d'abord.
   const panel = page.locator('[id^="GPcatalogPanel-"]');
@@ -92,22 +80,23 @@ test.describe('Carto', () => {
     expect(c.errors.filter((e) => !GPF_TILE_FLAKE.test(e))).toEqual([]);
   });
 
-  test('le panneau « Fonds de carte » bascule sur les photographies aériennes au clavier', async ({
+  test('le catalogue, onglet « Fonds de cartes » : bascule sur les photographies aériennes au clavier', async ({
     page,
   }, testInfo) => {
     const tiles = trackResponses(page, GPF_WMTS);
     await openMap(page);
-    await ensurePanel(page);
-    // Depuis M9 le panneau latéral ne contient que les fonds de carte (plus d'onglets).
-    await expect(page.getByRole('tab')).toHaveCount(0);
-    const plan = page.getByRole('radio', { name: /Plan IGN/ });
-    await expect(plan).toBeChecked();
-    // Clavier : focus sur le radio coché, flèche vers le suivant jusqu'aux photographies aériennes.
-    const ortho = page.getByRole('radio', { name: 'Photographies aériennes', exact: true });
-    await plan.focus();
-    for (let i = 0; i < 12 && !(await ortho.isChecked()); i++)
-      await page.keyboard.press('ArrowDown');
+    await openCatalogue(page);
+    await page.locator('#tabbutton-1_fonds').click();
+    const fond = (nom: string) =>
+      page.locator(
+        `input[name="checkboxes-fonds"][aria-label="Afficher le fond de carte : ${nom}"]`,
+      );
+    await expect(fond('Plan IGN')).toBeChecked();
+    const ortho = fond('Photographies aériennes');
+    await ortho.focus();
+    await page.keyboard.press('Space');
     await expect(ortho).toBeChecked();
+    await expect(fond('Plan IGN')).not.toBeChecked();
     await expect
       .poll(() => tiles.filter((t) => /ORTHOIMAGERY/i.test(t.url)).length, { timeout: 30_000 })
       .toBeGreaterThan(0);
@@ -116,12 +105,11 @@ test.describe('Carto', () => {
     expect(expectFlakeWithin(orthoTiles, testInfo, 'orthophotos')).toBeNull();
   });
 
-  test('le catalogue des données sols ajoute puis retire une couche (GetMap 200, image)', async ({
+  test('le catalogue de cartes ajoute puis retire une couche (GetMap 200, image)', async ({
     page,
   }, testInfo) => {
     const wms = trackResponses(page, GPF_WMS_V);
     await openMap(page);
-    await expect(page.getByRole('tab', { name: 'Données sols' })).toHaveCount(0);
     await openCatalogue(page);
     await searchCatalogue(page, 'carbone');
     const box = page.getByRole('checkbox', {
@@ -233,43 +221,112 @@ test.describe('Carto', () => {
     expect(await page.locator('canvas').count()).toBe(0);
   });
 
-  test('mise en page v1 : carte plein viewport, h1 sr-only, badge « Explorer », pied de page compact', async ({
+  test('mise en page v1.1 : carte plein viewport, aucune barre d’outils, badge « Explorer »', async ({
     page,
     isMobile,
   }) => {
     await openMap(page);
     await expect(page.locator('header .fr-badge')).toHaveText('Explorer');
-    // v1.1 : icône avant du badge (DSFR), violet glycine + repère de carte.
     await expect(page.locator('header .fr-badge')).toHaveClass(
       /fr-badge--purple-glycine.*fr-badge--icon-left.*fr-icon-map-pin-2-fill/,
     );
     await expect(
       page.getByRole('heading', { level: 1, name: 'Explorer les cartes' }),
     ).toBeAttached();
-    // Pied de page compact : liens bas, paramètres d'affichage, « Haut de page » ; ni partenaires ni liens de contenu.
-    const footer = page.locator('footer');
-    await expect(footer.getByRole('button', { name: "Paramètres d'affichage" })).toBeAttached();
-    await expect(footer.getByRole('link', { name: 'Mentions légales' })).toBeAttached();
-    await expect(footer.locator('.fr-footer__partners, .fr-footer__content')).toHaveCount(0);
-    await expect(footer.getByRole('link', { name: 'legifrance.gouv.fr' })).toHaveCount(0);
-    // Barre d'outils au-dessus de la carte : bouton du panneau et lien vers la liste.
-    const region = await page.getByRole('region', MAP_REGION).boundingBox();
-    const toggle = await page
-      .getByRole('button', { name: /(Afficher|Masquer) le panneau/ })
-      .boundingBox();
-    const list = await page
-      .getByRole('link', { name: 'Version accessible de la liste des données' })
-      .first()
-      .boundingBox();
-    expect(toggle!.y + toggle!.height).toBeLessThanOrEqual(region!.y + 1);
-    expect(list!.y + list!.height).toBeLessThanOrEqual(region!.y + 1);
+    // M13 : plus de panneau latéral, de partage, de contrôle d'attribution ni de lien vers la vue liste sur la carte.
+    for (const name of [/panneau/, 'Partager', 'Sources des données'])
+      await expect(page.getByRole('button', { name }), String(name)).toHaveCount(0);
+    await expect(page.locator('.ol-attribution, #panneau-lateral')).toHaveCount(0);
+    await expect(
+      page.getByRole('link', { name: 'Version accessible de la liste des données' }),
+    ).toHaveCount(0);
+    // Imprimer : bouton de la carte, colonne haut gauche.
+    await expect(page.locator('#position-container-top-left .map-print button')).toHaveAttribute(
+      'aria-label',
+      'Imprimer',
+    );
     if (!isMobile) {
-      // Carte plein viewport : pas de défilement de page (1280x900, desktop).
+      // Carte plein viewport : pas de défilement de page (1280x900, desktop), pied de page replié.
       const [scrollH, innerH] = await page.evaluate(() => [
         document.documentElement.scrollHeight,
         window.innerHeight,
       ]);
       expect(scrollH, 'hauteur de la page vs viewport').toBeLessThanOrEqual(innerH + 1);
+    }
+  });
+
+  test('plein écran en bas à droite, échelle à sa gauche en bleu action (clair)', async ({
+    page,
+  }) => {
+    await openMap(page);
+    const plein = await page
+      .locator('#position-container-bottom-right [id^="GPfullScreen-"] button')
+      .boundingBox();
+    const echelle = await page.locator('.ol-scale-line').boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(plein, 'plein écran').not.toBeNull();
+    expect(viewport.width - (plein!.x + plein!.width), 'écart au bord droit').toBeLessThanOrEqual(
+      16,
+    );
+    expect(echelle!.x + echelle!.width, 'échelle à gauche du plein écran').toBeLessThanOrEqual(
+      plein!.x,
+    );
+    expect(
+      plein!.x - (echelle!.x + echelle!.width),
+      'écart échelle / plein écran',
+    ).toBeLessThanOrEqual(24);
+    const [attendu, couleur] = await page.evaluate(() => {
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--text-action-high-blue-france)';
+      document.body.append(probe);
+      const attendu = getComputedStyle(probe).color;
+      probe.remove();
+      return [attendu, getComputedStyle(document.querySelector('.ol-scale-line-inner')!).color];
+    });
+    expect(couleur, 'couleur de l’échelle = jeton action').toBe(attendu);
+  });
+
+  test('pied de page : « Haut de page » le déplie, la page défile, « Fermer » le replie', async ({
+    page,
+    isMobile,
+  }) => {
+    await openMap(page);
+    const footer = page.getByRole('contentinfo');
+    const dims = () =>
+      page.evaluate(() => ({
+        h: document.documentElement.scrollHeight,
+        v: window.innerHeight,
+      }));
+    const ouvrir = footer.getByRole('button', { name: 'Haut de page' });
+    await expect(ouvrir).toHaveAttribute('aria-expanded', 'false');
+    await ouvrir.click();
+    const fermer = footer.getByRole('button', { name: 'Fermer' });
+    await expect(fermer).toHaveAttribute('aria-expanded', 'true');
+    await expect(footer.locator('.fr-footer__partners img').first()).toBeVisible();
+    const ouvert = await dims();
+    expect(ouvert.h, 'la page devient défilable').toBeGreaterThan(ouvert.v + 1);
+    await fermer.click();
+    await expect(footer.getByRole('button', { name: 'Haut de page' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+    const replie = await dims();
+    if (!isMobile) expect(replie.h, 'défilement restauré').toBeLessThanOrEqual(replie.v + 1);
+    expect(replie.h).toBeLessThan(ouvert.h);
+  });
+
+  test('le bloc marque de l’en-tête est entièrement cliquable (vers /)', async ({ page }) => {
+    await openMap(page);
+    for (const sel of ['.fr-header__logo', '.fr-header__operator', '.fr-header__service']) {
+      const href = await page
+        .locator(sel)
+        .first()
+        .evaluate((el) => {
+          const r = el.getBoundingClientRect();
+          const at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return at?.closest('a')?.getAttribute('href') ?? null;
+        });
+      expect(href, `lien au centre de ${sel}`).toBe('/');
     }
   });
 

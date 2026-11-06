@@ -166,7 +166,7 @@ export async function waitForDsfr(page: Page): Promise<void> {
 
 /** Ouvre le catalogue des données sols (contrôle geopf, M9) et attend son panneau. */
 export async function openCatalogue(page: Page): Promise<void> {
-  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
+  const button = page.getByRole('button', { name: 'Catalogue de cartes', exact: true });
   if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
   await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
 }
