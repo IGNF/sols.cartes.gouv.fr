@@ -138,8 +138,11 @@ export async function openServicesMenu(page: Page, isMobile: boolean) {
     .locator('header')
     .getByRole('button', { name: 'Services' })
     .locator('visible=true');
-  await button.click();
-  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  // Le JS DSFR pose `data-fr-js` avant d'attacher tous ses gestionnaires : on réessaie le clic jusqu'à l'ouverture.
+  await expect(async () => {
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true', { timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
   return button;
 }
 
@@ -166,11 +169,55 @@ export async function waitForDsfr(page: Page): Promise<void> {
 
 /** Ouvre le catalogue des données sols (contrôle geopf, M9) et attend son panneau. */
 export async function openCatalogue(page: Page): Promise<void> {
-  const button = page.getByRole('button', { name: 'Catalogue des données sols', exact: true });
+  const button = page.getByRole('button', { name: 'Catalogue de cartes', exact: true });
   if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
   await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
 }
 
 export async function searchCatalogue(page: Page, text: string): Promise<void> {
   await page.locator('#catalog-input-search-global').fill(text);
+}
+
+/** Liens du menu « Aide » (v1.1, E10/C13) : tous externes vers cartes.gouv.fr. */
+export const AIDE_CONTACT_URL = 'https://cartes.gouv.fr/aide/fr/nous-ecrire/';
+
+/** Ouvre le menu « Aide » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
+export async function openAideMenu(page: Page, isMobile: boolean, label = 'Aide') {
+  await waitForDsfr(page);
+  if (isMobile) await page.locator('header .fr-btn--menu').click();
+  // `visible=true` : l'en-tête contient deux copies du menu (bureau et modale mobile, ids suffixés `-mobile`) ;
+  // on ne garde que celle qui est affichée dans le viewport courant.
+  const button = page
+    .locator('header')
+    .getByRole('button', { name: label })
+    .locator('visible=true');
+  // Le JS DSFR pose `data-fr-js` avant d'attacher tous ses gestionnaires : on réessaie le clic jusqu'à l'ouverture.
+  await expect(async () => {
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true', { timeout: 1500 });
+  }).toPass({ timeout: 15_000 });
+  return button;
+}
+
+/** Vérifie les deux liens du menu « Aide » : cible, attributs, icône avant et icône « lien externe » après. */
+export async function expectAideLinks(page: Page, lang: 'fr' | 'en'): Promise<void> {
+  const links = page
+    .locator('header a[href^="https://cartes.gouv.fr/aide/"]')
+    .locator('visible=true');
+  await expect(links).toHaveCount(2);
+  const [centre, contact] = [links.nth(0), links.nth(1)];
+  await expect(centre).toHaveAttribute('href', `https://cartes.gouv.fr/aide/${lang}/`);
+  await expect(contact).toHaveAttribute('href', AIDE_CONTACT_URL);
+  for (const link of [centre, contact]) {
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener external');
+    const icons = await link.evaluate((el) => ({
+      before:
+        getComputedStyle(el, '::before').maskImage +
+        getComputedStyle(el, '::before').webkitMaskImage,
+      after: getComputedStyle(el, '::after').content,
+    }));
+    expect(icons.before, 'icône avant (masque DSFR)').toContain('url(');
+    expect(icons.after, 'icône « lien externe » après (::after)').not.toBe('none');
+  }
 }
