@@ -21,6 +21,8 @@
  * M14: the tool list panel is titled « Tous les outils » (375, 1280 px); no tooltip over an open panel, the
  * print icon kept under its tooltip; WMTS capabilities held back while the catalogue is opened on « Fonds de
  * cartes » at 375 px: the entries fill the open panel (tab, search, focus kept) and tick at the keyboard.
+ * M16: base-layer entries of the catalogue show their GPF thumbnail (and the sols entries theirs), never a
+ * placeholder nor a broken image; the zoom sits bottom right below the full screen (keyboard order kept).
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -131,40 +133,58 @@ for (const width of [375, 768, 1280]) {
   const overlap = await page.evaluate(() => {
     const search = document.querySelector('[id^="GPsearchEngine-"]')?.getBoundingClientRect();
     const zoom = document.querySelector('[id^="GPzoom-"]')?.getBoundingClientRect();
-    return search && zoom ? Math.max(0, zoom.right - search.left) : -1;
+    if (!search || !zoom) return -1;
+    const x = Math.max(0, Math.min(search.right, zoom.right) - Math.max(search.left, zoom.left));
+    const y = Math.max(0, Math.min(search.bottom, zoom.bottom) - Math.max(search.top, zoom.top));
+    return Math.round(x * y);
   });
-  check(
-    overlap === 0,
-    `${width}px : la recherche ne recouvre pas la colonne de zoom (${overlap} px)`,
-  );
-  // v1.1: no attribution control any more (brief); full screen and the scale line sit bottom right.
+  check(overlap === 0, `${width}px : la recherche ne recouvre pas le zoom (${overlap} px²)`);
+  // v1.1: no attribution control any more (brief). M16: full screen then zoom stacked bottom right (as on
+  // cartes.gouv.fr), the scale line at their left; geopf containers in reading order (keyboard order).
   await page.locator('[id^="GPfullScreen-"]').waitFor({ state: 'attached', timeout: 15_000 });
   const bottomRight = await page.evaluate(() => {
     const map = document.querySelector('.map-view')?.getBoundingClientRect();
     const full = document.querySelector('[id^="GPfullScreen-"]');
+    const zoom = document.querySelector('[id^="GPzoom-"]');
     const scale = document.querySelector('.ol-scale-line')?.getBoundingClientRect();
-    // The geopf widget div is wider than its 40 px button: measure the button.
+    // The geopf widget div is wider than its 40 px button: measure the buttons.
     const fullBox = full?.querySelector('button')?.getBoundingClientRect();
-    if (!map || !full || !scale || !fullBox) return null;
+    const zoomIn = document.querySelector('#GPzoomIn')?.getBoundingClientRect();
+    const zoomOut = document.querySelector('#GPzoomOut')?.getBoundingClientRect();
+    if (!map || !full || !zoom || !scale || !fullBox || !zoomIn || !zoomOut) return null;
+    const column = full.parentElement;
     return {
       attribution: document.querySelector('.ol-attribution') !== null,
-      fullInColumn: full.parentElement?.id === 'position-container-bottom-right',
-      fullBottom: Math.round(map.bottom - fullBox.bottom),
-      fullRight: Math.round(map.right - fullBox.right),
+      column: column?.id === 'position-container-bottom-right' && zoom.parentElement === column,
+      order: Array.from(column?.children ?? [])
+        .map((child) => child.id.split('-')[0])
+        .join(','),
+      containers: Array.from(document.querySelectorAll('[id^="position-container-"]'))
+        .map((c) => c.id.replace('position-container-', ''))
+        .join(','),
+      zoomBottom: Math.round(map.bottom - zoomOut.bottom),
+      zoomRight: Math.round(map.right - zoomOut.right),
+      fullAbove: Math.round(zoomIn.top - fullBox.bottom),
+      aligned: Math.round(Math.abs(zoomIn.left - fullBox.left)),
       scaleBottom: Math.round(map.bottom - scale.bottom),
-      scaleGap: Math.round(fullBox.left - scale.right),
+      scaleGap: Math.round(zoomOut.left - scale.right),
     };
   });
   check(
     bottomRight !== null &&
       !bottomRight.attribution &&
-      bottomRight.fullInColumn &&
-      bottomRight.fullBottom <= 16 &&
-      bottomRight.fullRight <= 16 &&
+      bottomRight.column &&
+      bottomRight.order === 'GPfullScreen,GPzoom' &&
+      bottomRight.containers === 'top-left,top-right,bottom-left,bottom-right' &&
+      bottomRight.zoomBottom <= 16 &&
+      bottomRight.zoomRight <= 16 &&
+      bottomRight.fullAbove >= 0 &&
+      bottomRight.fullAbove <= 8 &&
+      bottomRight.aligned <= 1 &&
       bottomRight.scaleBottom <= 16 &&
       bottomRight.scaleGap >= 4 &&
       bottomRight.scaleGap <= 24,
-    `${width}px : pas de bouton « Sources des données », plein écran en bas à droite et échelle à sa gauche (${JSON.stringify(bottomRight)})`,
+    `${width}px : pas de bouton « Sources des données », plein écran puis zoom en bas à droite, échelle à leur gauche, conteneurs dans l’ordre de lecture (${JSON.stringify(bottomRight)})`,
   );
   check(
     (await page
@@ -1476,6 +1496,89 @@ for (const width of [375, 1280]) {
   );
   const { messages, notes } = consoleReport();
   check(messages.length === 0, `D-carto-8 : console vide${notes} ${messages.join(' | ')}`);
+  await context.close();
+}
+
+// M16: thumbnails of the catalogue entries. The base layers show their GPF thumbnail
+// (BASE_LAYER_CANDIDATES), the sols records their CSW one; no entry shows geopf's empty placeholder, and a
+// thumbnail that fails is dropped (no broken image).
+for (const [name, context] of [
+  ['1280px', await browser.newContext({ viewport: { width: 1280, height: 900 } })],
+  [
+    '375px',
+    await browser.newContext({ ...devices['Pixel 5'], viewport: { width: 375, height: 812 } }),
+  ],
+] as const) {
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page.locator('#tabbutton-1_fonds').click();
+  await page
+    .locator('input[name="checkboxes-fonds"]')
+    .first()
+    .waitFor({ state: 'visible', timeout: 30_000 });
+  await page.waitForFunction(
+    () =>
+      Array.from(document.querySelectorAll('[data-layeritem] img')).every(
+        (i) => (i as HTMLImageElement).complete,
+      ),
+    undefined,
+    { timeout: 20_000 },
+  );
+  const entries = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('[data-layeritem]')).map((entry) => {
+      const img = entry.querySelector('img');
+      const container = entry.querySelector('.catalog-thumbnail-container');
+      return {
+        fond: entry.querySelector('input[name="checkboxes-fonds"]') !== null,
+        src: img?.getAttribute('src') ?? '',
+        loaded: img ? img.complete && img.naturalWidth > 0 : false,
+        placeholder: container ? getComputedStyle(container).display !== 'none' && !img : false,
+      };
+    }),
+  );
+  const fonds = entries.filter((e) => e.fond);
+  const sols = entries.filter((e) => !e.fond);
+  check(
+    fonds.length >= 2 &&
+      fonds.every(
+        (e) =>
+          e.loaded &&
+          e.src.startsWith('https://data.geopf.fr/annexes/ressources/metadata/thumbnail/'),
+      ) &&
+      sols.length === 7 &&
+      sols.every((e) => e.loaded) &&
+      entries.every((e) => !e.placeholder),
+    `M16 ${name} : vignettes GPF des ${fonds.length} fonds et des ${sols.length} données sols chargées, aucune vignette vide (${
+      fonds
+        .filter((e) => !e.loaded)
+        .map((e) => e.src)
+        .join(' ') || 'toutes chargées'
+    })`,
+  );
+  const { messages, notes } = consoleReport();
+  check(messages.length === 0, `M16 ${name} : console vide${notes} ${messages.join(' | ')}`);
+  // A thumbnail that fails to load leaves no broken image and no placeholder.
+  const broken = await page.evaluate(async () => {
+    const img = document.querySelector<HTMLImageElement>('[data-layeritem] img');
+    const container = img?.closest('.catalog-thumbnail-container');
+    if (!img || !container) return null;
+    await new Promise<void>((resolve) => {
+      img.addEventListener('error', () => setTimeout(resolve, 0), { once: true });
+      img.src = 'https://data.geopf.fr/annexes/ressources/metadata/thumbnail/absente-m16.jpg';
+    });
+    return {
+      img: container.querySelector('img') !== null,
+      display: getComputedStyle(container).display,
+    };
+  });
+  check(
+    broken !== null && !broken.img && broken.display === 'none',
+    `M16 ${name} : vignette en échec retirée, ni image cassée ni vignette vide (${JSON.stringify(broken)})`,
+  );
   await context.close();
 }
 
