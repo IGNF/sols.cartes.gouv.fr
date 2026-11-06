@@ -1,5 +1,18 @@
 # Rapport e2e (T3, passe 3)
 
+## Passe 3, vérification finale (après M12)
+
+Date : 2026-11-06. Base : `origin/main` 1d834c2 (M12 #66 fusionné), briques reconstruites (`bun run build:all`), suite complète sur le port 8148 (arrêté ensuite).
+
+Résultat : **103 réussis, 15 ignorés, 0 échec, 0 flaky**, identique à la partie 2 ; aucune assertion n'a dû être modifiée pour la nouvelle géométrie (le contournement mobile « fermer le catalogue par son bouton » reste valide ; l'ouverture de la liste des couches remplace maintenant le panneau du catalogue).
+
+M12 confirmé à la mesure (sonde Playwright) et sur les captures régénérées :
+- D-carto-5 corrigé par #66 : à 1280×900 le panneau du catalogue s'adapte au contenu (512 px vide, 320 px avec la recherche « carbone »), la première entrée n'est plus coupée.
+- D-carto-6 corrigé par #66 : à 375×812 le panneau fait 307 px de large (`calc(100vw - 4.25rem)`), ancré à gauche de son bouton ; « Ma sélection de cartes » reste visible et atteignable (boîte à x=319).
+- Observation mineure : sur mobile, l'infobulle « Catalogue des données sols » du bouton chevauche le titre du panneau tant que le bouton garde le survol.
+
+Les captures de `doc/e2e/` sont régénérées par ce passage. Les sections suivantes restent valables, avec D-carto-5 et D-carto-6 désormais corrigés.
+
 Ce rapport garde la partie 1 (v1 : en-tête, pied de page, home, aide, puces) puis ajoute la partie 2 (carte : outils geopf, catalogue des données sols). Partie 1 en dessous de la partie 2.
 
 ## Passe 3, partie 2 : outils de la carte et catalogue des données sols
