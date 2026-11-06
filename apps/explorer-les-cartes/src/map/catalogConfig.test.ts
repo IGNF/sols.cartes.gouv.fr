@@ -13,8 +13,15 @@ import {
   syncCatalogTicks,
 } from './catalogConfig';
 
+const PLAN_IGN_THUMBNAIL =
+  'https://data.geopf.fr/annexes/ressources/metadata/thumbnail/vignette-plan-ign.jpg';
 const BASE_LAYERS: AvailableBaseLayer[] = [
-  { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+  {
+    id: 'plan-ign',
+    layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+    title: 'Plan IGN',
+    thumbnail: PLAN_IGN_THUMBNAIL,
+  },
   { id: 'orthophotos', layerName: 'ORTHOIMAGERY.ORTHOPHOTOS', title: 'Photos & cartes' },
 ];
 
@@ -105,6 +112,28 @@ describe('buildCatalogData', () => {
 });
 
 describe('buildCatalogData : fonds de cartes', () => {
+  it('donne aux fonds leur vignette GPF, aucune vignette sans image ou hors des hôtes de confiance (M16)', () => {
+    const data = buildCatalogData(
+      [],
+      [
+        ...BASE_LAYERS,
+        {
+          id: 'relief',
+          layerName: 'ELEVATION.SLOPES',
+          title: 'Relief',
+          thumbnail: 'http://exemple.org/vignette.jpg',
+        },
+      ],
+    );
+    expect(data.layers['GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS']?.thumbnail).toBe(
+      PLAN_IGN_THUMBNAIL,
+    );
+    expect(data.layers['ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS']).not.toHaveProperty(
+      'thumbnail',
+    );
+    expect(data.layers['ELEVATION.SLOPES$GEOPORTAIL:OGC:WMTS']).not.toHaveProperty('thumbnail');
+  });
+
   it('ajoute une entrée WMTS par fond disponible dans la catégorie « fonds », titre échappé, sans producteur', () => {
     const data = buildCatalogData([], BASE_LAYERS);
     expect(Object.keys(data.layers)).toEqual([

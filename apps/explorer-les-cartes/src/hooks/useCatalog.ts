@@ -12,6 +12,7 @@ import {
   findCatalogOverlay,
   syncCatalogTicks,
 } from '../map/catalogConfig';
+import { dropBrokenThumbnails } from '../map/catalogThumbnails';
 import { readCatalogView, restoreCatalogView, type CatalogView } from '../map/catalogView';
 import { loadCatalog, type CatalogControl } from '../map/geopf';
 import { unescapeHtml } from '../text/escapeHtml';
@@ -198,6 +199,7 @@ export default function useCatalog(
       // Entries are rendered once the configuration is loaded: name their checkboxes and tick them as
       // they appear, then follow the store (layers removed from the switcher, links, base layer).
       const stopWatching = watchToolButtons(element, sync);
+      const stopThumbnails = dropBrokenThumbnails(element);
       const unsubscribe = useMapStore.subscribe((state, previous) => {
         if (
           state.overlays !== previous.overlays ||
@@ -215,6 +217,7 @@ export default function useCatalog(
         dispose: () => {
           stopRestoring();
           stopWatching();
+          stopThumbnails();
           unsubscribe();
           map.removeControl(control);
           mounted.current = null;

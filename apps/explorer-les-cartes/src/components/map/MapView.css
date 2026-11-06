@@ -147,6 +147,14 @@
 }
 
 /*
+ * Entry thumbnails (M16): geopf paints a placeholder vignette behind every entry without an image (or whose
+ * image failed and was dropped, src/map/catalogThumbnails.ts): no image at all rather than an empty one.
+ */
+.map-view .map-catalog .catalog-thumbnail-container:not(:has(img)) {
+  display: none;
+}
+
+/*
  * Catalogue panel height (M12). DSFR tabs size themselves on their content (`--tabs-height`): filtered
  * to one record the panel shrank to about 210 px and cut that record. Bounds on the DSFR spacing scale
  * (1w = 0.5rem): at least 40w, at most 64w (geopf: 500px) and the map height minus a 2w gutter; the

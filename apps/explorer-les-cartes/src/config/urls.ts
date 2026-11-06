@@ -85,6 +85,15 @@ export function solsStyleUrl(file: string): string {
   return `https://data.geopf.fr/annexes/gissol-osf/style/${encodeURIComponent(file)}.json`;
 }
 
+/**
+ * Thumbnail of a GPF layer in the shared metadata annexes, as cartes.gouv.fr gives it in its layer
+ * configuration (`thumbnail` of IGNF/cartes.gouv.fr-entree-carto `public/data/entreeCarto.json`), for
+ * example `vignette-plan-ign.jpg`. Every file used is checked (200 image/jpeg) in doc/agents/geopf-ext.md §12.7.
+ */
+export function gpfThumbnailUrl(file: string): string {
+  return `https://data.geopf.fr/annexes/ressources/metadata/thumbnail/${encodeURIComponent(file)}`;
+}
+
 /** Host of every GPF service: deep links to other hosts are refused. */
 export const GPF_HOST = 'data.geopf.fr';
 

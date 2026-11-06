@@ -446,6 +446,17 @@ describe('useCatalog', () => {
     );
   });
 
+  it('retire une vignette qui ne se charge pas plutôt que d’afficher une image cassée (M16)', async () => {
+    const { map, addControl } = createFakeMap();
+    renderHook(() => useCatalog(map));
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const body = geopf.created[0]?.element.querySelector('.entries');
+    if (!body) throw new Error('fixture');
+    body.innerHTML = '<div class="catalog-thumbnail-container"><img src="x.jpg" alt="" /></div>';
+    body.querySelector('img')?.dispatchEvent(new Event('error'));
+    expect(body.querySelector('img')).toBeNull();
+  });
+
   it('ne fait rien sans carte et n’ajoute rien après un démontage précoce', async () => {
     renderHook(() => useCatalog(null));
     expect(geopf.created).toHaveLength(0);
