@@ -187,11 +187,8 @@ test.describe('Carto : « Mes outils »', () => {
         page.getByRole('button', { name: 'Mesurer une distance', exact: true }),
       ).toHaveAttribute('aria-pressed', 'true');
     await expect(mesOutils).toBeFocused();
-    // Mobile : la liste doit se fermer à la sélection (doc/agents/geopf-ext.md §10.2) ; soft, pour rendre l'écart
-    // visible (D-carto-4). Desktop : elle reste ouverte, comme sur cartes.gouv.fr.
-    if (isMobile)
-      await expect.soft(panel, 'liste « Mes outils » fermée à la sélection (mobile)').toBeHidden();
-    else await expect(panel).toBeVisible();
+    // Depuis le correctif de M8 (#56) : l'activation clavier d'une entrée vide la liste, sur desktop comme sur mobile.
+    await expect(panel).toBeHidden();
   });
 });
 

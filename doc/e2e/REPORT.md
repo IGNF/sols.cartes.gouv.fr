@@ -1,4 +1,51 @@
-# Rapport e2e (T3, passe 3, première partie)
+# Rapport e2e (T3, passe 3)
+
+Ce rapport garde la partie 1 (v1 : en-tête, pied de page, home, aide, puces) puis ajoute la partie 2 (carte : outils geopf, catalogue des données sols). Partie 1 en dessous de la partie 2.
+
+## Passe 3, partie 2 : outils de la carte et catalogue des données sols
+
+Date : 2026-11-06. Base testée : branche `feat/T3-e2e-part2` = `origin/main` (qui contient M8 #56, M9 #60 tête `55a552a`, M10, M11, E9/C12) fusionné ; les trois briques ont été reconstruites (`bun run build:all`, sans erreur) et servies sur le port 8142. Un premier passage avait échoué en masse parce que le serveur d'aperçu avait été arrêté par un autre agent en cours de route (tests à ~100 ms, connexion refusée) : il a été relancé sous surveillance et le passage retenu est complet.
+
+Résultat du dernier passage complet : **103 réussis, 15 ignorés, 0 échec, 0 flaky**. Ignorés : axe sur mobile (8), outils geopf sur mobile (6 : leurs boutons sont masqués sous 48em, ils s'ouvrent par « Mes outils », test dédié), filtres du catalogue sur mobile (1) ; le test « Mes outils » tourne en desktop et mobile. Contrôle de types : `bun run typecheck`.
+
+| # | Scénario | Statut | Preuve |
+|---|---|---|---|
+| 3b | Fonds de carte (plus d'onglets) : photographies aériennes au clavier, tuiles 200 | PASS | le panneau latéral ne contient que les fonds ; aucun `tab` |
+| 3c | Catalogue des données sols : bouton, recherche « carbone », case « Ajouter à la carte : … » (Espace) : GetMap 200 image, couche dans le gestionnaire, décocher la retire | PASS | desktop et mobile (sur mobile le catalogue recouvre le gestionnaire : fermeture par « Fermer le panneau ») |
+| 3d' | Lien profond `?l=…` coche l'entrée du catalogue | PASS | |
+| 3e' | Couche du Loiret cassée côté serveur (M-4) : avis « Couche indisponible » | PASS | `role=alert` ou `status` |
+| 3f' | Quinze boutons d'outils avec nom accessible, aucune fenêtre geopf sans nom | PASS | desktop |
+| 3g' | « Mes outils » : activation clavier d'une entrée lance l'outil, liste fermée, focus rendu | PASS | desktop et mobile (correctif de M8) |
+| 3h' | Mesure de distance : valeur affichée | PASS | |
+| 3i | Partager : permalien (`l=` fond + couche, `c`, `permalink=yes`) rouvert dans une page neuve : mêmes fonds et couches | PASS | |
+| 3j | Imprimer : téléchargement PNG | PASS | |
+| 3k | Légendes : accordéon déplié, image chargée pour la couche sols ajoutée | PASS | |
+| 3l | Console du parcours outils : aucune erreur hors bruits amont documentés (`Greyscale`, complétion vide, flake GPF) | PASS | |
+| 3m | Chevron du menu « Services » de la carte se retourne (M10) | PASS | desktop et mobile |
+| 3n | Stabilité du rendu de la carte (20 chargements) | PASS | 0/20 sans canvas |
+| 1k | Échap ferme seulement le sous-menu « Services » : edito, catalogue, carte, desktop et mobile (E9/C12) | PASS | l'ancien test sauté est réactivé |
+| 4' | axe : carte avec le catalogue ouvert, carte avec « Mes outils » ouvert, et les six pages de la partie 1 : 0 critical/serious | PASS | `heading-order` (modérée) sur le catalogue et, intermittent, sur la fiche |
+| 5' | Captures : carte catalogue ouvert, carte « Mes outils » ouvert, desktop et mobile | PASS | `doc/e2e/carto-catalogue-*.jpg`, `carto-outils-*.jpg` (< 300 kB) |
+
+BLOCKED : aucun. Note axe : l'axe tourne en desktop uniquement ; sur mobile en thème sombre, M-5 (survol de la marque, contraste du bouton « Menu ») est un état DSFR amont, à éviter avec `page.mouse.move(200, 400)` si on lance axe en mobile.
+
+### Défauts par brique (partie 2)
+
+- **carto**
+  - D-carto-5 (visuel) : à 1280x900, le panneau du catalogue des données sols s'ouvre sur une hauteur d'environ 210 px quand on y filtre « carbone » : la première entrée est coupée (capture `carto-catalogue-desktop.jpg`). Sur mobile le panneau est plein écran et lisible.
+  - Observation corrigée : la liste de « Mes outils » restait ouverte après Entrée avant le correctif de M8 (#56) ; depuis, elle se ferme et le focus revient sur « Mes outils » (test vert).
+  - Mobile : le catalogue ouvert recouvre le bouton du gestionnaire de couches ; il faut le fermer par « Fermer le panneau » avant d'ouvrir la liste des couches (comportement plein écran de geopf, non bloquant).
+- **catalogue** : `heading-order` modérée sur la recherche (amont) et sur la fiche selon le chargement ; rien de nouveau.
+- **edito** : rien de nouveau.
+
+### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
+
+- La maquette n'a pas de panneau « Fonds de carte » latéral : l'ajout de données et les outils passent par le catalogue et « Mes outils », comme dans la maquette ; le panneau latéral reste un ajout.
+- Les outils (mesures, légendes, partage, impression) sont présents ; le pied de page compact n'a toujours pas le lien « Conditions générales d'utilisation ».
+
+---
+
+# Partie 1 (v1 : en-tête, pied de page, home, aide, puces)
 
 Date : 2026-11-05. Base : `origin/main` 360b0c0 (v1 : X11, E7, E8, C8 à C11, M7 fusionnés ; M8 et M9 pas encore). Les trois briques ont été construites (`bun run build:all`, sans erreur) et servies sur le port 8133. Chromium headless, projets `desktop` (1280x900) et `mobile` (375x812). Aucun appel réseau simulé.
 
