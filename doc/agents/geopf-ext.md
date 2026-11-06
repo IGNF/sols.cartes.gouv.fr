@@ -673,3 +673,45 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   un avis par-dessus la carte recouvrirait ses widgets) et revient si la couche est retirée puis remise.
 - `check:map` : donnée Loiret ajoutée depuis le catalogue → avis « Couche indisponible » puis retrait ; lien `l=` vers `rrp_loiret_…` →
   entrée `rrp_dept_loiret_…` cochée, décocher retire la couche et l'avis.
+
+## 12. v1.1 (M13, 2026-11-06)
+
+### 12.2 Barre d'outils retirée, catalogue de cartes, outils à la demande (PR 2)
+
+- **Plus de `map-explorer__toolbar` ni de panneau latéral** (`MapExplorer` = avis + carte) : la vue carte occupe toute la largeur. Le
+  bouton « Imprimer » est un contrôle OpenLayers maison (`src/map/printControl.ts`, `usePrintControl`) habillé comme les boutons geopf
+  (`gpf-widget gpf-widget-button`, `gpf-btn gpf-btn-icon fr-btn fr-btn--tertiary fr-icon-printer-line`, `aria-label` « Imprimer »), déplacé
+  dans `#position-container-top-left` après les contrôles geopf (zoom, plein écran, import, GetFeatureInfo) ; il ouvre la modale DSFR
+  `printModal` (`src/components/map/printModal.ts`, `openPrintModal`). **Partage retiré** (`ShareModal`, `mapPermalink`, `SHARE_LABELS`) ;
+  la lecture des permaliens/liens profonds (`permalink.ts`, `deepLink.ts`) reste. **Vue liste conservée mais plus liée** depuis la carte
+  (`?vue=liste` ; l'avis « Catalogue indisponible » y renvoie encore) ; le magasin perd `isPanelOpen`/`togglePanel`.
+- **Catalogue renommé « Catalogue de cartes »** (`CONTROL_LABELS.catalog`, `titlePrimary`, `GEOPF_DIALOG_LABELS.GPcatalogPanel`) avec deux
+  catégories (`CATALOG_CATEGORIES`) filtrées sur un champ `kind` des entrées (`CATALOG_KIND_FIELD`, valeurs `CATALOG_KINDS`) : « Données
+  sols » (`sols`, producteur, tri) et **« Fonds de cartes »** (`fonds`, onglet `tabbutton-1_fonds`). Les entrées fonds sont les
+  `BASE_LAYER_CANDIDATES` publiés dans les capacités WMTS (`useBaseLayerCatalogue().layers`, passés à `useCatalog(map, layers)` ; le contrôle
+  est reconstruit quand elles arrivent), clé `<nom>$GEOPORTAIL:OGC:WMTS`, titre des capacités, sans producteur (`producer: []` →
+  `createCatalogProducerLinks` renvoie `null` : le gabarit lit `producers[0].name` dès que la liste est définie). Cocher un fond →
+  `setActiveBaseLayer` ; `syncCatalogTicks(root, overlays, datasets, baseLayers, activeBaseLayerId)` coche le seul fond actif (et le recoche
+  après un décochage : un fond reste toujours affiché). Cases nommées « Afficher le fond de carte : <titre> » (`checkboxes-fonds`,
+  `fixToolButtons`). La recherche globale du widget couvre les deux onglets.
+- **Barre de recherche centrée** (≥ 48em : `left: 50%; transform: translateX(-50%)`, largeur bornée par les deux colonnes de boutons) ;
+  **bouton d'effacement** `GPsearchInputReset-` masqué tant que le champ est vide (`:has(> input:placeholder-shown)` sur son parent, le
+  bouton n'est pas dans `.GPInputGroup` mais frère du champ dans `.gpf-panel__content`). cartes.gouv.fr garde sa barre en haut à gauche
+  et n'a pas de `GPsearchInputReset-` (bouton « Effacer la saisie » en flux, affiché seulement avec du texte).
+- **Outils à la demande** (`DEFAULT_TOOLS` = MeasureLength, MeasureArea, Drawing, Route, par `CLASSNAME` geopf) : les autres outils
+  listables reçoivent `map-tool--on-demand` et leur bouton est masqué (`MapView.css`) jusqu'à ce que l'outil soit choisi dans
+  **« Afficher tous les outils »** (ControlList renommé, placé **en dernier** de la colonne de droite, panneau « Tous les outils ») :
+  l'entrée de la liste clique le bouton de l'outil (comportement amont, `ControlListDOM`), qui passe `aria-pressed="true"` ;
+  `revealOnOpen` (observateur d'attribut) ajoute alors `map-tool--shown` et le bouton reste. Sur cartes.gouv.fr les six premiers outils
+  sont dessinés et les autres repoussés hors écran par geopf (`margin-left: -9504px`) : la liste y ouvre l'outil sans ajouter son bouton ;
+  ici le bouton est ajouté (demande du brief). Même comportement à toutes les largeurs (la règle mobile qui cachait tous les outils
+  listables est retirée).
+
+### 12.5 Sélecteurs e2e (PR 2)
+
+| Élément | Sélecteur |
+|---|---|
+| Catalogue | `getByRole('button', { name: 'Catalogue de cartes', exact: true })` ; onglets `#tabbutton-0_sols`, `#tabbutton-1_fonds` ; fonds `input[name="checkboxes-fonds"][data-layer="<nom>:WMTS"]` nommés « Afficher le fond de carte : <titre> » |
+| Imprimer | `.map-print button` (`aria-label` « Imprimer »), dans `#position-container-top-left` ; modale `#imprimer-la-carte` |
+| Tous les outils | `getByRole('button', { name: 'Afficher tous les outils', exact: true })` (dernier de `#position-container-top-right`) ; entrées `[id^="GPcontrolListPanel-"] li` ; outil à la demande caché : `.map-tool--on-demand:not(.map-tool--shown)` |
+| Supprimés | « Masquer/Afficher le panneau », `#panneau-lateral`, « Partager », « Version accessible de la liste des données » sur la carte, onglet DSFR « Fonds de carte » |
