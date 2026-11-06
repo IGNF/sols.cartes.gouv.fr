@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { BASE_LAYER_CANDIDATES } from '../config/map';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
-import { availableBaseLayers, resolveActiveBaseLayer } from './baseLayerCatalogue';
+import {
+  availableBaseLayers,
+  baseLayersStatus,
+  resolveActiveBaseLayer,
+} from './baseLayerCatalogue';
 import { parseWmtsCapabilities } from './wmtsCapabilities';
 
 const capabilities = parseWmtsCapabilities(capabilitiesXml);
@@ -44,5 +48,16 @@ describe('resolveActiveBaseLayer', () => {
 
   it('renvoie undefined sans fond disponible', () => {
     expect(resolveActiveBaseLayer([], 'plan-ign')).toBeUndefined();
+  });
+});
+
+describe('baseLayersStatus', () => {
+  const layers = availableBaseLayers(capabilities);
+
+  it('distingue chargement, échec, aucun fond publié et fonds disponibles', () => {
+    expect(baseLayersStatus({ isPending: true, isError: false }, [])).toBe('loading');
+    expect(baseLayersStatus({ isPending: false, isError: true }, [])).toBe('error');
+    expect(baseLayersStatus({ isPending: false, isError: false }, [])).toBe('empty');
+    expect(baseLayersStatus({ isPending: false, isError: false }, layers)).toBe('ready');
   });
 });
