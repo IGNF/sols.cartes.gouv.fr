@@ -706,6 +706,8 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   avant le libellé (`fr-link--icon-left` + classe d'icône, si listée dans `HEADER_MENU_ICONS`, sinon rien) ; l'icône « lien externe » après
   est celle du DSFR (`[target=_blank]::after`), poussée à droite comme sur cartes.gouv.fr (`.header-menu__label { flex: 1 }`). Badge :
   `badgeStyles.carto` (E10) → `SERVICE_BADGE_CLASSES`, liste blanche de couleurs et d'icônes, repli violet glycine + `fr-icon-map-pin-2-fill`.
+  `check:map` ne cherche plus `cartes.gouv.fr` que dans `.fr-header__brand` (les liens « Aide » y mènent depuis E10) et vérifie les liens
+  externes de « Aide ». Les icônes DSFR étant des data URI inlinées, comparer les `mask-image` de `::before` et `::after`, pas leur nom.
 - **Icônes et build parallèles** : `react-dsfr update-icons` réécrit `dsfr/utility/icons/icons.min.css` dans `node_modules` ; avec bun, ce
   fichier est un lien physique partagé par tous les worktrees (7 liens observés) : un build lancé en parallèle dans une autre brique peut
   retirer les icônes `ri-*` du bundle. Relancer `bun run build` juste avant `check:map` et vérifier `grep ri-share-line dist/assets/*.css`.
