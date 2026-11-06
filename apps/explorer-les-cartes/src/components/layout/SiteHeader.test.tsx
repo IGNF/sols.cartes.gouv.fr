@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { BRAND, SERVICE_BADGE } from '../../config/site';
+import { BRAND, SERVICE_BADGE, SERVICE_BADGE_CLASSES, itemHref } from '../../config/site';
 import SiteHeader from './SiteHeader';
 
 const { service, header } = BRAND;
@@ -22,7 +22,11 @@ describe('SiteHeader (v1, contenu issu de @sols/brand)', () => {
     expect(screen.getAllByText(service.title, { exact: false }).length).toBeGreaterThan(0);
     expect(SERVICE_BADGE).toBe('Explorer');
     const badge = screen.getAllByText(SERVICE_BADGE ?? '')[0];
-    expect(badge).toHaveClass('fr-badge', 'fr-badge--purple-glycine');
+    expect(badge).toHaveClass('fr-badge', 'fr-badge--purple-glycine', 'fr-icon-map-pin-2-fill');
+    expect(SERVICE_BADGE_CLASSES).toEqual({
+      color: 'fr-badge--purple-glycine',
+      icon: 'fr-icon-map-pin-2-fill',
+    });
     expect(screen.getAllByText(service.tagline).length).toBeGreaterThan(0);
   });
 
@@ -50,7 +54,7 @@ describe('SiteHeader (v1, contenu issu de @sols/brand)', () => {
         within(panel)
           .getAllByRole('link')
           .map((link) => link.getAttribute('href')),
-      ).toEqual(menu.items.map((item) => item.href));
+      ).toEqual(menu.items.map((item) => itemHref(item)));
       await user.click(button);
     }
   });

@@ -1,9 +1,17 @@
-/* Compact footer: the DSFR bottom bar only, on one line, as on cartes.gouv.fr map pages. */
-.fr-footer.compact-footer {
+/*
+ * Expandable footer (M13, CgfrFooter pattern of cartes.gouv.fr). Expanded: the regular DSFR footer.
+ * Collapsed (`compact-footer--collapsed`): the DSFR bottom bar only, on one line, as on cartes.gouv.fr map
+ * pages; body, partners and licence carry the `hidden` attribute, which DSFR's `display: flex` would override.
+ */
+.compact-footer [hidden] {
+  display: none;
+}
+
+.fr-footer.compact-footer--collapsed {
   padding-top: 0;
 }
 
-.compact-footer .fr-footer__bottom {
+.compact-footer--collapsed .fr-footer__bottom {
   flex-wrap: nowrap;
   align-items: center;
   margin-top: 0;
@@ -15,15 +23,29 @@
   width: auto;
 }
 
-.compact-footer .compact-footer__top {
+.compact-footer .fr-footer__bottom .compact-footer__toggle {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
   margin-left: 1rem;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
 }
 
-/* Small screens: the links wrap, « Haut de page » goes below them. */
+/* Partner logos: same height, as on the edito footer (DSFR sets height: auto on .fr-footer__logo). */
+.compact-footer .fr-footer__partners .compact-footer__partner-logo {
+  height: 4.5rem;
+  max-width: 12rem;
+  padding: 0.5rem;
+  object-fit: contain;
+}
+
+/* Small screens: the links wrap, the toggle goes below them. */
 @media (max-width: 47.99em) {
-  .compact-footer .fr-footer__bottom {
+  .compact-footer--collapsed .fr-footer__bottom {
     flex-wrap: wrap;
+  }
+
+  .compact-footer .fr-footer__bottom .compact-footer__toggle {
+    margin-left: 0;
   }
 }

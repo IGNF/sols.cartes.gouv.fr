@@ -1,23 +1,15 @@
 /*
- * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn in
- * `::after` (DSFR uses `::before` for the separator). The PNG is transparent: no tile. Hidden below 62em,
- * where the DSFR header stacks the service title under the brand.
+ * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn as a
+ * background of `.fr-header__service` (DSFR uses its `::before` for the separator). No positioning on
+ * purpose: `position: relative` here would confine the DSFR `fr-enlarge-link` overlay (`a::before`,
+ * absolute, inset 0) to the service block, and the logo and operator would no longer link to « / »
+ * (doc/agents/geopf-ext.md §12.1). The PNG is transparent: no tile. Hidden below 62em, where the DSFR header
+ * stacks the service title under the brand.
  */
 @media (min-width: 62em) {
   .site-header .fr-header__service {
-    position: relative;
     padding-left: 5rem;
-  }
-
-  .site-header .fr-header__service::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 1.25rem;
-    width: 3rem;
-    height: 3rem;
-    transform: translateY(-50%);
-    background: var(--osf-mark) center / contain no-repeat;
+    background: var(--osf-mark) 1.25rem center / 3rem 3rem no-repeat;
   }
 }
 
@@ -58,10 +50,18 @@
   list-style: none;
 }
 
+/*
+ * Menu link: item icon (::before), label and hint, external-link icon (DSFR `[target=_blank]::after`) pushed
+ * to the right, as in the cartes.gouv.fr « Aide » menu.
+ */
 .header-menu__panel .fr-nav__link {
-  display: block;
+  justify-content: flex-start;
   padding: 0.75rem 1rem;
   box-shadow: 0 1px 0 0 var(--border-default-grey);
+}
+
+.header-menu__label {
+  flex: 1 1 auto;
 }
 
 /* In the DSFR mobile menu modal, the list is part of the flow. */
