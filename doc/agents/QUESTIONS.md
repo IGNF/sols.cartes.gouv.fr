@@ -119,6 +119,18 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 
 -> nOui est à l'avenir, si sur de la donné tuilé / data.geopf. Si ta requête et bonne, documentée et que le serveur te renvoie une erreur cohérente ne passe pas plus de temps de raissonnement dessus. Documente là et poursuit.
 
+## M-5. Contraste du bouton « Menu » au survol du bloc de marque en thème sombre (carto-dev, M11)
+
+- Constat : en mobile (< 62em), thème sombre, quand le pointeur survole le bloc de marque de l'en-tête, DSFR 1.14.2
+  (`.fr-enlarge-link:hover { background-color: var(--hover) }`) le peint en `#3f3f3f` ; le bouton « Menu » qu'il contient
+  (`#8585f6`) tombe à 3,35:1 (axe `color-contrast`, grave). Même mesure sur l'edito et la carto ; 0 violation au repos.
+  Détail : `doc/agents/geopf-ext.md` §9.7.
+- Options : (a) le laisser tel quel (comportement DSFR, transitoire au survol) et le signaler au DSFR
+  (https://github.com/GouvernementFR/dsfr/issues) ; (b) surcharger le survol du bloc de marque sur toutes les briques
+  (`@sols/brand` ou CSS de chaque brique) ; (c) attendre une version du DSFR qui le corrige.
+- Défaut appliqué : (a), aucune surcharge. Le ticket au DSFR est à ouvrir par un humain. `check:map` vérifie qu'il n'y a
+  aucune violation au repos et que, au survol, seule celle-ci apparaît.
+
 ## G-1. « Logged in the web browser » et authentification (v1, orchestrateur)
 
 - Question : `refine.md` dit « They should be logged in the web browser in the final product, for security reasons » puis « The 'Connect' button should never be visible since we do not have authentication/login (confirm this) ».
