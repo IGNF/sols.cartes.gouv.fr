@@ -8,6 +8,21 @@ export interface AvailableBaseLayer {
   title: string;
 }
 
+/**
+ * Where the « Fonds de cartes » stand: capabilities still loading, failed, published without any
+ * candidate, or entries available.
+ */
+export type BaseLayersStatus = 'loading' | 'error' | 'empty' | 'ready';
+
+export function baseLayersStatus(
+  query: { isPending: boolean; isError: boolean },
+  layers: readonly AvailableBaseLayer[],
+): BaseLayersStatus {
+  if (query.isError) return 'error';
+  if (query.isPending) return 'loading';
+  return layers.length ? 'ready' : 'empty';
+}
+
 /** Keeps the candidates published in the capabilities, in candidate order. Silent on missing ones. */
 export function availableBaseLayers(
   capabilities: WmtsCapabilities,

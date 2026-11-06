@@ -414,6 +414,12 @@ export const MAP_NOTICES = {
   catalogueUnavailableTitle: 'Catalogue indisponible',
   catalogueUnavailable:
     'Le catalogue des données sols n’a pas pu être chargé sur la carte. Toutes les données restent consultables ici :',
+  /** Notices of the « Fonds de cartes » tab of the catalogue while its entries are not there (M15). */
+  baseLayersLoading: 'Chargement des fonds de cartes de la Géoplateforme…',
+  baseLayersError:
+    'Les fonds de cartes n’ont pas pu être chargés depuis la Géoplateforme. Rechargez la page pour réessayer.',
+  baseLayersReload: 'Recharger la page',
+  baseLayersEmpty: 'Aucun fond de carte prévu n’est publié par la Géoplateforme.',
 } as const;
 
 /** Strings of the "Imprimer la carte" dialog and print sheet. */
