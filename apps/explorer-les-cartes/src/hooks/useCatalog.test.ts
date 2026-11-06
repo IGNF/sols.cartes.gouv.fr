@@ -280,6 +280,49 @@ describe('useCatalog', () => {
     expect(layersOf(geopf.created[1])).toHaveLength(8);
   });
 
+  it('rend le focus au nouveau bouton quand le catalogue est reconstruit depuis son bouton', async () => {
+    const { map, addControl, container } = createFakeMap();
+    document.body.append(container);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    const firstButton = geopf.created[0]?.element.querySelector('button');
+    firstButton?.focus();
+    expect(document.activeElement).toBe(firstButton);
+    rerender({
+      layers: [
+        { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+      ],
+    });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    const secondButton = geopf.created[1]?.element.querySelector('button');
+    expect(secondButton).not.toBe(firstButton);
+    expect(document.activeElement).toBe(secondButton);
+    container.remove();
+  });
+
+  it('laisse le focus là où il est quand le catalogue est reconstruit sans l’avoir', async () => {
+    const { map, addControl, container } = createFakeMap();
+    document.body.append(container);
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const { rerender } = renderHook(({ layers }) => useCatalog(map, layers), {
+      initialProps: { layers: [] as AvailableBaseLayer[] },
+    });
+    await waitFor(() => expect(addControl).toHaveBeenCalledTimes(1));
+    outside.focus();
+    rerender({
+      layers: [
+        { id: 'plan-ign', layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', title: 'Plan IGN' },
+      ],
+    });
+    await waitFor(() => expect(geopf.created).toHaveLength(2));
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+    container.remove();
+  });
+
   it('signale au magasin un catalogue qui n’a pas pu être chargé', async () => {
     geopf.failNext();
     const { map, addControl } = createFakeMap();

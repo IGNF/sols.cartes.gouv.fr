@@ -222,8 +222,11 @@ export default function useCatalog(
       const Catalog = catalogClass.current;
       if (!current || !Catalog || current.baseLayers === wanted.current) return undefined;
       const rebuild = () => {
+        // The old control takes the focus away with it (to the body): give it to the new button.
+        const hadFocus = current.element.contains(document.activeElement);
         current.dispose();
         mount(Catalog, wanted.current);
+        if (hadFocus) mounted.current?.element.querySelector('button')?.focus();
       };
       if (!isOpen(current.element)) {
         rebuild();
