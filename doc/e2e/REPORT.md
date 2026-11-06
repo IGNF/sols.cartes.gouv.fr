@@ -4,7 +4,7 @@
 
 Date : 2026-11-06. Base : `origin/main` 7759161 (E10 #70, C13 #71, E11 #72, M13 #73, #74, #75 fusionnés), les trois briques reconstruites (`bun run build:all`, sans erreur), suite complète sur le port 8142 (arrêté ensuite).
 
-Résultat mesuré : auteur, un passage complet : 128 réussis, 12 ignorés, 0 échec, 0 flaky ; relecteur, deux passages complets : 126 réussis, 12 ignorés, 0 échec, **2 flaky** à chaque fois (réussis au nouvel essai) : l'onglet « Fonds de cartes » sur mobile (`03-carto.spec.ts`, premier essai en échec dans les deux passages, D-carto-8 fréquent sur mobile) et, une fois, les filtres du catalogue sur desktop (délai dépassé, lenteur réseau). Sur des passages partiels antérieurs, le test « Aide » du catalogue et le test de stabilité ont aussi échoué au premier essai : lenteur réseau (GPF, API du catalogue), pas un défaut reproductible. Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile. Stabilité du rendu : 0/20 sans canvas, 0/20 Plan IGN absent (desktop et mobile) sur mon passage. Après ce passage : attente explicite de la case « Photographies aériennes » (`toBeVisible()`, le panneau d'onglet DSFR reste masqué une image après le clic), réessai du clic d'ouverture des menus (le JS DSFR pose `data-fr-js` avant d'attacher ses gestionnaires), délai du test de stabilité porté à 40 s par chargement, et Échap dans « Aide » vérifié aussi sur mobile (le menu burger reste ouvert). La passe complète finale attend la fusion de #77 (M14).
+Résultat final (après la fusion de #77, M14 ; passage complet, JSON Playwright) : **128 réussis, 11 ignorés, 0 échec, 1 flaky**. Le flaky est « les puces de mots-clés basculent » du catalogue sur desktop (échec au premier essai, réussi au nouvel essai : lenteur de l'API du catalogue). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile. Stabilité du rendu : 0/20 sans canvas et 0/20 Plan IGN absent (desktop et mobile). L'onglet « Fonds de cartes » sur mobile réussit au premier essai (il échouait au premier essai dans les deux passages précédents du relecteur, D-carto-8). Historique mesuré avant #77 : auteur 128 réussis, 0 flaky ; relecteur, deux passages : 126 réussis, 2 flaky chacun (onglet « Fonds de cartes » mobile ; une fois les filtres du catalogue, lenteur réseau). Corrections de test conservées : attente `toBeVisible()` de la case « Photographies aériennes », réessai du clic d'ouverture des menus (le JS DSFR pose `data-fr-js` avant d'attacher ses gestionnaires), délai de stabilité 40 s par chargement, Échap dans « Aide » vérifié aussi sur mobile.
 
 | # | Scénario | Statut | Preuve |
 |---|---|---|---|
@@ -15,7 +15,7 @@ Résultat mesuré : auteur, un passage complet : 128 réussis, 12 ignorés, 0 é
 | 2h | Badge « Rechercher » : `fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line` | PASS | |
 | 3o | Badge « Explorer » : `fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` | PASS | |
 | 3p | Carte v1.1 : plus de panneau latéral, de « Partager », de « Sources des données », de lien vers la vue liste ; bouton « Imprimer » en haut à gauche ; pas de défilement de page | PASS | desktop et mobile |
-| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS (mobile : flaky) | mobile : échec au premier essai dans les deux passages du relecteur, réussi au nouvel essai (D-carto-8) |
+| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | réussi au premier essai après #77 (D-carto-8 corrigé) |
 | 3r | Catalogue : ajout (GetMap 200 image) et retrait d'une couche sols, lien profond coche l'entrée | PASS | |
 | 3s | Outils par défaut (distance, surface, itinéraire, annoter) visibles ; autres cachés ; « Afficher tous les outils » dernier de la colonne ; sélection au clavier ajoute le bouton, ferme la liste, rend le focus | PASS | |
 | 3t | Mesure de distance, Imprimer (PNG), Légendes (image), console propre hors bruits amont, partage retiré | PASS | |
@@ -33,10 +33,10 @@ BLOCKED : aucun.
 - **edito** : rien de nouveau.
 - **catalogue** : `heading-order` modérée (amont) ; rien de nouveau.
 - **carto**
-  - D-carto-7 (mineur, visuel) : à 1280×900, survoler le bouton « Catalogue de cartes » avec le panneau ouvert : l'infobulle recouvre le titre du panneau (capture `carto-catalogue-desktop.jpg`).
-  - D-carto-8 (fréquent sur mobile, projet 375 px) : ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » juste après : la case reste décochée au premier essai. Deux causes (PR #77 / M14) : course applicative (catalogue reconstruit à l'arrivée des fonds) et cadence du test (panneau d'onglet masqué une image, désormais attendu).
-  - D-carto-9 (mineur) : à 375 px, le panneau de la liste d'outils s'intitule « Mes outils » ; « Tous les outils » après #77 (`carto-outils-mobile.jpg`).
-  - D-carto-7/8/9 sont traités par #77 (M14, en revue) : à confirmer à la fusion.
+  - D-carto-7 (visuel, **corrigé par #77**, confirmé) : l'infobulle « Catalogue de cartes » recouvrait le titre du panneau à 1280×900 ; sur la capture finale le panneau affiche son titre et sa croix, sans infobulle.
+  - D-carto-8 (**corrigé par #77**, confirmé) : à 375×812, ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » laissait la case décochée au premier essai ; plus d'échec sur le passage final.
+  - D-carto-9 (**corrigé par #77**, confirmé) : à 375 px le panneau s'intitulait « Mes outils » ; il s'intitule « Tous les outils » (`carto-outils-mobile.jpg`).
+  - D-carto-10 (non reproduit) : le relecteur de M14 a vu, à 1280 px, le clic sur « Afficher tous les outils » pour fermer la liste intercepté par un élément `GPlayerDragNDrop`. Essais : ouvrir puis fermer la liste à 1280×900 (carte nue et avec une couche ajoutée, gestionnaire de couches ouvert), 1280×720 et 1440×900 : le second clic aboutit chaque fois (liste fermée).
 
 ### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
 
