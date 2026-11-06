@@ -32,7 +32,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium, devices } from 'playwright';
 import brand from '@sols/brand/brand.json';
-import { CONTROL_LABELS, MAP_LABEL, MAP_NOTICES, PRINT_LABELS } from '../src/config/map';
+import {
+  CONTROL_LABELS,
+  MAP_LABEL,
+  MAP_NOTICES,
+  PRINT_LABELS,
+  THUMBNAIL_LOAD_TIMEOUT_MS,
+} from '../src/config/map';
 import { GPF_ENDPOINTS } from '../src/config/urls';
 
 const url = process.argv[2] ?? 'http://localhost:8101/explorer-les-cartes/';
@@ -1748,6 +1754,62 @@ for (const [name, context] of [
   check(
     broken !== null && !broken.img && broken.display === 'none',
     `M16 ${name} : vignette en échec retirée, ni image cassée ni vignette vide (${JSON.stringify(broken)})`,
+  );
+  await context.close();
+}
+
+// M16 review: a stalled thumbnail request (seen once on a CSW thumbnail) left an empty slot. One record
+// thumbnail is held: after THUMBNAIL_LOAD_TIMEOUT_MS its image is dropped and the slot hidden.
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  let held = '';
+  await page.route(/\/annexes\/gissol-osf\/thumbnail\/.*\.png/, async (route) => {
+    if (!held) {
+      held = route.request().url();
+      return; // never answered
+    }
+    await route.continue();
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const catalogue = page.getByRole('button', { name: CATALOGUE, exact: true });
+  await catalogue.waitFor({ timeout: 30_000 });
+  await catalogue.click();
+  await page
+    .locator('[data-layeritem] img')
+    .first()
+    .waitFor({ state: 'attached', timeout: 30_000 });
+  const slot = (src: string) =>
+    page.evaluate((s) => {
+      const entry = Array.from(document.querySelectorAll('[data-layeritem]')).find((e) =>
+        e.querySelector(`img[src="${s}"]`),
+      );
+      return entry ? 'img' : 'none';
+    }, src);
+  const before = held ? await slot(held) : 'not held';
+  await page.waitForTimeout(THUMBNAIL_LOAD_TIMEOUT_MS + 2_000);
+  const after = await page.evaluate((heldSrc) => {
+    const entries = Array.from(document.querySelectorAll('[data-layeritem]'));
+    return {
+      // Another thumbnail may stall for real and be dropped too: only the held one is required.
+      heldDropped: !document.querySelector(`[data-layeritem] img[src="${heldSrc}"]`),
+      withoutImage: entries.filter((e) => !e.querySelector('img')).length,
+      emptySlots: entries.filter((e) => {
+        const container = e.querySelector('.catalog-thumbnail-container');
+        return (
+          container &&
+          !container.querySelector('img') &&
+          getComputedStyle(container).display !== 'none'
+        );
+      }).length,
+      notLoaded: Array.from(
+        document.querySelectorAll<HTMLImageElement>('[data-layeritem] img'),
+      ).filter((img) => !(img.complete && img.naturalWidth > 0)).length,
+    };
+  }, held);
+  check(
+    before === 'img' && after.heldDropped && after.emptySlots === 0 && after.notLoaded === 0,
+    `M16 : vignette bloquée retirée après ${THUMBNAIL_LOAD_TIMEOUT_MS / 1000} s, pas de case vide (${JSON.stringify({ before, ...after })})`,
   );
   await context.close();
 }

@@ -103,6 +103,12 @@ export const GPF_ATTRIBUTION = `<a href="${EXTERNAL_LINKS.cartesGouv}" target="_
 export const TILE_RETRY_DELAY_MS = 500;
 
 /**
+ * Wait for a catalogue thumbnail (GPF annexes) before giving up on it: a stalled request otherwise leaves
+ * an empty slot (M16 review); the thumbnails load even with the panel closed, within 1 s normally.
+ */
+export const THUMBNAIL_LOAD_TIMEOUT_MS = 10_000;
+
+/**
  * GPF capabilities requests (src/map/fetchHedged.ts). The GPF intermittently accepts a request and never
  * answers (D-carto-1: about 1 in 5 GetCapabilities in curl on 2026-11-05, 3 in 40 on 2026-11-06), answers
  * late, or stops sending the body (D-carto-11: once in about 200 browser loads). Headers normally arrive
