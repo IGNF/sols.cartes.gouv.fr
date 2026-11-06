@@ -269,22 +269,25 @@ d'une ligne vide, de `<!-- prettier-ignore -->` et d'un bloc ```` ```html ````. 
 4. « Titre du service avec badge, catalogue » et « …, carto » (v1.1, en fin de document) : `p.fr-header__service-title`
    avec le badge de la brique, à substituer au titre sans badge du bloc « En-tête ».
 
-**Échap dans le menu mobile (E9, défaut D-edito-2)** : en dessous du point de rupture LG, les menus d'outils sont
-recopiés dans la modale `#menu-principal`. DSFR 1.14.2 ne traite Échap pour un `fr-nav__item` ouvert qu'en LG
-(`Navigation._keydown`, `hasOpenedMenu`) ; ailleurs `Modal._escape` ferme toute la modale, et aucun attribut ni option
-DSFR ne change cet ordre. `apps/accueil/src/js/header.js` (chargé en module après `dsfr.module.min.js` sur chaque
-page) écoute `keydown` en phase de capture sur `document`, donc avant l'écouteur racine DSFR (capture sur `<html>`) :
-si le focus est dans un `.fr-header__menu-links .fr-nav__item` dont le bouton est ouvert, il referme ce sous-menu par
-son bouton (bascule DSFR), rend le focus au bouton et arrête la propagation ; le second Échap ferme la modale (focus
-rendu au bouton « Menu »), comme sur la carto. Bureau inchangé (DSFR ferme le menu et rend le focus). Les briques qui
-reprennent l'en-tête doivent embarquer ce script (ou son équivalent) :
+**Échap dans le menu mobile (E9, défaut D-edito-2), et dans les menus d'outils du bureau (E11)** : quand le focus est dans un menu d'outils ouvert (« Aide », « Services »,
+langue), sur son bouton ou sur un lien du menu, Échap ferme ce menu et rend le focus à son bouton, en bureau comme dans
+la modale mobile. DSFR 1.14.2 ne le fait lui-même qu'au point de rupture LG (`Navigation._keydown`, `hasOpenedMenu`) ;
+en dessous, `Modal._escape` ferme toute la modale `#menu-principal` (défaut D-edito-2, E9). La revue C13 a signalé
+qu'en bureau Échap ne refermait pas « Aide » une fois le focus sur « Centre d'aide » (E11 ; non reproduit en Chromium
+sans interface) : le gestionnaire couvre désormais aussi la barre d'outils du bureau, pour ne plus dépendre du chemin
+DSFR. `apps/accueil/src/js/header.js` (chargé en module après `dsfr.module.min.js` sur chaque page) écoute `keydown` en
+phase de capture sur `document`, donc avant l'écouteur racine DSFR (capture sur `<html>`) : si le focus est dans un
+`.fr-header .fr-nav__item` dont le bouton est ouvert, il referme le menu par son bouton (bascule DSFR), rend le focus au
+bouton et arrête la propagation ; sinon il laisse passer la touche (le second Échap ferme la modale mobile, focus rendu
+au bouton « Menu »). Testé par `test/header-escape.test.js` (DOM happy-dom) et au clavier dans Chromium. Les briques
+qui reprennent l'en-tête doivent embarquer ce script (ou son équivalent) :
 
 ```js
 document.addEventListener(
   'keydown',
   (event) => {
     if (event.key !== 'Escape') return;
-    const item = event.target.closest?.('.fr-header__menu-links .fr-nav__item');
+    const item = event.target.closest?.('.fr-header .fr-nav__item');
     const button = item?.querySelector('button[aria-expanded="true"]');
     if (!button) return;
     event.stopPropagation();
