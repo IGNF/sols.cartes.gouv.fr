@@ -26,6 +26,10 @@ interface Created {
 
 const geopf = vi.hoisted(() => {
   const created: Created[] = [];
+  /** Panel of the real ControlList: header with the hardcoded title, then the list. */
+  const CONTROL_LIST_PANEL =
+    '<div class="GPpanelHeader gpf-panel__header"><span class="GPpanelTitle gpf-panel__title">Mes outils</span>' +
+    '<button type="button" class="GPpanelClose">Fermer le panneau</button></div><ul class="fr-m-0"></ul>';
   /** Fake geopf control: keeps its options, renders a toggle button and the dialog of the real widget. */
   const make = (kind: string, dialogPrefix?: string) =>
     class {
@@ -41,7 +45,7 @@ const geopf = vi.hoisted(() => {
         this.element = document.createElement('div');
         this.element.innerHTML = `<button type="button" aria-label="Afficher plus" aria-pressed="false">+</button>${
           dialogPrefix
-            ? `<dialog id="${dialogPrefix}-1">${kind === 'controlList' ? '<ul class="fr-m-0"></ul>' : ''}</dialog>`
+            ? `<dialog id="${dialogPrefix}-1">${kind === 'controlList' ? CONTROL_LIST_PANEL : ''}</dialog>`
             : ''
         }`;
         created.push({ kind, options, element: this.element });
@@ -197,15 +201,26 @@ describe('createMapTools', () => {
     const legends = geopf.created.find((c) => c.kind === 'legends');
     expect(legends?.element).toHaveClass(TOOL_CLASS);
     expect(legends?.element).not.toHaveClass(LISTABLE_TOOL_CLASS);
-    // The list of « Mes outils » is a menu (its items are rendered as role="button" li upstream).
+    // The list of « Tous les outils » is a menu (its items are rendered as role="button" li upstream).
     expect(controlList?.element.querySelector('ul')).toHaveAttribute('role', 'menu');
+  });
+
+  it('titre le panneau de la liste « Tous les outils », comme son nom accessible (D-carto-9)', () => {
+    createMapTools(geopf.tools as unknown as Tools);
+    const controlList = geopf.created.find((c) => c.kind === 'controlList');
+    expect(controlList?.element.querySelector('.gpf-panel__title')).toHaveTextContent(
+      /^Tous les outils$/,
+    );
+    expect(CONTROL_LABELS.controlListTitle).toBe('Tous les outils');
+    expect(GEOPF_DIALOG_LABELS['GPcontrolListPanel']).toBe(CONTROL_LABELS.controlListTitle);
+    expect(controlList?.element).not.toHaveTextContent('Mes outils');
   });
 });
 
 describe('returnFocusOnCollapse', () => {
   function setup(pressed: string) {
     const element = document.createElement('div');
-    element.innerHTML = `<button type="button" aria-pressed="${pressed}">Mes outils</button>`;
+    element.innerHTML = `<button type="button" aria-pressed="${pressed}">Afficher tous les outils</button>`;
     document.body.append(element);
     const listeners = new Map<string, (event: unknown) => void>();
     returnFocusOnCollapse(
@@ -215,7 +230,7 @@ describe('returnFocusOnCollapse', () => {
     return { element, listeners, toggle: element.querySelector('button') as HTMLButtonElement };
   }
 
-  it('rend le focus au bouton « Mes outils » après l’évènement, quand la liste se replie après un choix', () => {
+  it('rend le focus au bouton « Afficher tous les outils » après l’évènement, quand la liste se replie après un choix', () => {
     vi.useFakeTimers();
     const { element, listeners, toggle } = setup('false');
     (document.activeElement as HTMLElement | null)?.blur();
@@ -251,7 +266,7 @@ describe('returnFocusOnCollapse', () => {
 describe('menuKeyboard', () => {
   function setup() {
     const element = document.createElement('div');
-    element.innerHTML = `<button type="button" aria-pressed="true">Mes outils</button>
+    element.innerHTML = `<button type="button" aria-pressed="true">Afficher tous les outils</button>
       <dialog id="GPcontrolListPanel-1" open><ul role="menu">
         <li role="menuitem" tabindex="0">Distance</li><li role="menuitem" tabindex="0">Surface</li>
         <li role="menuitem" tabindex="0">Angle</li></ul></dialog>`;

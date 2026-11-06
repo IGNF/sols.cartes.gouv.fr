@@ -9,7 +9,7 @@ import {
   TOOL_PROJECTIONS,
 } from '../config/map';
 import { loadCrs, loadMapTools, type MapToolsModule } from '../map/geopf';
-import { controlElement, labelToggleButton } from '../map/labelControls';
+import { controlElement, labelPanelTitle, labelToggleButton } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 import { fixToolButtons, labelDialogsOnInit, watchToolButtons } from '../map/labelToolButtons';
 
@@ -42,13 +42,13 @@ export function revealOnOpen(element: HTMLElement): () => void {
   return () => observer.disconnect();
 }
 
-/** Entries of the « Mes outils » list (upstream `li[role=button]`, made `menuitem` by fixToolButtons). */
+/** Entries of the « Tous les outils » list (upstream `li[role=button]`, made `menuitem` by fixToolButtons). */
 const MENU_ITEMS =
   '[id^="GPcontrolListPanel-"] li[role="menuitem"], [id^="GPcontrolListPanel-"] li[role="button"]';
 
 /**
- * Choosing an entry of « Mes outils » empties the list (the focused `<li>` disappears, focus lands on
- * the body): give it back to the « Mes outils » button, the only way to reach the tools below 48em.
+ * Choosing an entry of « Tous les outils » empties the list (the focused `<li>` disappears, focus lands
+ * on the body): give it back to the « Afficher tous les outils » button.
  * The focus moves in a later task: the entry is activated on `keydown`, and Enter would otherwise
  * activate the newly focused button in the same event and reopen the list.
  */
@@ -63,7 +63,7 @@ export function returnFocusOnCollapse(controlList: object, element: HTMLElement)
 }
 
 /**
- * Keyboard of the « Mes outils » menu (WAI-ARIA menu button pattern on the upstream list): one tab stop
+ * Keyboard of the « Tous les outils » menu (WAI-ARIA menu button pattern on the upstream list): one tab stop
  * (roving `tabindex`, first entry focused when the list opens), ArrowUp/ArrowDown (wrapping), Home/End,
  * Escape closes the list (focus back to the button through returnFocusOnCollapse). Enter/Space are
  * handled by the control; their default action is prevented so nothing else is activated or scrolled.
@@ -130,6 +130,7 @@ export function createMapTools(tools: MapToolsModule): Control[] {
   const options = MAP_TOOLS_OPTIONS;
   const controlList = new tools.ControlList({ ...options.controlList });
   labelToggleButton(controlElement(controlList), CONTROL_LABELS.controlList);
+  labelPanelTitle(controlElement(controlList), CONTROL_LABELS.controlListTitle);
   fixToolButtons(controlElement(controlList));
   returnFocusOnCollapse(controlList, controlElement(controlList));
   menuKeyboard(controlList, controlElement(controlList));

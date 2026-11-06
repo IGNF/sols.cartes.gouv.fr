@@ -75,7 +75,7 @@ export async function loadSearchEngine() {
 /**
  * The tool set of the cartes.gouv.fr map viewer (M8), loaded on demand after the map is displayed:
  * legends, territories, overview map, cursor coordinates, measures, elevation profile, route, isochrone,
- * reverse geocoding, drawing, layer import, feature info and the "Mes outils" list, with their DSFR
+ * reverse geocoding, drawing, layer import, feature info and the « Afficher tous les outils » list, with their DSFR
  * stylesheets (geopfToolsStyles.ts). One chunk per control, geoportal-access-lib shared with the search
  * engine. `TERRITORIES` is the control's built-in list (Territories.json).
  */
