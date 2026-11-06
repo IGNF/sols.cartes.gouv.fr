@@ -6,16 +6,18 @@ import { MAP_TOOLS_OPTIONS } from '../config/map';
 import { GeoportalFullScreen, GeoportalZoom, loadSearchEngine } from '../map/geopf';
 import { labelSearchInput } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
+import { ensurePositionContainers } from '../map/positionContainers';
 
 /**
- * Map tools available immediately: geopf-extensions zoom (top left) and full screen (bottom right, v1.1),
- * OL scale line (bottom right too, MapView.css). No attribution control since v1.1 (brief): the sources
- * stay on the layer sources for the print sheet (exportMap.mapSources).
+ * Map tools available immediately: geopf-extensions full screen then zoom, stacked bottom right (M16, as
+ * on cartes.gouv.fr), OL scale line at their left (MapView.css). The zoom appends itself to its container,
+ * after the full screen: below it. No attribution control since v1.1 (brief): the sources stay on the
+ * layer sources for the print sheet (exportMap.mapSources).
  */
 export function createMapControls(): Control[] {
   return [
-    new GeoportalZoom({ ...MAP_TOOLS_OPTIONS.zoom }),
     new GeoportalFullScreen({ ...MAP_TOOLS_OPTIONS.fullScreen }),
+    new GeoportalZoom({ ...MAP_TOOLS_OPTIONS.zoom }),
     new ScaleLine({ ...MAP_TOOLS_OPTIONS.scaleLine }),
   ];
 }
@@ -27,6 +29,8 @@ export function createMapControls(): Control[] {
 export default function useMapControls(map: OlMap | null): void {
   useEffect(() => {
     if (!map) return undefined;
+    // First controls of the map: the geopf position containers in reading order (Tab order) beforehand.
+    ensurePositionContainers(map);
     const controls = createMapControls();
     controls.forEach((control) => map.addControl(control));
     let active = true;

@@ -33,9 +33,10 @@
 }
 
 /*
- * geopf-extensions search engine: its own slot, right of the zoom column and left of the layer
- * switcher, at every width (geopf puts it at left: 46px above 576px and at 0 below, over the zoom).
- * Offsets follow the DSFR spacing scale (1w = 0.5rem): zoom column = 1w offset + 5w buttons, plus 1w gap.
+ * geopf-extensions search engine: its own slot, right of the top-left button column (print, import,
+ * feature info; the zoom until M16) and left of the layer switcher, at every width (geopf puts it at
+ * left: 46px above 576px and at 0 below, over that column). Offsets follow the DSFR spacing scale
+ * (1w = 0.5rem): column = 1w offset + 5w buttons, plus 1w gap.
  */
 .map-view [id^='GPsearchEngine-'] {
   top: 0.5rem;

@@ -221,7 +221,8 @@ export const TOOL_PROJECTIONS: readonly string[] = ['EPSG:2154', 'EPSG:27572'];
  * JSDoc of the controls but missing from their `.d.ts` (upstream gap).
  */
 export const MAP_TOOLS_OPTIONS = {
-  zoom: { position: 'top-left' } satisfies ZoomOptions & { position: ControlPosition },
+  // M16: bottom right below the full screen button, next to the scale line (as on cartes.gouv.fr).
+  zoom: { position: 'bottom-right' } satisfies ZoomOptions & { position: ControlPosition },
   // v1.1: bottom right, next to the scale line (as on cartes.gouv.fr).
   fullScreen: {
     position: 'bottom-right',
