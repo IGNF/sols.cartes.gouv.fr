@@ -7,6 +7,8 @@ import {
   SOLS_GROUP,
   GPF_TILE_FLAKE,
   PAGES,
+  openAideMenu,
+  expectAideLinks,
   waitForDsfr,
   SOLS_LAYER,
 } from './helpers';
@@ -99,6 +101,10 @@ test.describe('Catalogue', () => {
   }) => {
     await page.goto(PAGES.catalogue);
     await expect(page.locator('header .fr-badge')).toHaveText('Rechercher');
+    // v1.1 : icône avant du badge (DSFR), vert menthe + loupe.
+    await expect(page.locator('header .fr-badge')).toHaveClass(
+      /fr-badge--green-menthe.*fr-badge--icon-left.*fr-icon-search-line/,
+    );
     await expect(
       page.locator('header #navigation-principale, header nav[aria-label="Menu principal"]'),
     ).toHaveCount(0);
@@ -106,7 +112,12 @@ test.describe('Catalogue', () => {
       .locator('header a')
       .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
     expect(hrefs).toContain('/');
-    expect(hrefs.filter((h) => /cartes\.gouv\.fr/.test(h))).toEqual([]);
+    // Seuls les liens d'aide (menu « Aide », v1.1) pointent vers cartes.gouv.fr.
+    expect(
+      hrefs.filter(
+        (h) => /cartes\.gouv\.fr/.test(h) && !h.startsWith('https://cartes.gouv.fr/aide/'),
+      ),
+    ).toEqual([]);
     // C-6 : les paramètres d'affichage sont masqués sur le catalogue.
     await expect(page.getByRole('button', { name: "Paramètres d'affichage" })).toHaveCount(0);
     // Partenaires dans le pied de page.
@@ -212,5 +223,15 @@ test.describe('Catalogue', () => {
     // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
     if (isMobile)
       await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
+  });
+
+  test('le menu « Aide » du catalogue : liens externes cartes.gouv.fr, cible, attributs, icônes', async ({
+    page,
+    isMobile,
+  }) => {
+    await page.goto(PAGES.catalogue);
+    await waitForCatalogueResults(page);
+    await openAideMenu(page, isMobile);
+    await expectAideLinks(page, 'fr');
   });
 });

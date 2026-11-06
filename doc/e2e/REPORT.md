@@ -1,4 +1,58 @@
+# Rapport e2e (T4, passe 4)
+
+## Passe 4 : v1.1 (en-tête, carte M13)
+
+Date : 2026-11-06. Base : `origin/main` 7759161 (E10 #70, C13 #71, E11 #72, M13 #73, #74, #75 fusionnés), les trois briques reconstruites (`bun run build:all`, sans erreur), suite complète sur le port 8142 (arrêté ensuite).
+
+Résultats mesurés (la flakiness varie d'un passage à l'autre, ne pas se fier à un seul run) :
+- Moi, passage complet après #77 (M14) : **128 réussis, 11 ignorés, 0 échec, 1 flaky** (puces de mots-clés du catalogue, desktop, premier essai en échec). Stabilité du rendu : 0/20 sans canvas et 0/20 sans Plan IGN (desktop et mobile). Ignorés : axe sur mobile (9), tracé de mesure à la souris sur mobile, filtres du catalogue sur mobile.
+- Relecteur, spécifications 01 à 03 seules, un passage : **79 réussis, 1 ignoré, 0 échec, 4 flaky** : « Voir sur la carte » (desktop, `02-catalogue.spec.ts`), canvas et tuiles (desktop, `03-carto.spec.ts`), onglet « Fonds de cartes » (desktop, case non trouvée) et stabilité mobile (1/20 chargements sans Plan IGN dans la liste des couches).
+- Antérieur à #77 : moi 128 réussis, 0 flaky ; relecteur, deux passages complets : 126 réussis, 2 flaky chacun.
+- Après ce tour : `03-carto.spec.ts`, 32 réussis (hors test de stabilité de 2 minutes), 0 flaky, sur mon port.
+Corrections de test conservées : attente bornée (20 s) des entrées de l'onglet « Fonds de cartes » avec un nouveau clic d'onglet si la liste est vide (l'onglet reste vide tant que les capacités WMTS n'arrivent pas, puis le catalogue est reconstruit), case visible avant `focus()` + Espace, délai du test de stabilité 40 s par chargement, Échap dans « Aide » vérifié aussi sur mobile. Les assistants de réessai de clic (`openAideMenu`, `openServicesMenu`) sont voulus : bornés à 15 s, ils couvrent un clic avant que le JS DSFR soit prêt (`data-fr-js` posé avant l'attache des gestionnaires).
+
+| # | Scénario | Statut | Preuve |
+|---|---|---|---|
+| 1m | Menu « Aide » fr, en (« Help ») : deux liens externes `https://cartes.gouv.fr/aide/<lang>/` et `.../aide/fr/nous-ecrire/`, `target="_blank"`, `rel="noopener external"`, icône avant (masque) et icône « lien externe » après | PASS | edito fr/en, catalogue, carte ; desktop et mobile |
+| 1n | Seuls les liens d'aide pointent vers cartes.gouv.fr dans l'en-tête ; pied de page sans lien cartes.gouv.fr | PASS | |
+| 1o | Échap depuis l'intérieur du menu « Aide » le ferme, focus rendu ; sur mobile le menu burger reste ouvert | PASS | correctif E11 ; desktop et mobile |
+| 1p | Thème sombre : logos de l'en-tête sans fond (`.fr-header__operator`, `.sols-operator*` transparents) | PASS | |
+| 2h | Badge « Rechercher » : `fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line` | PASS | |
+| 3o | Badge « Explorer » : `fr-badge--purple-glycine fr-badge--icon-left fr-icon-map-pin-2-fill` | PASS | |
+| 3p | Carte v1.1 : plus de panneau latéral, de « Partager », de « Sources des données », de lien vers la vue liste ; bouton « Imprimer » en haut à gauche ; pas de défilement de page | PASS | desktop et mobile |
+| 3q | Catalogue de cartes : onglets « Données sols » et « Fonds de cartes » ; bascule sur « Photographies aériennes » au clavier (Espace), tuiles ORTHOIMAGERY 200 | PASS | attente bornée des fonds ; flaky selon les passages (voir D-carto-8) |
+| 3r | Catalogue : ajout (GetMap 200 image) et retrait d'une couche sols, lien profond coche l'entrée | PASS | |
+| 3s | Outils par défaut (distance, surface, itinéraire, annoter) visibles ; autres cachés ; « Afficher tous les outils » dernier de la colonne ; sélection au clavier ajoute le bouton, ferme la liste, rend le focus | PASS | |
+| 3t | Mesure de distance, Imprimer (PNG), Légendes (image), console propre hors bruits amont, partage retiré | PASS | |
+| 3u | Plein écran en bas à droite, échelle à sa gauche (≤ 24 px) en bleu action | PASS | |
+| 3v | Pied de page : « Haut de page » déplie (partenaires visibles, page défilable), « Fermer » replie (défilement restauré) | PASS | |
+| 3w | Bloc marque de l'en-tête cliquable (centre du logo, de l'opérateur et du service : lien `/`) | PASS | |
+| 3n' | Stabilité du rendu de la carte (20 chargements) | PASS | 0/20 |
+| 4 | axe : `/fr/`, `/fr/aide/`, catalogue, fiche, carte, liste, carte catalogue ouvert, carte liste d'outils ouverte, carte pied de page déplié : 0 critical/serious | PASS | seule `heading-order` (modérée) sur le catalogue ; axe en desktop (survol de la marque évité par `page.mouse.move`) |
+| 5 | Captures desktop + mobile, y compris carte catalogue ouvert, liste d'outils, pied de page déplié | PASS | `doc/e2e/*.jpg` < 300 kB |
+
+BLOCKED : aucun.
+
+### Défauts par brique
+
+- **edito** : rien de nouveau.
+- **catalogue** : `heading-order` modérée (amont) ; rien de nouveau.
+- **carto**
+  - D-carto-7 (visuel, **corrigé par #77**, confirmé) : l'infobulle « Catalogue de cartes » recouvrait le titre du panneau à 1280×900 ; sur la capture finale le panneau affiche son titre et sa croix, sans infobulle.
+  - D-carto-8 : corrigé côté application par #77 ; le test attend désormais le chargement des fonds (l'onglet est vide tant que les capacités WMTS n'arrivent pas). À 375×812 : ouvrir « Catalogue de cartes », cliquer l'onglet « Fonds de cartes », cocher « Photographies aériennes » trop tôt laissait la case décochée ; un échec « case non trouvée » a encore été vu sur desktop par le relecteur.
+  - D-carto-9 (**corrigé par #77**, confirmé) : à 375 px le panneau s'intitulait « Mes outils » ; il s'intitule « Tous les outils » (`carto-outils-mobile.jpg`).
+  - D-carto-11 (rare, environ 1 chargement sur 20 à 375 px, projet mobile) : aucun « Plan IGN » dans la liste des couches (« Ma sélection de cartes ») alors que la carte est chargée ; vu par le relecteur sur le test de stabilité. Défaut applicatif possible, pas du bruit réseau : en cours d'investigation par un agent carto (M15).
+  - D-carto-10 (non reproduit) : le relecteur de M14 a vu, à 1280 px, le clic sur « Afficher tous les outils » pour fermer la liste intercepté par un élément `GPlayerDragNDrop`. Essais : ouvrir puis fermer la liste à 1280×900 (carte nue et avec une couche ajoutée, gestionnaire de couches ouvert), 1280×720 et 1440×900 : le second clic aboutit chaque fois (liste fermée).
+
+### Figma (carte, nœud `1:10562`), nouvelles divergences seulement
+
+La mise en page se rapproche de la maquette (carte pleine page, pied de page compact, badge à icône). Restent : pas de « Se connecter » (voulu), le pied de page compact n'a pas « Conditions générales d'utilisation » et l'ordre des liens diffère (déjà noté en partie 1 : non répété) ; nouveau : le pied de page se déplie par un bouton « Haut de page » (la maquette montre un simple chevron) et la carte porte des colonnes d'outils à gauche et à droite que la maquette ne détaille pas.
+
+---
+
 # Rapport e2e (T3, passe 3)
+
+(Rapport de la passe 3 ci-dessous ; la passe 4 est en tête de fichier.)
 
 ## Passe 3, vérification finale (après M12)
 

@@ -43,21 +43,31 @@ test.describe('Accessibilité (axe-core)', () => {
     [
       'carto-catalogue-ouvert',
       async (page: import('@playwright/test').Page) => {
-        await page.getByRole('button', { name: 'Catalogue des données sols', exact: true }).click();
+        await page.getByRole('button', { name: 'Catalogue de cartes', exact: true }).click();
         await expect(page.locator('[id^="GPcatalogPanel-"]')).toBeVisible();
       },
     ],
     [
       'carto-mes-outils-ouvert',
       async (page: import('@playwright/test').Page) => {
-        await page.getByRole('button', { name: 'Mes outils', exact: true }).click();
+        await page.getByRole('button', { name: 'Afficher tous les outils', exact: true }).click();
         await expect(page.locator('[id^="GPcontrolListPanel-"] li').first()).toBeVisible();
+      },
+    ],
+    [
+      'carto-pied-de-page-deplie',
+      async (page: import('@playwright/test').Page) => {
+        await page.getByRole('contentinfo').getByRole('button', { name: 'Haut de page' }).click();
+        await expect(
+          page.getByRole('contentinfo').getByRole('button', { name: 'Fermer' }),
+        ).toBeVisible();
       },
     ],
   ] as const) {
     test(`aucune violation critique ou sérieuse sur la carte (${nom})`, async ({ page }) => {
       await page.goto(PAGES.carto);
       await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
+      await page.mouse.move(200, 400); // pointeur loin de la marque (survol DSFR, M-5)
       await ouvrir(page);
       const { violations } = await new AxeBuilder({ page }).analyze();
       const summary = violations.map((v) => ({

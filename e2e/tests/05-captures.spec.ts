@@ -43,23 +43,36 @@ test.describe('Captures', () => {
     });
   }
 
-  // Carte avec le catalogue des données sols ouvert (recherche « carbone », entrée non cochée), puis avec « Mes outils » ouvert.
+  // Carte avec le catalogue des données sols ouvert (recherche « carbone », entrée non cochée), puis avec « Afficher tous les outils » ouvert.
   test('capture de la carte, catalogue ouvert', async ({ page }, testInfo) => {
     await page.goto(PAGES.carto);
     await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
-    await page.getByRole('button', { name: 'Catalogue des données sols', exact: true }).click();
+    await page.getByRole('button', { name: 'Catalogue de cartes', exact: true }).click();
     await page.locator('#catalog-input-search-global').fill('carbone');
     await expect(page.locator('input[data-layer]:visible').first()).toBeVisible();
     await page.waitForTimeout(800);
     await shootJpeg(page, `${OUT_DIR}/carto-catalogue-${testInfo.project.name}.jpg`);
   });
 
-  test('capture de la carte, « Mes outils » ouvert', async ({ page }, testInfo) => {
+  test('capture de la carte, « Afficher tous les outils » ouvert', async ({ page }, testInfo) => {
     await page.goto(PAGES.carto);
     await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
-    await page.getByRole('button', { name: 'Mes outils', exact: true }).click();
+    await page.getByRole('button', { name: 'Afficher tous les outils', exact: true }).click();
     await expect(page.locator('[id^="GPcontrolListPanel-"] li').first()).toBeVisible();
     await page.waitForTimeout(800);
     await shootJpeg(page, `${OUT_DIR}/carto-outils-${testInfo.project.name}.jpg`);
+  });
+
+  test('capture de la carte, pied de page déplié', async ({ page }, testInfo) => {
+    await page.goto(PAGES.carto);
+    await expect(page.locator('.map-view canvas').first()).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('contentinfo').getByRole('button', { name: 'Haut de page' }).click();
+    await expect(
+      page.getByRole('contentinfo').getByRole('button', { name: 'Fermer' }),
+    ).toBeVisible();
+    await page.waitForTimeout(500);
+    await shootJpeg(page, `${OUT_DIR}/carto-pied-de-page-${testInfo.project.name}.jpg`, {
+      fullPage: true,
+    });
   });
 });
