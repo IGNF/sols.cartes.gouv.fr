@@ -39,7 +39,7 @@
 | C10  | catalogue | done                            | #49      | Record-level « Voir sur la carte » links (patch 0006); WFS loop not reproduced (C-5); dark mode documented.                                    |
 | M7   | carto     | done                            | #47      | v1 layout (map fills the viewport, compact footer), header v1 with badge « Explorer », OL controls themed.                                     |
 | M8   | carto     | done                            | #56      | 15 geopf-ext tools, share permalink `l=`, print; « Mes outils » keyboard menu.                                                                 |
-| M9   | carto     | in review                       | #60      | geopf `Catalog` widget replaces the « Données sols » tab; unavailable-layer notices; escaping; thumbnail allow-list.                           |
+| M9   | carto     | done                            | #60      | geopf `Catalog` widget replaces the « Données sols » tab; unavailable-layer notices; HTML escaping; thumbnail allow-list.                      |
 | T3   | e2e       | part 1 done, part 2 in progress | #57      | Suite adapted to v1 (80 passed, 8 skipped); M8/M9 coverage on `feat/T3-e2e-part2`.                                                             |
 | C11  | catalogue | done                            | #54      | Keyword chips toggle with aria-pressed (patch 0007).                                                                                           |
 | X12  | root      | done                            | #48      | Transparent OSF mark; CI workflows watch packages/**.                                                                                          |
@@ -47,7 +47,8 @@
 | X14  | root      | done                            | #52      | Tight viewBox for the INRAE logo (measured).                                                                                                   |
 | X15  | root      | done                            | #55      | v1 status update, brand README wording.                                                                                                        |
 | M10  | carto     | done                            | #61      | Header menu chevron flips when open.                                                                                                           |
-| M11  | carto     | in review                       | #62      | Dark-mode menu button contrast: upstream DSFR hover style, documented (M-5); idle-page axe check.                                              |
+| M11  | carto     | done                            | #62      | Dark-mode menu button contrast: upstream DSFR hover style, documented (M-5); idle-page axe check.                                              |
 | E9   | edito     | done                            | #58      | Mobile Escape closes only the open sub-menu (header.js, mirrored by the catalogue).                                                            |
 | C12  | catalogue | done                            | #59      | Ships the shared header.js read from doc/agents/edito.md.                                                                                      |
-| X16  | root      | done                            |          | v1 report (doc/v1/REPORT.md) and status at the session cut.                                                                                    |
+| X16  | root      | done                            | #63      | v1 report (doc/v1/REPORT.md) and status at the session cut.                                                                                    |
+| X17  | root      | done                            |          | Status after M9 and M11 merged; report §5 refreshed.                                                                                           |

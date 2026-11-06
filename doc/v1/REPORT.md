@@ -40,6 +40,6 @@ Partie 2 (couverture M8/M9, branche `feat/T3-e2e-part2`) : en cours au moment de
 - L'agent carto M8 (modèle Fable) a été interrompu par une limite d'usage puis repris sans perte.
 - Les commentaires Figma ne sont pas lisibles par l'API MCP (G-2).
 
-## 5. État à la coupure de session
+## 5. État
 
-Fusionné : X11–X15, E7–E9, C8–C12, M7, M8, M10, T3 partie 1. Ouverts : #60 (M9, relecture finale en cours), #62 (M11, documentation, relecture en cours), la PR T3 partie 2 (à ouvrir par l'agent e2e), #15 (Docker, volontairement non fusionné). Les réponses attendues de l'humain sont dans `doc/agents/QUESTIONS.md` (C-4, C-5, C-6, G-1, G-2, E-3, E-4, M-5).
+Fusionné : X11–X17, E7–E9, C8–C12, M7–M11, T3 partie 1. Ouverts : la PR T3 partie 2 (couverture e2e de M8/M9, en cours d'ouverture par l'agent e2e), #15 (Docker, volontairement non fusionné). Les réponses attendues de l'humain sont dans `doc/agents/QUESTIONS.md` (C-4, C-5, C-6, G-1, G-2, E-3, E-4, M-5).
