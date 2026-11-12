@@ -11,6 +11,18 @@ export const CONFIG_FILE = join(APP_DIR, 'config', 'default.toml')
 export const DIST_DIR = join(APP_DIR, 'dist')
 export const MIN_NODE_MAJOR = 24
 
+/**
+ * Environment for every `nx` call on .upstream. Besides no daemon and no Nx Cloud,
+ * NX_SKIP_VSCODE_EXTENSION_INSTALL stops Nx (>= 22) from asking, in a VS Code or
+ * Cursor terminal, whether to install Nx Console: on a fresh machine that
+ * interactive question blocks `npm run build` and `bun run build:all`.
+ */
+export const NX_ENV = {
+  NX_DAEMON: 'false',
+  NX_NO_CLOUD: 'true',
+  NX_SKIP_VSCODE_EXTENSION_INSTALL: 'true',
+}
+
 /** Reads and validates upstream.json, the single place where the pinned ref lives. */
 export function readUpstream(text = readFileSync(join(APP_DIR, 'upstream.json'), 'utf8')) {
   const upstream = JSON.parse(text)
