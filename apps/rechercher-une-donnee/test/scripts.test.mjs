@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { test } from 'node:test'
-import { APP_DIR, CONFIG_FILE, PATCHES_DIR, listPatches, nodeMajor, patchedFiles, readUpstream } from '../scripts/lib.mjs'
+import { APP_DIR, CONFIG_FILE, NX_ENV, PATCHES_DIR, listPatches, nodeMajor, patchedFiles, readUpstream } from '../scripts/lib.mjs'
 import {
   EXTERNAL_VIEWER_TEMPLATE,
   checkBaseHrefPatch,
@@ -112,4 +112,16 @@ test('search filters and keyword presets stay within the sols scope (C9)', () =>
   const presets = [...toml.matchAll(/^\[\[search_preset\]\]\n(?:\s+#.*\n)*\s+name = '([^']+)'\n\s+filters\.keyword = \['([^']+)'\]$/gm)]
   assert.ok(presets.length >= 3)
   for (const [, name, keyword] of presets) assert.equal(name, keyword)
+})
+
+test('nx runs without daemon, Nx Cloud or the Nx Console install prompt', () => {
+  assert.deepEqual(NX_ENV, {
+    NX_DAEMON: 'false',
+    NX_NO_CLOUD: 'true',
+    NX_SKIP_VSCODE_EXTENSION_INSTALL: 'true',
+  })
+  for (const script of ['build.mjs', 'dev.mjs']) {
+    const source = readFileSync(join(APP_DIR, 'scripts', script), 'utf8')
+    assert.match(source, /env: \{ \.\.\.process\.env, \.\.\.NX_ENV \}/, `${script} must pass NX_ENV to nx`)
+  }
 })
