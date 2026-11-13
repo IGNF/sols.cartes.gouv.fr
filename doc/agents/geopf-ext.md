@@ -960,6 +960,11 @@ caché (« Required by DSFR JS »). cartes.gouv.fr/creer-une-carte (cité dans l
   `fr-header__menu fr-modal` de guichet : sous 62em le script DSFR active cette modale et écrit quatre avertissements
   « Modal - missing accessible name » dans la console.
 - Au-dessus de la carte à toutes les largeurs : l'en-tête prend le `z-index` DSFR lg (`--ground + 750`) partout.
+- **Largeur de la liste (M18)** : à partir de 62em, le DSFR fixe `.fr-menu__list { width: 20rem }` (navigation.css, lg). Avec le
+  panneau de 18rem repris de guichet (dont la liste est un `fr-raw-list`, sans largeur), les liens débordaient de 2rem : sous
+  « Services », jusqu'à 1296 px à 1280 px, avec défilement horizontal. `.header-menu__panel .fr-menu__list` prend `width: 100%`
+  du panneau. `check:map` (M18) mesure les liens, pas seulement le panneau, et `scrollWidth <= innerWidth` menu ouvert, de
+  320 à 1920 px.
 - La question M-5 (contraste du bouton « Menu » au survol de la marque) disparaît sur la carto : `check:map` exige
   désormais 0 violation grave au survol aussi.
 
@@ -982,7 +987,7 @@ Une rangée sans débordement de 320 à 1280 px ; titre tronqué (ellipse) seule
 | Retour à l'accueil | clic sur `.fr-header__logo`, `.fr-header__operator` (≥ 36em) ou `.fr-header__service` → `/` |
 | Slogan | absent de la carto |
 
-`check:map` (bloc M17) : à 320, 375, 768 et 1280 px, en-tête ≤ 57 px sur une rangée sans débordement ni bouton « Menu »,
+`check:map` (bloc M17) : à 320, 375, 768, 1280 et 1920 px, en-tête ≤ 57 px sur une rangée sans débordement ni bouton « Menu »,
 carte collée sous l'en-tête avec son canevas, « Aide » et « Services » visibles, panneau dans l'écran et au-dessus de la
 carte, Échap ferme et rend le focus, clic sur la Marianne → `/`, console vide ; « Paramètres d'affichage » ouvre la
 modale et passe en sombre ; axe sans violation grave « Services » ouvert (375 sombre, 1280 clair et sombre).

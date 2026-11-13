@@ -239,7 +239,14 @@
   filter: drop-shadow(var(--overlap-shadow));
 }
 
+/*
+ * The list fills the panel: from 62em the DSFR gives `.fr-menu__list` a fixed `width: 20rem` (navigation.css, lg),
+ * wider than the 18rem panel (guichet uses `fr-raw-list`, which has no width): the links overflowed the panel by
+ * 2rem and, under « Services », the viewport (horizontal scroll).
+ */
 .header-menu__panel .fr-menu__list {
+  box-sizing: border-box;
+  width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
