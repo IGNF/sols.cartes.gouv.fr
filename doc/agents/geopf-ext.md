@@ -1093,3 +1093,35 @@ action (clair) » de `e2e/tests/03-carto.spec.ts` attend `--text-action-high-blu
 clair : il faut désormais `--text-default-grey` en clair (trait `--text-mention-grey`), `--text-action-high-blue-france` en
 sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la recherche ni la géolocalisation (relevé du
 2026-11-13).
+
+## 15. Pied de page replié sur une ligne (M21)
+
+- **Constat** (`check:map` sur `main`) : entre 1024 et 1199 px, le pied de page replié mesurait 85 px au lieu de 60. « Paramètres
+  d'affichage » passait à la ligne et prenait 25 px à la carte. Depuis #94 les six liens bas demandent 975 px avec l'espacement
+  DSFR md (`.fr-footer__bottom-item` : `margin-left` et `::before` `margin-right` à 0.75rem). À 1024 px, la barre en offre 976,
+  dont 141 pour « Haut de page » (125 px) et sa marge : il en manquait 140. À 1100 px il en manquait 64 ; à partir de 1199 px
+  tout tenait.
+- **Référence** : `CgfrFooter.vue` (IGNF/cartes.gouv.fr-vue-components `3ae3f94`), replié dans l'entrée carto
+  (`src/views/Main.vue`, `compact`).
+  - Le bouton replié est en icône seule (`icon-only`, `aria-label` et `title` « Plus d'informations », 40×40, en
+    `position: absolute` dans un `padding-right: 4rem`).
+  - Le pied de page a une hauteur fixe (`height: 3.5rem`) et l'espacement DSFR md.
+  - Mesuré en ligne le 2026-11-13 : une ligne de 1100 à 1280 px. **À 1024 px, cartes.gouv.fr passe aussi à la ligne** :
+    « Paramètres d'affichage » est rogné sous la barre de 56 px (capture `doc/screenshots/M21/reference-pied-de-page-1024.png`).
+- **Correctif** (`SiteFooter.css`, pied de page replié, de 62em à 74.99em seulement) :
+  - « Haut de page » en icône seule, comme la référence. Le texte est gardé (`font-size: 0`), donc le nom accessible est
+    inchangé. `title` vaut le libellé (`SiteFooter.tsx`), comme pour un bouton icône seule DSFR. Le bouton fait 46 px.
+  - Les liens prennent l'espacement DSFR des petits écrans (0.25rem au lieu de 0.75rem autour des séparateurs).
+  - Aucun lien n'est retiré ni masqué ; la taille de texte DSFR (0.75rem) est inchangée.
+- **Mesures après** :
+  - Une ligne de 60 px de 1000 à 1440 px ; la carte passe de 659 à 684 px entre 1024 et 1199 px (fenêtre de 800 px).
+  - Inchangé à 320, 375 et 768 px (177, 152 et 96 px, libellé visible), à partir de 1200 px, et déplié.
+  - Entre 992 et 999 px, la barre fait toujours deux lignes (il manque quelques pixels), comme avant.
+- **`check:map`** :
+  - Le bloc M7 (pied de page ≤ 64 px collé à la carte, pas de défilement) passe à 1024, 1100, 1199, 1280 et 1440 px.
+  - Bloc M21, de 320 à 1440 px. Toutes largeurs : sept entrées nommées, `title`, libellé visible hors de 62–75em, pas de
+    défilement horizontal. À partir de 1024 px : ≤ 60 px, une seule ligne, bouton dans la barre, liens dans l'écran. Déplié
+    à 768, 1024 et 1280 px : « Fermer » avec son libellé, espacement 0.75rem.
+  - Revue M19 : l'avertissement « willReadFrequently » de la mesure du canevas d'OpenLayers n'est toléré qu'**une fois par
+    page** ; au-delà, `watchConsole` échoue.
+
