@@ -235,3 +235,15 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Suite (orchestrateur) : « Coordonnées » seul conservé (option a, déjà en place) ; sur mobile, le libellé « Avancée »
   reste visible et les colonnes de boutons passent sous la barre, comme guichet-collaboratif (tâche carto M22) ;
   échelle validée.
+
+## M-8. Tuiles raster qui disparaissent : confirmation en usage réel (carto-dev, M20)
+
+- Constat : la cause trouvée (nouvel essai d'une tuile qui relançait sans fin le cache de tuiles d'OpenLayers, `doc/agents/geopf-ext.md`
+  §15) est reproduite à chaque fois dès qu'une seule tuile répond en erreur puis réussit au nouvel essai ; elle donne exactement
+  les symptômes signalés (couche vide, requêtes normales dans l'onglet Réseau, retour au changement de zoom). Sans injection
+  d'erreur, 54 parcours réels n'ont pas déclenché la boucle : les erreurs transitoires de la GPF observées ce jour-là échouaient
+  aussi au nouvel essai. Le lien avec l'échelle 10–5 km (z≈9,7 à 12,1) n'est pas démontré.
+- Question : après la fusion du correctif, le propriétaire voit-il encore des tuiles disparaître ? Si oui : navigateur et version,
+  couche exacte, adresse de la page (avec `c=` et `z=`), et une capture de l'onglet Réseau filtrée sur `GetTile` (codes 400/502/503
+  et réponses « (memory cache) »).
+- Défaut appliqué : correctif livré (PR M20) ; à rouvrir si le symptôme persiste.
