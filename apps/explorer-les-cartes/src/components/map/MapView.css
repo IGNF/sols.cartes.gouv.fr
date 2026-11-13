@@ -74,16 +74,24 @@
 }
 
 /*
- * Scale line (v1.1): bottom right, left of the full screen button (2w offset + 5w button + 1w gap), in
- * the DSFR action colour rather than OL's grey (brief).
+ * Scale line (v1.1): bottom right, left of the full screen button (2w offset + 5w button + 1w gap). M19:
+ * colours of cartes.gouv.fr (IGNF/cartes.gouv.fr-entree-carto, `ScaleLine.vue`): opaque background
+ * `--background-default-grey` (OL's is 80 % opaque); grey text and bar in the light theme (OL's #333 and
+ * #666, here the closest DSFR tokens), blue France action in the dark theme.
  */
 .map-view .ol-scale-line {
   left: auto;
   right: 4rem;
   bottom: 0.5rem;
+  background-color: var(--background-default-grey);
 }
 
 .map-view .ol-scale-line-inner {
+  color: var(--text-default-grey);
+  border-color: var(--text-mention-grey);
+}
+
+[data-fr-theme='dark'] .map-view .ol-scale-line-inner {
   color: var(--text-action-high-blue-france);
   border-color: var(--text-action-high-blue-france);
 }
