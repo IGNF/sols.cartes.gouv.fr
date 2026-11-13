@@ -2400,21 +2400,28 @@ for (const width of [320, 375, 768, 1024, 1100, 1199, 1280, 1440]) {
   await context.close();
 }
 
-// M22 (owner's answer to QUESTIONS M-7): below 36em the search bar spans the map (1w margins) with its « Avancée »
-// label, and the top-left and top-right button columns start under it (guichet-collaboratif, cartes.gouv.fr). Checks,
-// light and dark, at 320 and 375 px, plus 576 and 768 px (layout from 36em unchanged): bar geometry, columns under
-// the bar without colliding with the bottom columns, suggestions on top, catalogue and full-screen tool panels at
-// the top of the map above the bar, axe with the « Avancée » panel open, console clean.
-for (const [width, scheme] of [
-  [320, 'light'],
-  [320, 'dark'],
-  [375, 'light'],
-  [375, 'dark'],
-  [576, 'light'],
-  [768, 'light'],
+// M22 (owner's answer to QUESTIONS M-7): below 36em, in portrait, the search bar spans the map (1w margins) with its
+// « Avancée » label, the top-left and top-right button columns start under it (guichet-collaboratif, cartes.gouv.fr)
+// and the map fills the viewport under the header (review of #103: with 70dvh the right-hand columns overlapped on
+// common phone heights). Layout, on phone sizes (320×568, 360×640, 375×667, 375×812) and at 320/375×800 in both
+// themes, 576 and 768 px (unchanged from 36em): bar geometry, map height, every column non-empty, top and bottom
+// columns apart, and every visible column button is the top element at its centre (a real hit-test). At 320/375×800:
+// suggestions on top, catalogue and full-screen tool panels at the top of the map, axe with « Avancée » open, console.
+// Short landscape screens (568×320) keep the layout from 36em; their columns overlap as on main (QUESTIONS M-9).
+for (const [width, height, scheme, full] of [
+  [320, 568, 'light', false],
+  [360, 640, 'light', false],
+  [375, 667, 'light', false],
+  [375, 812, 'light', false],
+  [320, 800, 'light', true],
+  [320, 800, 'dark', true],
+  [375, 800, 'light', true],
+  [375, 800, 'dark', true],
+  [576, 800, 'light', false],
+  [768, 800, 'light', false],
 ] as const) {
   const context = await browser.newContext({
-    viewport: { width, height: 800 },
+    viewport: { width, height },
     colorScheme: scheme,
   });
   const page = await context.newPage();
@@ -2429,20 +2436,34 @@ for (const [width, scheme] of [
     const map = document.querySelector('.map-view')?.getBoundingClientRect();
     const bar = document.querySelector('form.GPSearchBar')?.getBoundingClientRect();
     if (!map || !bar) return null;
-    const buttons = (id: string) =>
-      Array.from(document.querySelectorAll(`#position-container-${id} button`))
-        .filter((b) => b.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
-        .map((b) => b.getBoundingClientRect())
-        .filter((b) => b.width > 0);
-    const [topLeft, topRight, bottomLeft, bottomRight] = [
-      'top-left',
-      'top-right',
-      'bottom-left',
-      'bottom-right',
-    ].map(buttons);
+    const ids = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+    const visible = ids.map((id) =>
+      Array.from(document.querySelectorAll<HTMLElement>(`#position-container-${id} button`)).filter(
+        (b) =>
+          b.checkVisibility({ visibilityProperty: true, opacityProperty: true }) &&
+          b.getBoundingClientRect().width > 0,
+      ),
+    );
+    // Hit-test: the element at the centre of each visible column button must be that button (or inside it).
+    const blocked = visible.flat().flatMap((b) => {
+      const r = b.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return b.contains(hit)
+        ? []
+        : [
+            `${b.getAttribute('aria-label') ?? b.title ?? b.id} ← ${hit?.getAttribute('aria-label') ?? hit?.id ?? hit?.tagName}`,
+          ];
+    });
+    const [topLeft, topRight, bottomLeft, bottomRight] = visible.map((list) =>
+      list.map((b) => b.getBoundingClientRect()),
+    );
     const top = (list: DOMRect[] = []) => Math.min(...list.map((b) => b.top));
     const bottom = (list: DOMRect[] = []) => Math.max(...list.map((b) => b.bottom));
     return {
+      mapHeight: Math.round(map.height),
+      mapUnderHeader: Math.round(window.innerHeight - map.height),
+      counts: visible.map((list) => list.length),
+      blocked,
       barLeft: Math.round(bar.left - map.left),
       barRight: Math.round(map.right - bar.right),
       barTop: Math.round(bar.top - map.top),
@@ -2459,19 +2480,22 @@ for (const [width, scheme] of [
   });
   check(
     layout !== null &&
+      layout.counts.every((count) => count > 0) &&
+      layout.blocked.length === 0 &&
       layout.advancedText === 'Avancée' &&
       layout.advancedWidth >= 80 &&
       layout.roomLeft >= 0 &&
       layout.roomRight >= 0 &&
       (mobile
-        ? Math.abs(layout.barLeft - 8) <= 1 &&
+        ? Math.abs(layout.mapUnderHeader - 56) <= 1 &&
+          Math.abs(layout.barLeft - 8) <= 1 &&
           Math.abs(layout.barRight - 8) <= 1 &&
           Math.abs(layout.barTop - 8) <= 1 &&
           layout.columnsTop >= layout.barBottom + 4
         : layout.columnsTop <= 8 && layout.barLeft >= 48 && layout.barRight >= 48),
-    `M22 ${width}px ${scheme} : ${mobile ? 'barre sur toute la largeur (1w), colonnes sous la barre' : 'barre entre les colonnes (inchangé)'}, libellé « Avancée » visible, colonnes du haut et du bas sans chevauchement (${JSON.stringify(layout)})`,
+    `M22 ${width}×${height} ${scheme} : ${mobile ? 'carte sous l’en-tête sur toute la hauteur, barre sur toute la largeur (1w), colonnes sous la barre' : 'barre entre les colonnes (inchangé)'}, libellé « Avancée » visible, colonnes non vides et sans chevauchement, chaque bouton visible des colonnes au premier plan (${JSON.stringify(layout)})`,
   );
-  if (mobile) {
+  if (mobile && full) {
     // Suggestions: three letters, the list opens under the bar, on top of the columns.
     await input.click();
     await page.keyboard.type('Orl', { delay: 60 });
@@ -2491,7 +2515,7 @@ for (const [width, scheme] of [
       : null;
     check(
       suggestions !== null && suggestions.onTop && suggestions.inside,
-      `M22 ${width}px ${scheme} : les suggestions s’ouvrent sous la barre, au-dessus des colonnes (${JSON.stringify(suggestions)})`,
+      `M22 ${width}×${height} ${scheme} : les suggestions s’ouvrent sous la barre, au-dessus des colonnes (${JSON.stringify(suggestions)})`,
     );
     await input.fill('');
     await page.mouse.click(width / 2, 600);
@@ -2513,6 +2537,7 @@ for (const [width, scheme] of [
         const c = close?.getBoundingClientRect();
         return {
           top: Math.round(d.top - map.top),
+          bottomGap: Math.round(map.bottom - d.bottom),
           inMap: d.bottom <= map.bottom + 1 && d.left >= -1 && d.right <= window.innerWidth + 1,
           closeOnTop: Boolean(
             c && close?.contains(document.elementFromPoint(c.x + c.width / 2, c.y + c.height / 2)),
@@ -2530,8 +2555,13 @@ for (const [width, scheme] of [
       }, name);
       await page.waitForTimeout(300);
       check(
-        panel !== null && Math.abs(panel.top) <= 2 && panel.inMap && panel.closeOnTop,
-        `M22 ${width}px ${scheme} : panneau « ${name} » en haut de la carte, dans la carte, bouton de fermeture accessible (${JSON.stringify(panel)})`,
+        panel !== null &&
+          Math.abs(panel.top) <= 2 &&
+          panel.inMap &&
+          panel.closeOnTop &&
+          // The full-screen tool panel (geopf `.gpf-mobile-fullscreen`) is as tall as the map (review of #103).
+          (name === CONTROL_LABELS.catalog || panel.bottomGap <= 8),
+        `M22 ${width}×${height} ${scheme} : panneau « ${name} » en haut de la carte, dans la carte, bouton de fermeture accessible (${JSON.stringify(panel)})`,
       );
     }
     await page.getByRole('button', { name: CONTROL_LABELS.advancedSearch }).click();
@@ -2542,7 +2572,7 @@ for (const [width, scheme] of [
     );
     check(
       violations.length === 0,
-      `M22 a11y ${width}px ${scheme}, panneau « Avancée » ouvert : axe sans violation grave${
+      `M22 a11y ${width}×${height} ${scheme}, panneau « Avancée » ouvert : axe sans violation grave${
         violations.length
           ? ` : ${violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`).join(' | ')}`
           : ''
@@ -2552,7 +2582,7 @@ for (const [width, scheme] of [
   const report = consoleReport();
   check(
     report.messages.length === 0,
-    `M22 ${width}px ${scheme} : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
+    `M22 ${width}×${height} ${scheme} : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
   );
   await context.close();
 }
