@@ -186,17 +186,18 @@ test.describe('Carto : outils geopf, impression', () => {
 });
 
 test.describe('Carto : en-tête', () => {
-  test('le chevron du menu « Services » se retourne à l’ouverture', async ({ page, isMobile }) => {
+  test('le chevron du menu « Services » se retourne à l’ouverture', async ({ page }) => {
     await openMap(page);
-    if (isMobile) await page.locator('header .fr-btn--menu').click();
     await waitForDsfr(page);
     const button = page
       .locator('header')
       .getByRole('button', { name: 'Services' })
       .locator('visible=true');
-    // Le chevron est le <span> enfant du bouton (M10) : sa transformation change quand le menu s'ouvre.
+    // Le chevron est le <span class="header-menu__chevron"> du bouton (M10, #5 : le premier <span> est désormais le libellé) : sa transformation change quand le menu s'ouvre.
     const transform = () =>
-      button.evaluate((el) => getComputedStyle(el.querySelector('span') ?? el).transform);
+      button.evaluate(
+        (el) => getComputedStyle(el.querySelector('.header-menu__chevron') ?? el).transform,
+      );
     const ferme = await transform();
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');

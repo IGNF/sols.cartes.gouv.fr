@@ -263,7 +263,7 @@ test.describe('Carto', () => {
     }
   });
 
-  test('plein écran en bas à droite, échelle à sa gauche en bleu action (clair)', async ({
+  test('plein écran en bas à droite, échelle à sa gauche, fond opaque, gris en clair et bleu action en sombre', async ({
     page,
   }) => {
     await openMap(page);
@@ -283,15 +283,49 @@ test.describe('Carto', () => {
       plein!.x - (echelle!.x + echelle!.width),
       'écart échelle / plein écran',
     ).toBeLessThanOrEqual(24);
-    const [attendu, couleur] = await page.evaluate(() => {
-      const probe = document.createElement('span');
-      probe.style.color = 'var(--text-action-high-blue-france)';
-      document.body.append(probe);
-      const attendu = getComputedStyle(probe).color;
-      probe.remove();
-      return [attendu, getComputedStyle(document.querySelector('.ol-scale-line-inner')!).color];
-    });
-    expect(couleur, 'couleur de l’échelle = jeton action').toBe(attendu);
+    // Couleurs attendues, résolues depuis les jetons DSFR du thème courant.
+    const mesure = () =>
+      page.evaluate(() => {
+        const jeton = (prop: string, token: string): string => {
+          const probe = document.createElement('span');
+          probe.style.setProperty(prop, `var(${token})`);
+          document.body.append(probe);
+          const v = getComputedStyle(probe).getPropertyValue(prop);
+          probe.remove();
+          return v;
+        };
+        const ligne = document.querySelector('.ol-scale-line')!;
+        const interne = getComputedStyle(document.querySelector('.ol-scale-line-inner')!);
+        return {
+          fond: getComputedStyle(ligne).backgroundColor,
+          fondAttendu: jeton('background-color', '--background-default-grey'),
+          texte: interne.color,
+          barre: interne.borderBottomColor,
+          texteGris: jeton('color', '--text-default-grey'),
+          barreGrise: jeton('color', '--text-mention-grey'),
+          bleu: jeton('color', '--text-action-high-blue-france'),
+        };
+      });
+    const alpha = (c: string) => (/rgba\(.*,\s*([\d.]+)\)$/.exec(c)?.[1] ?? '1') === '1';
+    const clair = await mesure();
+    expect(alpha(clair.fond), 'fond opaque (clair)').toBe(true);
+    expect(clair.fond, 'fond = jeton fond par défaut (clair)').toBe(clair.fondAttendu);
+    expect(clair.texte, 'texte gris (clair)').toBe(clair.texteGris);
+    expect(clair.barre, 'barre grise (clair)').toBe(clair.barreGrise);
+    expect(clair.texte).not.toBe(clair.bleu);
+    await page.evaluate(() => document.documentElement.setAttribute('data-fr-theme', 'dark'));
+    // Les couleurs de DSFR sont animées (transition) : on attend leur valeur finale.
+    await expect
+      .poll(async () => {
+        const m = await mesure();
+        return m.texte === m.bleu && m.barre === m.bleu;
+      })
+      .toBe(true);
+    const sombre = await mesure();
+    expect(alpha(sombre.fond), 'fond opaque (sombre)').toBe(true);
+    expect(sombre.fond, 'fond = jeton fond par défaut (sombre)').toBe(sombre.fondAttendu);
+    expect(sombre.texte, 'texte bleu action (sombre)').toBe(sombre.bleu);
+    expect(sombre.barre, 'barre bleu action (sombre)').toBe(sombre.bleu);
   });
 
   test('pied de page : « Haut de page » le déplie, la page défile, « Fermer » le replie', async ({
@@ -325,7 +359,11 @@ test.describe('Carto', () => {
 
   test('le bloc marque de l’en-tête est entièrement cliquable (vers /)', async ({ page }) => {
     await openMap(page);
-    for (const sel of ['.fr-header__logo', '.fr-header__operator', '.fr-header__service']) {
+    const width = page.viewportSize()?.width ?? 1280;
+    // L'opérateur (Marianne) est masqué sous 36em (576 px) dans l'en-tête compact.
+    const blocs = ['.fr-header__logo', '.fr-header__service'];
+    if (width >= 576) blocs.splice(1, 0, '.fr-header__operator');
+    for (const sel of blocs) {
       const href = await page
         .locator(sel)
         .first()
@@ -349,12 +387,11 @@ test.describe('Carto', () => {
     await page.waitForURL(/\/rechercher-une-donnee\//, { waitUntil: 'commit' });
   });
 
-  test('Échap ferme seulement le sous-menu « Services » (mobile compris)', async ({
+  test('Échap ferme le sous-menu « Services » et rend le focus (mobile compris)', async ({
     page,
-    isMobile,
   }) => {
     await openMap(page);
-    if (isMobile) await page.locator('header .fr-btn--menu').click();
+    await expect(page.locator('header .fr-btn--menu')).toHaveCount(0);
     const button = page
       .locator('header')
       .getByRole('button', { name: 'Services' })
@@ -366,9 +403,6 @@ test.describe('Carto', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
-    // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
-    if (isMobile)
-      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6

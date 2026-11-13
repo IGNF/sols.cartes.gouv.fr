@@ -38,9 +38,12 @@ test.describe('Accueil et en-tête v1', () => {
       .locator('a')
       .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
     expect(
-      // Seuls les liens d'aide (menu « Aide », v1.1) pointent vers cartes.gouv.fr.
+      // Seuls les liens d'aide (menu « Aide », v1.1) et « Publier une donnée » (menu Services, #93) pointent vers cartes.gouv.fr.
       hrefs.filter(
-        (h) => /cartes\.gouv\.fr/.test(h) && !h.startsWith('https://cartes.gouv.fr/aide/'),
+        (h) =>
+          /cartes\.gouv\.fr/.test(h) &&
+          !h.startsWith('https://cartes.gouv.fr/aide/') &&
+          h !== 'https://cartes.gouv.fr/publier-une-donnee',
       ),
       'aucun autre lien vers cartes.gouv.fr',
     ).toEqual([]);
@@ -63,7 +66,11 @@ test.describe('Accueil et en-tête v1', () => {
     const hrefs = await footer
       .locator('a')
       .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
-    expect(hrefs.filter((h) => /cartes\.gouv\.fr/.test(h))).toEqual([]);
+    // Seuls CGU et données personnelles (#94) pointent vers cartes.gouv.fr.
+    expect(hrefs.filter((h) => /cartes\.gouv\.fr/.test(h))).toEqual([
+      'https://cartes.gouv.fr/cgu/',
+      'https://cartes.gouv.fr/donnees-personnelles/',
+    ]);
   });
 
   test('le menu « Services » ouvre, au clavier aussi, et se ferme avec Échap', async ({

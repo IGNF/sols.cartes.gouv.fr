@@ -130,10 +130,17 @@ export function isResultQuery(body: string): boolean {
   }
 }
 
+/** Ouvre le menu burger si l'en-tête en a un (edito, catalogue) ; la carto (en-tête compact, #5) n'en a plus. */
+export async function openBurgerIfAny(page: Page, isMobile: boolean): Promise<void> {
+  if (!isMobile) return;
+  const burger = page.locator('header .fr-btn--menu');
+  if ((await burger.count()) > 0) await burger.click();
+}
+
 /** Ouvre le menu « Services » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
 export async function openServicesMenu(page: Page, isMobile: boolean) {
   await waitForDsfr(page);
-  if (isMobile) await page.locator('header .fr-btn--menu').click();
+  await openBurgerIfAny(page, isMobile);
   const button = page
     .locator('header')
     .getByRole('button', { name: 'Services' })
@@ -184,7 +191,7 @@ export const AIDE_CONTACT_URL = 'https://cartes.gouv.fr/aide/fr/nous-ecrire/';
 /** Ouvre le menu « Aide » de l'en-tête (sur mobile : d'abord le menu burger) et le renvoie. */
 export async function openAideMenu(page: Page, isMobile: boolean, label = 'Aide') {
   await waitForDsfr(page);
-  if (isMobile) await page.locator('header .fr-btn--menu').click();
+  await openBurgerIfAny(page, isMobile);
   // `visible=true` : l'en-tête contient deux copies du menu (bureau et modale mobile, ids suffixés `-mobile`) ;
   // on ne garde que celle qui est affichée dans le viewport courant.
   const button = page

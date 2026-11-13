@@ -1,3 +1,4 @@
+import TileState from 'ol/TileState';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import BaseEvent from 'ol/events/Event';
@@ -77,7 +78,7 @@ describe('useOverlays', () => {
     const source = created.find((c) => c.key === 'c')?.source;
     act(() => {
       for (let i = 0; i < 3; i++) {
-        const tile = { getKey: () => `tuile-${i}`, load: vi.fn() };
+        const tile = { getKey: () => `tuile-${i}`, load: vi.fn(), getState: () => TileState.ERROR };
         source?.dispatchEvent(Object.assign(new BaseEvent('tileloaderror'), { tile }));
       }
     });

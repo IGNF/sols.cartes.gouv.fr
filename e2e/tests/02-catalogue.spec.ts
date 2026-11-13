@@ -112,10 +112,13 @@ test.describe('Catalogue', () => {
       .locator('header a')
       .evaluateAll((a) => a.map((x) => x.getAttribute('href') ?? ''));
     expect(hrefs).toContain('/');
-    // Seuls les liens d'aide (menu « Aide », v1.1) pointent vers cartes.gouv.fr.
+    // Seuls les liens d'aide (menu « Aide », v1.1) et « Publier une donnée » (menu Services, #93) pointent vers cartes.gouv.fr.
     expect(
       hrefs.filter(
-        (h) => /cartes\.gouv\.fr/.test(h) && !h.startsWith('https://cartes.gouv.fr/aide/'),
+        (h) =>
+          /cartes\.gouv\.fr/.test(h) &&
+          !h.startsWith('https://cartes.gouv.fr/aide/') &&
+          h !== 'https://cartes.gouv.fr/publier-une-donnee',
       ),
     ).toEqual([]);
     // C-6 : les paramètres d'affichage sont masqués sur le catalogue.
