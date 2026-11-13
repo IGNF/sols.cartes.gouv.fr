@@ -2,9 +2,14 @@ import type Control from 'ol/control/Control';
 import ScaleLine from 'ol/control/ScaleLine';
 import type OlMap from 'ol/Map';
 import { useEffect } from 'react';
-import { MAP_TOOLS_OPTIONS } from '../config/map';
-import { GeoportalFullScreen, GeoportalZoom, loadSearchEngine } from '../map/geopf';
-import { labelSearchInput } from '../map/labelControls';
+import { CONTROL_LABELS, MAP_TOOLS_OPTIONS } from '../config/map';
+import {
+  GeoportalFullScreen,
+  GeoportalZoom,
+  loadSearchEngine,
+  type SearchEngineModule,
+} from '../map/geopf';
+import { controlElement } from '../map/labelControls';
 import labelGeopfDialogs from '../map/labelGeopfDialogs';
 import { ensurePositionContainers } from '../map/positionContainers';
 
@@ -23,8 +28,25 @@ export function createMapControls(): Control[] {
 }
 
 /**
+ * Search engine as on cartes.gouv.fr and guichet-collaboratif (M19): geocoding bar whose « Avancée » button
+ * opens « Me géolocaliser » then the advanced forms (MAP_TOOLS_OPTIONS.search, .coordinateSearch).
+ */
+export function createSearchEngine({
+  SearchEngineAdvanced,
+  CoordinateAdvancedSearch,
+}: SearchEngineModule): Control {
+  const control = new SearchEngineAdvanced({
+    ...MAP_TOOLS_OPTIONS.search,
+    advancedSearch: [new CoordinateAdvancedSearch({ ...MAP_TOOLS_OPTIONS.coordinateSearch })],
+  });
+  control.advancedBtn?.setAttribute('aria-label', CONTROL_LABELS.advancedSearch);
+  return control;
+}
+
+/**
  * Adds the map tools in an effect and removes them on cleanup.
- * The search engine (geocoding + geolocation) is loaded lazily, then added if the map is still mounted.
+ * The search engine (geocoding, geolocation, advanced forms) is loaded lazily, then added if the map is
+ * still mounted.
  */
 export default function useMapControls(map: OlMap | null): void {
   useEffect(() => {
@@ -36,11 +58,10 @@ export default function useMapControls(map: OlMap | null): void {
     let active = true;
     let search: Control | null = null;
     loadSearchEngine()
-      .then((SearchEngine) => {
+      .then((module) => {
         if (!active) return;
-        const control = new SearchEngine({ ...MAP_TOOLS_OPTIONS.search });
-        labelGeopfDialogs(control.element);
-        labelSearchInput(control.element);
+        const control = createSearchEngine(module);
+        labelGeopfDialogs(controlElement(control));
         map.addControl(control);
         search = control;
       })

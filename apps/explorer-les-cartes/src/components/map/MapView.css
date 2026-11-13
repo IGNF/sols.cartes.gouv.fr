@@ -33,60 +33,65 @@
 }
 
 /*
- * geopf-extensions search engine: its own slot, right of the top-left button column (print, import,
- * feature info; the zoom until M16) and left of the layer switcher, at every width (geopf puts it at
- * left: 46px above 576px and at 0 below, over that column). Offsets follow the DSFR spacing scale
- * (1w = 0.5rem): column = 1w offset + 5w buttons, plus 1w gap.
+ * geopf-extensions search engine (SearchEngineAdvanced since M19, as on cartes.gouv.fr): its own slot, right
+ * of the top-left button column (print, import, feature info) and left of the layer switcher, at every width
+ * (geopf sizes it 100 % / 360px from its left edge). Offsets follow the DSFR spacing scale (1w = 0.5rem):
+ * column = 1w offset + 5w buttons, plus 1w gap. The outer widget only: it nests a `GPsearchEngine-<n>`.
  */
-.map-view [id^='GPsearchEngine-'] {
+.map-view [id^='GPsearchEngine-Advanced-'] {
   top: 0.5rem;
   left: 3.5rem;
-  max-width: calc(100% - 7rem);
-}
-
-/* Keep the typed text clear of the reset button that geopf overlays on the input. */
-.map-view input[id^='GPsearchInputText-'] {
-  padding-right: 2.5rem;
-}
-
-/* The reset button only makes sense with a text to clear (v1.1): hidden while the input is empty. */
-.map-view
-  [id^='GPsearchEngine-']
-  :has(> input[id^='GPsearchInputText-']:placeholder-shown)
-  > button[id^='GPsearchInputReset-'] {
-  display: none;
+  width: calc(100% - 7rem);
 }
 
 /*
- * From the DSFR md breakpoint the search bar is centred over the map (v1.1, as on cartes.gouv.fr),
- * clear of the two button columns (1w offset + 5w buttons + 1w gap on each side).
+ * From the DSFR md breakpoint the search bar is centred over the map (v1.1), clear of the two button columns
+ * (1w offset + 5w buttons + 1w gap on each side); 420px wide as on cartes.gouv.fr when there is room.
  */
 @media (min-width: 48em) {
-  .map-view [id^='GPsearchEngine-'] {
+  .map-view [id^='GPsearchEngine-Advanced-'] {
     left: 50%;
     transform: translateX(-50%);
+    width: 26.25rem;
     max-width: calc(100% - 14rem);
   }
 }
 
-/* Desktop (DSFR lg breakpoint): wide enough for the whole placeholder. */
-@media (min-width: 62em) {
-  .map-view input[id^='GPsearchInputText-'] {
-    width: 18rem;
+/*
+ * Below the DSFR sm breakpoint the bar sits between the two button columns (208px at 320px): « Avancée » keeps
+ * only its chevron, else the input has no room left. Its accessible name (« Recherche avancée »,
+ * src/hooks/useMapControls.ts) and `title` stay; cartes.gouv.fr gives the bar the full width there instead, over
+ * the button columns (doc/agents/QUESTIONS.md M-7).
+ */
+@media (max-width: 35.99em) {
+  .map-view [id^='GPsearchEngine-Advanced-'] .GPSearchEngine-advanced-btn {
+    font-size: 0;
+  }
+
+  .map-view [id^='GPsearchEngine-Advanced-'] .GPSearchEngine-advanced-btn::after {
+    margin-left: 0;
   }
 }
 
 /*
- * Scale line (v1.1): bottom right, left of the full screen button (2w offset + 5w button + 1w gap), in
- * the DSFR action colour rather than OL's grey (brief).
+ * Scale line (v1.1): bottom right, left of the full screen button (2w offset + 5w button + 1w gap). M19:
+ * colours of cartes.gouv.fr (IGNF/cartes.gouv.fr-entree-carto, `ScaleLine.vue`): opaque background
+ * `--background-default-grey` (OL's is 80 % opaque); grey text and bar in the light theme (OL's #333 and
+ * #666, here the closest DSFR tokens), blue France action in the dark theme.
  */
 .map-view .ol-scale-line {
   left: auto;
   right: 4rem;
   bottom: 0.5rem;
+  background-color: var(--background-default-grey);
 }
 
 .map-view .ol-scale-line-inner {
+  color: var(--text-default-grey);
+  border-color: var(--text-mention-grey);
+}
+
+[data-fr-theme='dark'] .map-view .ol-scale-line-inner {
   color: var(--text-action-high-blue-france);
   border-color: var(--text-action-high-blue-france);
 }

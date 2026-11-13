@@ -148,7 +148,7 @@ conteneur (`ResizeObserver` → `map.updateSize()`) : la carte s'élargit quand 
 | Plein écran                 | `GeoportalFullScreen` (étend `ol/control/FullScreen`)   | `position`, `tipLabel`                                                                                                                                                                            |
 | Attributions (retirées M13) | `GeoportalAttribution` (étend `ol/control/Attribution`) | `collapsible`, `collapsed`, `tipLabel` ; sans `Gp.Config`, affiche les `attributions` de la source OL (`GPF_ATTRIBUTION`) ; retire l'attribution OL par défaut                                    |
 | Échelle                     | `ol/control/ScaleLine`                                  | geopf-ext n'en fournit pas ; `units: 'metric'`                                                                                                                                                    |
-| Recherche + géolocalisation | `SearchEngine`                                          | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
+| Recherche + géolocalisation | `SearchEngine` (M19 : `SearchEngineAdvanced`, §14)       | `collapsed: false`, `placeholder`, `displayButtonGeolocate: true`, `displayButtonAdvancedSearch: false`, `displayButtonCoordinateSearch: false`, `resources: { search: false }`, `zoomTo: 'auto'` |
 | Rotation                    | `ol/control/Rotate` (via `defaults`)                    | `tipLabel` français ; `zoom: false`, `attribution: false` dans `defaults`                                                                                                                         |
 
 Disposition (revue M3) : geopf place la recherche à `left: 46px` au-dessus de 576 px et à `0` en dessous, donc **sur** la colonne
@@ -764,7 +764,7 @@ comme notre fond primaire : forcée à `--text-inverted-blue-france`, sinon l'ic
   (`GPF_ATTRIBUTION`, `SOLS_ATTRIBUTION`) pour la feuille d'impression (`exportMap.mapSources`).
 - **Plein écran en bas à droite** (`MAP_TOOLS_OPTIONS.fullScreen.position: 'bottom-right'`, `#position-container-bottom-right`, comme sur
   cartes.gouv.fr) ; **échelle** OL à sa gauche (`MapView.css` : `left: auto; right: 4rem` = 2w + 5w + 1w, `bottom: 0.5rem`), texte et
-  trait en `--text-action-high-blue-france` (`.ol-scale-line-inner`, OL les tirait de `--ol-foreground-color`/`--ol-subtle-foreground-color`,
+  trait en `--text-action-high-blue-france` (M19 : couleurs de cartes.gouv.fr, §14.2) (`.ol-scale-line-inner`, OL les tirait de `--ol-foreground-color`/`--ol-subtle-foreground-color`,
   gris) ; la colonne bas gauche garde légendes, territoires et mini-carte.
 - `check:map` : pas de `.ol-attribution`, plein écran dans la colonne bas droite à ≤ 16 px des bords, échelle à 4–24 px à sa gauche, couleurs
   de l'échelle = jeton action dans les deux thèmes.
@@ -991,3 +991,105 @@ Une rangée sans débordement de 320 à 1280 px ; titre tronqué (ellipse) seule
 carte collée sous l'en-tête avec son canevas, « Aide » et « Services » visibles, panneau dans l'écran et au-dessus de la
 carte, Échap ferme et rend le focus, clic sur la Marianne → `/`, console vide ; « Paramètres d'affichage » ouvre la
 modale et passe en sombre ; axe sans violation grave « Services » ouvert (375 sombre, 1280 clair et sombre).
+
+## 14. Géolocalisation sous « Avancée », couleurs de l'échelle (M19)
+
+Demande du propriétaire : « la géolocalisation sous la recherche avancée, comme cartes.gouv.fr/explorer-les-cartes et
+guichet-collaboratif ; l'échelle aux couleurs de cartes.gouv.fr, fond non transparent ». Plan `doc/plans/M19.md`.
+
+### 14.1 Moteur de recherche : `SearchEngineAdvanced`
+
+- **Références lues** : IGNF/cartes.gouv.fr-entree-carto `main` (`1f890d3`), `src/components/carte/control/SearchEngine.vue`
+  (`SearchEngineAdvanced` + `InseeAdvancedSearch`, `LocationAdvancedSearch`, `CoordinateAdvancedSearch`, `ParcelAdvancedSearch`),
+  options dans `src/components/carte/Controls.vue` (`searchEngineOptions`) ; IGNF/cartes.gouv.fr-guichet-collaboratif `develop`
+  (`bd456e3`), `src/features/navigation/controls/ToolsControl.tsx` et `GuichetSearchEngineControl.ts` (classe dérivée de
+  `SearchEngineAdvanced`, `CoordinateAdvancedSearch` seul selon la communauté). Aucune des deux n'utilise d'option de position
+  ni de `target` pour la géolocalisation : c'est la structure du contrôle. Sources geopf lues (1.0.0-beta.16) :
+  `Controls/SearchEngine/SearchEngineAdvanced.{js,d.ts}`, `SearchEngineBase.js`, `SearchEngineGeocodeIGN.js`,
+  `CoordinateAdvancedSearch.js`, `InseeAdvancedSearch.js`, `LocationAdvancedSearch.js`, `ParcelAdvancedSearch.js`, `typedefs.js`,
+  `Services/IGNSearchService.js`, `InseeSearchService.js`, `Search.js`, CSS `DSFRadvancedSearchEngineStyle.css`,
+  `GPFadvancedSearchEngine.css` (importée par `AbstractAdvancedSearch.js`).
+- **Structure** (`_initContainer`) : widget `GPsearchEngine-Advanced-<n>` qui contient la barre `GPsearchEngine-<n>`
+  (`SearchEngineGeocodeIGN`, `options.target` = le widget) ; dans la barre, `.GPOptionsContainer` avec « Avancée »
+  (`GPSearchEngine-advanced-btn-*`, `aria-label` « Afficher les options avancées » renommé ici, `aria-expanded`, `aria-controls`) et
+  « Effacer la saisie » ; sous la barre, `.GPAdvancedContainer` dont le **premier enfant est « Me géolocaliser »**
+  (`GPSearchEngine-locate`), puis un accordéon DSFR par formulaire. Un second « Me géolocaliser » est dans l'en-tête des
+  suggestions (`.GPautoCompleteHeader`), affiché quand le champ a le focus. « Avancée » n'est ajouté que s'il y a au moins un
+  formulaire (`_searchForms.length`). L'ancienne option `displayButtonGeolocate` (bouton `GPshowGeolocate-*` à côté de la
+  barre) n'existe pas dans ce contrôle.
+- **Mesures, cartes.gouv.fr** (Chromium sans interface, 1280×800, 2026-11-13) : barre 48 px de haut ; panneau collé sous la
+  barre (`top` = bas de la barre) ; « Me géolocaliser » 153×32 px, à 12 px sous la barre et 12 px du bord gauche du panneau ;
+  focus sur lui à l'ouverture (Entrée/clic sur « Avancée »). **Ici, après** : mêmes valeurs à 320, 375, 768 et 1280 px
+  (panneau à 0 px sous la barre, bouton à 12/12 px), aucun bouton de la carte recouvert par la barre ni par le panneau.
+- **Nom de « Avancée »** : geopf pose `aria-label` « Afficher les options avancées », qui ne contient pas le texte visible
+  « Avancée » : axe `label-content-name-mismatch` (grave, RGAA 6.1 / WCAG 2.5.3) sur toutes les pages de `check:map`
+  (premier passage, 9 échecs). `createSearchEngine` le renomme `CONTROL_LABELS.advancedSearch` « Recherche avancée »
+  (même texte que son `title` geopf) par le champ public `advancedBtn`. Lacune amont, à ajouter au ticket du §5.7.
+- **Choix** : `MAP_TOOLS_OPTIONS.search` = `placeholder`, `ariaLabel` (nomme le champ, qui n'a pas de `<label>` :
+  `labelSearchInput` est retiré) ; `MAP_TOOLS_OPTIONS.coordinateSearch` = formulaire « Coordonnées » seul (systèmes de
+  `MOUSE_POSITION_SYSTEMS`, enregistrés par le formulaire via `CRS.loadByName`). Les trois autres formulaires de cartes.gouv.fr
+  appellent `geo.api.gouv.fr` / `apicarto.ign.fr`, écrits en dur en amont, hors GPF : question M-7. Pas de `serverUrl` : le
+  géocodage garde les adresses GPF par défaut de geoportal-access-lib (`data.geopf.fr/geocodage/completion` et `/search`),
+  et un `searchOptions.serviceOptions.serverUrl` passerait par `Search.setUrl`, qui fait un `eval` (§5.7).
+- `loadSearchEngine()` charge `SearchEngineAdvanced` et `CoordinateAdvancedSearch` dans le morceau de la recherche ;
+  `createSearchEngine(module)` (`src/hooks/useMapControls.ts`) les assemble. `DSFRadvancedSearchEngineStyle.css` est importée
+  dans `geopf.ts` avec `DSFRsearchEngineStyle.css`.
+- **CSS** (`MapView.css`) : les règles visent le widget extérieur `[id^='GPsearchEngine-Advanced-']` (un
+  `[id^='GPsearchEngine-']` attrape aussi la barre intérieure). Même emplacement qu'avant : entre les colonnes sous 48em
+  (`left: 3.5rem`, `width: calc(100% - 7rem)`), centrée au-dessus (largeur 420 px comme cartes.gouv.fr, bornée par les
+  colonnes). Sous 36em, « Avancée » n'affiche que son chevron (`font-size: 0` ; nom « Recherche avancée » et `title` gardés), sinon
+  le champ n'a plus de place à 320 px (0 px mesuré) ; il garde 102 px à 320 px, 155 px à 375 px. Les règles de M3 sur
+  `GPsearchInputReset-` (bouton de l'ancien contrôle) sont retirées : l'effacement est `GPSearchEngine-erase-btn-*`, affiché
+  par geopf quand le champ contient du texte (« Avancée » est alors masqué, comme sur cartes.gouv.fr).
+- **Clavier** (comportement amont, identique à cartes.gouv.fr) : champ (rôle `combobox`), Tab → « Me géolocaliser » des
+  suggestions, Tab → « Avancée », Entrée → focus sur « Me géolocaliser » du panneau, Tab → « Coordonnées ». Échap ne ferme
+  pas le panneau (un clic ou le focus hors du panneau le ferme) : limite amont, à ajouter au ticket du §5.7. Le clic sur
+  « Me géolocaliser » pose un repère « Ma localisation » (popup `GPSearchPopup`, boutons « Fermer », « Supprimer ») et
+  centre la carte ; le panneau reste ouvert.
+- **Console** : `SearchEngineAdvanced` ajoute une interaction `Select` sur sa couche de repères. Au premier clic sur la carte,
+  sa détection d'objets lance le banc d'essai des lectures de canevas d'OpenLayers 10.11 (`benchmarkCanvasReads`,
+  `render/canvas/ExecutorGroup.js`, contextes sans `willReadFrequently` exprès) : Chrome écrit **une fois par page**
+  « Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to
+  true ». Même avertissement sur cartes.gouv.fr (mesuré : 0 avant, 1 après six clics, ici comme là-bas). Bruit amont :
+  `check:map` le compte dans les notes (`OL_CANVAS_BENCHMARK_WARNING`) au lieu d'échouer.
+- **Tests** : `src/map/searchEngine.test.ts` monte le vrai `SearchEngineAdvanced` dans jsdom (géolocalisation en tête du
+  panneau, « Avancée » dans la barre, focus à l'ouverture) ; jsdom n'a pas `innerText`, que geopf utilise pour les textes des
+  boutons : textes vérifiés par `check:map`. À relancer à chaque montée de version de geopf.
+
+### 14.2 Échelle
+
+- **Référence** : `src/components/carte/control/ScaleLine.vue` de l'entrée carto (même commit) :
+  `.ol-scale-line { background: var(--background-default-grey) }` et, en sombre seulement,
+  `html[data-fr-theme="dark"] .ol-scale-line-inner { color/border-color: var(--text-action-high-blue-france) }` ; en clair,
+  les valeurs par défaut d'OpenLayers (`#333`, trait `#666`). Lecture du propriétaire confirmée : fond opaque.
+
+  | Mesure (styles calculés) | cartes.gouv.fr clair | ici avant | ici après | cartes.gouv.fr sombre | ici avant | ici après |
+  |---|---|---|---|---|---|---|
+  | Fond `.ol-scale-line` | `rgb(255,255,255)` | blanc à 80 % | `rgb(255,255,255)` | `rgb(22,22,22)` | `#161616` à 80 % | `rgb(22,22,22)` |
+  | Texte | `rgb(51,51,51)` | `rgb(0,0,145)` | `rgb(58,58,58)` (`--text-default-grey`, le plus proche) | `rgb(133,133,246)` | idem | `rgb(133,133,246)` |
+  | Trait | `rgb(102,102,102)` | `rgb(0,0,145)` | `rgb(102,102,102)` (`--text-mention-grey`) | `rgb(133,133,246)` | idem | `rgb(133,133,246)` |
+
+  Marges, rayon, position identiques (`padding: 2px`, `border-radius: 4px`, `right: 64px`, `bottom: 8px`). Contraste du texte
+  sur le fond (WCAG, calculé par `check:map`) : 11,4:1 en clair, 5,8:1 en sombre.
+
+### 14.3 Vérification et sélecteurs e2e
+
+`check:map` (bloc M19, 320/375/768/1280 px) : plus de `GPshowGeolocate-*`, aucun « Me géolocaliser » visible au repos, parcours
+clavier ci-dessus, « Me géolocaliser » premier enfant du panneau, 0–2 px sous la barre, 0–16 px du bord, au premier plan
+(`elementFromPoint`), aucun bouton visible des colonnes recouvert (les panneaux geopf fermés gardent un « Fermer » en
+`visibility: hidden`, ignoré), champ ≥ 96 px, Entrée → repère « Ma localisation » (position
+accordée et simulée), axe sans violation grave panneau ouvert (375 et 1280 px), console vide ; bloc des thèmes : fond, texte et
+trait de l'échelle = jetons ci-dessus, contraste ≥ 4,5:1. Captures `doc/screenshots/M19/`.
+
+| Élément | Sélecteur |
+|---|---|
+| Recherche | widget `[id^="GPsearchEngine-Advanced-"]` ; champ `getByRole('combobox', { name: 'Rechercher un lieu ou une adresse' })` (plus `textbox`) |
+| « Avancée » | `getByRole('button', { name: 'Recherche avancée' })` (`CONTROL_LABELS.advancedSearch`), `aria-expanded` ; panneau `.GPAdvancedContainer` |
+| Géolocalisation | `.GPAdvancedContainer > .GPSearchEngine-locate` (« Me géolocaliser », premier enfant) ; celui des suggestions `.GPautoCompleteHeader .GPSearchEngine-locate` ; repère : `.GPSearchPopup .GPPopupContent` « Ma localisation » |
+| Supprimé | `[id^="GPshowGeolocate-"]` (« Activer la géolocalisation »), `[id^="GPsearchInputReset-"]` |
+
+**Impact sur la suite e2e** (`e2e/`, hors de la brique) : le test « plein écran en bas à droite, échelle à sa gauche en bleu
+action (clair) » de `e2e/tests/03-carto.spec.ts` attend `--text-action-high-blue-france` pour le texte de l'échelle en thème
+clair : il faut désormais `--text-default-grey` en clair (trait `--text-mention-grey`), `--text-action-high-blue-france` en
+sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la recherche ni la géolocalisation (relevé du
+2026-11-13).

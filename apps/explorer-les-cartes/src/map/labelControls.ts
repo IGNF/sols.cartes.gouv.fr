@@ -1,5 +1,4 @@
 import type Control from 'ol/control/Control';
-import { CONTROL_LABELS } from '../config/map';
 
 /** The root element of a control (`element` is protected in the OL typings but public at runtime). */
 export function controlElement(control: Control): HTMLElement {
@@ -29,13 +28,6 @@ export function labelToggleButton(root: HTMLElement, label: string): void {
 export function labelPanelTitle(root: HTMLElement, title: string): void {
   const element = root.querySelector('.gpf-panel__title');
   if (element) element.textContent = title;
-}
-
-/** Gives the geopf search input an accessible name (it has no label). */
-export function labelSearchInput(root: HTMLElement): void {
-  root
-    .querySelectorAll('input[id^="GPsearchInputText-"]')
-    .forEach((input) => input.setAttribute('aria-label', CONTROL_LABELS.searchInput));
 }
 
 /**

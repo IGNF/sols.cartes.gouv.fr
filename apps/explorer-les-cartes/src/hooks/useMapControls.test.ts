@@ -23,6 +23,7 @@ const geopf = vi.hoisted(() => {
   return {
     created,
     search: make('search', true),
+    coordinate: make('coordinate'),
     zoom: make('zoom'),
     fullScreen: make('fullScreen'),
   };
@@ -31,7 +32,11 @@ const geopf = vi.hoisted(() => {
 vi.mock('../map/geopf', () => ({
   GeoportalZoom: geopf.zoom,
   GeoportalFullScreen: geopf.fullScreen,
-  loadSearchEngine: () => Promise.resolve(geopf.search),
+  loadSearchEngine: () =>
+    Promise.resolve({
+      SearchEngineAdvanced: geopf.search,
+      CoordinateAdvancedSearch: geopf.coordinate,
+    }),
 }));
 
 function createFakeMap() {
@@ -48,7 +53,7 @@ function createFakeMap() {
 }
 
 describe('useMapControls', () => {
-  it('ajoute zoom, plein écran (en bas à droite) et échelle, sans attributions, puis la recherche chargée à la demande', async () => {
+  it('ajoute zoom, plein écran (en bas à droite) et échelle, sans attributions, puis la recherche avancée chargée à la demande', async () => {
     geopf.created.length = 0;
     const { map, addControl, overlays } = createFakeMap();
     renderHook(() => useMapControls(map));
@@ -69,12 +74,17 @@ describe('useMapControls', () => {
     });
     expect(addControl.mock.calls.some(([c]) => c instanceof ScaleLine)).toBe(true);
     await waitFor(() => expect(addControl).toHaveBeenCalledTimes(4));
+    // M19: the advanced search engine of cartes.gouv.fr, with the coordinate form (geolocation in its panel).
     const search = geopf.created.find((c) => c.kind === 'search');
-    expect(search?.options).toEqual(MAP_TOOLS_OPTIONS.search);
-    expect(search?.element.querySelector('input')).toHaveAttribute(
-      'aria-label',
-      CONTROL_LABELS.searchInput,
-    );
+    const coordinate = geopf.created.find((c) => c.kind === 'coordinate');
+    expect(coordinate?.options).toEqual(MAP_TOOLS_OPTIONS.coordinateSearch);
+    expect(search?.options).toMatchObject({
+      ...MAP_TOOLS_OPTIONS.search,
+      ariaLabel: CONTROL_LABELS.searchInput,
+    });
+    const { advancedSearch } = search?.options as { advancedSearch: unknown[] };
+    expect(advancedSearch).toHaveLength(1);
+    expect(advancedSearch[0]).toBeInstanceOf(geopf.coordinate);
     expect(search?.element.querySelector('dialog')).toHaveAttribute(
       'aria-label',
       GEOPF_DIALOG_LABELS['GPautoCompleteList'],
