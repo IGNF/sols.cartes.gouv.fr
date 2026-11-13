@@ -35,11 +35,20 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
     expect(root).toHaveClass('compact-footer--collapsed');
     const list = block('.fr-footer__bottom-list');
     for (const link of footer.bottomLinks) {
-      expect(within(list).getByRole('link', { name: link.label })).toHaveAttribute(
-        'href',
-        link.href,
-      );
+      const anchor = within(list).getByRole('link', { name: link.label });
+      expect(anchor).toHaveAttribute('href', link.href);
+      // Pages read on cartes.gouv.fr (CGU, données personnelles: #89, #90) open a new window.
+      if ('external' in link && link.external) {
+        expect(anchor).toHaveAttribute('target', '_blank');
+        expect(anchor).toHaveAttribute('rel', 'noopener external');
+        expect(anchor).toHaveAttribute('title', `${link.label} - nouvelle fenêtre`);
+      } else {
+        expect(anchor).not.toHaveAttribute('target');
+      }
     }
+    expect(footer.bottomLinks.filter((link) => 'external' in link && link.external)).toHaveLength(
+      2,
+    );
     expect(
       within(list).getByRole('button', { name: /paramètres d.affichage/i }),
     ).toBeInTheDocument();

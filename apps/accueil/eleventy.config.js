@@ -185,9 +185,11 @@ export default function (eleventyConfig) {
     const missing = [];
     if (!/<meta name="description" content="[^"\s][^"]*">/.test(content))
       missing.push('meta description');
-    // A rerouting page is canonicalised to its target, every other page to itself.
+    // A rerouting page is canonicalised to its target (absolute for a page moved to another site),
+    // every other page to itself.
     const target = content.match(REFRESH)?.[1] ?? this.page.url;
-    if (!content.includes(`<link rel="canonical" href="${site.url}${target}">`)) {
+    const canonical = /^https?:\/\//.test(target) ? target : `${site.url}${target}`;
+    if (!content.includes(`<link rel="canonical" href="${canonical}">`)) {
       missing.push('canonical');
     }
     if (missing.length > 0) {
