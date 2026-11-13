@@ -1,5 +1,9 @@
 # Rapport e2e (T5, passe 5)
 
+## Passe 5, résultat final (après #96, #93 à #95 et le correctif #98)
+
+Base : `origin/main` fusionné, trois briques reconstruites, suite complète sur le port 8352 (arrêté ensuite) : **145 réussis, 11 ignorés, 0 échec, 0 flaky**. Le test « le menu Services reste dans l'écran à l'ouverture » passe sur desktop sans modification : le défaut de débordement du panneau est corrigé. Les sections ci-dessous décrivent le premier passage (avant correctif).
+
 ## Passe 5 : en-tête compact de la carte (#5, PR #96) et liens légaux (#93, #94, #95)
 
 Date : 2026-11-13. Base : `origin/feat/5-compact-header` fusionné avec `origin/main` (#93 #94 #95) ; les trois briques reconstruites, suite complète sur le port 8351 (arrêté ensuite). La branche de #96 ne contenait pas encore #94 : ces tests exigent #94 sur la base (ils passeront quand #96 sera rebasée sur main).
