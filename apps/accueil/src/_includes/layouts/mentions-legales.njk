@@ -1,0 +1,15 @@
+---
+layout: layouts/page.njk
+---
+{#- Legal notice (#88): sections and wording in i18n.pages.mentionsLegales, one anchored h2 per section. -#}
+{%- for section in t.pages.mentionsLegales.sections %}
+<section aria-labelledby="{{ section.id }}">
+  <h2 id="{{ section.id }}">{{ section.title }}</h2>
+  {%- for paragraph in section.paragraphs %}
+  <p>{{ paragraph }}</p>
+  {%- endfor %}
+  {%- if section.link %}
+  <p><a class="fr-link" href="{{ section.link.href }}"{% if locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ section.link.label }} - {{ t.newWindow }}">{{ section.link.label }}</a></p>
+  {%- endif %}
+</section>
+{%- endfor %}
