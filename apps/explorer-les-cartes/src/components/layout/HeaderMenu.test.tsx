@@ -58,10 +58,8 @@ describe('HeaderMenu', () => {
     await user.click(screen.getByRole('button', { name: 'Ailleurs' }));
     expect(button).toHaveAttribute('aria-expanded', 'false');
     await user.click(button);
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
+    // One Tab per link of the menu, then one more to leave it.
+    for (let index = 0; index <= menu.items.length; index += 1) await user.tab();
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 

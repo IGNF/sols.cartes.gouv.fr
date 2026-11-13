@@ -209,7 +209,8 @@ renvoi (le meta refresh perd l'ancre) : le balisage partagé met alors la langue
   « … - nouvelle fenêtre »), icône DSFR avant (`fr-link--icon-left` + `icon` de `brand.json` : `fr-icon-question-mark`,
   `fr-icon-mail-line`) et icône « lien externe » après (`.sols-tool-menu__external::after`, icône du cœur DSFR
   `icons/system/external-link-line.svg`), comme sur cartes.gouv.fr. Les entrées « Services » gardent
-  `.sols-tool-menu__described` (libellé + description empilés).
+  `.sols-tool-menu__described` (libellé + description empilés), sauf « Publier une donnée » (#85), lien externe vers
+  cartes.gouv.fr : même balisage que les liens d'aide, sans icône avant (`fr-nav__link sols-tool-menu__external`).
 - **Badge** : icône DSFR avant et couleur par brique (`brand.json` `badgeStyles.<brique>` : catalogue
   `green-menthe` + `fr-icon-search-line`, carto `purple-glycine` + `fr-icon-map-pin-2-fill`) ; balisage exact dans les
   blocs « Titre du service avec badge » en fin de document (`badges.<brique>` inchangé).
@@ -378,6 +379,9 @@ En-tête :
                     </li>
                     <li>
                       <a class="fr-nav__link sols-tool-menu__described" href="/explorer-les-cartes/">Explorer les cartes<span class="fr-hint-text">Le visualiseur cartographique</span></a>
+                    </li>
+                    <li>
+                      <a class="fr-nav__link sols-tool-menu__external" href="https://cartes.gouv.fr/publier-une-donnee" target="_blank" rel="noopener external" title="Publier une donnée - nouvelle fenêtre">Publier une donnée</a>
                     </li>
                     <li>
                       <a class="fr-nav__link sols-tool-menu__described" href="/fr/">Découvrir<span class="fr-hint-text">L&#39;Observatoire des sols de France</span></a>
