@@ -108,14 +108,20 @@ function watchConsole(page: import('playwright').Page) {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
     const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
     const upstream = messages.filter((m) => UPSTREAM_WARNINGS.includes(m)).length;
-    const canvasBenchmark = messages.filter(isOlCanvasBenchmark).length;
+    // The benchmark runs once per page: a second warning is not that benchmark any more (review M19).
+    const canvasWarnings = messages.filter(isOlCanvasBenchmark).length;
+    const canvasBenchmark = Math.min(canvasWarnings, 1);
     const unexplained = messages.filter(
       (m) =>
         !m.startsWith('Failed to load resource') &&
         !UPSTREAM_WARNINGS.includes(m) &&
         !isOlCanvasBenchmark(m),
     );
-    const loadErrors = messages.length - unexplained.length - upstream - canvasBenchmark;
+    const loadErrors = messages.length - unexplained.length - upstream - canvasWarnings;
+    if (canvasWarnings > 1)
+      unexplained.push(
+        `${canvasWarnings} avertissements « willReadFrequently » sur la page (au plus 1 attendu : la mesure du canevas d’OpenLayers)`,
+      );
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
     const explainedByTiles = failed.length > 0 && withinTolerance;
     const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
