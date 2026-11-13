@@ -138,9 +138,25 @@ export function checkHeaderAgainstBrand(header, brand) {
   return header
 }
 
+/**
+ * Cross-check of the injected footer with packages/brand/brand.json: every bottom link
+ * (`footer.bottomLinks`) with its href, external ones (pages read on cartes.gouv.fr) in a new window.
+ */
+export function checkFooterAgainstBrand(footer, brand) {
+  const problems = []
+  for (const link of brand.footer?.bottomLinks ?? []) {
+    const anchor = `<a class="fr-footer__bottom-link" href="${link.href}"${link.external ? ' target="_blank" rel="noopener external"' : ''}`
+    if (!footer.includes(anchor)) problems.push(`bottom link: ${link.label} (${link.href}) not found`)
+  }
+  if (problems.length) throw new Error(`footer differs from brand.json: ${problems.join('; ')}`)
+  return footer
+}
+
 export function readLayout(baseHref) {
   const layout = buildLayout(readFileSync(EDITO_DOC, 'utf8'), { baseHref })
-  checkHeaderAgainstBrand(layout.header, JSON.parse(readFileSync(join(BRAND_DIR, 'brand.json'), 'utf8')))
+  const brand = JSON.parse(readFileSync(join(BRAND_DIR, 'brand.json'), 'utf8'))
+  checkHeaderAgainstBrand(layout.header, brand)
+  checkFooterAgainstBrand(layout.footer, brand)
   return layout
 }
 

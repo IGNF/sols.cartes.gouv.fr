@@ -1,0 +1,28 @@
+---
+pagination:
+  data: site.movedPages
+  size: 1
+  alias: moved
+permalink: "{{ moved.path }}"
+eleventyExcludeFromCollections: true
+---
+{#- Former local pages now read on cartes.gouv.fr (site.movedPages): static redirect, no JS, not in the sitemap. -#}
+{%- set movedLocale = moved.path | localeOf -%}
+{%- set strings = i18n[movedLocale].moved -%}
+<!DOCTYPE html>
+<html lang="{{ movedLocale }}">
+  <head>
+{% include "partials/head-common.njk" %}
+    <meta http-equiv="refresh" content="0; url={{ moved.href }}">
+    <title>{{ strings.title }}</title>
+    <meta name="description" content="{{ strings.description }}">
+    <link rel="canonical" href="{{ moved.href }}">
+  </head>
+  <body>
+    <main id="contenu" class="fr-container fr-py-6w">
+      <h1>{{ strings.heading }}</h1>
+      <p>{{ strings.intro }}</p>
+      <p><a href="{{ moved.href }}"{% if movedLocale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ strings.link }}</a></p>
+    </main>
+  </body>
+</html>

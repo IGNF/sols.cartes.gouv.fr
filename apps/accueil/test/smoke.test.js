@@ -9,6 +9,7 @@ import site from '../src/_data/site.js';
 import {
   APP_DIR,
   DIST,
+  FOOTER_EXTERNAL,
   FOOTER_PATHS,
   LOCALES,
   SHARED_PAGE,
@@ -105,6 +106,20 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     expect(html).toContain('<dialog id="fr-theme-modal" class="fr-modal"');
     for (const theme of site.display.themes) {
       expect(html).toContain(`id="fr-radios-theme-${theme.value}" name="fr-radios-theme"`);
+    }
+  });
+
+  test('pied de page : CGU et données personnelles renvoient à cartes.gouv.fr, nouvelle fenêtre', () => {
+    expect(FOOTER_EXTERNAL.map((link) => link.href)).toEqual([
+      site.external.cgu,
+      site.external.donneesPersonnelles,
+    ]);
+    const hreflang = locale === site.defaultLanguage ? '' : ` hreflang="${site.defaultLanguage}"`;
+    for (const link of FOOTER_EXTERNAL) {
+      const label = html(t.footer.bottomLinks[link.key]);
+      expect(home()).toContain(
+        `<a class="fr-footer__bottom-link" href="${link.href}"${hreflang} target="_blank" rel="noopener external" title="${label} - ${t.newWindow}">${label}</a>`,
+      );
     }
   });
 
@@ -229,6 +244,7 @@ describe.each(LOCALES)('pages du pied de page /%s/', (locale) => {
       expect(html).toContain(`<li><a href="/${locale}${path}"`);
     }
     for (const path of site.crossBrick) expect(html).toContain(`<li><a href="${path}"`);
+    for (const link of FOOTER_EXTERNAL) expect(html).toContain(`<li><a href="${link.href}"`);
   });
 });
 
@@ -287,6 +303,24 @@ describe('pages de renvoi sans langue', () => {
       expect(html).toContain(
         `<a href="/${code}${path}" hreflang="${code}" lang="${code}">${i18n[code].reroute.link}</a>`,
       );
+    }
+  });
+});
+
+describe('pages déplacées vers cartes.gouv.fr (#89, #90)', () => {
+  test('les anciennes adresses des données personnelles renvoient à cartes.gouv.fr, sans JS', () => {
+    const paths = ['', ...LOCALES.map((code) => `/${code}`)].map(
+      (prefix) => `${prefix}/donnees-personnelles/`,
+    );
+    expect(site.movedPages.map((moved) => moved.path)).toEqual(paths);
+    for (const { path, href } of site.movedPages) {
+      const page = read(path);
+      expect(href).toBe(site.external.donneesPersonnelles);
+      expect(page).toContain(`<meta http-equiv="refresh" content="0; url=${href}">`);
+      expect(page).toContain(`<link rel="canonical" href="${href}">`);
+      expect(page).toContain(`<a href="${href}"`);
+      expect(page.match(/<h1[\s>]/g)).toHaveLength(1);
+      expect(page).not.toContain('<script');
     }
   });
 });
@@ -356,8 +390,8 @@ describe('page de référence partagée et doc/agents/edito.md', () => {
         `<p class="fr-header__service-title">${site.header.serviceTitle} <span class="fr-badge fr-badge--sm fr-badge--${badge.color} fr-badge--icon-left ${badge.icon}">${badge.label}</span></p>`,
       );
     }
-    for (const path of FOOTER_PATHS)
-      expect(html).toContain(`class="fr-footer__bottom-link" href="${path}"`);
+    for (const { href } of site.footer.bottomLinks)
+      expect(html).toContain(`class="fr-footer__bottom-link" href="${href}"`);
     expect(html).toContain('<dialog id="fr-theme-modal"');
   });
 

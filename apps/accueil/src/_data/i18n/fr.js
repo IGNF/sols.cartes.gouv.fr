@@ -85,6 +85,13 @@ export default {
     intro: 'Vous allez être redirigé vers la version française.',
     link: 'Version française',
   },
+  moved: {
+    title: 'sols.cartes.gouv.fr : page déplacée',
+    description: 'Cette page est désormais consultable sur cartes.gouv.fr.',
+    heading: 'Page déplacée',
+    intro: 'Cette page est commune à cartes.gouv.fr : vous allez y être redirigé.',
+    link: 'Consulter la page sur cartes.gouv.fr',
+  },
   partage: {
     title: 'En-tête et pied de page partagés',
     description:
@@ -129,12 +136,6 @@ export default {
       title: 'Mentions légales',
       description: 'Mentions légales de sols.cartes.gouv.fr (texte provisoire).',
       body: 'Les mentions légales du site (éditeur, directeur de la publication, hébergement) seront publiées ici (texte provisoire).',
-    },
-    donneesPersonnelles: {
-      title: 'Données personnelles',
-      description:
-        'Politique de gestion des données personnelles de sols.cartes.gouv.fr (texte provisoire).',
-      body: 'Les informations sur le traitement des données personnelles et les cookies seront publiées ici (texte provisoire).',
     },
     planDuSite: {
       title: 'Plan du site',

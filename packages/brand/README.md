@@ -23,7 +23,7 @@ Structure DSFR `fr-header` :
 
 ## Pied de page v1
 
-`fr-footer` complet (edito, catalogue) : marque + description (`footer.description`), bloc partenaires `fr-footer__partners` avec les trois logos (`footer.partners`, IGN et INRAE obligatoires, lien GIS Sol vers `external.gissol`, libellé inchangé), liens de contenu DSFR (`footer.contentLinks`), liens bas (`footer.bottomLinks`) suivis du composant « Paramètres d'affichage » (`fr-display`, modale DSFR : permet le mode clair/sombre), licence.
+`fr-footer` complet (edito, catalogue) : marque + description (`footer.description`), bloc partenaires `fr-footer__partners` avec les trois logos (`footer.partners`, IGN et INRAE obligatoires, lien GIS Sol vers `external.gissol`, libellé inchangé), liens de contenu DSFR (`footer.contentLinks`), liens bas (`footer.bottomLinks` ; « Conditions générales d'utilisation » et « Données personnelles » sont communes à cartes.gouv.fr : liens externes `external: true`, nouvelle fenêtre, URL répétées dans `external.cgu` et `external.donneesPersonnelles`, #89 et #90) suivis du composant « Paramètres d'affichage » (`fr-display`, modale DSFR : permet le mode clair/sombre), licence.
 
 Variante compacte (carto, `footer.compactOnCarto`) : uniquement `fr-footer__bottom` (liens bas + « Paramètres d'affichage »), comme sur la maquette `1:10562`.
 

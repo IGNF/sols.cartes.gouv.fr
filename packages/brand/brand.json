@@ -126,8 +126,14 @@
         "href": "/mentions-legales/"
       },
       {
+        "label": "Conditions générales d'utilisation",
+        "href": "https://cartes.gouv.fr/cgu/",
+        "external": true
+      },
+      {
         "label": "Données personnelles",
-        "href": "/donnees-personnelles/"
+        "href": "https://cartes.gouv.fr/donnees-personnelles/",
+        "external": true
       },
       {
         "label": "Plan du site",
@@ -148,6 +154,8 @@
     "gissol": "https://www.gissol.fr/observatoire-des-sols-de-france/",
     "gissolLabel": "Site du GIS Sol",
     "cartesGouv": "https://cartes.gouv.fr",
+    "cgu": "https://cartes.gouv.fr/cgu/",
+    "donneesPersonnelles": "https://cartes.gouv.fr/donnees-personnelles/",
     "geopf": "https://data.geopf.fr"
   }
 }
