@@ -253,6 +253,43 @@ describe.each(LOCALES)('pages du pied de page /%s/', (locale) => {
   });
 });
 
+describe.each(LOCALES)('mentions légales /%s/ (#88)', (locale) => {
+  const strings = i18n[locale].pages.mentionsLegales;
+  const page = () => read(`/${locale}${site.sections.mentionsLegales}`);
+  const main = () => page().slice(page().indexOf('<main'), page().indexOf('</main>'));
+
+  test('un h2 ancré par rubrique, dans l’ordre, sans saut de niveau', () => {
+    expectPageBasics(page(), locale);
+    expect(strings.sections.map((section) => section.id)).toEqual([
+      'editeur',
+      'traitement-des-donnees-a-caractere-personnel',
+      'droit-de-propriete-intellectuelle',
+      'liens-hypertextes',
+    ]);
+    const headings = [...main().matchAll(/<h([1-6])(?: id="([^"]+)")?>([^<]+)<\/h\1>/g)];
+    expect(headings.map(([, level]) => level)).toEqual(['1', ...strings.sections.map(() => '2')]);
+    expect(headings.slice(1).map(([, , id, title]) => [id, title])).toEqual(
+      strings.sections.map((section) => [section.id, html(section.title)]),
+    );
+    for (const section of strings.sections) {
+      expect(main()).toContain(`<section aria-labelledby="${section.id}">`);
+      for (const paragraph of section.paragraphs)
+        expect(main()).toContain(`<p>${html(paragraph)}</p>`);
+    }
+  });
+
+  test('nomme le site, renvoie aux données personnelles de cartes.gouv.fr, sans texte provisoire ni script propre', () => {
+    expect(main()).toContain(site.header.serviceTitle);
+    expect(page()).toContain(`<meta name="description" content="${html(strings.description)}">`);
+    const hreflang = locale === site.defaultLanguage ? '' : ` hreflang="${site.defaultLanguage}"`;
+    expect(main()).toContain(
+      `<a class="fr-link" href="${site.external.donneesPersonnelles}"${hreflang} target="_blank" rel="noopener external"`,
+    );
+    expect(main()).not.toMatch(/provisoire|placeholder/i);
+    expect(main()).not.toContain('<script');
+  });
+});
+
 describe.each(LOCALES)('aide /%s/', (locale) => {
   test('centre d’aide : trois accordéons et section #contact avec mailto', () => {
     const html = read(`/${locale}${site.sections.aide}`);

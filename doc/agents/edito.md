@@ -125,7 +125,9 @@ provisoire dans `en.js` ; structure (clés, liens, icônes, pictogrammes, illust
 Bandes de couleur : jetons DSFR `--background-alt-blue-france` (héros), `--background-alt-beige-gris-galet` (cas
 d'usage, partenaires), `--background-alt-green-emeraude` (agenda). Non repris : CTA de lancement (G-3), vidéo.
 
-Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Centre d'aide `/<langue>/aide/`
+Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Mentions légales (#88) :
+`layouts/mentions-legales.njk`, une `section` et un `h2` ancré par rubrique de `i18n.pages.mentionsLegales.sections`
+(rédaction reprise de cartes.gouv.fr, points ouverts dans `QUESTIONS.md` E-6), sans JS propre. Centre d'aide `/<langue>/aide/`
 (`layouts/aide.njk`, `i18n.pages.aide`) : introduction, trois accordéons DSFR (FAQ provisoire), section « Nous
 contacter » `#contact` qui renvoie au formulaire « Nous écrire » et au centre d'aide de cartes.gouv.fr (v1.1, E10 ; plus
 d'adresse provisoire). Le menu « Aide » de l'en-tête ne pointe plus vers cette page mais vers cartes.gouv.fr ; elle reste
