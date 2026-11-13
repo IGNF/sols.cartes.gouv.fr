@@ -33,6 +33,8 @@
  * M19: search engine of cartes.gouv.fr (SearchEngineAdvanced): « Me géolocaliser » first in the « Avancée » panel,
  * right under the bar, reached with the keyboard, on top and covering no map button, geolocation marker
  * (320 to 1280 px, axe with the panel open); scale line with the opaque background and colours of cartes.gouv.fr.
+ * M22: below 36em the search bar takes the map width with « Avancée » labelled, the top button columns start
+ * under it (as guichet-collaboratif and cartes.gouv.fr); suggestions, catalogue, full-screen tool panels, axe.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -2063,7 +2065,9 @@ for (const [width, scheme] of [
 // no longer beside the bar: « Me géolocaliser » is the first entry of the « Avancée » panel, right under the bar,
 // and the suggestions header when the input has the focus. Keyboard: input, « Me géolocaliser » (suggestions),
 // « Avancée », Enter focuses « Me géolocaliser » in the panel, Enter shows the « Ma localisation » marker (position
-// granted and mocked). The bar and its open panel cover no map button, at 320 to 1280 px; console clean.
+// granted and mocked). The bar covers no map button, at 320 to 1280 px; console clean. M22: « Avancée » shows its
+// label at every width (it was a chevron only below 36em); the open panel covers no map button from 36em, and below
+// it may cover the top of the columns (full-width bar, as on cartes.gouv.fr) but stays on top of them (dropdown).
 const GEOLOCATE = 'Me géolocaliser';
 const ADVANCED = CONTROL_LABELS.advancedSearch;
 for (const width of [320, 375, 768, 1280]) {
@@ -2116,12 +2120,14 @@ for (const width of [320, 375, 768, 1280]) {
     const overlaps = (a: DOMRect, b: DOMRect) =>
       a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     // Visible buttons only: closed geopf panels keep their « Fermer » button laid out, `visibility: hidden`.
-    const covered = Array.from(
+    const columnButtons = Array.from(
       document.querySelectorAll('.map-view [id^="position-container-"] button'),
     )
       .filter((b) => b.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
       .map((b) => b.getBoundingClientRect())
-      .filter((b) => b.width > 0 && (overlaps(b, bar) || overlaps(b, panelBox))).length;
+      .filter((b) => b.width > 0);
+    const underPanel = columnButtons.filter((b) => overlaps(b, panelBox));
+    const advanced = document.querySelector('.GPSearchEngine-advanced-btn');
     return {
       first: button.classList.contains('GPSearchEngine-locate'),
       gapUnderBar: Math.round(box.top - bar.bottom),
@@ -2129,7 +2135,16 @@ for (const width of [320, 375, 768, 1280]) {
       panelUnderBar: Math.round(panelBox.top - bar.bottom),
       onTop: hit === button,
       inMap: panelBox.left >= map.left && panelBox.right <= map.right && bar.top >= map.top,
-      covered,
+      barCovers: columnButtons.filter((b) => overlaps(b, bar)).length,
+      panelCovers: underPanel.length,
+      // A covered button must lie under the panel (the panel is hit at its centre), never over it.
+      panelOnTop: underPanel.every((b) =>
+        panel.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)),
+      ),
+      advancedLabel:
+        advanced?.textContent?.trim() === 'Avancée' &&
+        parseFloat(getComputedStyle(advanced).fontSize) > 0 &&
+        advanced.getBoundingClientRect().width >= 80,
       input: Math.round(
         document.querySelector('form.GPSearchBar input')?.getBoundingClientRect().width ?? 0,
       ),
@@ -2158,9 +2173,11 @@ for (const width of [320, 375, 768, 1280]) {
       layout.leftInPanel <= 16 &&
       layout.onTop &&
       layout.inMap &&
-      layout.covered === 0 &&
+      layout.barCovers === 0 &&
+      (width < 576 ? layout.panelOnTop : layout.panelCovers === 0) &&
+      layout.advancedLabel &&
       layout.input >= 96,
-    `M19 ${width}px : « ${GEOLOCATE} » en tête du panneau, juste sous la barre, au premier plan, aucun bouton de la carte recouvert, champ utilisable (${JSON.stringify(layout)})`,
+    `M19 ${width}px : « ${GEOLOCATE} » en tête du panneau, juste sous la barre, au premier plan, la barre ne recouvre aucun bouton de la carte, ${width < 576 ? 'le panneau ouvert passe au-dessus des colonnes' : 'ni le panneau ouvert'}, libellé « Avancée » visible, champ utilisable (${JSON.stringify(layout)})`,
   );
   await page.keyboard.press('Enter');
   const popup = page.locator('.GPSearchPopup .GPPopupContent');
@@ -2191,6 +2208,163 @@ for (const width of [320, 375, 768, 1280]) {
   check(
     report.messages.length === 0,
     `M19 ${width}px : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
+  );
+  await context.close();
+}
+
+// M22 (owner's answer to QUESTIONS M-7): below 36em the search bar spans the map (1w margins) with its « Avancée »
+// label, and the top-left and top-right button columns start under it (guichet-collaboratif, cartes.gouv.fr). Checks,
+// light and dark, at 320 and 375 px, plus 576 and 768 px (layout from 36em unchanged): bar geometry, columns under
+// the bar without colliding with the bottom columns, suggestions on top, catalogue and full-screen tool panels at
+// the top of the map above the bar, axe with the « Avancée » panel open, console clean.
+for (const [width, scheme] of [
+  [320, 'light'],
+  [320, 'dark'],
+  [375, 'light'],
+  [375, 'dark'],
+  [576, 'light'],
+  [768, 'light'],
+] as const) {
+  const context = await browser.newContext({
+    viewport: { width, height: 800 },
+    colorScheme: scheme,
+  });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  const input = page.getByRole('combobox', { name: CONTROL_LABELS.searchInput });
+  await input.waitFor({ timeout: 20_000 });
+  await page.locator('[id^="GPcontrolList-"]').waitFor({ timeout: 30_000 });
+  await page.waitForTimeout(800);
+  const mobile = width < 576;
+  const layout = await page.evaluate(() => {
+    const map = document.querySelector('.map-view')?.getBoundingClientRect();
+    const bar = document.querySelector('form.GPSearchBar')?.getBoundingClientRect();
+    if (!map || !bar) return null;
+    const buttons = (id: string) =>
+      Array.from(document.querySelectorAll(`#position-container-${id} button`))
+        .filter((b) => b.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
+        .map((b) => b.getBoundingClientRect())
+        .filter((b) => b.width > 0);
+    const [topLeft, topRight, bottomLeft, bottomRight] = [
+      'top-left',
+      'top-right',
+      'bottom-left',
+      'bottom-right',
+    ].map(buttons);
+    const top = (list: DOMRect[] = []) => Math.min(...list.map((b) => b.top));
+    const bottom = (list: DOMRect[] = []) => Math.max(...list.map((b) => b.bottom));
+    return {
+      barLeft: Math.round(bar.left - map.left),
+      barRight: Math.round(map.right - bar.right),
+      barTop: Math.round(bar.top - map.top),
+      barBottom: Math.round(bar.bottom - map.top),
+      columnsTop: Math.round(Math.min(top(topLeft), top(topRight)) - map.top),
+      // Room left between the top and the bottom column on each side (negative: collision).
+      roomLeft: Math.round(top(bottomLeft) - bottom(topLeft)),
+      roomRight: Math.round(top(bottomRight) - bottom(topRight)),
+      advancedText: document.querySelector('.GPSearchEngine-advanced-btn')?.textContent?.trim(),
+      advancedWidth: Math.round(
+        document.querySelector('.GPSearchEngine-advanced-btn')?.getBoundingClientRect().width ?? 0,
+      ),
+    };
+  });
+  check(
+    layout !== null &&
+      layout.advancedText === 'Avancée' &&
+      layout.advancedWidth >= 80 &&
+      layout.roomLeft >= 0 &&
+      layout.roomRight >= 0 &&
+      (mobile
+        ? Math.abs(layout.barLeft - 8) <= 1 &&
+          Math.abs(layout.barRight - 8) <= 1 &&
+          Math.abs(layout.barTop - 8) <= 1 &&
+          layout.columnsTop >= layout.barBottom + 4
+        : layout.columnsTop <= 8 && layout.barLeft >= 48 && layout.barRight >= 48),
+    `M22 ${width}px ${scheme} : ${mobile ? 'barre sur toute la largeur (1w), colonnes sous la barre' : 'barre entre les colonnes (inchangé)'}, libellé « Avancée » visible, colonnes du haut et du bas sans chevauchement (${JSON.stringify(layout)})`,
+  );
+  if (mobile) {
+    // Suggestions: three letters, the list opens under the bar, on top of the columns.
+    await input.click();
+    await page.keyboard.type('Orl', { delay: 60 });
+    const first = page.locator('.GPautoCompleteList li').first();
+    const suggested = await first
+      .waitFor({ timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    const suggestions = suggested
+      ? await first.evaluate((item) => {
+          const b = item.getBoundingClientRect();
+          return {
+            onTop: item.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)),
+            inside: b.left >= 0 && b.right <= window.innerWidth,
+          };
+        })
+      : null;
+    check(
+      suggestions !== null && suggestions.onTop && suggestions.inside,
+      `M22 ${width}px ${scheme} : les suggestions s’ouvrent sous la barre, au-dessus des colonnes (${JSON.stringify(suggestions)})`,
+    );
+    await input.fill('');
+    await page.mouse.click(width / 2, 600);
+    // Catalogue and a full-screen tool panel (Itinéraire): at the top of the map, above the bar, closable.
+    for (const name of [CONTROL_LABELS.catalog, 'Itinéraire']) {
+      await page.getByRole('button', { name, exact: true }).click();
+      await page.waitForTimeout(700);
+      const panel = await page.evaluate((label) => {
+        const button = Array.from(document.querySelectorAll('button')).find(
+          (b) => b.getAttribute('aria-label') === label,
+        );
+        const dialog = button?.parentElement?.querySelector('dialog');
+        const map = document.querySelector('.map-view')?.getBoundingClientRect();
+        if (!dialog || !map) return null;
+        const d = dialog.getBoundingClientRect();
+        const close = Array.from(dialog.querySelectorAll('button')).find((b) =>
+          /Fermer|Masquer/.test(b.getAttribute('aria-label') ?? b.title ?? ''),
+        );
+        const c = close?.getBoundingClientRect();
+        return {
+          top: Math.round(d.top - map.top),
+          inMap: d.bottom <= map.bottom + 1 && d.left >= -1 && d.right <= window.innerWidth + 1,
+          closeOnTop: Boolean(
+            c && close?.contains(document.elementFromPoint(c.x + c.width / 2, c.y + c.height / 2)),
+          ),
+        };
+      }, name);
+      await page.evaluate((label) => {
+        const button = Array.from(document.querySelectorAll('button')).find(
+          (b) => b.getAttribute('aria-label') === label,
+        );
+        const close = Array.from(
+          button?.parentElement?.querySelector('dialog')?.querySelectorAll('button') ?? [],
+        ).find((b) => /Fermer|Masquer/.test(b.getAttribute('aria-label') ?? b.title ?? ''));
+        (close as HTMLElement | undefined)?.click();
+      }, name);
+      await page.waitForTimeout(300);
+      check(
+        panel !== null && Math.abs(panel.top) <= 2 && panel.inMap && panel.closeOnTop,
+        `M22 ${width}px ${scheme} : panneau « ${name} » en haut de la carte, dans la carte, bouton de fermeture accessible (${JSON.stringify(panel)})`,
+      );
+    }
+    await page.getByRole('button', { name: CONTROL_LABELS.advancedSearch }).click();
+    await page.mouse.move(width / 2, 700);
+    await page.waitForTimeout(300);
+    const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    );
+    check(
+      violations.length === 0,
+      `M22 a11y ${width}px ${scheme}, panneau « Avancée » ouvert : axe sans violation grave${
+        violations.length
+          ? ` : ${violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`).join(' | ')}`
+          : ''
+      }`,
+    );
+  }
+  const report = consoleReport();
+  check(
+    report.messages.length === 0,
+    `M22 ${width}px ${scheme} : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
   );
   await context.close();
 }
