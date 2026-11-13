@@ -39,7 +39,7 @@
                     {%- set item = strings.items[entry.key] %}
                     <li>
                       {%- if entry.external %}
-                      <a class="fr-nav__link fr-link--icon-left {{ entry.icon }} sols-tool-menu__external" href="{{ entry.href | localize(linkLocale) }}"{% if entry.frenchOnly and not shared and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ item.label }} - {{ t.newWindow }}">{{ item.label }}</a>
+                      <a class="fr-nav__link{% if entry.icon %} fr-link--icon-left {{ entry.icon }}{% endif %} sols-tool-menu__external" href="{{ entry.href | localize(linkLocale) }}"{% if entry.frenchOnly and not shared and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ item.label }} - {{ t.newWindow }}">{{ item.label }}</a>
                       {%- else %}
                       <a class="fr-nav__link sols-tool-menu__described" href="{{ entry.href | localize(linkLocale) }}"{% if not shared and locale != site.defaultLanguage and entry.href in site.crossBrick %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ item.label }}{% if item.desc %}<span class="fr-hint-text">{{ item.desc }}</span>{% endif %}</a>
                       {%- endif %}
