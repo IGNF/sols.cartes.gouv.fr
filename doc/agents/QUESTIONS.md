@@ -225,9 +225,13 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Options : (a) « Coordonnées » seul (comme guichet-collaboratif, services GPF uniquement) ; (b) les quatre formulaires
   de cartes.gouv.fr, en acceptant ces deux API de l'État hors GPF ; (c) « Coordonnées » et « Code INSEE ».
 - Défaut appliqué : (a). Passer à (b) ou (c) = ajouter les classes dans `loadSearchEngine()` et `createSearchEngine()`.
+-> Ajouter Coordonnées
 - Sous 36em (mobile), la barre reste entre les deux colonnes de boutons et « Avancée » n'affiche que son chevron (nom
   accessible « Recherche avancée ») ; cartes.gouv.fr y donne toute la largeur à la barre, par-dessus
   les colonnes. À trancher si le libellé « Avancée » doit rester visible sur mobile (il faudrait alors déplacer les
-  colonnes sous la barre, comme guichet-collaboratif).
+  colonnes sous la barre, comme guichet-collaboratif). -> oui
 - Échelle : sur cartes.gouv.fr le fond est opaque (`--background-default-grey`), le texte et le trait gris en thème clair
-  et bleu France en sombre ; elle était bleue dans les deux thèmes depuis M13 (brief v1.1). Alignée sur cartes.gouv.fr.
+  et bleu France en sombre ; elle était bleue dans les deux thèmes depuis M13 (brief v1.1). Alignée sur cartes.gouv.fr. -> ok
+- Suite (orchestrateur) : « Coordonnées » seul conservé (option a, déjà en place) ; sur mobile, le libellé « Avancée »
+  reste visible et les colonnes de boutons passent sous la barre, comme guichet-collaboratif (tâche carto M22) ;
+  échelle validée.
