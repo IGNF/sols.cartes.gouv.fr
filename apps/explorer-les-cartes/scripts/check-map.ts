@@ -2137,10 +2137,12 @@ for (const width of [320, 375, 768, 1280]) {
       inMap: panelBox.left >= map.left && panelBox.right <= map.right && bar.top >= map.top,
       barCovers: columnButtons.filter((b) => overlaps(b, bar)).length,
       panelCovers: underPanel.length,
-      // A covered button must lie under the panel (the panel is hit at its centre), never over it.
-      panelOnTop: underPanel.every((b) =>
-        panel.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)),
-      ),
+      // A covered button must lie under the panel: the panel is hit at the centre of their overlap.
+      panelOnTop: underPanel.every((b) => {
+        const x = (Math.max(b.left, panelBox.left) + Math.min(b.right, panelBox.right)) / 2;
+        const y = (Math.max(b.top, panelBox.top) + Math.min(b.bottom, panelBox.bottom)) / 2;
+        return panel.contains(document.elementFromPoint(x, y));
+      }),
       advancedLabel:
         advanced?.textContent?.trim() === 'Avancée' &&
         parseFloat(getComputedStyle(advanced).fontSize) > 0 &&
