@@ -55,6 +55,8 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
     for (const selector of ['.fr-footer__body', '.fr-footer__partners', '.fr-footer__bottom-copy'])
       expect(block(selector)).not.toBeVisible();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    // Icon only between 62em and 75em (M21): its label as a tooltip too, same text as its name.
+    expect(toggle).toHaveAttribute('title', FOOTER_LABELS.expand);
     expect(toggle).toHaveAttribute('aria-controls', FOOTER_ID);
     expect(toggle).toHaveClass('fr-btn--tertiary', 'fr-btn--sm', 'fr-icon-arrow-up-line');
   });
@@ -64,6 +66,7 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
     await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(toggle).toHaveAccessibleName(FOOTER_LABELS.collapse);
+    expect(toggle).toHaveAttribute('title', FOOTER_LABELS.collapse);
     expect(toggle).toHaveClass('fr-icon-close-line');
     expect(toggle).toHaveFocus();
     expect(root).not.toHaveClass('compact-footer--collapsed');

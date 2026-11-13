@@ -31,6 +31,33 @@
   padding: 0.25rem 0.75rem;
 }
 
+/*
+ * M21: from the DSFR lg breakpoint up to 75em the six bottom links (« Conditions générales d'utilisation » and the
+ * external-link icons since #94) and the « Haut de page » label do not fit on one line: « Paramètres d'affichage »
+ * wrapped (bar 85 px instead of 60 between 1024 and 1199 px). As on cartes.gouv.fr (CgfrFooter: icon-only toggle
+ * while collapsed, with a title), the collapsed toggle shows its icon only (its text stays its accessible name,
+ * `title` repeats it), and the links take the DSFR spacing of small screens (0.25rem instead of 0.75rem around
+ * the separators). Expanded footer, other widths: unchanged.
+ */
+@media (min-width: 62em) and (max-width: 74.99em) {
+  .compact-footer--collapsed .fr-footer__bottom-item:not(:first-child) {
+    margin-left: 0.25rem;
+  }
+
+  .compact-footer--collapsed .fr-footer__bottom-item::before {
+    margin-right: 0.25rem;
+  }
+
+  .compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle {
+    margin-left: 0.5rem;
+    font-size: 0;
+  }
+
+  .compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle::before {
+    margin: 0;
+  }
+}
+
 /* Partner logos: same height, as on the edito footer (DSFR sets height: auto on .fr-footer__logo). */
 .compact-footer .fr-footer__partners .compact-footer__partner-logo {
   height: 4.5rem;
