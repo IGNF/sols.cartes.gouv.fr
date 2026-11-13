@@ -53,7 +53,7 @@ export default function useOverlays(map: OlMap | null): void {
           const source = layer.getSource() as TileSource | null;
           const detachers = source
             ? [
-                attachTileRetry(source, TILE_RETRY_DELAY_MS),
+                attachTileRetry(source, TILE_RETRY_DELAY_MS, () => map.render()),
                 watchTileHealth(source, OVERLAY_UNAVAILABLE_AFTER_ERRORS, () =>
                   useMapStore.getState().markOverlayUnavailable(overlay.key),
                 ),

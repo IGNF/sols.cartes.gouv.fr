@@ -23,7 +23,9 @@ export default function useBaseLayer(
   useEffect(() => {
     if (!map || !layer) return undefined;
     const source = layer.getSource();
-    const detachRetry = source ? attachTileRetry(source, TILE_RETRY_DELAY_MS) : undefined;
+    const detachRetry = source
+      ? attachTileRetry(source, TILE_RETRY_DELAY_MS, () => map.render())
+      : undefined;
     // An explicit zIndex makes the LayerSwitcher sort its list by zIndex instead of putting the
     // new layer on top (and drawing it over the overlays).
     layer.setZIndex(BASE_LAYER_Z_INDEX);
