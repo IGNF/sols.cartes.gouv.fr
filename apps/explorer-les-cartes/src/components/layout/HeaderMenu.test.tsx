@@ -77,6 +77,13 @@ describe('HeaderMenu', () => {
     expect(button.querySelector('.header-menu__chevron')).toBe(chevron);
   });
 
+  it('a un petit bouton DSFR dont le libellé reste le nom accessible (masqué visuellement en mobile)', () => {
+    const { button } = setup();
+    expect(button).toHaveClass('fr-btn', 'fr-btn--sm', 'fr-btn--icon-left', menu.icon);
+    expect(button).toHaveAttribute('title', menu.label);
+    expect(button.querySelector('.header-menu__btn-label')).toHaveTextContent(menu.label);
+  });
+
   it('connaît les icônes des menus de la marque', () => {
     for (const tool of [BRAND.header.tools.help, BRAND.header.tools.services]) {
       expect(HEADER_MENU_ICONS).toContain(tool.icon);

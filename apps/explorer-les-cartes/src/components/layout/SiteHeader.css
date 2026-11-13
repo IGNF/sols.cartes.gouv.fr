@@ -1,21 +1,215 @@
 /*
- * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn as a
- * background of `.fr-header__service` (DSFR uses its `::before` for the separator). No positioning on
- * purpose: `position: relative` here would confine the DSFR `fr-enlarge-link` overlay (`a::before`,
- * absolute, inset 0) to the service block, and the logo and operator would no longer link to « / »
- * (doc/agents/geopf-ext.md §12.1). The PNG is transparent: no tile. Hidden below 62em, where the DSFR header
- * stacks the service title under the brand.
+ * Compact header (issue #5), after the compact header of cartes.gouv.fr map bricks:
+ * IGNF/cartes.gouv.fr-guichet-collaboratif, `src/css/app-header.css` (commit f3427f82). Same dimensions: a
+ * single 3.5rem row (0.5rem 1rem padding, bottom border), a 2.5rem brand block, the Marianne reduced to its
+ * flag (2.0625rem × 0.75rem, text and motto hidden), a 1.875rem high operator logo, no tagline, the badge from
+ * the DSFR md breakpoint, small tool buttons whose open state takes `--background-open-blue-france`.
+ * Scoped to `.fr-header--compact` (a guichet class, not a DSFR modifier). The DSFR lg layout of the brand
+ * block and of the header (raised background and shadow) applies at every width: there is no mobile menu.
  */
-@media (min-width: 62em) {
-  .site-header .fr-header__service {
-    padding-left: 5rem;
-    background: var(--osf-mark) 1.25rem center / 3rem 3rem no-repeat;
+.fr-header--compact {
+  z-index: calc(var(--ground) + 750);
+  background-color: var(--background-raised-grey);
+  filter: drop-shadow(var(--raised-shadow));
+}
+
+.fr-header--compact .fr-container--fluid {
+  overflow: visible;
+}
+
+.fr-header--compact .fr-header__body-row {
+  box-sizing: border-box;
+  height: 3.5rem;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-default-grey);
+}
+
+.fr-header--compact .fr-header__brand {
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  filter: none;
+}
+
+.fr-header--compact .fr-header__brand-top {
+  width: auto;
+  height: 2.5rem;
+  gap: 0.25rem;
+}
+
+/* Marianne: the flag only. */
+.fr-header--compact .fr-header__logo {
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.fr-header--compact .fr-header__logo .fr-logo {
+  margin: 0;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.fr-header--compact .fr-header__logo .fr-logo::before {
+  width: 2.0625rem;
+  height: 0.75rem;
+  margin: 0;
+  padding: 0;
+  background-position:
+    0 -0.048rem,
+    0 0,
+    0 0;
+  background-size:
+    2.0625rem 0.84rem,
+    2rem 0.75rem,
+    0;
+}
+
+.fr-header--compact .fr-header__logo .fr-logo::after {
+  display: none;
+}
+
+/* Operator (GIS Sol): guichet height, width from the logo ratio. */
+.fr-header--compact .fr-header__operator {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0 0.25rem;
+}
+
+.fr-header--compact .fr-header__operator img {
+  width: auto;
+  height: 1.875rem;
+  min-width: unset;
+}
+
+.fr-header--compact .fr-header__service {
+  min-width: 0;
+  margin: 0;
+  padding: 0 0.5rem;
+  white-space: nowrap;
+}
+
+/* One row: no separator between brand and service (DSFR draws it under 62em). */
+.fr-header--compact .fr-header__service::before {
+  content: none;
+}
+
+.fr-header--compact .fr-header__service-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fr-header--compact .fr-header__service-title > .fr-badge {
+  display: none;
+  margin: -0.25rem 0 0 0.625rem;
+}
+
+@media (min-width: 48em) {
+  .fr-header--compact .fr-header__service-title > .fr-badge {
+    display: inline-flex;
   }
+}
+
+/*
+ * Decorative Observatoire mark (brand `header.operator.mark`, alt="") before the service title, drawn as a
+ * background of `.fr-header__service` at the operator logo height. No positioning on purpose: `position:
+ * relative` here would confine the DSFR `fr-enlarge-link` overlay (`a::before`, absolute, inset 0) to the
+ * service block, and the logo and operator would no longer link to « / » (doc/agents/geopf-ext.md §12.1). The
+ * PNG is transparent: no tile. From 48em, where the row has room for it.
+ */
+@media (min-width: 48em) {
+  .site-header .fr-header__service {
+    padding-left: 2.75rem;
+    background: var(--osf-mark) 0.5rem center / 1.875rem 1.875rem no-repeat;
+  }
+}
+
+/* Tools: always in the row (DSFR hides them under 62em, for its mobile menu). */
+.fr-header--compact .fr-header__tools {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 0;
+}
+
+.fr-header--compact .fr-header__tools-links {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Empty copy target of the DSFR header script (SiteHeader.tsx): `hidden` alone loses to DSFR display rules. */
+.fr-header--compact .fr-header__menu-links {
+  display: none;
 }
 
 /* Header tool menus (Aide, Services): cartes.gouv.fr pattern, DSFR tokens only. */
 .header-menu {
   position: relative;
+}
+
+.header-menu__btn[aria-expanded='true'] {
+  background-color: var(--background-open-blue-france);
+}
+
+/*
+ * Narrow screens: the row keeps its 3.5rem. Under the DSFR md breakpoint the tool buttons show their icon and
+ * chevron only (the label stays the accessible name, fr-sr-only rules, and the `title`). Under sm, the GIS Sol
+ * logo is hidden too: the DSFR makes the service name mandatory and the operator logo optional
+ * (doc/agents/QUESTIONS.md M-6).
+ */
+@media (max-width: 35.99em) {
+  .fr-header--compact .fr-header__logo {
+    padding: 0 0.25rem 0 0;
+  }
+
+  .fr-header--compact .fr-header__operator {
+    display: none;
+  }
+
+  .fr-header--compact .fr-header__service {
+    padding-right: 0;
+  }
+
+  .fr-header--compact .fr-header__service-title {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+}
+
+@media (max-width: 47.99em) {
+  .header-menu__btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .fr-header--compact .header-menu__btn.fr-btn--icon-left[class*=' fr-icon-']::before {
+    margin-right: 0;
+  }
+
+  /* Panels aligned on the right of the tools block (positioned), not of their button: « Aide » stays on screen. */
+  .fr-header--compact .header-menu {
+    position: static;
+  }
 }
 
 /* Dropdown chevron (core DSFR icon), turned up while the menu is open, as on the edito header. */
@@ -39,7 +233,8 @@
   z-index: 1000;
   top: 100%;
   right: 0;
-  min-width: 16rem;
+  width: 18rem;
+  max-width: calc(100vw - 2rem);
   background-color: var(--background-overlap-grey);
   filter: drop-shadow(var(--overlap-shadow));
 }
@@ -62,10 +257,4 @@
 
 .header-menu__label {
   flex: 1 1 auto;
-}
-
-/* In the DSFR mobile menu modal, the list is part of the flow. */
-.fr-header__menu .header-menu__panel {
-  position: static;
-  filter: none;
 }
