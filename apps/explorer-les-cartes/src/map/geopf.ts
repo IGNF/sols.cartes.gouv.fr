@@ -8,7 +8,10 @@ import 'geopf-extensions-openlayers/src/packages/CSS/Controls/Zoom/DSFRzoomStyle
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/FullScreen/DSFRfullScreenStyle.css';
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/LayerSwitcher/DSFRlayerSwitcherStyle.css';
 import 'geopf-extensions-openlayers/src/packages/CSS/Controls/SearchEngine/DSFRsearchEngineStyle.css';
+import 'geopf-extensions-openlayers/src/packages/CSS/Controls/SearchEngine/DSFRadvancedSearchEngineStyle.css';
 import type Catalog from 'geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog';
+import type CoordinateAdvancedSearch from 'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/CoordinateAdvancedSearch';
+import type SearchEngineAdvanced from 'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngineAdvanced';
 import type Drawing from 'geopf-extensions-openlayers/src/packages/Controls/Drawing/Drawing';
 import type ElevationPath from 'geopf-extensions-openlayers/src/packages/Controls/ElevationPath/ElevationPath';
 import type GetFeatureInfo from 'geopf-extensions-openlayers/src/packages/Controls/GetFeatureInfo/GetFeatureInfo';
@@ -26,7 +29,6 @@ export { default as GeoportalFullScreen } from 'geopf-extensions-openlayers/src/
 export { default as GeoportalZoom } from 'geopf-extensions-openlayers/src/packages/Controls/Zoom/GeoportalZoom';
 export { default as LayerSwitcher } from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';
 export type { LayerSwitcherOptions } from 'geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher';
-export type { SearchEngineOptions } from 'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngine';
 export type { CatalogOptions } from 'geopf-extensions-openlayers/src/packages/Controls/Catalog/Catalog';
 export type { ControlListOptions } from 'geopf-extensions-openlayers/src/packages/Controls/ControlList/ControlList';
 export type { DrawingOptions } from 'geopf-extensions-openlayers/src/packages/Controls/Drawing/Drawing';
@@ -47,6 +49,10 @@ export type RouteOptions = ConstructorParameters<typeof Route>[0];
 export type ReverseGeocodeOptions = ConstructorParameters<typeof ReverseGeocode>[0];
 export type LayerImportOptions = ConstructorParameters<typeof LayerImport>[0];
 export type GetFeatureInfoOptions = ConstructorParameters<typeof GetFeatureInfo>[0];
+export type SearchEngineAdvancedOptions = ConstructorParameters<typeof SearchEngineAdvanced>[0];
+export type CoordinateAdvancedSearchOptions = NonNullable<
+  ConstructorParameters<typeof CoordinateAdvancedSearch>[0]
+>;
 export type DrawingControl = Drawing;
 export type CatalogControl = Catalog;
 
@@ -63,14 +69,23 @@ export async function loadCatalog() {
 }
 
 /**
- * SearchEngine pulls geoportal-access-lib, proj4 and the geopf layer classes (~0.7 MB minified):
- * it is loaded in its own chunk, after the map is displayed.
+ * Search engine of cartes.gouv.fr and guichet-collaboratif (M19): `SearchEngineAdvanced`, whose « Avancée »
+ * button opens a panel starting with « Me géolocaliser », then one accordion per advanced form. It pulls
+ * geoportal-access-lib, proj4 and the geopf layer classes (~0.7 MB minified): loaded in its own chunk, after
+ * the map is displayed, with the coordinate form (the only advanced form calling no service).
  */
 export async function loadSearchEngine() {
-  const module =
-    await import('geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngine');
-  return module.default;
+  const [advanced, coordinate] = await Promise.all([
+    import('geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngineAdvanced'),
+    import('geopf-extensions-openlayers/src/packages/Controls/SearchEngine/CoordinateAdvancedSearch'),
+  ]);
+  return {
+    SearchEngineAdvanced: advanced.default,
+    CoordinateAdvancedSearch: coordinate.default,
+  };
 }
+
+export type SearchEngineModule = Awaited<ReturnType<typeof loadSearchEngine>>;
 
 /**
  * The tool set of the cartes.gouv.fr map viewer (M8), loaded on demand after the map is displayed:
