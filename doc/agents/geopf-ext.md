@@ -953,6 +953,8 @@ caché (« Required by DSFR JS »). cartes.gouv.fr/creer-une-carte (cité dans l
 - **Modale « Paramètres d'affichage »** : le `Header` react-dsfr la montait. `Display` de `@codegouvfr/react-dsfr/Display`
   est un composant **vide** (déprécié, `return null`) : il faut `@codegouvfr/react-dsfr/Display/Display` (le module que
   le `Header` importe ; même `fr-theme-modal` que `headerFooterDisplayItem` du pied de page). Un test le vérifie.
+  **Chemin interne (pas d'API publique)** : à revérifier à chaque montée de version de react-dsfr (le module existe, exporte
+  toujours `Display` et monte bien la modale).
 - **Script DSFR `HeaderLinks`** (enregistré sur `.fr-header__tools-links`) lit `.fr-header__menu-links` sans vérifier sa
   présence : un `div.fr-header__menu-links` vide est gardé, caché (`hidden` ne suffit pas, règle CSS). Sans la classe
   `fr-header__menu fr-modal` de guichet : sous 62em le script DSFR active cette modale et écrit quatre avertissements
