@@ -27,8 +27,9 @@
  * working « Recharger la page » button when they fail.
  * M16: base-layer entries of the catalogue show their GPF thumbnail (and the sols entries theirs), never a
  * placeholder nor a broken image; the zoom sits bottom right below the full screen (keyboard order kept).
- * M17 (#5): compact header (one 3.5rem row at 320 to 1280 px, « Aide » and « Services » always visible and working,
+ * M17 (#5): compact header (one 3.5rem row at 320 to 1920 px, « Aide » and « Services » always visible and working,
  * Marianne back to « / », map right under the header, display settings modal, axe with « Services » open).
+ * M18: with each menu open, its links stay inside the panel and the viewport, no horizontal page scroll.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -1838,7 +1839,7 @@ for (const [name, context] of [
 // visible and working (panel inside the viewport and above the map, Escape closes it), the brand block leads to
 // « / », the map starts right under the header, the display settings modal (mounted by the header) opens from the
 // footer and switches the theme; axe with a menu open in both themes; console clean.
-for (const width of [320, 375, 768, 1280]) {
+for (const width of [320, 375, 768, 1280, 1920]) {
   const context = await browser.newContext({ viewport: { width, height: 800 } });
   const page = await context.newPage();
   const consoleReport = watchConsole(page);
@@ -1894,6 +1895,21 @@ for (const width of [320, 375, 768, 1280]) {
         onTop: Boolean(hit && element.contains(hit)),
       };
     });
+    // M18: the links (not only the panel) stay inside the panel and the viewport, and the page gets no
+    // horizontal scroll (the DSFR 20rem `.fr-menu__list` overflowed the 18rem panel from 62em).
+    const fit = await panel.evaluate((element) => {
+      const b = element.getBoundingClientRect();
+      const links = Array.from(element.querySelectorAll('a[href]'), (a) =>
+        a.getBoundingClientRect(),
+      );
+      return {
+        panelRight: Math.round(b.right),
+        linksLeft: Math.round(Math.min(...links.map((l) => l.left))),
+        linksRight: Math.round(Math.max(...links.map((l) => l.right))),
+        scrollWidth: document.documentElement.scrollWidth,
+        innerWidth: window.innerWidth,
+      };
+    });
     const links = await panel.getByRole('link').count();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Escape');
@@ -1905,6 +1921,13 @@ for (const width of [320, 375, 768, 1280]) {
         (await button.getAttribute('aria-expanded')) === 'false' &&
         (await button.evaluate((element) => element === document.activeElement)),
       `M17 ${width}px : « ${menu.label} » visible, ouvre ${links} lien(s) dans l’écran au-dessus de la carte, Échap le ferme (${JSON.stringify(placement)})`,
+    );
+    check(
+      fit.linksLeft >= 0 &&
+        fit.linksRight <= fit.panelRight &&
+        fit.linksRight <= fit.innerWidth &&
+        fit.scrollWidth <= fit.innerWidth,
+      `M18 ${width}px : liens de « ${menu.label} » dans le panneau et l’écran, pas de défilement horizontal (${JSON.stringify(fit)})`,
     );
   }
   if (width === 1280) {
