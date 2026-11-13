@@ -2006,5 +2006,110 @@ for (const [width, scheme] of [
   await context.close();
 }
 
+// M20: a tile that fails once (GPF 400/502/503, M-2) and loads on its retry must not blank its layer. Until M20 the
+// retry called `source.changed()`: OpenLayers 10 clears the layer's tile cache on every source revision, the
+// tiles were created again (same URLs, browser cache), the retried one loaded again and called `changed()` again,
+// an endless loop that kept the layer blank until the zoom changed (doc/agents/geopf-ext.md §14). Measured with
+// no app internals: an init script counts the tile URLs given to `HTMLImageElement.src` (OpenLayers' default
+// tile load function), loads from the browser cache included. The map is loaded at z 9.6 first, then « Zoomer »
+// takes it to z 10.6 (scale bar 5–10 km, the range of the owner's report) with the first new tile of the layer
+// answered 502 once (the loop started on 2 runs in 4 when the failure hit the very first load, every time after
+// a zoom): the failed tile is retried and loaded, then no tile load at all in a quiet window, and the Plan IGN
+// canvas is not blank.
+for (const target of [
+  {
+    name: 'Plan IGN (fond WMTS)',
+    query: '?c=2.35,48.85&z=9.6',
+    match: /PLANIGNV2.*TileMatrix=11&/,
+    canvas: true,
+  },
+  {
+    name: 'stocks de carbone (WMS sols)',
+    query:
+      '?c=2.35,46.6&z=9.6&l=stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS(1;1;1;0)&permalink=no',
+    match: /REQUEST=GetMap.*stock_carbone_fao_fr_wmsv/i,
+    canvas: false,
+  },
+]) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await context.addInitScript(() => {
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    const loads: string[] = [];
+    Object.assign(window, { __tileLoads: loads });
+    if (!descriptor?.set) return;
+    const set = descriptor.set;
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+      ...descriptor,
+      set(this: HTMLImageElement, value: string) {
+        if (/REQUEST=Get(Tile|Map)/i.test(value)) loads.push(value);
+        set.call(this, value);
+      },
+    });
+  });
+  const page = await context.newPage();
+  let armed = false;
+  let failedUrl = '';
+  let failedRequests = 0;
+  await page.route(/REQUEST=Get(Tile|Map)/i, async (route) => {
+    const requestUrl = route.request().url();
+    if (armed && !failedUrl && target.match.test(requestUrl)) failedUrl = requestUrl;
+    if (requestUrl === failedUrl) {
+      failedRequests += 1;
+      if (failedRequests === 1) return route.fulfill({ status: 502, body: 'Bad Gateway' });
+    }
+    return route.continue();
+  });
+  await page.goto(`${url}${target.query}`, { waitUntil: 'load' });
+  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.locator('#GPzoomIn').waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(6_000);
+  armed = true;
+  await page.locator('#GPzoomIn').click();
+  await page.mouse.move(640, 790);
+  await page.waitForTimeout(8_000);
+  const tileLoads = () =>
+    page.evaluate(() => (window as unknown as { __tileLoads: string[] }).__tileLoads.length);
+  const before = await tileLoads();
+  const blank: number[] = [];
+  for (let i = 0; i < 12; i += 1) {
+    if (target.canvas)
+      blank.push(
+        await page.evaluate(() => {
+          const canvas = document.querySelector<HTMLCanvasElement>('.map-view .ol-layer canvas');
+          const context2d = canvas?.getContext('2d');
+          if (!canvas || !context2d) return 100;
+          const { data } = context2d.getImageData(0, 0, canvas.width, canvas.height);
+          let empty = 0;
+          let samples = 0;
+          for (let y = 10; y < canvas.height; y += 37)
+            for (let x = 10; x < canvas.width; x += 37) {
+              samples += 1;
+              if (data[(y * canvas.width + x) * 4 + 3] === 0) empty += 1;
+            }
+          return Math.round((empty / samples) * 100);
+        }),
+      );
+    await page.waitForTimeout(250);
+  }
+  const quietLoads = (await tileLoads()) - before;
+  const failedLoads = await page.evaluate(
+    (failedTile) =>
+      (window as unknown as { __tileLoads: string[] }).__tileLoads.filter((u) => u === failedTile)
+        .length,
+    failedUrl,
+  );
+  check(
+    failedUrl !== '' && failedRequests === 2 && failedLoads === 2,
+    `M20 ${target.name} : tuile en 502 réessayée une fois puis chargée (${failedRequests} requête(s), ${failedLoads} chargement(s))`,
+  );
+  check(
+    quietLoads === 0 && (!target.canvas || Math.max(...blank) <= 1),
+    `M20 ${target.name} : plus aucun chargement de tuile vue immobile (${quietLoads} en 3 s)${
+      target.canvas ? `, carte non vide (vide max ${Math.max(...blank)} %)` : ''
+    }`,
+  );
+  await context.close();
+}
+
 await browser.close();
 process.exit(failed ? 1 : 0);
