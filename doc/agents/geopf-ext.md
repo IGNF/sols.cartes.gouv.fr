@@ -1103,12 +1103,13 @@ zoom.
 ### 15.1 Cause
 
 - `attachTileRetry` (`src/map/tileRetry.ts`, depuis `af61b68`, 2026-11-05, bien avant l'en-tête compact #96) recharge une fois
-  une tuile en erreur (`tile.load()`, hors de la file de tuiles de la carte), puis, quand ce nouvel essai aboutit, appelait
-  `source.changed()` pour faire redessiner la carte.
+  une tuile en erreur (`tile.load()` sur l'objet tuile en erreur), puis, quand ce nouvel essai aboutit, appelait
+  `source.changed()` pour faire redessiner la carte (inutile : voir §15.4).
 - OpenLayers 10.11 : `CanvasTileLayerRenderer.prepareFrame` vide **tout** son cache de tuiles (`tileCache_.clear()`, et
   `sourceTileCache_`) dès que `source.getRevision()` change, ce que fait `changed()`. Les tuiles de la vue sont alors recréées
-  (même URL, servies par le cache du navigateur : réponses `cache-control: private, max-age=1814400`), la tuile réessayée se
-  recharge, `tileloadend` retrouve sa clé dans `retried` et rappelle `changed()`… **boucle sans fin** : la couche reste vide
+  (mêmes URL, servies par le cache du navigateur : réponses `cache-control: private, max-age=1814400`), la tuile réessayée se
+  recharge, `tileloadend` retrouve sa clé dans `retried` (`Tile.getKey()` : clé de la source + coordonnées de la tuile, pas
+  l'URL) et rappelle `changed()`… **boucle sans fin** : la couche reste vide
   (aucune tuile ne reste chargée assez longtemps pour être dessinée) jusqu'à ce qu'un changement de zoom sorte la tuile de la vue.
   Les requêtes, servies par le cache, paraissent normales dans l'onglet Réseau.
 - Il faut une erreur **transitoire** (400, 502, 503 de la GPF, M-2) suivie d'un succès au nouvel essai ; une 404 permanente
@@ -1135,10 +1136,9 @@ zoom.
 
 ### 15.3 Correctif
 
-- `attachTileRetry(source, delayMs, requestRender)` ne touche plus jamais à la révision de la source : quand le **seul**
-  chargement relancé par le helper se termine (suivi par objet tuile, `reloading`), il appelle `requestRender`, soit
-  `map.render()` (`useBaseLayer`, `useOverlays`). Les chargements suivants de la même URL ne redemandent rien. Le nouvel essai
-  après 500 ms est conservé (rapidité), le cache de tuiles aussi.
+- `attachTileRetry(source, delayMs)` ne touche plus jamais à la révision de la source ni ne demande de rendu : la file de
+  tuiles de la carte s'en charge (§15.4). Le nouvel essai après 500 ms est conservé (rapidité), le cache de tuiles aussi.
+  (PR #102 passait un `requestRender` = `map.render()`, retiré dans la PR de suivi, §15.4.)
 - Test unitaire avec une vraie source `XYZ` : la révision ne change pas pendant un nouvel essai réussi (échouait avec l'ancien
   code).
 - `check:map` (bloc M20, isolé en fin de fichier) : carte chargée à z 9,6, puis « Zoomer » (z 10,6) avec une 502 forcée sur la
@@ -1147,3 +1147,17 @@ zoom.
   du navigateur compris) et, pour Plan IGN, canevas non vide. Sur `main` avant correctif : 3 exécutions sur 3 en échec (la tuile
   ~600 fois chargée depuis le cache pour 2 requêtes réseau, ~2 900 chargements en 3 s, canevas vide à 100 %) ; après : 3 sur 3
   réussies (2 chargements, 0, 0 %).
+
+### 15.4 Suivi de revue (après #102)
+
+- **Rendu de la tuile réessayée** : `ol/TileQueue.js` (10.11), `handleTileChange` retire son écouteur `change` d'une tuile
+  passée LOADED ou EMPTY, **pas** d'une tuile en ERROR, et appelle `tileChangeCallback_`, soit `Map#handleTileChange_` →
+  `map.render()`. Quand le nouvel essai fait passer la tuile de ERROR à LOADED, la carte est donc déjà redessinée : le
+  `requestRender` ajouté en #102 était redondant, il est retiré. Un test (vraie `TileQueue`, tuile ERROR → nouvel essai →
+  LOADED) vérifie que le rappel de rendu est bien appelé ; il signalera un changement de ce comportement à une montée d'OL.
+- **Tuile libérée avant le nouvel essai** : `Tile#release()` (expiration du cache LRU, couche retirée) la passe en EMPTY ; le
+  minuteur ne recharge plus qu'une tuile encore en ERROR (test). L'ensemble `reloading` de #102, qui gardait ces tuiles jusqu'au
+  détachement, disparaît avec `requestRender`.
+- **Clé** : `Tile.getKey()` vaut `this.key + '/' + this.tileCoord`, la clé de la source (`TileImage#getKey`, gabarit d'URL)
+  plus les coordonnées, par exemple `https://data.geopf.fr/wmts?SERVICE=WMTS&/11,1037,704` ; ce n'est pas l'URL de la tuile.
+- `check:map` M20 inchangé : toujours vert avec ce code, toujours en échec sur le code d'avant #102.
