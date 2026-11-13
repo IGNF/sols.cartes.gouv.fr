@@ -1226,8 +1226,8 @@ Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur 
   - Ils s'ouvrent en haut de la carte, dans la carte, au-dessus de la barre ; leur bouton de fermeture est atteignable.
   - Le panneau « Avancée » ouvert recouvre le haut des colonnes, comme sur cartes.gouv.fr : c'est un menu déroulant, au
     premier plan.
-- **Limite** : la colonne de droite a 20 px de marge à 320×700. Afficher deux outils à la demande de plus peut la faire
-  rejoindre la colonne du bas (plein écran, zoom) sur un écran bas.
+- **Limite (première version, corrigée en revue, ci-dessous)** : avec la carte à 70dvh, les colonnes de droite se
+  chevauchaient sur les hauteurs de téléphone courantes.
 - **`check:map`** :
   - Bloc M19 : l'assertion « aucun bouton recouvert par la barre ni le panneau » devient « la barre ne recouvre aucun
     bouton ; à partir de 36em, le panneau non plus ; en dessous, il passe au-dessus des boutons qu'il recouvre ». Ajout
@@ -1236,4 +1236,60 @@ Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur 
     - 320 et 375 px, clair et sombre : géométrie de la barre, colonnes sous la barre et sans chevauchement, suggestions
       au-dessus des colonnes, catalogue et Itinéraire en haut de la carte, axe panneau ouvert, console vide.
     - 576 et 768 px : disposition inchangée.
+
+### 17.1 Revue de #103 : hauteur de la carte sur mobile, portrait seulement
+
+- **Constat du relecteur** (écart entre le bas de la colonne en haut à droite et le haut de celle en bas à droite ; négatif :
+  chevauchement) : 375×667 `main` 57 → #103 −3 ; 320×568 −12 → −72 ; 568×320 −90 → −150. À 320×568, un vrai clic sur
+  « Annoter la carte » et « Afficher tous les outils » tombait sur « Plein écran » / « Zoomer ». Cause : sous 48em la
+  carte ne faisait que 70dvh (choix M6, pour un panneau sous la carte retiré en v1.1), alors que les références lui
+  donnent l'écran.
+- **Références** : l'entrée carto rend la carte sur toute la hauteur sous l'en-tête (`src/views/Main.vue` : grille
+  `[map] 1fr`, `min-height: 100vh`, pas de pied de page sous LG) ; guichet-collaboratif fixe
+  `.map-view { height: calc(100vh - 6rem) }` (en-tête et pied de page, `src/css/map-view.css`, `f3427f8` #295).
+- **Correctif** (`MapView.css`) :
+  - **Hauteur** : sous 48em, `.map-view` passe de `70dvh` à `calc(100dvh - 3.5rem)` (fenêtre moins l'en-tête compact),
+    avec le plancher de 20rem. Le pied de page suit ; la page défile jusqu'à lui (160 à 185 px selon la largeur).
+  - **Portrait seulement** : barre pleine largeur et colonnes abaissées passent sous
+    `(max-width: 35.99em) and (orientation: portrait)`. En paysage (568×320) la carte est au plancher, et abaisser les
+    colonnes ne ferait que leur retirer de la place ; la barre reste entre les colonnes, libellé visible. Le
+    chevauchement du paysage, déjà sur `main`, est la question M-9.
+  - **Panneaux plein écran** : les panneaux `.gpf-mobile-fullscreen` ramenés en haut de la carte prennent aussi sa hauteur
+    (`height` et `max-height: 100cqh`, `.map-view` est un conteneur de taille ; geopf les borne à `max-height: 100%` de
+    leur colonne) : ils s'arrêtaient 4rem avant le bas.
+- **Écarts mesurés après** (colonne de droite, outils par défaut ; aucun bouton masqué au test de point, vrais clics sur
+  « Annoter la carte » et « Afficher tous les outils ») :
+
+  | Fenêtre | Carte | Écart droite | Écart gauche |
+  |---|---|---|---|
+  | 320×568 | 512 px | 42 px | 199 px |
+  | 360×640 | 584 px | 114 px | 271 px |
+  | 375×667 | 611 px | 141 px | 298 px |
+  | 375×812 | 756 px | 286 px | 443 px |
+  | 568×320 (paysage) | 320 px | −90 px (comme `main`, M-9) | 67 px |
+
+- **Pied de page et défilement** (320×568 et 375×667, profil Pixel 5 tactile) :
+  - Lien d'évitement « Pied de page » : `#footer` atteint (défilement à 185 / 160 px).
+  - Focus clavier sur un lien du pied de page : il défile dans la vue.
+  - « Haut de page » déplie le pied de page et défile jusqu'en bas ; « Fermer » le replie et remonte.
+  - Lien d'évitement « Contenu » : le contenu est atteint avec le focus.
+  - Aucun conteneur défilant intérieur : une seule barre de défilement, celle de la page.
+  - Glisser au doigt (événements tactiles CDP) sur l'en-tête ou sur le pied de page fait défiler la page.
+- **Limite de la mesure tactile** :
+  - Sur la carte, ces événements synthétiques n'ont pas déclenché le déplacement d'OpenLayers : la page a défilé, la
+    carte n'a pas bougé. Sur un vrai téléphone, `DragPan` d'OpenLayers déplace la carte et bloque le défilement de la
+    page (`MapBrowserEventHandler.handleTouchMove_`), comme sur cartes.gouv.fr et guichet-collaboratif.
+  - La carte prenant l'écran sous l'en-tête, on atteint donc le pied de page au doigt en glissant sur l'en-tête
+    (56 px), au clavier, ou par le lien d'évitement. Les références font de même ou plus strict : pas de pied de page
+    sur mobile dans l'entrée carto ; pied de page de 2.5rem toujours visible dans guichet-collaboratif, impossible ici
+    (le pied de page replié fait 152 à 177 px sous 48em).
+  - Variante possible, plus proche de guichet : `calc(100dvh - 6rem)`, avec 40 px de pied de page visibles. Mais il ne
+    resterait que 2 px entre les colonnes à 320×568.
+- **`check:map`** (bloc M22 récrit) :
+  - Fenêtres : 320×568, 360×640, 375×667, 375×812, plus 320/375×800 clair et sombre, 576 et 768 px.
+  - Chaque colonne non vide.
+  - Chaque bouton visible des colonnes au premier plan en son centre (`elementFromPoint`).
+  - Colonnes du haut et du bas sans chevauchement.
+  - Carte = fenêtre moins 56 px sous 36em, en portrait.
+  - Panneau Itinéraire aussi haut que la carte.
 

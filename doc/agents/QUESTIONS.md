@@ -95,3 +95,18 @@ Questions en attente d'une réponse du propriétaire. Chaque entrée : question,
   « Menu » du DSFR sous 62em (en-tête plus haut sur mobile).
 - Défaut appliqué : (a). En-tête de 56 px de 320 à 1280 px ; titre en 1rem sous 36em, tronqué par une ellipse seulement
   sous ~360 px. La question M-5 (contraste du bouton « Menu ») ne concerne plus la carto, qui n'a plus ce bouton.
+
+## M-9. Colonnes de boutons de la carte sur mobile en paysage (carto-dev, M22)
+
+- Constat : en paysage sur un petit téléphone (568×320), la carte est à son plancher de 20rem (320 px) et les colonnes de
+  droite (haut : catalogue, gestionnaire de couches, quatre outils par défaut, « Afficher tous les outils » ; bas :
+  plein écran, zoom) ne tiennent pas l'une au-dessus de l'autre : 90 px de chevauchement, déjà sur `main` avant M22.
+  « Annoter la carte » et « Afficher tous les outils » sont alors sous « Plein écran » et « Zoomer ». En portrait
+  (320×568 à 375×812), M22 a supprimé le chevauchement (carte sous l'en-tête sur toute la hauteur).
+- Options : (a) en rester là : le paysage d'un petit téléphone reste partiellement inutilisable pour ces deux
+  boutons (rotation de l'écran) ; (b) sur écran bas (`max-height: 30em`), réduire la colonne du haut à ses boutons
+  principaux et passer les outils par défaut dans « Afficher tous les outils » ; (c) colonne du haut limitée en
+  hauteur avec défilement (les panneaux geopf s'ouvrent depuis la colonne et seraient rognés : à éviter) ; (d) zoom
+  et plein écran en bas à gauche sur écran bas.
+- Défaut appliqué : (a). M22 n'aggrave pas le cas : sa barre pleine largeur et ses colonnes abaissées ne s'appliquent
+  qu'en portrait ; en paysage, la barre reste entre les colonnes avec le libellé « Avancée » visible.
