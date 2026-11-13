@@ -1037,7 +1037,7 @@ guichet-collaboratif ; l'échelle aux couleurs de cartes.gouv.fr, fond non trans
 - **CSS** (`MapView.css`) : les règles visent le widget extérieur `[id^='GPsearchEngine-Advanced-']` (un
   `[id^='GPsearchEngine-']` attrape aussi la barre intérieure). Même emplacement qu'avant : entre les colonnes sous 48em
   (`left: 3.5rem`, `width: calc(100% - 7rem)`), centrée au-dessus (largeur 420 px comme cartes.gouv.fr, bornée par les
-  colonnes). Sous 36em, « Avancée » n'affiche que son chevron (`font-size: 0` ; nom « Recherche avancée » et `title` gardés), sinon
+  colonnes). Sous 36em (jusqu'à M22, remplacé par la barre pleine largeur du §16), « Avancée » n'affiche que son chevron (`font-size: 0` ; nom « Recherche avancée » et `title` gardés), sinon
   le champ n'a plus de place à 320 px (0 px mesuré) ; il garde 102 px à 320 px, 155 px à 375 px. Les règles de M3 sur
   `GPsearchInputReset-` (bouton de l'ancien contrôle) sont retirées : l'effacement est `GPSearchEngine-erase-btn-*`, affiché
   par geopf quand le champ contient du texte (« Avancée » est alors masqué, comme sur cartes.gouv.fr).
@@ -1093,3 +1093,48 @@ action (clair) » de `e2e/tests/03-carto.spec.ts` attend `--text-action-high-blu
 clair : il faut désormais `--text-default-grey` en clair (trait `--text-mention-grey`), `--text-action-high-blue-france` en
 sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la recherche ni la géolocalisation (relevé du
 2026-11-13).
+
+## 16. Barre de recherche pleine largeur sur mobile (M22)
+
+Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur mobile ; les colonnes de boutons passent sous la barre.
+
+- **Références** :
+  - guichet-collaboratif `develop` @ `bd456e3`, `src/css/map-view.css` : sous 36rem (« MODE MOBILE », règle de `d2b6bb8` #219,
+    retouchée par `a192ef6` #309), `div[id^="GPsearchEngine-"]` perd `top`/`left` et prend `width: 100%` ;
+    `.position-container-top-right { top: 4rem !important }` (`f3427f8` #295).
+  - entrée carto `main` @ `1f890d3` : `src/components/carte/control/SearchEngine.vue` (sous `sm` : widget à `top: $gap`,
+    `left: $gap - 5px`, `max-width: calc(100% - 6px)`) et `src/components/carte/Controls.vue` (sous `sm` :
+    `.position-container-top-left, .position-container-top-right { top: $widget-btn-size + $gap * 2 }`, soit 64 px ;
+    `.position { height: calc(100% - ($widget-btn-size + $gap * 3)) }`).
+  - Mesuré en ligne (2026-11-13, 320 et 375 px, clair et sombre) : barre à 8 px du haut et des bords de la carte, 48 px de haut,
+    « Avancée » 105 px avec son libellé ; colonnes du haut à 64 px.
+- **Ici** (`MapView.css`, sous 36em) :
+  - Widget à `left: 0.5rem`, `width: calc(100% - 1rem + 10px)`, barre intérieure sans marge. geopf entoure le widget d'un
+    `padding` de 5 px rattrapé par une marge de -5 px, et décale la barre intérieure de 5 px. Résultat : barre de 8 px à
+    `largeur - 8 px`, comme cartes.gouv.fr.
+  - Règle « chevron seul » retirée.
+  - `#position-container-top-left` et `-top-right` : `top: 4rem`, `height: calc(100% - 4rem - 4px)` (geopf : `top: 4px`,
+    `height: calc(100% - 8px)`). Les colonnes du bas sont inchangées.
+  - Les panneaux geopf « plein écran mobile » (`.gpf-mobile-fullscreen`, `top: -4px !important` contre leur colonne) passent
+    à `top: -4rem !important` : ils restent en haut de la carte.
+- **Mesures après** :
+  - 320 px : barre 8 → 312 px, champ 139 px, « Avancée » 105 px ; premiers boutons des colonnes du haut à 66 px du haut
+    de la carte (barre jusqu'à 56 px).
+  - 375 px : champ 193 px.
+  - Colonnes du haut et du bas sans chevauchement (320×700 : 20 px d'écart à droite avec les outils par défaut).
+- **Panneaux** (320 et 375 px) : catalogue, gestionnaire de couches, « Tous les outils », Itinéraire, import, territoires,
+  légendes.
+  - Ils s'ouvrent en haut de la carte, dans la carte, au-dessus de la barre ; leur bouton de fermeture est atteignable.
+  - Le panneau « Avancée » ouvert recouvre le haut des colonnes, comme sur cartes.gouv.fr : c'est un menu déroulant, au
+    premier plan.
+- **Limite** : la colonne de droite a 20 px de marge à 320×700. Afficher deux outils à la demande de plus peut la faire
+  rejoindre la colonne du bas (plein écran, zoom) sur un écran bas.
+- **`check:map`** :
+  - Bloc M19 : l'assertion « aucun bouton recouvert par la barre ni le panneau » devient « la barre ne recouvre aucun
+    bouton ; à partir de 36em, le panneau non plus ; en dessous, il passe au-dessus des boutons qu'il recouvre ». Ajout
+    de « libellé « Avancée » visible » à toutes les largeurs.
+  - Nouveau bloc M22 :
+    - 320 et 375 px, clair et sombre : géométrie de la barre, colonnes sous la barre et sans chevauchement, suggestions
+      au-dessus des colonnes, catalogue et Itinéraire en haut de la carte, axe panneau ouvert, console vide.
+    - 576 et 768 px : disposition inchangée.
+
