@@ -122,25 +122,44 @@ export function buildLayout(markdown, { baseHref }) {
 
 /**
  * Cross-check of the injected header with packages/brand/brand.json: badge label, colour and icon
- * (`badges.catalogue`, `badgeStyles.catalogue`) and external help links (new window, rel external).
+ * (`badges.catalogue`, `badgeStyles.catalogue`) and external links of the tool menus (« Aide », and
+ * « Services » such as « Publier une donnée »: new window, rel external).
  */
 export function checkHeaderAgainstBrand(header, brand) {
   const problems = []
   const style = brand.badgeStyles?.catalogue
   const badge = `<span class="fr-badge fr-badge--sm fr-badge--${style?.color} fr-badge--icon-left ${style?.icon}">${brand.badges?.catalogue}</span>`
   if (!header.includes(badge)) problems.push(`badge: expected ${badge}`)
-  for (const item of brand.header?.tools?.help?.items ?? []) {
-    if (!item.external) continue
-    const link = new RegExp(`<a class="[^"]*${item.icon}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
-    if (!link.test(header)) problems.push(`help link: ${item.label} (${item.href}) not found as an external link`)
+  for (const [menu, tool] of Object.entries(brand.header?.tools ?? {})) {
+    for (const item of tool?.items ?? []) {
+      if (!item.external) continue
+      const link = new RegExp(`<a class="[^"]*${item.icon ?? ''}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
+      if (!link.test(header)) problems.push(`${menu} link: ${item.label} (${item.href}) not found as an external link`)
+    }
   }
   if (problems.length) throw new Error(`header differs from brand.json: ${problems.join('; ')}`)
   return header
 }
 
+/**
+ * Cross-check of the injected footer with packages/brand/brand.json: every bottom link
+ * (`footer.bottomLinks`) with its href, external ones (pages read on cartes.gouv.fr) in a new window.
+ */
+export function checkFooterAgainstBrand(footer, brand) {
+  const problems = []
+  for (const link of brand.footer?.bottomLinks ?? []) {
+    const anchor = `<a class="fr-footer__bottom-link" href="${link.href}"${link.external ? ' target="_blank" rel="noopener external"' : ''}`
+    if (!footer.includes(anchor)) problems.push(`bottom link: ${link.label} (${link.href}) not found`)
+  }
+  if (problems.length) throw new Error(`footer differs from brand.json: ${problems.join('; ')}`)
+  return footer
+}
+
 export function readLayout(baseHref) {
   const layout = buildLayout(readFileSync(EDITO_DOC, 'utf8'), { baseHref })
-  checkHeaderAgainstBrand(layout.header, JSON.parse(readFileSync(join(BRAND_DIR, 'brand.json'), 'utf8')))
+  const brand = JSON.parse(readFileSync(join(BRAND_DIR, 'brand.json'), 'utf8'))
+  checkHeaderAgainstBrand(layout.header, brand)
+  checkFooterAgainstBrand(layout.footer, brand)
   return layout
 }
 

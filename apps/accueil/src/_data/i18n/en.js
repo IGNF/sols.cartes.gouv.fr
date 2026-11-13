@@ -1,4 +1,6 @@
 /** English strings. Every prose string is placeholder text, marked "(placeholder text)". */
+import site from '../site.js';
+
 const description =
   'Soil observatory: portal for the GIS Sol (INRAE) soil data served by the Géoplateforme (placeholder text).';
 const footerDescription =
@@ -41,6 +43,7 @@ export default {
             label: 'Explore maps (in French)',
             desc: 'The map viewer',
           },
+          'https://cartes.gouv.fr/publier-une-donnee': { label: 'Publish data (in French)' },
           '/fr/': { label: 'Discover', desc: 'The Soil observatory of France' },
         },
       },
@@ -53,7 +56,8 @@ export default {
     bottomLinks: {
       accessibilite: 'Accessibility: not compliant',
       mentionsLegales: 'Legal notice',
-      donneesPersonnelles: 'Personal data',
+      [site.external.cgu]: 'Terms of use (in French)',
+      [site.external.donneesPersonnelles]: 'Personal data (in French)',
       planDuSite: 'Site map',
     },
     licence: {
@@ -79,6 +83,13 @@ export default {
   articles: { published: 'Published on' },
   reroute: {
     link: 'English version',
+  },
+  moved: {
+    title: 'sols.cartes.gouv.fr: page moved',
+    description: 'This page is now available on cartes.gouv.fr (in French).',
+    heading: 'Page moved',
+    intro: 'This page is shared with cartes.gouv.fr: you are being redirected there.',
+    link: 'Read the page on cartes.gouv.fr (in French)',
   },
   pages: {
     aide: {
@@ -110,15 +121,48 @@ export default {
       description: 'Accessibility statement of sols.cartes.gouv.fr (placeholder text).',
       body: 'The site has not been audited against the RGAA yet: it is not compliant. The accessibility statement will be published here (placeholder text).',
     },
+    /** Translation of the French legal notice (i18n/fr.js, #88): same sections, same ids. */
     mentionsLegales: {
       title: 'Legal notice',
-      description: 'Legal notice of sols.cartes.gouv.fr (placeholder text).',
-      body: 'The legal notice (publisher, publication director, hosting) will be published here (placeholder text).',
-    },
-    donneesPersonnelles: {
-      title: 'Personal data',
-      description: 'Personal data policy of sols.cartes.gouv.fr (placeholder text).',
-      body: 'Information about personal data processing and cookies will be published here (placeholder text).',
+      description: `Legal notice of ${site.header.serviceTitle}: publisher, publication director, personal data, intellectual property and hyperlinks.`,
+      sections: [
+        {
+          id: 'editeur',
+          title: 'Publisher',
+          paragraphs: [
+            `The ${site.header.serviceTitle} website is published by the Institut national de l’information géographique et forestière (IGN), 73 avenue de Paris, 94165 SAINT-MANDE CEDEX, France.`,
+            'Tel.: +33 1 43 98 80 00',
+            'Publication director: Sébastien Soriano, Director General of IGN.',
+          ],
+        },
+        {
+          id: 'traitement-des-donnees-a-caractere-personnel',
+          title: 'Processing of personal data',
+          paragraphs: [
+            'The recipient of the data is IGN.',
+            'In accordance with the French Data Protection Act (« Informatique et libertés ») of 6 January 1978, you have a right of access to and rectification of the information concerning you, which you can exercise by writing to IGN through the “Contact us” link of the “Help” menu.',
+          ],
+          link: {
+            label: 'Learn more about personal data (in French)',
+            href: site.external.donneesPersonnelles,
+          },
+        },
+        {
+          id: 'droit-de-propriete-intellectuelle',
+          title: 'Intellectual property rights',
+          paragraphs: [
+            `The illustrations, the editorial content, the elements of the graphic charter and the map data from online consultation shown on the ${site.header.serviceTitle} website are owned by IGN or IGN holds the right to exploit them.`,
+            'Any use of the documents or elements of the site is subject to the prior agreement of our institution.',
+          ],
+        },
+        {
+          id: 'liens-hypertextes',
+          title: `Hyperlinks offered on ${site.header.serviceTitle}`,
+          paragraphs: [
+            `The links to third-party sites inserted in the pages of the ${site.header.serviceTitle} website are offered for information; the publisher is not responsible for the content of the sites these links lead to.`,
+          ],
+        },
+      ],
     },
     planDuSite: {
       title: 'Site map',

@@ -58,10 +58,8 @@ describe('HeaderMenu', () => {
     await user.click(screen.getByRole('button', { name: 'Ailleurs' }));
     expect(button).toHaveAttribute('aria-expanded', 'false');
     await user.click(button);
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    await user.tab();
+    // One Tab per link of the menu, then one more to leave it.
+    for (let index = 0; index <= menu.items.length; index += 1) await user.tab();
     expect(button).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -75,6 +73,13 @@ describe('HeaderMenu', () => {
     await user.click(button);
     expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(button.querySelector('.header-menu__chevron')).toBe(chevron);
+  });
+
+  it('a un petit bouton DSFR dont le libellé reste le nom accessible (masqué visuellement en mobile)', () => {
+    const { button } = setup();
+    expect(button).toHaveClass('fr-btn', 'fr-btn--sm', 'fr-btn--icon-left', menu.icon);
+    expect(button).toHaveAttribute('title', menu.label);
+    expect(button.querySelector('.header-menu__btn-label')).toHaveTextContent(menu.label);
   });
 
   it('connaît les icônes des menus de la marque', () => {

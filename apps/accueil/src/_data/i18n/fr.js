@@ -85,6 +85,13 @@ export default {
     intro: 'Vous allez être redirigé vers la version française.',
     link: 'Version française',
   },
+  moved: {
+    title: 'sols.cartes.gouv.fr : page déplacée',
+    description: 'Cette page est désormais consultable sur cartes.gouv.fr.',
+    heading: 'Page déplacée',
+    intro: 'Cette page est commune à cartes.gouv.fr : vous allez y être redirigé.',
+    link: 'Consulter la page sur cartes.gouv.fr',
+  },
   partage: {
     title: 'En-tête et pied de page partagés',
     description:
@@ -125,16 +132,51 @@ export default {
       description: 'Déclaration d’accessibilité de sols.cartes.gouv.fr (texte provisoire).',
       body: 'Le site n’a pas encore fait l’objet d’un audit de conformité au RGAA : il est non conforme. La déclaration d’accessibilité sera publiée ici (texte provisoire).',
     },
+    /**
+     * Mentions légales (#88): structure and wording of https://cartes.gouv.fr/mentions-legales, minus what
+     * does not apply here (registration forms of the user account space). Open points: QUESTIONS.md E-6.
+     */
     mentionsLegales: {
       title: 'Mentions légales',
-      description: 'Mentions légales de sols.cartes.gouv.fr (texte provisoire).',
-      body: 'Les mentions légales du site (éditeur, directeur de la publication, hébergement) seront publiées ici (texte provisoire).',
-    },
-    donneesPersonnelles: {
-      title: 'Données personnelles',
-      description:
-        'Politique de gestion des données personnelles de sols.cartes.gouv.fr (texte provisoire).',
-      body: 'Les informations sur le traitement des données personnelles et les cookies seront publiées ici (texte provisoire).',
+      description: `Mentions légales du site ${brand.service.title} : éditeur, directeur de la publication, données à caractère personnel, propriété intellectuelle et liens hypertextes.`,
+      sections: [
+        {
+          id: 'editeur',
+          title: 'Éditeur',
+          paragraphs: [
+            `Le site ${brand.service.title} est édité par l’Institut national de l’information géographique et forestière (IGN), 73 avenue de Paris, 94165 SAINT-MANDE CEDEX, France.`,
+            'Tél. : 01 43 98 80 00',
+            'Directeur de la publication : Sébastien Soriano, Directeur général de l’IGN.',
+          ],
+        },
+        {
+          id: 'traitement-des-donnees-a-caractere-personnel',
+          title: 'Traitement des données à caractère personnel',
+          paragraphs: [
+            'Le destinataire des données est l’IGN.',
+            'Conformément à la loi « Informatique et libertés » du 6 janvier 1978, vous bénéficiez d’un droit d’accès et de rectification des informations qui vous concernent, que vous pouvez exercer en vous adressant à l’IGN aux coordonnées accessibles via le lien « Nous contacter » du menu « Aide ».',
+          ],
+          link: {
+            label: 'En savoir plus sur les données à caractère personnel',
+            href: site.external.donneesPersonnelles,
+          },
+        },
+        {
+          id: 'droit-de-propriete-intellectuelle',
+          title: 'Droit de propriété intellectuelle',
+          paragraphs: [
+            `Les illustrations, le contenu éditorial, les divers éléments de la charte graphique ainsi que les données cartographiques issues de la consultation en ligne figurant sur le site ${brand.service.title} sont des éléments dont l’IGN détient la propriété ou le droit d’exploitation.`,
+            'L’utilisation des documents ou éléments du site est soumise à l’accord préalable de notre établissement.',
+          ],
+        },
+        {
+          id: 'liens-hypertextes',
+          title: `Liens hypertextes proposés sur ${brand.service.title}`,
+          paragraphs: [
+            `Les liens insérés dans les pages du site ${brand.service.title} vers des sites tiers sont proposés à titre d’information ; le contenu des sites vers lesquels ces liens conduisent n’engage pas la responsabilité de l’éditeur.`,
+          ],
+        },
+      ],
     },
     planDuSite: {
       title: 'Plan du site',

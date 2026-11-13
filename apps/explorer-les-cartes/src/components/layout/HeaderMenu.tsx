@@ -47,11 +47,11 @@ function MenuLink({ item }: MenuLinkProps) {
 }
 
 /**
- * Drop-down menu of the header tools ("Aide", "Services"), cartes.gouv.fr pattern: a DSFR button with
- * `aria-expanded`/`aria-controls` and a list of links. DSFR has no menu in `fr-header__tools`, and react-dsfr
- * 1.36 `quickAccessItems` only take links/buttons, so this component is passed as a JSX quick access item.
- * State is React-controlled (no `fr-collapse`, whose DSFR script would fight React). Escape or a click
- * outside closes it; Escape returns focus to the button.
+ * Drop-down menu of the header tools ("Aide", "Services"), cartes.gouv.fr pattern (`HeaderMenu.tsx` of
+ * guichet-collaboratif): a small DSFR button with `aria-expanded`/`aria-controls` and a list of links. DSFR has
+ * no menu in `fr-header__tools`. State is React-controlled (no `fr-collapse`, whose DSFR script would fight
+ * React). Escape, a click or the focus outside closes it; Escape returns focus to the button. Under the DSFR sm
+ * breakpoint the label is visually hidden (CSS) and stays the accessible name; `title` shows it on hover.
  */
 export default function HeaderMenu({ menu }: HeaderMenuProps) {
   const menuId = `menu-${useId().replace(/:/g, '')}`;
@@ -71,7 +71,7 @@ export default function HeaderMenu({ menu }: HeaderMenuProps) {
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape' || !isInside(document.activeElement)) return;
-      // Capture phase: close this menu only, not the DSFR mobile menu modal around it.
+      // Capture phase: close this menu only, before any other Escape handler of the page.
       event.stopPropagation();
       setOpen(false);
       button.current?.focus();
@@ -92,13 +92,16 @@ export default function HeaderMenu({ menu }: HeaderMenuProps) {
         ref={button}
         type="button"
         className={`${
-          isMenuIcon(menu.icon) ? fr.cx('fr-btn', menu.icon, 'fr-btn--icon-left') : fr.cx('fr-btn')
+          isMenuIcon(menu.icon)
+            ? fr.cx('fr-btn', 'fr-btn--sm', menu.icon, 'fr-btn--icon-left')
+            : fr.cx('fr-btn', 'fr-btn--sm')
         } header-menu__btn`}
+        title={menu.label}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
       >
-        {menu.label}
+        <span className="header-menu__btn-label">{menu.label}</span>
         <span
           className={`${fr.cx('fr-icon-arrow-down-s-line', 'fr-icon--sm')} header-menu__chevron`}
           aria-hidden="true"

@@ -7,6 +7,7 @@ import {
   addBadge,
   assertStaticTemplate,
   buildLayout,
+  checkFooterAgainstBrand,
   checkHeaderAgainstBrand,
   duplicateToolLinks,
   extractBlock,
@@ -230,8 +231,42 @@ test('checkHeaderAgainstBrand compares badge and help links with brand.json (C13
     '<a class="fr-nav__link fr-link--icon-left fr-icon-q sols-tool-menu__external" href="https://x.fr/aide/" target="_blank" rel="noopener external">'
   assert.equal(checkHeaderAgainstBrand(ok, brand), ok)
   assert.throws(() => checkHeaderAgainstBrand(badgeTitle, brand), /help link/)
+  // External entry of another menu, without icon (« Publier une donnée », #85); `login: false` is skipped.
+  const withService = {
+    ...brand,
+    header: {
+      tools: {
+        ...brand.header.tools,
+        services: { items: [{ label: 'Interne', href: '/x/' }, { label: 'Publier', href: 'https://x.fr/publier', external: true }] },
+        login: false,
+      },
+    },
+  }
+  assert.throws(() => checkHeaderAgainstBrand(ok, withService), /services link: Publier/)
+  const okService =
+    ok + '<a class="fr-nav__link sols-tool-menu__external" href="https://x.fr/publier" target="_blank" rel="noopener external">'
+  assert.equal(checkHeaderAgainstBrand(okService, withService), okService)
   assert.throws(
     () => checkHeaderAgainstBrand(ok, { ...brand, badgeStyles: { catalogue: { color: 'blue', icon: 'x' } } }),
     /badge/
+  )
+})
+
+test('checkFooterAgainstBrand compares the bottom links with brand.json (#89, #90)', () => {
+  const brand = {
+    footer: {
+      bottomLinks: [
+        { label: 'Mentions légales', href: '/mentions-legales/' },
+        { label: 'CGU', href: 'https://x.fr/cgu/', external: true },
+      ],
+    },
+  }
+  const local = '<a class="fr-footer__bottom-link" href="/mentions-legales/">Mentions légales</a>'
+  const ok = local + '<a class="fr-footer__bottom-link" href="https://x.fr/cgu/" target="_blank" rel="noopener external" title="CGU">CGU</a>'
+  assert.equal(checkFooterAgainstBrand(ok, brand), ok)
+  assert.throws(() => checkFooterAgainstBrand(local, brand), /bottom link: CGU/)
+  assert.throws(
+    () => checkFooterAgainstBrand(local + '<a class="fr-footer__bottom-link" href="https://x.fr/cgu/">CGU</a>', brand),
+    /bottom link: CGU/
   )
 })
