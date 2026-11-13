@@ -1,5 +1,9 @@
 # Rapport e2e (T5, passe 5)
 
+## Passe 5, mise à jour après M19 (#99)
+
+Base : `origin/main` fusionné (M19 inclus), suite complète sur le port 8353 (arrêté ensuite) : **147 réussis, 11 ignorés, 0 échec, 0 flaky**. Adaptations : test de l'échelle renommé (fond opaque ; gris `--text-default-grey` / `--text-mention-grey` en clair, bleu action en sombre ; attente de la transition de couleur DSFR) ; nouveau test « Avancée » (nom « Recherche avancée ») : pas de bouton `GPshowGeolocate`, panneau sous la barre, « Me géolocaliser » premier contrôle et focalisé au clavier, puis « Coordonnées », dans l'écran, desktop et mobile. Le retour à deux lignes du pied de page carto entre 1024 et 1199 px n'est pas couvert par un test de la suite : rien à signaler.
+
 ## Passe 5, résultat final (après #96, #93 à #95 et le correctif #98)
 
 Base : `origin/main` fusionné, trois briques reconstruites, suite complète sur le port 8352 (arrêté ensuite) : **145 réussis, 11 ignorés, 0 échec, 0 flaky**. Le test « le menu Services reste dans l'écran à l'ouverture » passe sur desktop sans modification : le défaut de débordement du panneau est corrigé. Les sections ci-dessous décrivent le premier passage (avant correctif).

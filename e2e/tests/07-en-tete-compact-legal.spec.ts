@@ -121,3 +121,40 @@ test.describe('Pied de page : liens légaux', () => {
     }
   });
 });
+
+test.describe('Carto : recherche avancée et géolocalisation (M19)', () => {
+  test('« Avancée » ouvre un panneau sous la barre dont « Me géolocaliser » est le premier contrôle', async ({
+    page,
+  }) => {
+    await page.goto(PAGES.carto);
+    await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[id^="GPshowGeolocate"]')).toHaveCount(0);
+    const bouton = page.getByRole('button', { name: 'Recherche avancée' });
+    await expect(bouton).toBeVisible();
+    const barre = page
+      .locator(
+        '[id^="GPsearchEngine-Advanced-"] .GPsearchEngine, [id^="GPsearchEngine-Advanced-"] [id^="GPsearchEngine-"]',
+      )
+      .first();
+    const bas = (await barre.boundingBox())!;
+    await bouton.focus();
+    await page.keyboard.press('Enter');
+    await expect(bouton).toHaveAttribute('aria-expanded', 'true');
+    const panneau = page.locator('.GPAdvancedContainer');
+    await expect(panneau).toBeVisible();
+    const geoloc = panneau.getByRole('button', { name: 'Me géolocaliser' });
+    await expect(geoloc).toBeVisible();
+    // Premier contrôle du panneau, atteignable au clavier (focus à l'ouverture, puis Tab vers « Coordonnées »).
+    const premier = await panneau.evaluate(
+      (el) => el.querySelector('button, input, select, a')?.textContent?.trim() ?? '',
+    );
+    expect(premier).toContain('Me géolocaliser');
+    await expect(geoloc).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(panneau.getByText('Coordonnées').first()).toBeVisible();
+    const pan = (await panneau.boundingBox())!;
+    expect(pan.y, 'panneau sous la barre').toBeGreaterThanOrEqual(bas.y + bas.height - 2);
+    expect(pan.x).toBeGreaterThanOrEqual(0);
+    expect(pan.x + pan.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  });
+});
