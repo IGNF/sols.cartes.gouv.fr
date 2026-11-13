@@ -108,7 +108,11 @@ export default function SiteFooter() {
           <ul className={fr.cx('fr-footer__bottom-list')}>
             {footer.bottomLinks.map((link) => (
               <li key={link.href} className={fr.cx('fr-footer__bottom-item')}>
-                <a className={fr.cx('fr-footer__bottom-link')} href={link.href}>
+                <a
+                  className={fr.cx('fr-footer__bottom-link')}
+                  href={link.href}
+                  {...('external' in link && link.external ? newWindow(link.label) : {})}
+                >
                   {link.label}
                 </a>
               </li>

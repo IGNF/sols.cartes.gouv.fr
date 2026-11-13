@@ -61,7 +61,8 @@ describe('en-tête de chaque page', () => {
       const html = read(path);
       const target =
         html.match(/<meta http-equiv="refresh" content="0; url=([^"]+)">/)?.[1] ?? path;
-      expect(html).toContain(`<link rel="canonical" href="${site.url}${target}">`);
+      const canonical = /^https?:\/\//.test(target) ? target : `${site.url}${target}`;
+      expect(html).toContain(`<link rel="canonical" href="${canonical}">`);
       expect(html).toMatch(/<meta name="description" content="[^"\s][^"]*">/);
     }
   });

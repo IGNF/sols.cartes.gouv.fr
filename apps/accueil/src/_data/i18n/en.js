@@ -1,4 +1,6 @@
 /** English strings. Every prose string is placeholder text, marked "(placeholder text)". */
+import site from '../site.js';
+
 const description =
   'Soil observatory: portal for the GIS Sol (INRAE) soil data served by the Géoplateforme (placeholder text).';
 const footerDescription =
@@ -54,7 +56,8 @@ export default {
     bottomLinks: {
       accessibilite: 'Accessibility: not compliant',
       mentionsLegales: 'Legal notice',
-      donneesPersonnelles: 'Personal data',
+      [site.external.cgu]: 'Terms of use (in French)',
+      [site.external.donneesPersonnelles]: 'Personal data (in French)',
       planDuSite: 'Site map',
     },
     licence: {
@@ -80,6 +83,13 @@ export default {
   articles: { published: 'Published on' },
   reroute: {
     link: 'English version',
+  },
+  moved: {
+    title: 'sols.cartes.gouv.fr: page moved',
+    description: 'This page is now available on cartes.gouv.fr (in French).',
+    heading: 'Page moved',
+    intro: 'This page is shared with cartes.gouv.fr: you are being redirected there.',
+    link: 'Read the page on cartes.gouv.fr (in French)',
   },
   pages: {
     aide: {
@@ -115,11 +125,6 @@ export default {
       title: 'Legal notice',
       description: 'Legal notice of sols.cartes.gouv.fr (placeholder text).',
       body: 'The legal notice (publisher, publication director, hosting) will be published here (placeholder text).',
-    },
-    donneesPersonnelles: {
-      title: 'Personal data',
-      description: 'Personal data policy of sols.cartes.gouv.fr (placeholder text).',
-      body: 'Information about personal data processing and cookies will be published here (placeholder text).',
     },
     planDuSite: {
       title: 'Site map',
