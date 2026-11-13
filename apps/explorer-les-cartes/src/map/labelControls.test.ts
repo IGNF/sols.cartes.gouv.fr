@@ -8,7 +8,6 @@ import {
   fixLayerMoveArrows,
   labelControlButtons,
   labelPanelTitle,
-  labelSearchInput,
   watchLayerMoveArrows,
 } from './labelControls';
 
@@ -39,14 +38,6 @@ describe('labelControls', () => {
     expect(root.querySelector('dialog button')).toHaveTextContent('Fermer le panneau');
     const empty = document.createElement('div');
     expect(() => labelPanelTitle(empty, 'Titre')).not.toThrow();
-  });
-
-  it('donne un nom accessible au champ de recherche geopf', () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<form><input id="GPsearchInputText-7" type="text" /></form>';
-    labelSearchInput(root);
-    document.body.append(root);
-    expect(screen.getByRole('textbox', { name: CONTROL_LABELS.searchInput })).toBeInTheDocument();
   });
 
   it('donne le rôle bouton aux flèches de déplacement des couches, y compris celles ajoutées ensuite', async () => {

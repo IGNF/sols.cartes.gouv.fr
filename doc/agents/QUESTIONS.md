@@ -212,3 +212,22 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
   « Menu » du DSFR sous 62em (en-tête plus haut sur mobile).
 - Défaut appliqué : (a). En-tête de 56 px de 320 à 1280 px ; titre en 1rem sous 36em, tronqué par une ellipse seulement
   sous ~360 px. La question M-5 (contraste du bouton « Menu ») ne concerne plus la carto, qui n'a plus ce bouton.
+
+## M-7. Formulaires de la recherche « Avancée » et barre de recherche sur mobile (carto-dev, M19)
+
+- Constat : la géolocalisation est désormais sous le bouton « Avancée » du moteur de recherche, comme sur
+  cartes.gouv.fr/explorer-les-cartes et guichet-collaboratif (contrôle geopf `SearchEngineAdvanced` : « Me géolocaliser »
+  en tête du panneau). Ce bouton n'existe que s'il y a au moins un formulaire avancé. cartes.gouv.fr en a quatre (« Code
+  INSEE », « Lieux et toponymes », « Coordonnées », « Parcelles cadastrales ») ; guichet-collaboratif n'a que
+  « Coordonnées », selon la communauté. « Code INSEE », « Lieux et toponymes » et « Parcelles cadastrales » appellent
+  `https://geo.api.gouv.fr/communes` (et `https://apicarto.ign.fr/api/codes-postaux/communes/` pour les lieux), adresses
+  écrites en dur dans geopf-extensions 1.0.0-beta.16, hors Géoplateforme ; « Coordonnées » n'appelle aucun service.
+- Options : (a) « Coordonnées » seul (comme guichet-collaboratif, services GPF uniquement) ; (b) les quatre formulaires
+  de cartes.gouv.fr, en acceptant ces deux API de l'État hors GPF ; (c) « Coordonnées » et « Code INSEE ».
+- Défaut appliqué : (a). Passer à (b) ou (c) = ajouter les classes dans `loadSearchEngine()` et `createSearchEngine()`.
+- Sous 36em (mobile), la barre reste entre les deux colonnes de boutons et « Avancée » n'affiche que son chevron (nom
+  accessible « Recherche avancée ») ; cartes.gouv.fr y donne toute la largeur à la barre, par-dessus
+  les colonnes. À trancher si le libellé « Avancée » doit rester visible sur mobile (il faudrait alors déplacer les
+  colonnes sous la barre, comme guichet-collaboratif).
+- Échelle : sur cartes.gouv.fr le fond est opaque (`--background-default-grey`), le texte et le trait gris en thème clair
+  et bleu France en sombre ; elle était bleue dans les deux thèmes depuis M13 (brief v1.1). Alignée sur cartes.gouv.fr.
