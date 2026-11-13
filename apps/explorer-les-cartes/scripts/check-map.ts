@@ -65,6 +65,16 @@ const UPSTREAM_WARNINGS = [
 ];
 
 /**
+ * Warning Chrome writes once per page when OpenLayers 10.11 benchmarks canvas reads (`benchmarkCanvasReads` in
+ * `render/canvas/ExecutorGroup.js`, contexts without `willReadFrequently` on purpose) on the first hit detection of
+ * a vector layer. Since M19 the search engine's `Select` interaction (SearchEngineAdvanced, as on cartes.gouv.fr,
+ * which logs it too) does one on the first map click: known upstream noise, counted in the notes.
+ */
+const OL_CANVAS_BENCHMARK_WARNING =
+  'Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true.';
+const isOlCanvasBenchmark = (message: string) => message.startsWith(OL_CANVAS_BENCHMARK_WARNING);
+
+/**
  * GPF requests the geopf controls send on their own and the service refuses (HTTP 4xx logged by the
  * browser as "Failed to load resource"): the Route/Isocurve forms call the geocoding completion with a
  * blank or numeric text (`geocodage/completion?text=73%20`, 400). Only those (text shorter than three
@@ -98,10 +108,14 @@ function watchConsole(page: import('playwright').Page) {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
     const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
     const upstream = messages.filter((m) => UPSTREAM_WARNINGS.includes(m)).length;
+    const canvasBenchmark = messages.filter(isOlCanvasBenchmark).length;
     const unexplained = messages.filter(
-      (m) => !m.startsWith('Failed to load resource') && !UPSTREAM_WARNINGS.includes(m),
+      (m) =>
+        !m.startsWith('Failed to load resource') &&
+        !UPSTREAM_WARNINGS.includes(m) &&
+        !isOlCanvasBenchmark(m),
     );
-    const loadErrors = messages.length - unexplained.length - upstream;
+    const loadErrors = messages.length - unexplained.length - upstream - canvasBenchmark;
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
     const explainedByTiles = failed.length > 0 && withinTolerance;
     const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
@@ -117,6 +131,9 @@ function watchConsole(page: import('playwright').Page) {
           ]
         : []),
       ...(upstream ? [`${upstream} avertissement(s) amont geopf-ext (niveaux de gris)`] : []),
+      ...(canvasBenchmark
+        ? [`${canvasBenchmark} avertissement(s) de la mesure du canevas d’OpenLayers (amont)`]
+        : []),
       ...(upstreamRequests
         ? [`${upstreamRequests} requête(s) de complétion refusée(s) par la GPF (amont)`]
         : []),
