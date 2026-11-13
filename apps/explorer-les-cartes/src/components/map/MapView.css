@@ -1,7 +1,14 @@
+/*
+ * Below the DSFR md breakpoint the map fills the viewport under the compact header (3.5rem, SiteHeader.css), the
+ * footer follows when the page scrolls (M22: was 70dvh). As the references: the entrée carto's map takes the whole
+ * screen under its header on mobile (`Main.vue`, grid row `1fr`, no footer below LG) and guichet-collaboratif's is
+ * `calc(100vh - 6rem)` (`map-view.css`, header and footer). With the lowered top columns (below), 70dvh left the
+ * right-hand top and bottom columns overlapping on common phone heights.
+ */
 .map-view {
   position: relative;
   width: 100%;
-  height: 70dvh;
+  height: calc(100dvh - 3.5rem);
   min-height: 20rem;
   background-color: var(--background-alt-grey);
   /* Size container: the panels bound their height on the map (100cqh), whatever gives it its height. */
@@ -58,18 +65,50 @@
 }
 
 /*
- * Below the DSFR sm breakpoint the bar sits between the two button columns (208px at 320px): « Avancée » keeps
- * only its chevron, else the input has no room left. Its accessible name (« Recherche avancée »,
- * src/hooks/useMapControls.ts) and `title` stay; cartes.gouv.fr gives the bar the full width there instead, over
- * the button columns (doc/agents/QUESTIONS.md M-7).
+ * Below the DSFR sm breakpoint (M22, owner's answer to QUESTIONS M-7) the search bar takes the full width of the
+ * map with its « Avancée » label visible, and the two top button columns start under it, as guichet-collaboratif
+ * (`src/css/map-view.css`: full-width `GPsearchEngine` under 36rem, `.position-container-top-right { top: 4rem }`)
+ * and cartes.gouv.fr (`Controls.vue`/`SearchEngine.vue` of the entrée carto: bar at 8px, columns from 64px).
+ * Portrait only: in landscape (568×320) the map is at its 20rem floor, lowering the columns would only cost them
+ * room, and the bar fits between them with its label (QUESTIONS M-9 for the columns of short landscape screens).
+ * Bar: 1w from the map edges; geopf pads the widget by 5px (pulled back by a -5px margin) and offsets the inner
+ * bar by 5px more: inner offset removed, widget widened by its two paddings. Columns: bar (1w + 6w) + 1w.
  */
-@media (max-width: 35.99em) {
-  .map-view [id^='GPsearchEngine-Advanced-'] .GPSearchEngine-advanced-btn {
-    font-size: 0;
+@media (max-width: 35.99em) and (orientation: portrait) {
+  .map-view [id^='GPsearchEngine-Advanced-'] {
+    left: 0.5rem;
+    width: calc(100% - 1rem + 10px);
   }
 
-  .map-view [id^='GPsearchEngine-Advanced-'] .GPSearchEngine-advanced-btn::after {
-    margin-left: 0;
+  .map-view [id^='GPsearchEngine-Advanced-'] > [id^='GPsearchEngine-'] {
+    margin: 0;
+  }
+
+  .map-view #position-container-top-left,
+  .map-view #position-container-top-right {
+    top: 4rem;
+    height: calc(100% - 4rem - 4px);
+  }
+
+  /*
+   * Tool panels shown full screen on mobile by geopf (`.gpf-mobile-fullscreen`) are placed against their column
+   * (`top: -4px !important`, DSFRgeneralWidget.css): back to the top of the map from the lowered columns, as
+   * tall as the map.
+   */
+  .map-view
+    #position-container-top-left
+    .gpf-mobile-fullscreen
+    > button[aria-pressed='true']
+    ~ dialog,
+  .map-view
+    #position-container-top-right
+    .gpf-mobile-fullscreen
+    > button[aria-pressed='true']
+    ~ dialog {
+    top: -4rem !important;
+    /* geopf sizes them on their (now shorter) column (`max-height: 100%`): the map height instead (size container). */
+    height: 100cqh !important;
+    max-height: 100cqh !important;
   }
 }
 

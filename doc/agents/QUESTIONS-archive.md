@@ -141,6 +141,9 @@ Entrées de [`QUESTIONS.md`](QUESTIONS.md) auxquelles le propriétaire a répond
 - Suite (orchestrateur) : « Coordonnées » seul conservé (option a, déjà en place) ; sur mobile, le libellé « Avancée »
   reste visible et les colonnes de boutons passent sous la barre, comme guichet-collaboratif (tâche carto M22) ;
   échelle validée.
+- Suite M22 (carto-dev) : sous 36em, la barre de recherche prend la largeur de la carte avec le libellé « Avancée »
+  visible et les colonnes de boutons du haut commencent sous la barre (guichet-collaboratif, cartes.gouv.fr) ;
+  `doc/agents/geopf-ext.md` §17.
 
 ## M-8. Tuiles raster qui disparaissent : confirmation en usage réel (carto-dev, M20)
 
