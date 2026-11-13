@@ -10,9 +10,16 @@ vi.mock('geopf-extensions-openlayers/src/packages/Controls/Zoom/GeoportalZoom', 
 vi.mock('geopf-extensions-openlayers/src/packages/Controls/LayerSwitcher/LayerSwitcher', () => ({
   default: function ControlStub() {},
 }));
-vi.mock('geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngine', () => ({
-  default: function SearchEngineStub() {},
-}));
+vi.mock(
+  'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/SearchEngineAdvanced',
+  () => ({
+    default: function SearchEngineAdvancedStub() {},
+  }),
+);
+vi.mock(
+  'geopf-extensions-openlayers/src/packages/Controls/SearchEngine/CoordinateAdvancedSearch',
+  () => ({ default: function CoordinateAdvancedSearchStub() {} }),
+);
 vi.mock('geopf-extensions-openlayers/src/packages/CRS/CRS', () => ({ default: { loadByName } }));
 vi.mock('geopf-extensions-openlayers/src/packages/Controls/Legends/Legends', () => ({
   default: function LegendsStub() {},
@@ -70,9 +77,11 @@ vi.mock('geopf-extensions-openlayers/src/packages/Controls/Territories/Territori
 }));
 
 describe('geopf (point d’entrée unique)', () => {
-  it('charge le moteur de recherche à la demande', async () => {
+  it('charge à la demande le moteur de recherche avancée et le formulaire de coordonnées', async () => {
     const { loadSearchEngine } = await import('./geopf');
-    expect((await loadSearchEngine()).name).toBe('SearchEngineStub');
+    const search = await loadSearchEngine();
+    expect(search.SearchEngineAdvanced.name).toBe('SearchEngineAdvancedStub');
+    expect(search.CoordinateAdvancedSearch.name).toBe('CoordinateAdvancedSearchStub');
   });
 
   it('charge le jeu d’outils à la demande, avec la liste intégrée des territoires', async () => {
