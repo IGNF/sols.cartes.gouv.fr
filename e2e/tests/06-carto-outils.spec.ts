@@ -186,9 +186,8 @@ test.describe('Carto : outils geopf, impression', () => {
 });
 
 test.describe('Carto : en-tête', () => {
-  test('le chevron du menu « Services » se retourne à l’ouverture', async ({ page, isMobile }) => {
+  test('le chevron du menu « Services » se retourne à l’ouverture', async ({ page }) => {
     await openMap(page);
-    if (isMobile) await page.locator('header .fr-btn--menu').click();
     await waitForDsfr(page);
     const button = page
       .locator('header')

@@ -325,7 +325,11 @@ test.describe('Carto', () => {
 
   test('le bloc marque de l’en-tête est entièrement cliquable (vers /)', async ({ page }) => {
     await openMap(page);
-    for (const sel of ['.fr-header__logo', '.fr-header__operator', '.fr-header__service']) {
+    const width = page.viewportSize()?.width ?? 1280;
+    // L'opérateur (Marianne) est masqué sous 36em (576 px) dans l'en-tête compact.
+    const blocs = ['.fr-header__logo', '.fr-header__service'];
+    if (width >= 576) blocs.splice(1, 0, '.fr-header__operator');
+    for (const sel of blocs) {
       const href = await page
         .locator(sel)
         .first()
@@ -349,12 +353,11 @@ test.describe('Carto', () => {
     await page.waitForURL(/\/rechercher-une-donnee\//, { waitUntil: 'commit' });
   });
 
-  test('Échap ferme seulement le sous-menu « Services » (mobile compris)', async ({
+  test('Échap ferme le sous-menu « Services » et rend le focus (mobile compris)', async ({
     page,
-    isMobile,
   }) => {
     await openMap(page);
-    if (isMobile) await page.locator('header .fr-btn--menu').click();
+    await expect(page.locator('header .fr-btn--menu')).toHaveCount(0);
     const button = page
       .locator('header')
       .getByRole('button', { name: 'Services' })
@@ -366,9 +369,6 @@ test.describe('Carto', () => {
     await page.keyboard.press('Escape');
     await expect(button).toHaveAttribute('aria-expanded', 'false');
     await expect(button).toBeFocused();
-    // Le menu burger reste ouvert : seul le sous-menu s'est fermé.
-    if (isMobile)
-      await expect(page.locator('header .fr-header__menu')).toHaveClass(/fr-modal--opened/);
   });
 
   // D-carto-1 : la carte s'affichait parfois sans canvas ni fond Plan IGN (aucune erreur réseau). Depuis M6
