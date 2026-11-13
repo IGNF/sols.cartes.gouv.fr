@@ -140,6 +140,8 @@ export default function SiteFooter() {
                     'fr-btn--icon-left',
                   )
             } compact-footer__toggle`}
+            // Icon only while collapsed between 62em and 75em (SiteFooter.css, M21): the label as a tooltip.
+            title={expanded ? FOOTER_LABELS.collapse : FOOTER_LABELS.expand}
             aria-expanded={expanded}
             aria-controls={FOOTER_ID}
             onClick={toggle}

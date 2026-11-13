@@ -1,3 +1,4 @@
+import TileState from 'ol/TileState';
 import { renderHook } from '@testing-library/react';
 import type OlMap from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
@@ -64,7 +65,7 @@ describe('useBaseLayer', () => {
     };
     const source = layer.getSource();
     const fail = (key: string) => {
-      const tile = { load: vi.fn(), getKey: () => key };
+      const tile = { load: vi.fn(), getKey: () => key, getState: () => TileState.ERROR };
       source.dispatchEvent(Object.assign(new BaseEvent('tileloaderror'), { tile }));
       return tile;
     };
