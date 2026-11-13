@@ -991,3 +991,57 @@ Une rangée sans débordement de 320 à 1280 px ; titre tronqué (ellipse) seule
 carte collée sous l'en-tête avec son canevas, « Aide » et « Services » visibles, panneau dans l'écran et au-dessus de la
 carte, Échap ferme et rend le focus, clic sur la Marianne → `/`, console vide ; « Paramètres d'affichage » ouvre la
 modale et passe en sombre ; axe sans violation grave « Services » ouvert (375 sombre, 1280 clair et sombre).
+
+## 14. Tuiles raster qui disparaissent (M20)
+
+Signalement du propriétaire : des couches raster (Plan IGN par exemple) disparaissent, « surtout entre les échelles 10 km et
+5 km » ; les requêtes de tuiles semblent correctes dans l'onglet Réseau, mais rien ne s'affiche avant un nouveau changement de
+zoom.
+
+### 14.1 Cause
+
+- `attachTileRetry` (`src/map/tileRetry.ts`, depuis `af61b68`, 2026-11-05, bien avant l'en-tête compact #96) recharge une fois
+  une tuile en erreur (`tile.load()`, hors de la file de tuiles de la carte), puis, quand ce nouvel essai aboutit, appelait
+  `source.changed()` pour faire redessiner la carte.
+- OpenLayers 10.11 : `CanvasTileLayerRenderer.prepareFrame` vide **tout** son cache de tuiles (`tileCache_.clear()`, et
+  `sourceTileCache_`) dès que `source.getRevision()` change, ce que fait `changed()`. Les tuiles de la vue sont alors recréées
+  (même URL, servies par le cache du navigateur : réponses `cache-control: private, max-age=1814400`), la tuile réessayée se
+  recharge, `tileloadend` retrouve sa clé dans `retried` et rappelle `changed()`… **boucle sans fin** : la couche reste vide
+  (aucune tuile ne reste chargée assez longtemps pour être dessinée) jusqu'à ce qu'un changement de zoom sorte la tuile de la vue.
+  Les requêtes, servies par le cache, paraissent normales dans l'onglet Réseau.
+- Il faut une erreur **transitoire** (400, 502, 503 de la GPF, M-2) suivie d'un succès au nouvel essai ; une 404 permanente
+  (tuile absente, fréquente aux bords) échoue deux fois et n'entre pas dans la boucle.
+- Échelle 10–5 km de la barre d'échelle (`ScaleLine`, `minWidth: 80`, pas 1-2-5) entre 46,6° N et 48,85° N : 10 km de
+  z≈9,7 à z≈10,7, 5 km de z≈10,7 à z≈12,1 ; le rendu y utilise les tuiles z10 à z12. Rien dans le code ne dépend du niveau : la fourchette
+  correspond sans doute à l'endroit où l'on navigue (et où la GPF répond le plus souvent en erreur transitoire), non vérifié.
+
+### 14.2 Mesures (aperçu local, Chromium sans interface, carte exposée sur `window` dans un build local non commité)
+
+- Une 502 forcée (`page.route`) sur une seule tuile Plan IGN z11, vue fixe à z 10,6 : en 6 s de vue immobile, 367
+  changements de révision de la source, ~5 900 chargements de tuiles (la même tuile chargée 691 fois), canevas 100 % vide sur
+  24 relevés ; zoom +1 : la boucle s'arrête, canevas plein. Sans erreur forcée : 0 révision, 0 chargement, 0 % vide.
+- Même boucle, 502 forcée sur une tuile : photographies aériennes (fond, ~4 800 chargements en 5 s), `INRAE_CARTE-SOLS` en WMTS
+  (surcouche, ~9 500), `stock_carbone_fao_fr_wmsv` en WMS (surcouche, ~4 800).
+- Même résultat sur le code d'avant l'en-tête compact (#96, `074be8c`) : 366 révisions en 6 s, canevas 100 % vide ; l'en-tête
+  n'y est pour rien (`tileRetry.ts` identique).
+- Le départ de la boucle dépend du moment : erreur sur la toute première tuile chargée (vue donnée par l'URL), boucle 2 fois
+  sur 4 ; erreur après un changement de zoom (le cas d'usage), boucle à chaque fois (9/9).
+- Navigation réelle sans erreur forcée : 24 sessions (molette et déplacements, z 9,6 à 13,8, 1920×1080) puis 30 vues fixes
+  de 12 s (z 10,2 à 12,1) : **aucune boucle**. La GPF a bien renvoyé des erreurs (400, 502 de z9 à z14, 404 nombreuses aux
+  forts zooms), mais aucune erreur transitoire n'a réussi au nouvel essai 500 ms plus tard ; une 404 de la GPF porte aussi
+  `cache-control: private, max-age=1814400` (`text/xml`). La boucle n'a donc pas été reproduite sans injection ; question M-8.
+
+### 14.3 Correctif
+
+- `attachTileRetry(source, delayMs, requestRender)` ne touche plus jamais à la révision de la source : quand le **seul**
+  chargement relancé par le helper se termine (suivi par objet tuile, `reloading`), il appelle `requestRender`, soit
+  `map.render()` (`useBaseLayer`, `useOverlays`). Les chargements suivants de la même URL ne redemandent rien. Le nouvel essai
+  après 500 ms est conservé (rapidité), le cache de tuiles aussi.
+- Test unitaire avec une vraie source `XYZ` : la révision ne change pas pendant un nouvel essai réussi (échouait avec l'ancien
+  code).
+- `check:map` (bloc M20, isolé en fin de fichier) : carte chargée à z 9,6, puis « Zoomer » (z 10,6) avec une 502 forcée sur la
+  première nouvelle tuile Plan IGN (fond), puis sur la première image WMS sols (surcouche) ; la tuile est redemandée une fois et
+  chargée, puis **aucun** chargement de tuile en 3 s de vue immobile (compté par les URL données à `HTMLImageElement.src`, cache
+  du navigateur compris) et, pour Plan IGN, canevas non vide. Sur `main` avant correctif : 3 exécutions sur 3 en échec (la tuile
+  ~600 fois chargée depuis le cache pour 2 requêtes réseau, ~2 900 chargements en 3 s, canevas vide à 100 %) ; après : 3 sur 3
+  réussies (2 chargements, 0, 0 %).
