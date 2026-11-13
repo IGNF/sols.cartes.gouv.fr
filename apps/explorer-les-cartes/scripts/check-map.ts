@@ -1917,6 +1917,7 @@ for (const width of [320, 375, 768, 1280]) {
     await dialog.getByText('Thème sombre').click();
     const theme = await page.evaluate(() => document.documentElement.getAttribute('data-fr-theme'));
     await dialog.getByRole('button', { name: 'Fermer' }).click();
+    await dialog.waitFor({ state: 'hidden' });
     check(
       theme === 'dark',
       `M17 : « Paramètres d’affichage » ouvre la modale montée par l’en-tête et passe en sombre (${theme})`,
