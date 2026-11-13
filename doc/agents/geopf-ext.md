@@ -1087,3 +1087,9 @@ trait de l'échelle = jetons ci-dessus, contraste ≥ 4,5:1. Captures `doc/scree
 | « Avancée » | `getByRole('button', { name: 'Recherche avancée' })` (`CONTROL_LABELS.advancedSearch`), `aria-expanded` ; panneau `.GPAdvancedContainer` |
 | Géolocalisation | `.GPAdvancedContainer > .GPSearchEngine-locate` (« Me géolocaliser », premier enfant) ; celui des suggestions `.GPautoCompleteHeader .GPSearchEngine-locate` ; repère : `.GPSearchPopup .GPPopupContent` « Ma localisation » |
 | Supprimé | `[id^="GPshowGeolocate-"]` (« Activer la géolocalisation »), `[id^="GPsearchInputReset-"]` |
+
+**Impact sur la suite e2e** (`e2e/`, hors de la brique) : le test « plein écran en bas à droite, échelle à sa gauche en bleu
+action (clair) » de `e2e/tests/03-carto.spec.ts` attend `--text-action-high-blue-france` pour le texte de l'échelle en thème
+clair : il faut désormais `--text-default-grey` en clair (trait `--text-mention-grey`), `--text-action-high-blue-france` en
+sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la recherche ni la géolocalisation (relevé du
+2026-11-13).
