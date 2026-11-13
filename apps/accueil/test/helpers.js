@@ -6,7 +6,13 @@ export const APP_DIR = join(import.meta.dir, '..');
 export const DIST = join(APP_DIR, 'dist');
 export const LOCALES = site.languages.map((language) => language.code);
 export const SHARED_PAGE = '/partage/en-tete-pied-de-page/';
-export const FOOTER_PATHS = site.footer.bottomLinks.map((link) => link.href);
+/** Local pages of the footer bottom links, and the links read on cartes.gouv.fr (#89, #90). */
+export const FOOTER_PATHS = site.footer.bottomLinks
+  .filter((link) => !link.external)
+  .map((link) => link.href);
+export const FOOTER_EXTERNAL = site.footer.bottomLinks.filter((link) => link.external);
+/** Static redirects to pages moved to cartes.gouv.fr (src/moved.njk): outside the sitemap. */
+export const MOVED_PATHS = site.movedPages.map((moved) => moved.path);
 
 /** Builds the site once per test file. */
 export function build() {
@@ -32,7 +38,9 @@ export function allPages() {
 
 /** Localized pages (/fr/..., /en/...). */
 export const localizedPages = () =>
-  allPages().filter((path) => LOCALES.some((code) => path.startsWith(`/${code}/`)));
+  allPages().filter(
+    (path) => LOCALES.some((code) => path.startsWith(`/${code}/`)) && !MOVED_PATHS.includes(path),
+  );
 
 /** Article slugs of a locale, from src/<locale>/articles/*.md. */
 export const articleSlugs = (locale) =>

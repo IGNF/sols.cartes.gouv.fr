@@ -33,6 +33,7 @@ apps/accueil/
   src/fr/, src/en/            pages par langue : gabarits vides (front matter `layout` + `pageKey`) et articles .md
   src/reroute.njk             pages de renvoi sans langue (/, /mentions-legales/, ...) vers /fr/...
   src/partage.njk             /partage/en-tete-pied-de-page/ : référence de l'en-tête et du pied de page partagés
+  src/moved.njk               anciennes pages locales désormais lues sur cartes.gouv.fr (renvoi statique externe)
   src/sitemap.njk, src/robots.njk   /sitemap.xml et /robots.txt
   src/css/site.css            styles propres au site (jetons DSFR uniquement : fond du héros, surtitre)
   scripts/check-links.js      vérificateur de liens internes (module importé par les tests et script CLI)
@@ -58,10 +59,15 @@ apps/accueil/
   clavier automatisés). Elle vient du bundle DSFR, pas du balisage du site, ne bloque pas le menu et n'est pas
   reproductible en usage normal ; à signaler en amont (https://github.com/GouvernementFR/dsfr) si elle réapparaît.
 - Pages de renvoi (`src/reroute.njk`, pagination sur la collection `fr`) : chaque page française a une page à son
-  chemin sans `/fr` (`/`, `/accessibilite/`, `/mentions-legales/`, `/donnees-personnelles/`, `/plan-du-site/`,
+  chemin sans `/fr` (`/`, `/accessibilite/`, `/mentions-legales/`, `/plan-du-site/`,
   `/articles/`, `/articles/<slug>/`) avec `<meta http-equiv="refresh" content="0; url=/fr/...">`, une canonique vers
   la page française, `lang="fr"`, et les liens visibles « Version française » / « English version ». Pas de JS. Elles
   sont exclues du sitemap.
+- Pages déplacées (`src/moved.njk`, pagination sur `site.movedPages`, #89 et #90) : les conditions générales
+  d'utilisation et les données personnelles sont communes à cartes.gouv.fr ; le pied de page y renvoie par des liens
+  externes (`brand.json` `external: true`, nouvelle fenêtre, `hreflang="fr"` sur une page anglaise). Les anciennes
+  adresses `/donnees-personnelles/`, `/fr/donnees-personnelles/` et `/en/donnees-personnelles/` restent servies : meta
+  refresh vers `brand.external.donneesPersonnelles`, canonique sur la cible, un lien visible, pas de JS, hors sitemap.
 - Liens vers les autres briques (`site.crossBrick` : `/rechercher-une-donnee/`, `/explorer-les-cartes/`) : jamais
   localisés ; sur les pages anglaises ils portent `hreflang="fr"` et un libellé « (in French) ».
 
@@ -119,7 +125,9 @@ provisoire dans `en.js` ; structure (clés, liens, icônes, pictogrammes, illust
 Bandes de couleur : jetons DSFR `--background-alt-blue-france` (héros), `--background-alt-beige-gris-galet` (cas
 d'usage, partenaires), `--background-alt-green-emeraude` (agenda). Non repris : CTA de lancement (G-3), vidéo.
 
-Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Centre d'aide `/<langue>/aide/`
+Pages du pied de page : `layouts/page.njk` (`pageKey` + `body` dans `i18n`). Mentions légales (#88) :
+`layouts/mentions-legales.njk`, une `section` et un `h2` ancré par rubrique de `i18n.pages.mentionsLegales.sections`
+(rédaction reprise de cartes.gouv.fr, points ouverts dans `QUESTIONS.md` E-6), sans JS propre. Centre d'aide `/<langue>/aide/`
 (`layouts/aide.njk`, `i18n.pages.aide`) : introduction, trois accordéons DSFR (FAQ provisoire), section « Nous
 contacter » `#contact` qui renvoie au formulaire « Nous écrire » et au centre d'aide de cartes.gouv.fr (v1.1, E10 ; plus
 d'adresse provisoire). Le menu « Aide » de l'en-tête ne pointe plus vers cette page mais vers cartes.gouv.fr ; elle reste
@@ -467,7 +475,10 @@ Pied de page et modale « Paramètres d'affichage » (juste après le pied de pa
           <a class="fr-footer__bottom-link" href="/mentions-legales/">Mentions légales</a>
         </li>
         <li class="fr-footer__bottom-item">
-          <a class="fr-footer__bottom-link" href="/donnees-personnelles/">Données personnelles</a>
+          <a class="fr-footer__bottom-link" href="https://cartes.gouv.fr/cgu/" target="_blank" rel="noopener external" title="Conditions générales d&#39;utilisation - nouvelle fenêtre">Conditions générales d&#39;utilisation</a>
+        </li>
+        <li class="fr-footer__bottom-item">
+          <a class="fr-footer__bottom-link" href="https://cartes.gouv.fr/donnees-personnelles/" target="_blank" rel="noopener external" title="Données personnelles - nouvelle fenêtre">Données personnelles</a>
         </li>
         <li class="fr-footer__bottom-item">
           <a class="fr-footer__bottom-link" href="/plan-du-site/">Plan du site</a>

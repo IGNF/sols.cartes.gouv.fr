@@ -130,6 +130,7 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
   (`@sols/brand` ou CSS de chaque brique) ; (c) attendre une version du DSFR qui le corrige.
 - Défaut appliqué : (a), aucune surcharge. Le ticket au DSFR est à ouvrir par un humain. `check:map` vérifie qu'il n'y a
   aucune violation au repos et que, au survol, seule celle-ci apparaît.
+- Note (M17, #5) : ne s'applique plus à la carto, dont l'en-tête compact n'a plus de bouton « Menu » (voir M-6) ; reste valable pour l'edito.
 
 ## G-1. « Logged in the web browser » et authentification (v1, orchestrateur)
 
@@ -187,6 +188,16 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : `fixes.md` (v1.1) demande que « Aide » et « Nous contacter » renvoient vers `https://cartes.gouv.fr/aide/<langue>/` et `.../nous-ecrire/`, en liens externes.
 - Défaut appliqué : `brand.json` porte ces liens (`href` en français pour catalogue et carto, `hrefTemplate` avec `{lang}` pour l'edito) ; la page locale `/<langue>/aide/` est conservée (FAQ provisoire, cible des liens « contact » de l'accueil) et sa section « Nous contacter » renvoie au formulaire de cartes.gouv.fr. Cela remplace l'adresse provisoire de E-3. À trancher : supprimer la page locale (et rediriger `/aide/` vers cartes.gouv.fr) si la FAQ ne doit pas être rédigée ici.
 - Note (revue E10) : « Nous contacter » vise toujours `https://cartes.gouv.fr/aide/fr/nous-ecrire/` (le formulaire n'existe qu'en français ; `hreflang="fr"` sur les pages anglaises). `brand.json` garde `sections.helpContact` = `/fr/aide/#contact` (section contact de la page d'aide locale, elle-même renvoyant au formulaire) : à retirer si la page locale est supprimée.
+
+## E-6. Mentions légales : points à compléter par le propriétaire (edito, #88)
+
+- Constat : la page `/fr/mentions-legales/` reprend la structure et la rédaction de <https://cartes.gouv.fr/mentions-legales> (relevé du 2026-11-13), adaptées au nom du site ; rien n'a été inventé et aucun texte provisoire n'est affiché. Retiré : la phrase sur les formulaires d'inscription (pas d'espace connecté ici) et la rubrique « Hébergeur » (voir ci-dessous) ; les encarts « lettre d'information » et « Communauté » de la page d'origine ne font pas partie des mentions.
+- À confirmer ou compléter :
+  1. Éditeur et directeur de la publication : repris de cartes.gouv.fr (IGN, Sébastien Soriano). Le portail étant piloté par INRAE avec le GIS Sol, faut-il un autre éditeur, un co-éditeur ou un responsable éditorial INRAE / GIS Sol ?
+  2. Hébergeur : rubrique absente de la page. cartes.gouv.fr indique OVH SAS (2 rue Kellermann, 59100 Roubaix) ; l'hébergement de sols.cartes.gouv.fr n'est pas connu (le domaine ne résout pas encore). Cette mention est obligatoire : à ajouter dans `apps/accueil/src/_data/i18n/fr.js` (`pages.mentionsLegales.sections`) et `en.js`.
+  3. Propriété intellectuelle : la rédaction héritée attribue à l'IGN la propriété ou le droit d'exploitation des contenus et des « données cartographiques », et soumet toute réutilisation à un accord préalable. Les données sols viennent d'INRAE / GIS Sol et le pied de page annonce la licence etalab-2.0 : rédaction à revoir.
+  4. Données à caractère personnel : « Le destinataire des données est l'IGN » et le droit d'accès sont conservés (formulaire « Nous écrire » de cartes.gouv.fr) ; à confirmer une fois la mesure d'audience du portail décidée (aucune n'est installée à ce jour).
+  5. Version anglaise : traduction de courtoisie de la page française, à relire ou à remplacer par un renvoi à la version française.
 
 ## M-6. En-tête compact de la carto sur petits écrans (carto-dev, M17, #5)
 

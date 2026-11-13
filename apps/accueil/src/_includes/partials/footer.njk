@@ -40,7 +40,11 @@
         {%- for link in site.footer.bottomLinks %}
         {%- set href = link.href | localize(linkLocale) %}
         <li class="fr-footer__bottom-item">
+          {%- if link.external %}
+          <a class="fr-footer__bottom-link" href="{{ href }}"{% if not shared and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ t.footer.bottomLinks[link.key] }} - {{ t.newWindow }}">{{ t.footer.bottomLinks[link.key] }}</a>
+          {%- else %}
           <a class="fr-footer__bottom-link" href="{{ href }}"{% if page.url == href %} aria-current="page"{% endif %}>{{ t.footer.bottomLinks[link.key] }}</a>
+          {%- endif %}
         </li>
         {%- endfor %}
         <li class="fr-footer__bottom-item">

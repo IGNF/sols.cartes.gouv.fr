@@ -14,7 +14,6 @@ const sections = {
   aide: brand.sections.help,
   accessibilite: '/accessibilite/',
   mentionsLegales: '/mentions-legales/',
-  donneesPersonnelles: '/donnees-personnelles/',
   planDuSite: '/plan-du-site/',
   articles: '/articles/',
 };
@@ -23,7 +22,26 @@ const external = {
   gissol: brand.external.gissol,
   geoplateformeData: brand.external.geopf,
   licenceEtalab: brand.footer.licence.href,
+  cgu: brand.external.cgu,
+  donneesPersonnelles: brand.external.donneesPersonnelles,
 };
+
+const languages = [
+  { code: 'fr', label: 'Français', dateLocale: 'fr-FR' },
+  { code: 'en', label: 'English', dateLocale: 'en-GB' },
+];
+
+/**
+ * Former local pages now read on cartes.gouv.fr (#89, #90): their old paths, with and without language,
+ * stay served as static redirects (src/moved.njk) so that existing links do not end on a 404.
+ */
+const MOVED_PATHS = { '/donnees-personnelles/': external.donneesPersonnelles };
+const movedPages = Object.entries(MOVED_PATHS).flatMap(([path, href]) =>
+  ['', ...languages.map(({ code }) => `/${code}`)].map((prefix) => ({
+    path: `${prefix}${path}`,
+    href,
+  })),
+);
 
 /** Public path of the @sols/brand images (copied by eleventy.config.js). */
 const BRAND_ASSETS = '/assets/brand';
@@ -32,16 +50,14 @@ const brandAsset = (path) => `${BRAND_ASSETS}/${path.replace(/^assets\//, '')}`;
 export default {
   url: 'https://sols.cartes.gouv.fr',
   defaultLanguage: 'fr',
-  languages: [
-    { code: 'fr', label: 'Français', dateLocale: 'fr-FR' },
-    { code: 'en', label: 'English', dateLocale: 'en-GB' },
-  ],
+  languages,
   themeColor: '#000091',
   assets: { dsfr: '/dsfr', css: '/css', js: '/js', brand: BRAND_ASSETS },
   sections,
   /** Paths served by the other bricks: never localized, never checked against the edito dist. */
   crossBrick: [sections.rechercherUneDonnee, sections.explorerLesCartes],
   external,
+  movedPages,
   /** Main sections listed by the site map (the header has no main navigation since v1). */
   mainSections: [
     { key: 'accueil', href: sections.accueil },
@@ -88,10 +104,14 @@ export default {
       logo: brandAsset(partner.logo),
     })),
     contentLinks: brand.footer.contentLinks,
-    /** brand.json bottom links; `key` (section name) indexes the English labels in i18n/en.js. */
-    bottomLinks: brand.footer.bottomLinks.map(({ href }) => ({
-      key: Object.keys(sections).find((key) => sections[key] === href),
+    /**
+     * brand.json bottom links; `key` indexes the English labels in i18n/en.js: the section name of a local
+     * page, the href of an external link (pages read on cartes.gouv.fr, in French only).
+     */
+    bottomLinks: brand.footer.bottomLinks.map(({ href, external: isExternal }) => ({
+      key: Object.keys(sections).find((key) => sections[key] === href) ?? href,
       href,
+      external: Boolean(isExternal),
     })),
     licenceHref: external.licenceEtalab,
   },
