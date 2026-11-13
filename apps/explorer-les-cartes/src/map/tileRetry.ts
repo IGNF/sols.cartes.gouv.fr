@@ -15,7 +15,7 @@ import type TileSource from 'ol/source/Tile';
  * since OpenLayers 10 the canvas tile renderer clears its whole tile cache when the source revision
  * changes; the tiles were then created again (same URL, served from the browser cache), the retried one
  * loaded again, called `changed()` again... an endless loop that kept the layer blank until the zoom
- * changed (M20, doc/agents/geopf-ext.md §14). Returns a cleanup function.
+ * changed (M20, doc/agents/geopf-ext.md §15). Returns a cleanup function.
  */
 export default function attachTileRetry(
   source: Pick<TileSource, 'on'>,

@@ -30,6 +30,9 @@
  * M17 (#5): compact header (one 3.5rem row at 320 to 1920 px, « Aide » and « Services » always visible and working,
  * Marianne back to « / », map right under the header, display settings modal, axe with « Services » open).
  * M18: with each menu open, its links stay inside the panel and the viewport, no horizontal page scroll.
+ * M19: search engine of cartes.gouv.fr (SearchEngineAdvanced): « Me géolocaliser » first in the « Avancée » panel,
+ * right under the bar, reached with the keyboard, on top and covering no map button, geolocation marker
+ * (320 to 1280 px, axe with the panel open); scale line with the opaque background and colours of cartes.gouv.fr.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -60,6 +63,16 @@ const UPSTREAM_WARNINGS = [
   'Greyscale only implemented for raster and vector tiles',
   'Grayscale not implemented for layer groups',
 ];
+
+/**
+ * Warning Chrome writes once per page when OpenLayers 10.11 benchmarks canvas reads (`benchmarkCanvasReads` in
+ * `render/canvas/ExecutorGroup.js`, contexts without `willReadFrequently` on purpose) on the first hit detection of
+ * a vector layer. Since M19 the search engine's `Select` interaction (SearchEngineAdvanced, as on cartes.gouv.fr,
+ * which logs it too) does one on the first map click: known upstream noise, counted in the notes.
+ */
+const OL_CANVAS_BENCHMARK_WARNING =
+  'Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to true.';
+const isOlCanvasBenchmark = (message: string) => message.startsWith(OL_CANVAS_BENCHMARK_WARNING);
 
 /**
  * GPF requests the geopf controls send on their own and the service refuses (HTTP 4xx logged by the
@@ -95,10 +108,14 @@ function watchConsole(page: import('playwright').Page) {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
     const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
     const upstream = messages.filter((m) => UPSTREAM_WARNINGS.includes(m)).length;
+    const canvasBenchmark = messages.filter(isOlCanvasBenchmark).length;
     const unexplained = messages.filter(
-      (m) => !m.startsWith('Failed to load resource') && !UPSTREAM_WARNINGS.includes(m),
+      (m) =>
+        !m.startsWith('Failed to load resource') &&
+        !UPSTREAM_WARNINGS.includes(m) &&
+        !isOlCanvasBenchmark(m),
     );
-    const loadErrors = messages.length - unexplained.length - upstream;
+    const loadErrors = messages.length - unexplained.length - upstream - canvasBenchmark;
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
     const explainedByTiles = failed.length > 0 && withinTolerance;
     const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
@@ -114,6 +131,9 @@ function watchConsole(page: import('playwright').Page) {
           ]
         : []),
       ...(upstream ? [`${upstream} avertissement(s) amont geopf-ext (niveaux de gris)`] : []),
+      ...(canvasBenchmark
+        ? [`${canvasBenchmark} avertissement(s) de la mesure du canevas d’OpenLayers (amont)`]
+        : []),
       ...(upstreamRequests
         ? [`${upstreamRequests} requête(s) de complétion refusée(s) par la GPF (amont)`]
         : []),
@@ -130,11 +150,24 @@ const check = (ok: boolean, message: string) => {
   if (!ok) failed = true;
 };
 
+/** WCAG contrast ratio of two opaque computed colours (`rgb(r, g, b)`), used for the scale line text (M19). */
+function contrastRatio(foreground: string, background: string): number {
+  const luminance = (colour: string) => {
+    const [r = 0, g = 0, b = 0] = (colour.match(/[\d.]+/g) ?? []).map(Number).map((c) => {
+      const v = c / 255;
+      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const [a, b] = [luminance(foreground), luminance(background)];
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 for (const width of [375, 768, 1280]) {
   const page = await browser.newPage({ viewport: { width, height: 900 } });
   const consoleReport = watchConsole(page);
   await page.goto(url, { waitUntil: 'load' });
-  await page.locator('[id^="GPsearchEngine-"]').waitFor();
+  await page.locator('[id^="GPsearchEngine-Advanced-"]').waitFor();
 
   const zoomIn = page.locator('#GPzoomIn');
   await zoomIn.scrollIntoViewIfNeeded();
@@ -146,7 +179,9 @@ for (const width of [375, 768, 1280]) {
   check(clickable, `${width}px : le bouton « Zoomer » est cliquable`);
 
   const overlap = await page.evaluate(() => {
-    const search = document.querySelector('[id^="GPsearchEngine-"]')?.getBoundingClientRect();
+    const search = document
+      .querySelector('[id^="GPsearchEngine-Advanced-"]')
+      ?.getBoundingClientRect();
     const zoom = document.querySelector('[id^="GPzoom-"]')?.getBoundingClientRect();
     if (!search || !zoom) return -1;
     const x = Math.max(0, Math.min(search.right, zoom.right) - Math.max(search.left, zoom.left));
@@ -208,7 +243,7 @@ for (const width of [375, 768, 1280]) {
     `${width}px : bouton « ${CONTROL_LABELS.rotate} » nommé (masqué tant que la carte n'est pas tournée)`,
   );
   check(
-    (await page.getByRole('textbox', { name: CONTROL_LABELS.searchInput }).count()) === 1,
+    (await page.getByRole('combobox', { name: CONTROL_LABELS.searchInput }).count()) === 1,
     `${width}px : champ « ${CONTROL_LABELS.searchInput} » nommé`,
   );
   const { messages, notes } = consoleReport();
@@ -606,24 +641,42 @@ for (const scheme of ['light', 'dark'] as const) {
       probe.remove();
       return value;
     };
+    const line = document.querySelector('.ol-scale-line');
     const scale = document.querySelector('.ol-scale-line-inner');
     return {
       theme: document.documentElement.getAttribute('data-fr-theme'),
       token: resolve('--background-default-grey'),
       zoom: background('#GPzoomIn'),
       fullScreen: background('[id^="GPfullScreen-"] button'),
-      action: resolve('--text-action-high-blue-france'),
+      // M19: colours of the cartes.gouv.fr scale line (entrée carto `ScaleLine.vue`), see doc/agents/geopf-ext.md §14.
+      text: resolve(
+        document.documentElement.getAttribute('data-fr-theme') === 'dark'
+          ? '--text-action-high-blue-france'
+          : '--text-default-grey',
+      ),
+      bar: resolve(
+        document.documentElement.getAttribute('data-fr-theme') === 'dark'
+          ? '--text-action-high-blue-france'
+          : '--text-mention-grey',
+      ),
+      scaleBackground: line ? getComputedStyle(line).backgroundColor : null,
       scaleColor: scale ? getComputedStyle(scale).color : null,
       scaleBorder: scale ? getComputedStyle(scale).borderBottomColor : null,
     };
   });
+  const ratio =
+    colours.scaleColor && colours.scaleBackground
+      ? contrastRatio(colours.scaleColor, colours.scaleBackground)
+      : 0;
   check(
     colours.theme === scheme &&
       colours.zoom === colours.token &&
       colours.fullScreen === colours.token &&
-      colours.scaleColor === colours.action &&
-      colours.scaleBorder === colours.action,
-    `thème ${scheme} : zoom et plein écran sur le fond DSFR, échelle en bleu France action (${colours.action} ; échelle ${colours.scaleColor})`,
+      colours.scaleBackground === colours.token &&
+      colours.scaleColor === colours.text &&
+      colours.scaleBorder === colours.bar &&
+      ratio >= 4.5,
+    `thème ${scheme} : zoom et plein écran sur le fond DSFR ; échelle comme cartes.gouv.fr, fond opaque ${colours.scaleBackground}, texte ${colours.scaleColor}, trait ${colours.scaleBorder}, contraste ${ratio.toFixed(2)}:1`,
   );
   await context.close();
 }
@@ -2006,10 +2059,146 @@ for (const [width, scheme] of [
   await context.close();
 }
 
+// M19: search engine of cartes.gouv.fr and guichet-collaboratif (SearchEngineAdvanced). The geolocation button is
+// no longer beside the bar: « Me géolocaliser » is the first entry of the « Avancée » panel, right under the bar,
+// and the suggestions header when the input has the focus. Keyboard: input, « Me géolocaliser » (suggestions),
+// « Avancée », Enter focuses « Me géolocaliser » in the panel, Enter shows the « Ma localisation » marker (position
+// granted and mocked). The bar and its open panel cover no map button, at 320 to 1280 px; console clean.
+const GEOLOCATE = 'Me géolocaliser';
+const ADVANCED = CONTROL_LABELS.advancedSearch;
+for (const width of [320, 375, 768, 1280]) {
+  const context = await browser.newContext({
+    viewport: { width, height: 800 },
+    permissions: ['geolocation'],
+    geolocation: { latitude: 47.9025, longitude: 1.909 },
+  });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  const search = page.locator('[id^="GPsearchEngine-Advanced-"]');
+  const input = search.getByRole('combobox', { name: CONTROL_LABELS.searchInput });
+  await input.waitFor({ timeout: 20_000 });
+  await page.locator('#position-container-top-right button').first().waitFor({ timeout: 20_000 });
+  await page.waitForTimeout(500);
+  const visibleGeolocate = () =>
+    page.getByRole('button', { name: GEOLOCATE, exact: true }).filter({ visible: true }).count();
+  const idle = await page.evaluate(() => ({
+    oldButton: document.querySelector('[id^="GPshowGeolocate-"]') !== null,
+    advancedInBar: document.querySelector('form.GPSearchBar .GPSearchEngine-advanced-btn') !== null,
+  }));
+  const idleVisible = await visibleGeolocate();
+  const active = () =>
+    page.evaluate(() => {
+      const element = document.activeElement;
+      return {
+        text: element?.textContent?.trim() ?? '',
+        label: element?.getAttribute('aria-label') ?? '',
+        zone: element?.parentElement?.className ?? '',
+      };
+    });
+  await input.focus();
+  await page.keyboard.press('Tab');
+  const afterInput = await active();
+  await page.keyboard.press('Tab');
+  const afterGeolocate = await active();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const inPanel = await active();
+  const layout = await page.evaluate(() => {
+    const bar = document.querySelector('form.GPSearchBar')?.getBoundingClientRect();
+    const panel = document.querySelector('.GPAdvancedContainer');
+    const button = panel?.firstElementChild;
+    const box = button?.getBoundingClientRect();
+    const map = document.querySelector('.map-view')?.getBoundingClientRect();
+    if (!bar || !panel || !button || !box || !map) return null;
+    const panelBox = panel.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+    const overlaps = (a: DOMRect, b: DOMRect) =>
+      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+    // Visible buttons only: closed geopf panels keep their « Fermer » button laid out, `visibility: hidden`.
+    const covered = Array.from(
+      document.querySelectorAll('.map-view [id^="position-container-"] button'),
+    )
+      .filter((b) => b.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
+      .map((b) => b.getBoundingClientRect())
+      .filter((b) => b.width > 0 && (overlaps(b, bar) || overlaps(b, panelBox))).length;
+    return {
+      first: button.classList.contains('GPSearchEngine-locate'),
+      gapUnderBar: Math.round(box.top - bar.bottom),
+      leftInPanel: Math.round(box.left - panelBox.left),
+      panelUnderBar: Math.round(panelBox.top - bar.bottom),
+      onTop: hit === button,
+      inMap: panelBox.left >= map.left && panelBox.right <= map.right && bar.top >= map.top,
+      covered,
+      input: Math.round(
+        document.querySelector('form.GPSearchBar input')?.getBoundingClientRect().width ?? 0,
+      ),
+    };
+  });
+  check(
+    !idle.oldButton &&
+      idle.advancedInBar &&
+      idleVisible === 0 &&
+      afterInput.text === GEOLOCATE &&
+      afterInput.zone.includes('GPautoCompleteHeader') &&
+      afterGeolocate.label === ADVANCED &&
+      inPanel.text === GEOLOCATE &&
+      inPanel.zone.includes('GPAdvancedContainer') &&
+      (await page.locator('.GPSearchEngine-advanced-btn').getAttribute('aria-expanded')) === 'true',
+    `M19 ${width}px : géolocalisation sous « Avancée » (plus de bouton à côté de la barre), au clavier : champ, « ${GEOLOCATE} » (suggestions), « Avancée », Entrée → « ${GEOLOCATE} » du panneau (${JSON.stringify({ idle, idleVisible, afterInput, afterGeolocate, inPanel })})`,
+  );
+  check(
+    layout !== null &&
+      layout.first &&
+      layout.panelUnderBar >= 0 &&
+      layout.panelUnderBar <= 2 &&
+      layout.gapUnderBar >= 0 &&
+      layout.gapUnderBar <= 16 &&
+      layout.leftInPanel >= 0 &&
+      layout.leftInPanel <= 16 &&
+      layout.onTop &&
+      layout.inMap &&
+      layout.covered === 0 &&
+      layout.input >= 96,
+    `M19 ${width}px : « ${GEOLOCATE} » en tête du panneau, juste sous la barre, au premier plan, aucun bouton de la carte recouvert, champ utilisable (${JSON.stringify(layout)})`,
+  );
+  await page.keyboard.press('Enter');
+  const popup = page.locator('.GPSearchPopup .GPPopupContent');
+  const marker = await popup
+    .filter({ hasText: 'Ma localisation' })
+    .waitFor({ state: 'visible', timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  check(marker, `M19 ${width}px : Entrée sur « ${GEOLOCATE} » pose le repère « Ma localisation »`);
+  if (width === 375 || width === 1280) {
+    await page.getByRole('button', { name: ADVANCED }).click();
+    await page.getByRole('button', { name: ADVANCED }).click();
+    await page.mouse.move(width / 2, 700);
+    await page.waitForTimeout(300);
+    const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+      (v) => v.impact === 'serious' || v.impact === 'critical',
+    );
+    check(
+      violations.length === 0,
+      `M19 a11y ${width}px, panneau « Avancée » ouvert : axe sans violation grave${
+        violations.length
+          ? ` : ${violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`).join(' | ')}`
+          : ''
+      }`,
+    );
+  }
+  const report = consoleReport();
+  check(
+    report.messages.length === 0,
+    `M19 ${width}px : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
+  );
+  await context.close();
+}
+
 // M20: a tile that fails once (GPF 400/502/503, M-2) and loads on its retry must not blank its layer. Until M20 the
 // retry called `source.changed()`: OpenLayers 10 clears the layer's tile cache on every source revision, the
 // tiles were created again (same URLs, browser cache), the retried one loaded again and called `changed()` again,
-// an endless loop that kept the layer blank until the zoom changed (doc/agents/geopf-ext.md §14). Measured with
+// an endless loop that kept the layer blank until the zoom changed (doc/agents/geopf-ext.md §15). Measured with
 // no app internals: an init script counts the tile URLs given to `HTMLImageElement.src` (OpenLayers' default
 // tile load function), loads from the browser cache included. The map is loaded at z 9.6 first, then « Zoomer »
 // takes it to z 10.6 (scale bar 5–10 km, the range of the owner's report) with the first new tile of the layer

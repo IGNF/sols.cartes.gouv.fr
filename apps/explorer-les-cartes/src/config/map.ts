@@ -11,6 +11,7 @@ import type { Options as ZoomOptions } from 'ol/control/Zoom';
 import type {
   CatalogOptions,
   ControlListOptions,
+  CoordinateAdvancedSearchOptions,
   DrawingOptions,
   ElevationPathOptions,
   GetFeatureInfoOptions,
@@ -24,7 +25,7 @@ import type {
   MousePositionOptions,
   ReverseGeocodeOptions,
   RouteOptions,
-  SearchEngineOptions,
+  SearchEngineAdvancedOptions,
   TerritoriesOptions,
 } from '../map/geopf';
 import { EXTERNAL_LINKS, GPF_ENDPOINTS, gpfThumbnailUrl } from './urls';
@@ -247,15 +248,26 @@ export const MAP_TOOLS_OPTIONS = {
     tipLabel: 'Plein écran',
   } satisfies FullScreenOptions & { position: ControlPosition },
   scaleLine: { units: 'metric', minWidth: 80 } satisfies ScaleLineOptions,
+  /**
+   * M19, as on cartes.gouv.fr and guichet-collaboratif: `SearchEngineAdvanced` (SearchEngineAdvanced.d.ts),
+   * geolocation (« Me géolocaliser ») first in the « Avancée » panel, and in the suggestions header when the
+   * input has the focus. Geocoding through geoportal-access-lib's GPF defaults (no `serverUrl`: geopf would
+   * `eval` it, §5.7); `ariaLabel` names the input (it has no `<label>`).
+   */
   search: {
-    collapsed: false,
     placeholder: 'Rechercher un lieu, une adresse',
-    displayButtonGeolocate: true,
-    displayButtonAdvancedSearch: false,
-    displayButtonCoordinateSearch: false,
-    resources: { search: false },
-    zoomTo: 'auto',
-  } satisfies SearchEngineOptions,
+    ariaLabel: 'Rechercher un lieu ou une adresse', // same text as CONTROL_LABELS.searchInput
+  } satisfies SearchEngineAdvancedOptions,
+  /**
+   * Advanced forms of the search engine: only « Coordonnées » (as guichet-collaboratif), the one calling no
+   * service. cartes.gouv.fr also has « Code INSEE », « Lieux et toponymes » and « Parcelles cadastrales »,
+   * which call geo.api.gouv.fr and apicarto.ign.fr, hardcoded upstream (not the GPF): QUESTIONS M-7.
+   * Systems: those of the cursor coordinates tool; the form registers them through the geopf CRS module.
+   */
+  coordinateSearch: {
+    name: 'Coordonnées',
+    coordinateSearch: { systems: [...MOUSE_POSITION_SYSTEMS] },
+  } satisfies CoordinateAdvancedSearchOptions,
   layerImport: {
     position: 'top-left',
     gutter: false,
@@ -487,6 +499,11 @@ export const CONTROL_LABELS = {
    */
   controlListTitle: 'Tous les outils',
   catalog: 'Catalogue de cartes',
+  /**
+   * « Avancée » button of the search engine (M19): geopf names it « Afficher les options avancées », which does not
+   * contain its visible text (axe label-content-name-mismatch, RGAA 6.1/WCAG 2.5.3); same text as its geopf `title`.
+   */
+  advancedSearch: 'Recherche avancée',
 } as const;
 
 /**
