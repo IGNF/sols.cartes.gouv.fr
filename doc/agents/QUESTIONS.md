@@ -187,3 +187,17 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
 - Constat : `fixes.md` (v1.1) demande que « Aide » et « Nous contacter » renvoient vers `https://cartes.gouv.fr/aide/<langue>/` et `.../nous-ecrire/`, en liens externes.
 - Défaut appliqué : `brand.json` porte ces liens (`href` en français pour catalogue et carto, `hrefTemplate` avec `{lang}` pour l'edito) ; la page locale `/<langue>/aide/` est conservée (FAQ provisoire, cible des liens « contact » de l'accueil) et sa section « Nous contacter » renvoie au formulaire de cartes.gouv.fr. Cela remplace l'adresse provisoire de E-3. À trancher : supprimer la page locale (et rediriger `/aide/` vers cartes.gouv.fr) si la FAQ ne doit pas être rédigée ici.
 - Note (revue E10) : « Nous contacter » vise toujours `https://cartes.gouv.fr/aide/fr/nous-ecrire/` (le formulaire n'existe qu'en français ; `hreflang="fr"` sur les pages anglaises). `brand.json` garde `sections.helpContact` = `/fr/aide/#contact` (section contact de la page d'aide locale, elle-même renvoyant au formulaire) : à retirer si la page locale est supprimée.
+
+## M-6. En-tête compact de la carto sur petits écrans (carto-dev, M17, #5)
+
+- Constat : l'en-tête compact de guichet-collaboratif (référence du ticket #5, `src/css/app-header.css`, commit
+  `f3427f82`) garde une seule rangée de 3,5rem à toutes les largeurs, sans menu mobile, et ne masque que le badge sous
+  48em ; il ne prévoit rien d'autre pour le mobile. Chez nous, Marianne + logo GIS Sol (96 px) + « sols.cartes.gouv.fr »
+  + « Aide » et « Services » avec libellés ne tiennent pas sur une rangée sous 48em. La maquette Figma (nœud 1-7634) n'a
+  pas pu être consultée.
+- Options : (a) une rangée partout : sous 48em, boutons « Aide » et « Services » réduits à leur icône et au chevron
+  (libellé gardé en nom accessible et en `title`) ; sous 36em, logo GIS Sol masqué (le DSFR rend le nom du site
+  obligatoire et le logo opérateur facultatif) ; (b) deux rangées sous 48em (marque, puis outils) ; (c) revenir au menu
+  « Menu » du DSFR sous 62em (en-tête plus haut sur mobile).
+- Défaut appliqué : (a). En-tête de 56 px de 320 à 1280 px ; titre en 1rem sous 36em, tronqué par une ellipse seulement
+  sous ~360 px. La question M-5 (contraste du bouton « Menu ») ne concerne plus la carto, qui n'a plus ce bouton.
