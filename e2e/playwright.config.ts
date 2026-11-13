@@ -13,7 +13,8 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 20_000 },
   retries: 1,
-  workers: 1,
+  // Parallélisme par fichier (pas de fullyParallel). Défaut : 4 en local, 1 en CI ; `E2E_WORKERS=n` pour forcer.
+  workers: Number(process.env.E2E_WORKERS ?? (process.env.CI ? 1 : 4)),
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: `http://localhost:${PORT}`,
