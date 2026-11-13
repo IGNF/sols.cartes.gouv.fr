@@ -1,4 +1,16 @@
-# Rapport e2e (T4, passe 4)
+# Rapport e2e (T5, passe 5)
+
+## Passe 5 : en-tête compact de la carte (#5, PR #96) et liens légaux (#93, #94, #95)
+
+Date : 2026-11-13. Base : `origin/feat/5-compact-header` fusionné avec `origin/main` (#93 #94 #95) ; les trois briques reconstruites, suite complète sur le port 8351 (arrêté ensuite). La branche de #96 ne contenait pas encore #94 : ces tests exigent #94 sur la base (ils passeront quand #96 sera rebasée sur main).
+
+Résultats : **143 réussis, 11 ignorés, 1 échec, 1 flaky** (catalogue « ouvre une fiche avec un titre », desktop : résultats du catalogue absents au premier essai, bruit amont connu).
+
+Tests adaptés (changements voulus, assertions inchangées sur le fond) : `openServicesMenu` et `openAideMenu` n'ouvrent le burger que s'il existe (`openBurgerIfAny`, edito et catalogue gardent le leur) ; Échap et chevron de la carte sans burger (chevron : `.header-menu__chevron`, le premier `<span>` est le libellé) ; bloc marque : `.fr-header__operator` ignoré sous 36em ; listes de liens `cartes.gouv.fr` autorisées de l'en-tête (« Publier une donnée ») et du pied de page (CGU, données personnelles).
+
+Ajouts (`07-en-tete-compact-legal.spec.ts`) : hauteur ≤ 57 px, pas de burger ni de débordement, Aide/Services atteignables sur mobile carto, « Publier une donnée » dans Services sur les trois briques (externe, `_blank`, `noopener`), deux liens légaux externes du pied de page, `/mentions-legales/` depuis le pied de page (h1, titre, axe sans violation grave).
+
+Défaut réel (FAIL) : **carto, desktop 1280 px, menu « Services » ouvert** : les liens du panneau font 320 px dans un panneau de 288 px ancré à droite (x = 976) ; ils dépassent de 16 px (bord droit à 1296 px), l'icône « lien externe » de « Publier une donnée » touche le bord de l'écran et `scrollWidth` du document vaut 1296 pour 1280. Absent à 375 px. Les liens de 320 px existent aussi sur l'edito, où le panneau n'est pas collé au bord. Gravité : mineure à modérée (clipping, RGAA).
 
 ## Passe 4 : v1.1 (en-tête, carte M13)
 

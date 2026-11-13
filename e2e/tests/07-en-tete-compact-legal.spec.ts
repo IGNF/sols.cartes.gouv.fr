@@ -89,10 +89,11 @@ test.describe('Pied de page : liens légaux', () => {
   test('CGU et données personnelles pointent vers cartes.gouv.fr', async ({ page }) => {
     await page.goto(PAGES.home);
     const footer = page.locator('footer');
-    for (const [nom, href] of [
+    const liens: [string, string][] = [
       ["Conditions générales d'utilisation", CGU_URL],
       ['Données personnelles', DONNEES_PERSO_URL],
-    ]) {
+    ];
+    for (const [nom, href] of liens) {
       const lien = footer.getByRole('link', { name: nom });
       await expect(lien).toHaveCount(1);
       await expect(lien).toHaveAttribute('href', href);
