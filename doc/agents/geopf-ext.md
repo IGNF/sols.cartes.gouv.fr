@@ -397,6 +397,9 @@ Brief : `.claude/commands/refine.md` (v1), plan `doc/v1/PLAN.md`, maquette Figma
 
 ### 9.2 En-tête v1 (`@sols/brand`)
 
+> Depuis M17 (#5), l'en-tête de la carto est compact et n'utilise plus le `Header` de react-dsfr : voir §13. Le contenu
+> (marque, badge, menus) et le comportement des menus décrits ici restent valables.
+
 - Dépendance `"@sols/brand": "workspace:*"`, `import brand from '@sols/brand/brand.json'` (`src/config/site.ts`), images importées
   par Vite (`@sols/brand/assets/*`, publiées dans `dist/assets`). `SECTION_PATHS` et `EXTERNAL_LINKS` en dérivent. Aucun contenu
   d'en-tête ou de pied de page n'est écrit dans la brique.
@@ -916,3 +919,70 @@ Demande du propriétaire (fin de v1.1) ; plan `doc/plans/M16.md`.
   fonds et CSW des sept données sols chargées, aucune vignette vide, image forcée en échec retirée (1280 et 375 px), console vide.
   Captures `doc/screenshots/M16/`.
 
+
+## 13. En-tête compact (M17, ticket #5)
+
+Demande du propriétaire : « le même en-tête compact que guichet-collaboratif, seulement sur /explorer-les-cartes ».
+L'edito et le catalogue gardent leur en-tête.
+
+### 13.1 Référence lue
+
+IGNF/cartes.gouv.fr-guichet-collaboratif, branche `develop` (`bd456e3`), introduit par `f3427f82` « Passage du header en
+mode compact (#295) » : `src/components/Layout/AppHeader.tsx`, `src/css/app-header.css` (retouché par `659e9716`),
+`src/components/Layout/Header/HeaderMenu.tsx`, `HeaderMenus.tsx`, `src/css/map-view.css`. Guichet n'utilise **pas** le
+`Header` de react-dsfr : balisage DSFR écrit à la main, `<header class="fr-header fr-header--compact">`
+(`fr-header--compact` n'est pas un modificateur DSFR 1.14), `fr-container--fluid`, et un `fr-header__menu fr-modal` vide
+caché (« Required by DSFR JS »). cartes.gouv.fr/creer-une-carte (cité dans le ticket) a l'en-tête DSFR standard (117 px à
+1280 px, menu « Menu » sous 62em) : seule guichet sert de modèle.
+
+| Élément | guichet (`app-header.css`) | Ici (`SiteHeader.css`) |
+|---|---|---|
+| Rangée | `height: 3.5rem`, `padding: 0.5rem 1rem`, bordure basse `--border-default-grey` | idem (+ `box-sizing: border-box`, `margin: 0`) |
+| Marque | `brand-top` 2.5rem, `gap: 0.25rem` | idem ; mise en page DSFR lg (marque sans fond ni ombre) à toutes les largeurs |
+| Marianne | drapeau seul 2.0625rem × 0.75rem, texte en `font-size: 0`, devise masquée | idem |
+| Opérateur | image 1.688rem × 1.875rem (logo cartes.gouv.fr) | GIS Sol : hauteur 1.875rem, largeur selon le logo (96 px) ; masqué sous 36em (M-6) |
+| Service | slogan masqué, badge à partir de 48em (`margin-left: 0.625rem`) | slogan non rendu, badge idem ; marque Observatoire en fond, 1.875rem, à partir de 48em |
+| Outils | `fr-header__tools-links` en flex, `gap: 0.25rem`, boutons `size="small"`, chevron tourné, bouton ouvert sur `--background-open-blue-france` | idem (`fr-btn--sm`, `title` = libellé comme cartes.gouv.fr) ; sous 48em icône + chevron seuls, libellé en règles `fr-sr-only` (M-6) |
+| Panneau | `width: 18rem`, `max-width: calc(100vw - 2rem)`, ombre `--overlap-shadow` | idem, fond `--background-overlap-grey` gardé |
+
+### 13.2 Choix et pièges
+
+- **`SiteHeader` écrit en balisage DSFR** (comme guichet) : le `Header` de react-dsfr ajoute toujours le bouton « Menu »
+  et la modale mobile, et y duplique les outils. Un seul lien dans la marque (titre du service, `title` = `homeLinkTitle`),
+  étendu à tout le bloc par `fr-enlarge-link` ; toujours aucun `position` sur un descendant de `.fr-header__brand` (§12.1).
+- **Modale « Paramètres d'affichage »** : le `Header` react-dsfr la montait. `Display` de `@codegouvfr/react-dsfr/Display`
+  est un composant **vide** (déprécié, `return null`) : il faut `@codegouvfr/react-dsfr/Display/Display` (le module que
+  le `Header` importe ; même `fr-theme-modal` que `headerFooterDisplayItem` du pied de page). Un test le vérifie.
+  **Chemin interne (pas d'API publique)** : à revérifier à chaque montée de version de react-dsfr (le module existe, exporte
+  toujours `Display` et monte bien la modale).
+- **Script DSFR `HeaderLinks`** (enregistré sur `.fr-header__tools-links`) lit `.fr-header__menu-links` sans vérifier sa
+  présence : un `div.fr-header__menu-links` vide est gardé, caché (`hidden` ne suffit pas, règle CSS). Sans la classe
+  `fr-header__menu fr-modal` de guichet : sous 62em le script DSFR active cette modale et écrit quatre avertissements
+  « Modal - missing accessible name » dans la console.
+- Au-dessus de la carte à toutes les largeurs : l'en-tête prend le `z-index` DSFR lg (`--ground + 750`) partout.
+- La question M-5 (contraste du bouton « Menu » au survol de la marque) disparaît sur la carto : `check:map` exige
+  désormais 0 violation grave au survol aussi.
+
+### 13.3 Mesures (aperçu local, Chromium sans interface)
+
+| Largeur | En-tête avant | En-tête après | Carte avant → après (hauteur, fenêtre de 800–900 px) |
+|---|---|---|---|
+| 1280 | 117 px | 56 px | 624 → 684 px (fenêtre 800) |
+| 768 | 169 px | 56 px | 647 → 759 px (fenêtre 900) |
+| 375 | 165 px (outils dans le menu « Menu ») | 56 px (outils visibles) | 568 → 568 px (fenêtre 812 ; la page défilait de 45 px, plus maintenant) |
+
+Une rangée sans débordement de 320 à 1280 px ; titre tronqué (ellipse) seulement à 320 px.
+
+### 13.4 Sélecteurs e2e
+
+| Élément | Sélecteur |
+|---|---|
+| En-tête | `header#en-tete.fr-header.fr-header--compact` ; plus de `#en-tete-menu-button`, de `.fr-header__navbar` ni de modale `.fr-header__menu` |
+| Menus | `.fr-header__tools` puis `getByRole('button', { name: 'Aide' \| 'Services' })`, visibles à toutes les largeurs (sous 48em, nom accessible = libellé masqué visuellement) |
+| Retour à l'accueil | clic sur `.fr-header__logo`, `.fr-header__operator` (≥ 36em) ou `.fr-header__service` → `/` |
+| Slogan | absent de la carto |
+
+`check:map` (bloc M17) : à 320, 375, 768 et 1280 px, en-tête ≤ 57 px sur une rangée sans débordement ni bouton « Menu »,
+carte collée sous l'en-tête avec son canevas, « Aide » et « Services » visibles, panneau dans l'écran et au-dessus de la
+carte, Échap ferme et rend le focus, clic sur la Marianne → `/`, console vide ; « Paramètres d'affichage » ouvre la
+modale et passe en sombre ; axe sans violation grave « Services » ouvert (375 sombre, 1280 clair et sombre).

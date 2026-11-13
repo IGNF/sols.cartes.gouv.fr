@@ -130,6 +130,7 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
   (`@sols/brand` ou CSS de chaque brique) ; (c) attendre une version du DSFR qui le corrige.
 - Défaut appliqué : (a), aucune surcharge. Le ticket au DSFR est à ouvrir par un humain. `check:map` vérifie qu'il n'y a
   aucune violation au repos et que, au survol, seule celle-ci apparaît.
+- Note (M17, #5) : ne s'applique plus à la carto, dont l'en-tête compact n'a plus de bouton « Menu » (voir M-6) ; reste valable pour l'edito.
 
 ## G-1. « Logged in the web browser » et authentification (v1, orchestrateur)
 
@@ -197,3 +198,17 @@ Décisions prises par l'orchestrateur sans validation humaine. Chaque entrée : 
   3. Propriété intellectuelle : la rédaction héritée attribue à l'IGN la propriété ou le droit d'exploitation des contenus et des « données cartographiques », et soumet toute réutilisation à un accord préalable. Les données sols viennent d'INRAE / GIS Sol et le pied de page annonce la licence etalab-2.0 : rédaction à revoir.
   4. Données à caractère personnel : « Le destinataire des données est l'IGN » et le droit d'accès sont conservés (formulaire « Nous écrire » de cartes.gouv.fr) ; à confirmer une fois la mesure d'audience du portail décidée (aucune n'est installée à ce jour).
   5. Version anglaise : traduction de courtoisie de la page française, à relire ou à remplacer par un renvoi à la version française.
+
+## M-6. En-tête compact de la carto sur petits écrans (carto-dev, M17, #5)
+
+- Constat : l'en-tête compact de guichet-collaboratif (référence du ticket #5, `src/css/app-header.css`, commit
+  `f3427f82`) garde une seule rangée de 3,5rem à toutes les largeurs, sans menu mobile, et ne masque que le badge sous
+  48em ; il ne prévoit rien d'autre pour le mobile. Chez nous, Marianne + logo GIS Sol (96 px) + « sols.cartes.gouv.fr »
+  + « Aide » et « Services » avec libellés ne tiennent pas sur une rangée sous 48em. La maquette Figma (nœud 1-7634) n'a
+  pas pu être consultée.
+- Options : (a) une rangée partout : sous 48em, boutons « Aide » et « Services » réduits à leur icône et au chevron
+  (libellé gardé en nom accessible et en `title`) ; sous 36em, logo GIS Sol masqué (le DSFR rend le nom du site
+  obligatoire et le logo opérateur facultatif) ; (b) deux rangées sous 48em (marque, puis outils) ; (c) revenir au menu
+  « Menu » du DSFR sous 62em (en-tête plus haut sur mobile).
+- Défaut appliqué : (a). En-tête de 56 px de 320 à 1280 px ; titre en 1rem sous 36em, tronqué par une ellipse seulement
+  sous ~360 px. La question M-5 (contraste du bouton « Menu ») ne concerne plus la carto, qui n'a plus ce bouton.

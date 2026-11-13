@@ -14,8 +14,8 @@
  * M8: the geopf-extensions tool set (every button named and operable, a distance measured, a WMS import of
  * GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2, feature info on a sols layer, legends), the print sheet
  * with the same layers, the print dialog (PNG download, print sheet); mobile tools through « Afficher tous les outils ».
- * M11: axe at 375 px in the dark theme with the page idle (pointer off the header); with the pointer on the
- * header brand block, only the known DSFR hover contrast on the « Menu » button (QUESTIONS M-5) is tolerated.
+ * M11: axe at 375 px in the dark theme with the page idle (pointer off the header) and with the pointer on the
+ * header brand block (no DSFR « Menu » button since the compact header, QUESTIONS M-5).
  * M13: the expandable footer (« Haut de page » expands it, the page scrolls, the map keeps ≥ 70 % of the
  * viewport, axe clean; « Fermer » collapses it), at 1280 and 375 px; the whole header brand block links to « / ».
  * M14: the tool list panel is titled « Tous les outils » (375, 1280 px); no tooltip over an open panel, the
@@ -27,6 +27,8 @@
  * working « Recharger la page » button when they fail.
  * M16: base-layer entries of the catalogue show their GPF thumbnail (and the sols entries theirs), never a
  * placeholder nor a broken image; the zoom sits bottom right below the full screen (keyboard order kept).
+ * M17 (#5): compact header (one 3.5rem row at 320 to 1280 px, « Aide » and « Services » always visible and working,
+ * Marianne back to « / », map right under the header, display settings modal, axe with « Services » open).
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -1118,8 +1120,9 @@ const TOOL_BUTTONS = [
 }
 
 // M11: axe at 375 px, dark theme, page idle. Headless Chromium starts with the pointer at (0, 0), on the header
-// brand block: DSFR `.fr-enlarge-link:hover` then paints it `--background-lifted-grey-hover` (#3f3f3f) under the
-// « Menu » button (#8585f6, 3.35:1). Upstream DSFR, same on the edito (doc/agents/geopf-ext.md §9.7, QUESTIONS M-5).
+// brand block: DSFR `.fr-enlarge-link:hover` then paints it with its hover background. Until the compact header
+// (#5) this put the DSFR « Menu » button (#8585f6) on #3f3f3f, 3.35:1 (doc/agents/geopf-ext.md §9.7, QUESTIONS
+// M-5); the compact header has no « Menu » button, so both cases must now be clean.
 {
   const context = await browser.newContext({
     viewport: { width: 375, height: 812 },
@@ -1146,15 +1149,10 @@ const TOOL_BUTTONS = [
   await page.mouse.move(8, 8);
   await page.waitForTimeout(400);
   const hovered = await seriousViolations();
-  const onlyKnownDsfr = hovered.every(
-    (v) =>
-      v.id === 'color-contrast' &&
-      v.nodes.every((n) => n.target.join(' ') === '#en-tete-menu-button'),
-  );
   check(
-    onlyKnownDsfr,
-    `a11y 375px sombre, pointeur sur la marque : seul le contraste DSFR connu du bouton « Menu » (M-5)${
-      onlyKnownDsfr ? '' : ` : ${describe(hovered)}`
+    hovered.length === 0,
+    `a11y 375px sombre, pointeur sur la marque : axe sans violation grave${
+      hovered.length ? ` : ${describe(hovered)}` : ''
     }`,
   );
   await context.close();
@@ -1832,6 +1830,155 @@ for (const [name, context] of [
   check(
     before === 'img' && after.heldDropped && after.emptySlots === 0 && after.notLoaded === 0,
     `M16 : vignette bloquée retirée après ${THUMBNAIL_LOAD_TIMEOUT_MS / 1000} s, pas de case vide (${JSON.stringify({ before, ...after })})`,
+  );
+  await context.close();
+}
+
+// M17 (#5): compact header after guichet-collaboratif: one 3.5rem row at every width, « Aide » and « Services »
+// visible and working (panel inside the viewport and above the map, Escape closes it), the brand block leads to
+// « / », the map starts right under the header, the display settings modal (mounted by the header) opens from the
+// footer and switches the theme; axe with a menu open in both themes; console clean.
+for (const width of [320, 375, 768, 1280]) {
+  const context = await browser.newContext({ viewport: { width, height: 800 } });
+  const page = await context.newPage();
+  const consoleReport = watchConsole(page);
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.waitForTimeout(800);
+  const layout = await page.evaluate(() => {
+    const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect();
+    const header = box('header.fr-header');
+    const row = document.querySelector('.fr-header__body-row') as HTMLElement;
+    const inHeader = (selector: string) => {
+      const b = box(selector);
+      return Boolean(
+        header && b && b.height > 0 && b.top >= header.top && b.bottom <= header.bottom,
+      );
+    };
+    const map = box('.map-view');
+    const canvas = document.querySelector<HTMLCanvasElement>('.map-view canvas');
+    return {
+      header: header?.height ?? 0,
+      compact: document.querySelector('header')?.classList.contains('fr-header--compact'),
+      oneRow: inHeader('.fr-header__brand') && inHeader('.fr-header__tools'),
+      overflow: row.scrollWidth > row.clientWidth,
+      mapGap: Math.abs((map?.top ?? 0) - (header?.bottom ?? 0)),
+      mapHeight: map?.height ?? 0,
+      canvasHeight: canvas ? canvas.getBoundingClientRect().height : 0,
+      menuButton: document.querySelector('.fr-header__navbar, .fr-btn--menu') !== null,
+    };
+  });
+  check(
+    layout.compact === true &&
+      layout.header <= 57 &&
+      layout.oneRow &&
+      !layout.overflow &&
+      !layout.menuButton,
+    `M17 ${width}px : en-tête compact sur une rangée (${Math.round(layout.header)} px), sans bouton « Menu »`,
+  );
+  check(
+    layout.mapGap <= 1 && Math.abs(layout.canvasHeight - layout.mapHeight) <= 1,
+    `M17 ${width}px : carte collée sous l’en-tête, canevas à sa hauteur (${Math.round(layout.mapHeight)} px)`,
+  );
+  for (const menu of [brand.header.tools.help, brand.header.tools.services]) {
+    const button = page.locator('.fr-header__tools').getByRole('button', { name: menu.label });
+    const visible = await button.isVisible();
+    await button.click();
+    const panel = page.locator(`#${await button.getAttribute('aria-controls')}`);
+    await panel.waitFor();
+    const placement = await panel.evaluate((element) => {
+      const b = element.getBoundingClientRect();
+      const hit = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+      return {
+        inside: b.left >= 0 && b.right <= window.innerWidth,
+        onTop: Boolean(hit && element.contains(hit)),
+      };
+    });
+    const links = await panel.getByRole('link').count();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Escape');
+    check(
+      visible &&
+        placement.inside &&
+        placement.onTop &&
+        links === menu.items.length &&
+        (await button.getAttribute('aria-expanded')) === 'false' &&
+        (await button.evaluate((element) => element === document.activeElement)),
+      `M17 ${width}px : « ${menu.label} » visible, ouvre ${links} lien(s) dans l’écran au-dessus de la carte, Échap le ferme (${JSON.stringify(placement)})`,
+    );
+  }
+  if (width === 1280) {
+    await page
+      .getByRole('contentinfo')
+      .getByRole('button', { name: /paramètres d.affichage/i })
+      .click();
+    const dialog = page.locator('#fr-theme-modal');
+    await dialog.waitFor({ state: 'visible' });
+    await dialog.getByText('Thème sombre').click();
+    const theme = await page.evaluate(() => document.documentElement.getAttribute('data-fr-theme'));
+    await dialog.getByRole('button', { name: 'Fermer' }).click();
+    await dialog.waitFor({ state: 'hidden' });
+    check(
+      theme === 'dark',
+      `M17 : « Paramètres d’affichage » ouvre la modale montée par l’en-tête et passe en sombre (${theme})`,
+    );
+  }
+  // A pointer click where the Marianne is drawn: the brand link's `fr-enlarge-link` overlay covers it (by design),
+  // which Playwright's `locator.click()` reports as an interception.
+  // The check is the navigation request the click starts, not the final URL (which depends on the home page).
+  const logo = await page.locator('.fr-header__logo').boundingBox();
+  const homeRequest = page
+    .waitForRequest(
+      (request) =>
+        request.isNavigationRequest() &&
+        request.frame() === page.mainFrame() &&
+        new URL(request.url()).pathname === '/',
+      { timeout: 10_000 },
+    )
+    .then((request) => new URL(request.url()).pathname)
+    .catch(() => 'aucune navigation vers /');
+  if (logo) await page.mouse.click(logo.x + logo.width / 2, logo.y + logo.height / 2);
+  const navigatedTo = await homeRequest;
+  check(
+    navigatedTo === '/',
+    `M17 ${width}px : un clic sur la Marianne lance la navigation vers l’accueil (${navigatedTo})`,
+  );
+  const report = consoleReport();
+  check(
+    report.messages.length === 0,
+    `M17 ${width}px : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
+  );
+  await context.close();
+}
+
+for (const [width, scheme] of [
+  [375, 'dark'],
+  [1280, 'light'],
+  [1280, 'dark'],
+] as const) {
+  const context = await browser.newContext({
+    viewport: { width, height: 800 },
+    colorScheme: scheme,
+  });
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'load' });
+  await page.locator('.ol-viewport canvas').first().waitFor({ timeout: 30_000 });
+  await page
+    .locator('.fr-header__tools')
+    .getByRole('button', { name: brand.header.tools.services.label })
+    .click();
+  await page.mouse.move(width / 2, 700);
+  await page.waitForTimeout(500);
+  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  );
+  check(
+    violations.length === 0,
+    `M17 a11y ${width}px ${scheme}, « Services » ouvert : axe sans violation grave${
+      violations.length
+        ? ` : ${violations.map((v) => `${v.id} ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`).join(' | ')}`
+        : ''
+    }`,
   );
   await context.close();
 }
