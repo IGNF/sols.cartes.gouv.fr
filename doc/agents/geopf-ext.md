@@ -1046,6 +1046,12 @@ guichet-collaboratif ; l'échelle aux couleurs de cartes.gouv.fr, fond non trans
   pas le panneau (un clic ou le focus hors du panneau le ferme) : limite amont, à ajouter au ticket du §5.7. Le clic sur
   « Me géolocaliser » pose un repère « Ma localisation » (popup `GPSearchPopup`, boutons « Fermer », « Supprimer ») et
   centre la carte ; le panneau reste ouvert.
+- **Console** : `SearchEngineAdvanced` ajoute une interaction `Select` sur sa couche de repères. Au premier clic sur la carte,
+  sa détection d'objets lance le banc d'essai des lectures de canevas d'OpenLayers 10.11 (`benchmarkCanvasReads`,
+  `render/canvas/ExecutorGroup.js`, contextes sans `willReadFrequently` exprès) : Chrome écrit **une fois par page**
+  « Canvas2D: Multiple readback operations using getImageData are faster with the willReadFrequently attribute set to
+  true ». Même avertissement sur cartes.gouv.fr (mesuré : 0 avant, 1 après six clics, ici comme là-bas). Bruit amont :
+  `check:map` le compte dans les notes (`OL_CANVAS_BENCHMARK_WARNING`) au lieu d'échouer.
 - **Tests** : `src/map/searchEngine.test.ts` monte le vrai `SearchEngineAdvanced` dans jsdom (géolocalisation en tête du
   panneau, « Avancée » dans la barre, focus à l'ouverture) ; jsdom n'a pas `innerText`, que geopf utilise pour les textes des
   boutons : textes vérifiés par `check:map`. À relancer à chaque montée de version de geopf.
