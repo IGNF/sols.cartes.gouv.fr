@@ -33,6 +33,8 @@
  * M19: search engine of cartes.gouv.fr (SearchEngineAdvanced): « Me géolocaliser » first in the « Avancée » panel,
  * right under the bar, reached with the keyboard, on top and covering no map button, geolocation marker
  * (320 to 1280 px, axe with the panel open); scale line with the opaque background and colours of cartes.gouv.fr.
+ * M21: the collapsed footer is one 60 px line from 1024 to 1440 px (all links and the toggle on it, named),
+ * unchanged at 320/375/768 px and expanded.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -108,14 +110,20 @@ function watchConsole(page: import('playwright').Page) {
     const failed = [...tiles].filter(([, codes]) => codes.some((c) => c >= 400));
     const lost = failed.filter(([, codes]) => codes.at(-1) !== 200);
     const upstream = messages.filter((m) => UPSTREAM_WARNINGS.includes(m)).length;
-    const canvasBenchmark = messages.filter(isOlCanvasBenchmark).length;
+    // The benchmark runs once per page: a second warning is not that benchmark any more (review M19).
+    const canvasWarnings = messages.filter(isOlCanvasBenchmark).length;
+    const canvasBenchmark = Math.min(canvasWarnings, 1);
     const unexplained = messages.filter(
       (m) =>
         !m.startsWith('Failed to load resource') &&
         !UPSTREAM_WARNINGS.includes(m) &&
         !isOlCanvasBenchmark(m),
     );
-    const loadErrors = messages.length - unexplained.length - upstream - canvasBenchmark;
+    const loadErrors = messages.length - unexplained.length - upstream - canvasWarnings;
+    if (canvasWarnings > 1)
+      unexplained.push(
+        `${canvasWarnings} avertissements « willReadFrequently » sur la page (au plus 1 attendu : la mesure du canevas d’OpenLayers)`,
+      );
     const withinTolerance = lost.length <= Math.ceil(tiles.size * TILE_ERROR_TOLERANCE);
     const explainedByTiles = failed.length > 0 && withinTolerance;
     const explainedByRequests = failed.length === 0 && loadErrors <= upstreamRequests;
@@ -516,7 +524,8 @@ for (const [label, query, assertion, entry] of deepLinks) {
 }
 
 // M7: header v1 from @sols/brand, compact footer, cartes.gouv.fr layout, controls in both themes.
-for (const width of [1024, 1440]) {
+// M21: also 1100, 1199 and 1280 px (the collapsed footer wrapped between 1024 and 1199 px).
+for (const width of [1024, 1100, 1199, 1280, 1440]) {
   const page = await browser.newPage({ viewport: { width, height: 900 } });
   await page.goto(url, { waitUntil: 'load' });
   await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 20_000 });
@@ -2297,6 +2306,78 @@ for (const target of [
       target.canvas ? `, carte non vide (vide max ${Math.max(...blank)} %)` : ''
     }`,
   );
+  await context.close();
+}
+
+// M21: the collapsed footer stays one line from 1024 px, as on cartes.gouv.fr (one bar, toggle icon only in
+// 62–75em): footer at most 60 px, the six bottom items and the toggle on that line, inside the viewport, toggle
+// named « Haut de page » (title too). Below 62em and from 75em the toggle shows its label; expanded, it shows
+// « Fermer » and the links get the DSFR spacing back (0.75rem). Every bottom item stays in the accessibility tree.
+/** Toggle labels (`FOOTER_LABELS` in src/config/site.ts, which imports images the script cannot load). */
+const FOOTER_LABELS = { expand: 'Haut de page', collapse: 'Fermer' } as const;
+for (const width of [320, 375, 768, 1024, 1100, 1199, 1280, 1440]) {
+  const context = await browser.newContext({ viewport: { width, height: 800 } });
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'load' });
+  const footer = page.getByRole('contentinfo');
+  const toggle = footer.getByRole('button', { name: FOOTER_LABELS.expand, exact: true });
+  await toggle.waitFor();
+  const bar = await page.evaluate(() => {
+    const element = document.querySelector('footer.compact-footer');
+    const box = element?.getBoundingClientRect();
+    const items = Array.from(document.querySelectorAll('footer .fr-footer__bottom-item'));
+    const button = document.querySelector<HTMLElement>('footer .compact-footer__toggle');
+    if (!box || !button) return null;
+    const rows = new Set(items.map((item) => Math.round(item.getBoundingClientRect().top / 4)));
+    const toggleBox = button.getBoundingClientRect();
+    return {
+      height: Math.round(box.height),
+      items: items.length,
+      rows: rows.size,
+      inside: items.every((item) => {
+        const b = item.getBoundingClientRect();
+        return b.left >= 0 && b.right <= window.innerWidth && b.bottom <= box.bottom + 1;
+      }),
+      toggleInBar: toggleBox.top >= box.top && toggleBox.bottom <= box.bottom,
+      toggleRight: Math.round(toggleBox.right),
+      labelShown: parseFloat(getComputedStyle(button).fontSize) > 0,
+      title: button.title,
+      scroll: document.documentElement.scrollWidth > window.innerWidth,
+    };
+  });
+  const named =
+    (await footer.getByRole('link').count()) === brand.footer.bottomLinks.length &&
+    (await footer.getByRole('button', { name: /paramètres d.affichage/i }).count()) === 1;
+  const iconOnly = width >= 992 && width < 1200;
+  check(
+    bar !== null &&
+      named &&
+      bar.items === brand.footer.bottomLinks.length + 1 &&
+      bar.title === FOOTER_LABELS.expand &&
+      bar.labelShown === !iconOnly &&
+      !bar.scroll &&
+      (width < 1024 || (bar.height <= 60 && bar.rows === 1 && bar.inside && bar.toggleInBar)),
+    `M21 ${width}px : pied de page replié ${width >= 1024 ? 'sur une ligne (≤ 60 px)' : 'inchangé'}, ${bar?.items ?? 0} entrées nommées, « ${FOOTER_LABELS.expand} » ${iconOnly ? 'en icône (nom et title gardés)' : 'avec son libellé'} (${JSON.stringify(bar)})`,
+  );
+  if (width === 768 || width === 1024 || width === 1280) {
+    await toggle.click();
+    const closer = footer.getByRole('button', { name: FOOTER_LABELS.collapse, exact: true });
+    await closer.waitFor();
+    const open = await page.evaluate(() => {
+      const button = document.querySelector<HTMLElement>('footer .compact-footer__toggle');
+      const second = document.querySelectorAll('footer .fr-footer__bottom-item')[1];
+      return {
+        labelShown: button ? parseFloat(getComputedStyle(button).fontSize) > 0 : false,
+        spacing: second ? getComputedStyle(second).marginLeft : '',
+        body: document.querySelector('footer .fr-footer__body')?.checkVisibility() ?? false,
+      };
+    });
+    await closer.click();
+    check(
+      open.labelShown && open.spacing === '12px' && open.body,
+      `M21 ${width}px : pied de page déplié inchangé (« ${FOOTER_LABELS.collapse} » avec son libellé, espacement DSFR 0,75rem) (${JSON.stringify(open)})`,
+    );
+  }
   await context.close();
 }
 
