@@ -1925,12 +1925,23 @@ for (const width of [320, 375, 768, 1280]) {
   }
   // A pointer click where the Marianne is drawn: the brand link's `fr-enlarge-link` overlay covers it (by design),
   // which Playwright's `locator.click()` reports as an interception.
+  // The check is the navigation request the click starts, not the final URL (which depends on the home page).
   const logo = await page.locator('.fr-header__logo').boundingBox();
+  const homeRequest = page
+    .waitForRequest(
+      (request) =>
+        request.isNavigationRequest() &&
+        request.frame() === page.mainFrame() &&
+        new URL(request.url()).pathname === '/',
+      { timeout: 10_000 },
+    )
+    .then((request) => new URL(request.url()).pathname)
+    .catch(() => 'aucune navigation vers /');
   if (logo) await page.mouse.click(logo.x + logo.width / 2, logo.y + logo.height / 2);
-  await page.waitForURL((target) => target.pathname === '/', { timeout: 10_000 }).catch(() => {});
+  const navigatedTo = await homeRequest;
   check(
-    new URL(page.url()).pathname === '/',
-    `M17 ${width}px : un clic sur la Marianne ramène à l’accueil (${new URL(page.url()).pathname})`,
+    navigatedTo === '/',
+    `M17 ${width}px : un clic sur la Marianne lance la navigation vers l’accueil (${navigatedTo})`,
   );
   const report = consoleReport();
   check(
