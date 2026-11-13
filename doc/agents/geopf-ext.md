@@ -1097,7 +1097,7 @@ sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la
 ## 15. Pied de page replié sur une ligne (M21)
 
 - **Constat** (`check:map` sur `main`) : entre 1024 et 1199 px, le pied de page replié mesurait 85 px au lieu de 60. « Paramètres
-  d'affichage » passait à la ligne et prenait 25 px à la carte. Depuis #94 les six liens bas demandent 975 px avec l'espacement
+  d'affichage » passait à la ligne et prenait 25 px à la carte. Depuis #94 les six entrées bas (cinq liens et « Paramètres d'affichage ») demandent 975 px avec l'espacement
   DSFR md (`.fr-footer__bottom-item` : `margin-left` et `::before` `margin-right` à 0.75rem). À 1024 px, la barre en offre 976,
   dont 141 pour « Haut de page » (125 px) et sa marge : il en manquait 140. À 1100 px il en manquait 64 ; à partir de 1199 px
   tout tenait.
@@ -1119,7 +1119,7 @@ sombre, et un fond `--background-default-grey` opaque. Aucun test e2e ne vise la
   - Entre 992 et 999 px, la barre fait toujours deux lignes (il manque quelques pixels), comme avant.
 - **`check:map`** :
   - Le bloc M7 (pied de page ≤ 64 px collé à la carte, pas de défilement) passe à 1024, 1100, 1199, 1280 et 1440 px.
-  - Bloc M21, de 320 à 1440 px. Toutes largeurs : sept entrées nommées, `title`, libellé visible hors de 62–75em, pas de
+  - Bloc M21, de 320 à 1440 px. Toutes largeurs : six entrées nommées (cinq liens et « Paramètres d'affichage »), `title`, libellé visible hors de 62–75em, pas de
     défilement horizontal. À partir de 1024 px : ≤ 60 px, une seule ligne, bouton dans la barre, liens dans l'écran. Déplié
     à 768, 1024 et 1280 px : « Fermer » avec son libellé, espacement 0.75rem.
   - Revue M19 : l'avertissement « willReadFrequently » de la mesure du canevas d'OpenLayers n'est toléré qu'**une fois par
