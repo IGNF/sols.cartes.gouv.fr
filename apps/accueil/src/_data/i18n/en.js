@@ -41,6 +41,7 @@ export default {
             label: 'Explore maps (in French)',
             desc: 'The map viewer',
           },
+          'https://cartes.gouv.fr/publier-une-donnee': { label: 'Publish data (in French)' },
           '/fr/': { label: 'Discover', desc: 'The Soil observatory of France' },
         },
       },

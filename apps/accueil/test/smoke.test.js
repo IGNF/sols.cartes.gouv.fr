@@ -88,6 +88,11 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
         ),
       );
     }
+    // « Publier une donnée » (#85): external service of cartes.gouv.fr, French only, no icon before.
+    const publish = brand.header.tools.services.items.find((item) => item.external);
+    expect(header).toContain(
+      `<a class="fr-nav__link sols-tool-menu__external" href="${publish.href}"${contactHreflang} target="_blank" rel="noopener external"`,
+    );
     expect(header).not.toContain('/aide/en/nous-ecrire/');
     expect(header).not.toContain(`href="/${locale}${site.sections.aide}`);
     for (const path of site.crossBrick) expect(header).toContain(`href="${path}"`);

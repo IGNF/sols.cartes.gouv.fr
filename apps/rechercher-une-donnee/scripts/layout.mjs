@@ -122,17 +122,20 @@ export function buildLayout(markdown, { baseHref }) {
 
 /**
  * Cross-check of the injected header with packages/brand/brand.json: badge label, colour and icon
- * (`badges.catalogue`, `badgeStyles.catalogue`) and external help links (new window, rel external).
+ * (`badges.catalogue`, `badgeStyles.catalogue`) and external links of the tool menus (« Aide », and
+ * « Services » such as « Publier une donnée »: new window, rel external).
  */
 export function checkHeaderAgainstBrand(header, brand) {
   const problems = []
   const style = brand.badgeStyles?.catalogue
   const badge = `<span class="fr-badge fr-badge--sm fr-badge--${style?.color} fr-badge--icon-left ${style?.icon}">${brand.badges?.catalogue}</span>`
   if (!header.includes(badge)) problems.push(`badge: expected ${badge}`)
-  for (const item of brand.header?.tools?.help?.items ?? []) {
-    if (!item.external) continue
-    const link = new RegExp(`<a class="[^"]*${item.icon}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
-    if (!link.test(header)) problems.push(`help link: ${item.label} (${item.href}) not found as an external link`)
+  for (const [menu, tool] of Object.entries(brand.header?.tools ?? {})) {
+    for (const item of tool?.items ?? []) {
+      if (!item.external) continue
+      const link = new RegExp(`<a class="[^"]*${item.icon ?? ''}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
+      if (!link.test(header)) problems.push(`${menu} link: ${item.label} (${item.href}) not found as an external link`)
+    }
   }
   if (problems.length) throw new Error(`header differs from brand.json: ${problems.join('; ')}`)
   return header
