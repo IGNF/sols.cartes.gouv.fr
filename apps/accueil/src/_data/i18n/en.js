@@ -116,6 +116,12 @@ export default {
       helpButton: 'cartes.gouv.fr help centre',
     },
     accueil: { title: 'Soil observatory', description },
+    notFound: {
+      title: 'Page not found',
+      description: 'The requested page does not exist or has moved.',
+      body: 'The requested page does not exist or has moved. Check the address or start again from the home page.',
+      home: 'Go to the English home page',
+    },
     accessibilite: {
       title: 'Accessibility',
       description: 'Accessibility statement of sols.cartes.gouv.fr (placeholder text).',
