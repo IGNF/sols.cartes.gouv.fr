@@ -467,6 +467,12 @@ export const MAP_NOTICES = {
   baseLayersEmpty: 'Aucun fond de carte prévu n’est publié par la Géoplateforme.',
 } as const;
 
+/**
+ * Wait for every tile of the view before the print export gives up: the GPF can accept a tile request
+ * and never answer (D-carto-1), and OpenLayers then never reports the map as rendered.
+ */
+export const PRINT_RENDER_TIMEOUT_MS = 20_000;
+
 /** Strings of the "Imprimer la carte" dialog and print sheet. */
 export const PRINT_LABELS = {
   button: 'Imprimer',
