@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { GPF_ENDPOINTS } from '../config/urls';
 import { findSolsLayer } from '../data/solsLayers';
 import { solsLayerKey, type SolsService } from '../data/solsLayersSchema';
-import { readDeepLink, type DeepLinkRequest } from '../map/deepLink';
+import type { DeepLinkRequest } from '../map/deepLink';
 import { toOverlayRef } from '../map/overlays';
 import { findWmtsLayer } from '../map/wmtsCapabilities';
 import { useMapStore } from '../store/useMapStore';
@@ -127,13 +127,4 @@ export function useDeepLinkLayer(request: DeepLinkRequest | null): DeepLinkStatu
   }, [foundService, foundTitle, knownLegend, request, addOverlay]);
 
   return status;
-}
-
-/**
- * Reads the first layer of the "Voir sur la carte" link once (`l` permalink, or the `layer/type/url`
- * alias) and follows it. The other layers of a permalink are followed by DeepLinkNotice (one per entry).
- */
-export default function useDeepLink(search: string = window.location.search): DeepLinkStatus {
-  const [request] = useState(() => readDeepLink(search));
-  return useDeepLinkLayer(request);
 }

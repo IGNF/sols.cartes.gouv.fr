@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   parseDeepLink,
   parsePermalinkLayers,
-  readDeepLink,
   readDeepLinks,
   readPermalinkBaseLayer,
   resolveDeepLink,
 } from './deepLink';
+
+/** First layer of a link (the catalogue sends one). */
+const readDeepLink = (search: string) => readDeepLinks(search)[0] ?? null;
 
 describe('parseDeepLink', () => {
   it('lit le lien émis par le catalogue (type en majuscules, layer non encodé, url encodée)', () => {

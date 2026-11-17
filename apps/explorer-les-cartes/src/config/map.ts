@@ -445,11 +445,7 @@ export const PERMALINK_PARAMS = {
   center: 'c',
   zoom: 'z',
   layers: 'l',
-  permalink: 'permalink',
 } as const;
-
-/** Value of `permalink` in the links this map emits (`no` in the catalogue's links, both ignored on reading). */
-export const PERMALINK_FLAG = 'yes';
 
 /** Notices of the map page about its layers and the catalogue. */
 export const MAP_NOTICES = {

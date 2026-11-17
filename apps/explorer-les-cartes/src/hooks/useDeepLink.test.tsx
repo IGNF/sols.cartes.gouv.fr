@@ -4,7 +4,8 @@ import { GPF_ENDPOINTS } from '../config/urls';
 import { initialMapState, useMapStore } from '../store/useMapStore';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import { createQueryWrapper } from '../test/queryWrapper';
-import useDeepLink from './useDeepLink';
+import { readDeepLinks } from '../map/deepLink';
+import { useDeepLinkLayer } from './useDeepLink';
 
 const WMS_CAPABILITIES = `<WMS_Capabilities xmlns="http://www.opengis.net/wms"><Capability><Layer>
   <Layer><Name>couche_publiee</Name><Title>Couche publiée</Title></Layer></Layer></Capability></WMS_Capabilities>`;
@@ -29,8 +30,11 @@ function mockFetch() {
   return fetchMock;
 }
 
-const render = (search: string) =>
-  renderHook(() => useDeepLink(search), { wrapper: createQueryWrapper() });
+/** Follows the first layer of a link, read once as DeepLinkNotice does. */
+const render = (search: string) => {
+  const request = readDeepLinks(search)[0] ?? null;
+  return renderHook(() => useDeepLinkLayer(request), { wrapper: createQueryWrapper() });
+};
 
 describe('useDeepLink', () => {
   beforeEach(() => {
