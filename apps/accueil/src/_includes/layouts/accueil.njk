@@ -162,6 +162,7 @@ layout: layouts/base.njk
         </ul>
       </section>
     </div>
+    <p hidden data-sols-carousel-empty>{{ strings.agenda.empty }}</p>
     <script type="module" src="{{ site.assets.js }}/carousel.js"></script>
     {%- else %}
     <p>{{ strings.agenda.empty }}</p>
