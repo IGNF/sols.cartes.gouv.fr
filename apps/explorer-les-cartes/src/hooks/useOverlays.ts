@@ -54,14 +54,22 @@ export default function useOverlays(map: OlMap | null): void {
           const detachers = source
             ? [
                 attachTileRetry(source, TILE_RETRY_DELAY_MS),
-                watchTileHealth(source, OVERLAY_UNAVAILABLE_AFTER_ERRORS, () =>
-                  useMapStore.getState().markOverlayUnavailable(overlay.key),
+                watchTileHealth(
+                  source,
+                  OVERLAY_UNAVAILABLE_AFTER_ERRORS,
+                  () => useMapStore.getState().markOverlayUnavailable(overlay.key),
+                  () => useMapStore.getState().markOverlayAvailable(overlay.key),
                 ),
               ]
             : [];
           const detach = () => detachers.forEach((stop) => stop());
           map.addLayer(layer);
           mounted.current.set(overlay.key, { layer, detach });
+        })
+        // The layer could not be built (e.g. the projection chunk failed to load): report it.
+        .catch(() => {
+          if (useMapStore.getState().overlays.some((o) => o.key === overlay.key))
+            markOverlayUnavailable(overlay.key);
         })
         .finally(() => pending.current.delete(overlay.key));
     }

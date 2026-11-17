@@ -55,6 +55,15 @@ describe('useMapStore', () => {
     expect(useMapStore.getState().unavailableOverlays).toEqual([]);
   });
 
+  it('retire la marque quand la couche dessine finalement une tuile', () => {
+    const { addOverlay, markOverlayUnavailable, markOverlayAvailable } = useMapStore.getState();
+    addOverlay(LOIRET);
+    markOverlayUnavailable(LOIRET.key);
+    markOverlayAvailable(LOIRET.key);
+    expect(useMapStore.getState().unavailableOverlays).toEqual([]);
+    expect(useMapStore.getState().overlays).toEqual([LOIRET]);
+  });
+
   it('prend le fond de carte d’un permalien, sinon le fond par défaut', () => {
     expect(initialBaseLayer('?l=ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS(0;1;1;0)')).toBe(
       'orthophotos',
