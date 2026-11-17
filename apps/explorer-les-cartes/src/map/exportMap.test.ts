@@ -55,4 +55,17 @@ describe('exportMapImage', () => {
     } as unknown as OlMap;
     await expect(exportMapImage(noSize)).rejects.toThrow('taille');
   });
+
+  it('abandonne si la carte ne finit jamais son rendu (tuile GPF sans réponse)', async () => {
+    vi.useFakeTimers();
+    const stuck = {
+      getViewport: () => document.createElement('div'),
+      once: vi.fn(() => ({ target: null, type: 'rendercomplete', listener: () => {} })),
+      renderSync: vi.fn(),
+    } as unknown as OlMap;
+    const result = exportMapImage(stuck, 1000);
+    vi.advanceTimersByTime(1000);
+    await expect(result).rejects.toThrow('à temps');
+    vi.useRealTimers();
+  });
 });

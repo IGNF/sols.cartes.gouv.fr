@@ -186,10 +186,11 @@ export default function (eleventyConfig) {
     if (!/<meta name="description" content="[^"\s][^"]*">/.test(content))
       missing.push('meta description');
     // A rerouting page is canonicalised to its target (absolute for a page moved to another site),
-    // every other page to itself.
+    // a noindex page (404) has none, every other page is canonicalised to itself.
     const target = content.match(REFRESH)?.[1] ?? this.page.url;
     const canonical = /^https?:\/\//.test(target) ? target : `${site.url}${target}`;
-    if (!content.includes(`<link rel="canonical" href="${canonical}">`)) {
+    const noindex = content.includes('<meta name="robots" content="noindex">');
+    if (!noindex && !content.includes(`<link rel="canonical" href="${canonical}">`)) {
       missing.push('canonical');
     }
     if (missing.length > 0) {

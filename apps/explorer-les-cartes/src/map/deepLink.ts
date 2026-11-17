@@ -178,7 +178,7 @@ function toRequest(layer: PermalinkLayer): DeepLinkRequest {
 
 /**
  * Base layer selected by a permalink: the first WMTS entry of `l` naming one of the configured base layers
- * (this map's own permalinks put it first, src/map/permalink.ts). Null when `l` names none.
+ * (cartes.gouv.fr permalinks put it first). Null when `l` names none.
  */
 export function readPermalinkBaseLayer(search: string): BaseLayerId | null {
   const permalink = new URLSearchParams(search).get(PERMALINK_PARAMS.layers);
@@ -211,9 +211,4 @@ export function readDeepLinks(search: string): DeepLinkRequest[] {
   if (target.kind === 'unsupported')
     return [{ kind: 'unsupported', name: alias.layer, type: target.type }];
   return [{ kind: 'invalid', name: alias.layer }];
-}
-
-/** The first layer to add (the catalogue sends one); null when there is no link. */
-export function readDeepLink(search: string): DeepLinkRequest | null {
-  return readDeepLinks(search)[0] ?? null;
 }

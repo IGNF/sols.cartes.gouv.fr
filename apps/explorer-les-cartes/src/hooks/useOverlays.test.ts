@@ -15,6 +15,7 @@ const wmts = vi.hoisted(() => ({
 vi.mock('../map/overlays', () => ({
   createOverlayLayer: (overlay: OverlayRef) => {
     if (overlay.name === 'inconstructible') return Promise.resolve(null);
+    if (overlay.name === 'chunk-perdu') return Promise.reject(new Error('chunk introuvable'));
     const source = new Observable();
     const layer = { getSource: () => source, key: overlay.key };
     created.push({ key: overlay.key, source });
@@ -114,6 +115,17 @@ describe('useOverlays', () => {
     act(() => useMapStore.getState().addOverlay(ref('inconstructible')));
     await waitFor(() =>
       expect(useMapStore.getState().unavailableOverlays).toEqual(['inconstructible']),
+    );
+    expect(addLayer).not.toHaveBeenCalled();
+  });
+
+  it('marque indisponible une couche dont la construction échoue (chunk de projection perdu)', async () => {
+    const { map, addLayer } = fakeMap();
+    useMapStore.setState({ map });
+    renderHook(() => useOverlays(map));
+    act(() => useMapStore.getState().addOverlay(ref('chunk-perdu')));
+    await waitFor(() =>
+      expect(useMapStore.getState().unavailableOverlays).toEqual(['chunk-perdu']),
     );
     expect(addLayer).not.toHaveBeenCalled();
   });

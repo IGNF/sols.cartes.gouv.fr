@@ -1,0 +1,10 @@
+---
+layout: layouts/page.njk
+pageKey: notFound
+permalink: /404.html
+eleventyExcludeFromCollections: true
+noindex: true
+---
+{#- Served by the host for any unknown path: absolute links only, French first then English. -#}
+<p><a class="fr-link" href="/{{ site.defaultLanguage }}/">{{ t.pages.notFound.home }}</a></p>
+<p lang="en">{{ i18n.en.pages.notFound.body }} <a class="fr-link" href="/en/">{{ i18n.en.pages.notFound.home }}</a></p>

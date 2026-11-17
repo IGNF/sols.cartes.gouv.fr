@@ -24,6 +24,8 @@ export interface MapState {
   addOverlay: (overlay: OverlayRef) => void;
   removeOverlay: (key: string) => void;
   markOverlayUnavailable: (key: string) => void;
+  /** Withdraws the mark: the layer drew a tile after all. */
+  markOverlayAvailable: (key: string) => void;
   setCatalogueUnavailable: (unavailable: boolean) => void;
 }
 
@@ -61,6 +63,12 @@ export const useMapStore = create<MapState>()((set) => ({
       state.unavailableOverlays.includes(key)
         ? state
         : { unavailableOverlays: [...state.unavailableOverlays, key] },
+    ),
+  markOverlayAvailable: (key) =>
+    set((state) =>
+      state.unavailableOverlays.includes(key)
+        ? { unavailableOverlays: state.unavailableOverlays.filter((k) => k !== key) }
+        : state,
     ),
   setCatalogueUnavailable: (catalogueUnavailable) => set({ catalogueUnavailable }),
 }));

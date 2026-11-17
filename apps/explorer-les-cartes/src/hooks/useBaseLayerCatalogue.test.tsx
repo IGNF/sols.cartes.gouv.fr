@@ -18,7 +18,6 @@ describe('useBaseLayerCatalogue', () => {
     const { result } = renderHook(() => useBaseLayerCatalogue(), {
       wrapper: createQueryWrapper(),
     });
-    expect(result.current.isPending).toBe(true);
     expect(result.current.status).toBe('loading');
     await waitFor(() => expect(result.current.layers).toHaveLength(3));
     expect(result.current.status).toBe('ready');
