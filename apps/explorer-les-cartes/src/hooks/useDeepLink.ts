@@ -14,6 +14,8 @@ export type DeepLinkStatus =
   | { state: 'checking'; name: string }
   | { state: 'added'; name: string; title: string; key: string }
   | { state: 'not-found'; name: string }
+  /** The capabilities to look the layer up in could not be fetched: no verdict on the layer. */
+  | { state: 'unreachable'; name: string }
   | { state: 'invalid'; name: string }
   | { state: 'unsupported'; name: string; type: string; style?: string };
 
@@ -25,7 +27,11 @@ const ENDPOINTS: Record<SolsService, string> = {
   tms: GPF_ENDPOINTS.tms,
 };
 
-type Lookup = { state: 'found'; title: string } | { state: 'absent' } | { state: 'pending' };
+type Lookup =
+  | { state: 'found'; title: string }
+  | { state: 'absent' }
+  | { state: 'pending' }
+  | { state: 'failed' };
 
 /**
  * Follows one layer of a "Voir sur la carte" link or permalink. The layer is looked up in sols-layers.json
@@ -53,12 +59,14 @@ export function useDeepLinkLayer(request: DeepLinkRequest | null): DeepLinkStatu
   const lookup = (service: SolsService): Lookup => {
     if (service === 'wmts') {
       if (wmts.isPending) return { state: 'pending' };
+      if (wmts.isError) return { state: 'failed' };
       const info = wmts.data ? findWmtsLayer(wmts.data, name) : null;
       return info ? { state: 'found', title: info.title } : { state: 'absent' };
     }
     const query = service === 'wms-raster' ? raster : service === 'wms-vector' ? vector : null;
     if (!query) return { state: 'absent' };
     if (query.isPending) return { state: 'pending' };
+    if (query.isError) return { state: 'failed' };
     const entry = query.data?.get(name);
     return entry ? { state: 'found', title: entry.title } : { state: 'absent' };
   };
@@ -86,6 +94,7 @@ export function useDeepLinkLayer(request: DeepLinkRequest | null): DeepLinkStatu
         found = { service, title: result.title };
         break;
       }
+      if (result.state === 'failed') status = { state: 'unreachable', name };
     }
   }
   if (found) {

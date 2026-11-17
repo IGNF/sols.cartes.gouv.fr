@@ -91,6 +91,20 @@ describe('useDeepLink', () => {
     expect(useMapStore.getState().overlays).toEqual([]);
   });
 
+  it('ne conclut pas à une couche introuvable quand le service ne répond pas', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response('', { status: 502 }))),
+    );
+    const { result } = render(
+      '?layer=couche_publiee&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-r%2Fwms',
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual({ state: 'unreachable', name: 'couche_publiee' }),
+    );
+    expect(useMapStore.getState().overlays).toEqual([]);
+  });
+
   it('signale le format TMS (style MapLibre) comme non pris en charge', () => {
     mockFetch();
     const { result } = render(
