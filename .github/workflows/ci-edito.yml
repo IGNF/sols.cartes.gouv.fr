@@ -6,6 +6,8 @@ on:
     paths:
       - 'packages/**'
       - 'apps/accueil/**'
+      # smoke.test.js compares the markup copied in this doc with the sources
+      - 'doc/agents/edito.md'
       - 'package.json'
       - 'bun.lock'
       - '.bun-version'
@@ -14,6 +16,8 @@ on:
     paths:
       - 'packages/**'
       - 'apps/accueil/**'
+      # smoke.test.js compares the markup copied in this doc with the sources
+      - 'doc/agents/edito.md'
       - 'package.json'
       - 'bun.lock'
       - '.bun-version'
@@ -51,4 +55,4 @@ jobs:
           else
             echo "skipped: no test script"
           fi
-      - run: bun run --if-present build
+      # No separate build step: lint and every test file already run eleventy.
