@@ -5,12 +5,31 @@
  */
 import type { AppSpec } from './apps';
 
+const UNSAFE_SCRIPT_CHARS: Record<string, string> = {
+  '<': '\\u003C',
+  '>': '\\u003E',
+  '/': '\\u002F',
+  '\b': '\\b',
+  '\f': '\\f',
+  '\n': '\\n',
+  '\r': '\\r',
+  '\t': '\\t',
+  '\0': '\\0',
+  '\u2028': '\\u2028',
+  '\u2029': '\\u2029',
+};
+
+/** Escapes JSON for inlining in a <script> element (no `</script>` break-out, no line terminators). */
+function escapeForScript(json: string): string {
+  return json.replace(/[<>/\b\f\n\r\t\0\u2028\u2029]/g, (c) => UNSAFE_SCRIPT_CHARS[c] ?? c);
+}
+
 export function notFoundPage(base: string, apps: readonly AppSpec[]): string {
   const spaRoots = apps
     .filter((app) => app.publicPath !== '/')
     .map((app) => `${base}${app.publicPath.replace(/^\/+|\/+$/g, '')}/`);
   // The script only redirects; without JS the message and the home link stay usable.
-  const script = `(function(){var roots=${JSON.stringify(spaRoots)};var p=location.pathname;for(var i=0;i<roots.length;i++){if(p.indexOf(roots[i])===0||p+'/'===roots[i]){location.replace(roots[i]);return;}}})();`;
+  const script = `(function(){var roots=${escapeForScript(JSON.stringify(spaRoots))};var p=location.pathname;for(var i=0;i<roots.length;i++){if(p.indexOf(roots[i])===0||p+'/'===roots[i]){location.replace(roots[i]);return;}}})();`;
   return `<!DOCTYPE html>
 <html lang="fr">
   <head>
