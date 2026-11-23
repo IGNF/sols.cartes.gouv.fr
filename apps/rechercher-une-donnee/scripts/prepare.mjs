@@ -21,6 +21,8 @@ import {
   UPSTREAM_DIR,
   capture,
   listPatches,
+  prefixRootPaths,
+  servedBaseHref,
   log,
   nodeMajor,
   readUpstream,
@@ -87,8 +89,10 @@ export function listFiles(dir) {
 }
 
 function applyOverlay(upstream) {
-  copyFileSync(CONFIG_FILE, join(UPSTREAM_DIR, 'conf', 'default.toml'))
+  // Same-origin paths of the config (datahub_url, favicon, map viewer) follow SITE_BASE.
+  writeFileSync(join(UPSTREAM_DIR, 'conf', 'default.toml'), prefixRootPaths(readFileSync(CONFIG_FILE, 'utf8')))
   log('config/default.toml copied to .upstream/conf/default.toml')
+  const baseHref = servedBaseHref(upstream)
   // New files of ours, copied one by one; COPYFILE_EXCL fails if an upstream file
   // already exists at that path (modifying upstream files is the job of patches).
   const overlayDir = join(APP_DIR, 'overlay')
@@ -98,15 +102,15 @@ function applyOverlay(upstream) {
     copyFileSync(file, target, constants.COPYFILE_EXCL)
   }
   const layoutDir = join(UPSTREAM_DIR, 'apps', upstream.app, 'src', 'app', 'sols-layout')
-  for (const [name, html] of Object.entries(readLayout(upstream.baseHref))) {
-    writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${html}\n`)
+  for (const [name, html] of Object.entries(readLayout(baseHref))) {
+    writeFileSync(join(layoutDir, `sols-${name}.component.html`), `${prefixRootPaths(html)}\n`)
   }
   const appSrc = join(UPSTREAM_DIR, 'apps', upstream.app, 'src')
-  const sharedCss = readSharedCss(upstream.baseHref)
+  const sharedCss = readSharedCss(baseHref)
   writeFileSync(join(appSrc, 'sols-shared.css'), sharedCss)
   // DSFR icons used by the shared CSS (chevron, external link...), from the installed DSFR
   const dsfrIcons = join(UPSTREAM_DIR, 'node_modules', '@gouvfr', 'dsfr', 'dist', 'icons')
-  for (const icon of referencedDsfrIcons(sharedCss, upstream.baseHref)) {
+  for (const icon of referencedDsfrIcons(sharedCss, baseHref)) {
     const target = join(appSrc, 'assets', 'dsfr', 'icons', icon)
     mkdirSync(dirname(target), { recursive: true })
     copyFileSync(join(dsfrIcons, icon), target)

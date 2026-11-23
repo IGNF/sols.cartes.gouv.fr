@@ -1,13 +1,16 @@
 // Production build of the datahub, served under upstream.baseHref, copied to dist/.
 import { cpSync, existsSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { DIST_DIR, NX_ENV, UPSTREAM_DIR, log, run } from './lib.mjs'
+import { DIST_DIR, NX_ENV, UPSTREAM_DIR, log, run, servedBaseHref } from './lib.mjs'
 import { prepare } from './prepare.mjs'
 
 const upstream = prepare()
-// No --base-href flag: the base href comes from project.json (patch 0002, value
-// checked against upstream.json by lint), shared with the dev server.
-run('npx', ['nx', 'build', upstream.app, '--configuration=production', '--skip-nx-cache'], {
+// The base href comes from project.json (patch 0002, value checked against upstream.json by lint),
+// shared with the dev server; only a build under another SITE_BASE overrides it.
+const baseHref = servedBaseHref(upstream)
+const baseHrefArgs = baseHref === upstream.baseHref ? [] : [`--base-href=${baseHref}`]
+const nxArgs = ['nx', 'build', upstream.app, '--configuration=production', '--skip-nx-cache']
+run('npx', [...nxArgs, ...baseHrefArgs], {
   cwd: UPSTREAM_DIR,
   env: { ...process.env, ...NX_ENV },
 })

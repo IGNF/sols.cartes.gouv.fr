@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { siteBase, withSiteBase } from '../../../scripts/site-base.mjs'
 
 export const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 export const UPSTREAM_DIR = join(APP_DIR, '.upstream')
@@ -38,6 +39,30 @@ export function readUpstream(text = readFileSync(join(APP_DIR, 'upstream.json'),
     throw new Error('upstream.json: "baseHref" must start and end with "/"')
   }
   return upstream
+}
+
+/**
+ * Site prefix (SITE_BASE, normalised in scripts/site-base.mjs at the repository root): "/" by default,
+ * "/sols.cartes.gouv.fr/" for the GitHub Pages preview. upstream.json and patch 0002 keep the
+ * production base href; a build under another prefix overrides it (build.mjs, --base-href).
+ */
+export const SITE_BASE = siteBase()
+
+/** Base href the catalogue is served under: upstream.baseHref below SITE_BASE. */
+export function servedBaseHref(upstream, base = SITE_BASE) {
+  return withSiteBase(upstream.baseHref, base)
+}
+
+/**
+ * Prefixes the root-absolute values of attributes (`href="/x"`) or TOML keys (`key = '/x'`) with SITE_BASE,
+ * for the generated header/footer and the copied config. Values already under SITE_BASE are kept.
+ */
+export function prefixRootPaths(text, base = SITE_BASE) {
+  if (base === '/') return text
+  return text.replace(
+    /(=\s*)(["'])(\/(?!\/)[^"']*)\2/g,
+    (_, eq, quote, path) => `${eq}${quote}${withSiteBase(path, base)}${quote}`
+  )
 }
 
 /** Patch files, applied in lexical order (0001-..., 0002-...). */
