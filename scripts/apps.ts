@@ -5,6 +5,7 @@
  */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { siteBase } from './site-base.mjs';
 
 export type PackageManager = 'bun' | 'npm';
 
@@ -40,6 +41,12 @@ export const APPS: readonly AppSpec[] = [
     pm: 'bun',
   },
 ];
+
+/**
+ * Public prefix of the site (SITE_BASE, normalised in site-base.mjs): "/" by default, "/sols.cartes.gouv.fr/"
+ * for the GitHub Pages preview. Bricks build with it; the dist layout below it does not change.
+ */
+export const SITE_BASE = siteBase();
 
 export const DIST_ROOT = join(ROOT, 'dist');
 export const PREVIEW_PORT = Number(process.env.PORT ?? 8080);

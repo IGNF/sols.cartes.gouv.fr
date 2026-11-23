@@ -3,12 +3,14 @@
  *   /                        <- apps/accueil
  *   /rechercher-une-donnee   <- apps/rechercher-une-donnee
  *   /explorer-les-cartes     <- apps/explorer-les-cartes
- * Usage: bun scripts/build-all.ts [--skip-build]
+ * With SITE_BASE set (GitHub Pages preview, see doc/ci.md), a root 404.html and .nojekyll are added.
+ * Usage: [SITE_BASE=/prefix/] bun scripts/build-all.ts [--skip-build]
  */
-import { cp, mkdir, rm } from 'node:fs/promises';
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { APPS, DIST_ROOT, ROOT, appExists, hasScript, runCommand } from './apps';
+import { APPS, DIST_ROOT, ROOT, SITE_BASE, appExists, hasScript, runCommand } from './apps';
+import { notFoundPage } from './not-found-page';
 
 const skipBuild = process.argv.includes('--skip-build');
 
@@ -53,4 +55,10 @@ for (const app of APPS) {
   await cp(source, target, { recursive: true });
   console.log(`[${app.id}] ${app.dir}/${app.outDir} -> dist${app.publicPath}`);
 }
-console.log(`dist assembled at ${DIST_ROOT}`);
+if (SITE_BASE !== '/') {
+  // GitHub Pages: no Jekyll processing, and its only fallback page is the root 404.html.
+  await writeFile(join(DIST_ROOT, '.nojekyll'), '');
+  await writeFile(join(DIST_ROOT, '404.html'), notFoundPage(SITE_BASE, APPS));
+  console.log(`404.html and .nojekyll added for SITE_BASE=${SITE_BASE}`);
+}
+console.log(`dist assembled at ${DIST_ROOT} (SITE_BASE=${SITE_BASE})`);
