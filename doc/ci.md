@@ -17,6 +17,19 @@ Les fichiers Markdown sont exclus de `prettier --check .` (`.prettierignore`) ; 
 
 Les workflows tournent sur `pull_request` et sur `push` vers `main`.
 
+## Prévisualisation GitHub Pages (`SITE_BASE`)
+
+`deploy-pages.yml` publie le site complet sur <https://ignf.github.io/sols.cartes.gouv.fr/> (site de projet, donc sous le préfixe `/sols.cartes.gouv.fr/`). Déclencheurs : `push` sur la branche `feat/gh-pages-deploy` et `workflow_dispatch` ; l'environnement Pages (source « GitHub Actions ») se configure dans les réglages du dépôt. Étapes : bun + Node, `bun install`, `SITE_BASE=/sols.cartes.gouv.fr/ bun run build:all`, puis `configure-pages`, `upload-pages-artifact` (`dist/`) et `deploy-pages`.
+
+La variable d'environnement `SITE_BASE` (défaut `/`, normalisée pour commencer et finir par `/`) est lue à un seul endroit, `scripts/site-base.mjs`, par toutes les briques ; avec la valeur par défaut, dev, `preview:all` et la production ne changent pas :
+
+- edito : `pathPrefix` + `HtmlBasePlugin` d'Eleventy (href, src et meta refresh du HTML produit) ; les pictogrammes SVG (`<use href>`) passent par le filtre `htmlBaseUrl` ;
+- carto : `base` Vite = `${SITE_BASE}explorer-les-cartes/`, et les chemins absolus de `@sols/brand/brand.json` sont préfixés au build (plugin de `vite.config.ts`) ;
+- catalogue : `upstream.json` et le patch 0002 gardent `/rechercher-une-donnee/` ; sous un autre préfixe, `scripts/build.mjs` passe `--base-href`, et `prepare.mjs` préfixe les chemins de l'en-tête/pied de page générés et de la copie de `config/default.toml` ;
+- `build-all` ajoute `404.html` (redirige les chemins du catalogue et de la carto vers l'entrée de la brique, sinon message « Page non trouvée ») et `.nojekyll` à la racine de `dist/`, uniquement quand `SITE_BASE` n'est pas `/`. La structure de `dist/` ne change pas.
+
+Limite : GitHub Pages n'a pas de repli SPA ; un lien profond du catalogue (`/rechercher-une-donnee/dataset/<id>`) ouvert directement aboutit à l'accueil du catalogue.
+
 ## Points d'attention
 
 - `main` n'a pas encore de règle de protection. Le jour où des checks deviennent obligatoires, un workflow filtré par chemin qui ne se déclenche pas reste « pending » : prévoir un job jumeau en `paths-ignore` ou un workflow unique avec `dorny/paths-filter`.
