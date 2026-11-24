@@ -1,5 +1,5 @@
 diff --git a/apps/datahub/src/app/home/home-header/home-header.component.html b/apps/datahub/src/app/home/home-header/home-header.component.html
-index f9d789c..79d8b94 100644
+index f9d789c..ad39b22 100644
 --- a/apps/datahub/src/app/home/home-header/home-header.component.html
 +++ b/apps/datahub/src/app/home/home-header/home-header.component.html
 @@ -39,6 +39,8 @@
@@ -11,18 +11,46 @@ index f9d789c..79d8b94 100644
        >
          @if (showFavoritesButton$ | async) {
            <datahub-header-badge-button
-@@ -75,7 +77,10 @@
-               <button
-                 type="button"
-                 class="badge-btn text-primary-white bg-primary/50 hover:bg-primary/100"
+@@ -69,18 +71,27 @@
+             </button>
+           </div>
+         }-->
+-        @for (preset of searchConfig?.SEARCH_PRESET; track preset) {
+-          <div>
+-            <div>
+-              <button
+-                type="button"
+-                class="badge-btn text-primary-white bg-primary/50 hover:bg-primary/100"
 -                (click)="clearSearchAndFilterAndSort(preset)"
-+                [attr.aria-pressed]="
-+                  isKeywordPresetActive(preset, selectedKeywords$ | async)
-+                "
-+                (click)="toggleKeywordPreset(preset)"
-               >
-                 <span translate>{{ preset['name'] }}</span>
-               </button>
+-              >
+-                <span translate>{{ preset['name'] }}</span>
+-              </button>
+-            </div>
+-          </div>
++        @if (searchConfig?.SEARCH_PRESET?.length) {
++          <ul class="fr-tags-group">
++            @for (preset of searchConfig.SEARCH_PRESET; track preset) {
++              <li>
++                <!-- Sols: aria-pressed follows the URL; stopImmediatePropagation
++                     skips the DSFR tag script, which would flip it a second time -->
++                <button
++                  type="button"
++                  class="fr-tag"
++                  [attr.aria-pressed]="
++                    isKeywordPresetActive(preset, selectedKeywords$ | async)
++                  "
++                  (click)="
++                    $event.stopImmediatePropagation(); toggleKeywordPreset(preset)
++                  "
++                >
++                  <span translate>{{ preset['name'] }}</span>
++                </button>
++              </li>
++            }
++          </ul>
+         }
+       </div>
+     </div>
 diff --git a/apps/datahub/src/app/home/home-header/home-header.component.ts b/apps/datahub/src/app/home/home-header/home-header.component.ts
 index f8661d6..fafe09c 100644
 --- a/apps/datahub/src/app/home/home-header/home-header.component.ts
