@@ -191,8 +191,16 @@ test('patch 0007 turns keyword presets into toggle chips (C11)', () => {
   ])
   assert.match(patch, /aria-pressed/)
   assert.match(patch, /aria-label="Mots-clés suggérés"/)
+  // DSFR pressable tags (C11 follow-up): fr-tags-group > li > button.fr-tag, default size
+  assert.match(patch, /^\+\s*<ul class="fr-tags-group">$/m)
+  assert.match(patch, /^\+\s*class="fr-tag"$/m)
+  assert.doesNotMatch(patch, /^\+.*(badge-btn|fr-tag--sm|fr-tags-group--sm)/m)
+  // the DSFR tag script would flip aria-pressed a second time on click
+  assert.match(patch, /\$event\.stopImmediatePropagation\(\); toggleKeywordPreset\(preset\)/)
+  const layout = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(layout, /^\+\s*"\.\/node_modules\/@gouvfr\/dsfr\/dist\/component\/tag\/tag\.min\.css",$/m)
   const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
-  assert.match(css, /\.badge-btn\[aria-pressed='true'\]/)
+  assert.doesNotMatch(css, /badge-btn/)
 })
 
 test('extractHeaderScript reads the E9 js block and fails loudly without it (C12)', () => {
