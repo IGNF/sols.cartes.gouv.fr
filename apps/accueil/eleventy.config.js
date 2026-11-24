@@ -1,8 +1,7 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, posix } from 'node:path';
-import { HtmlBasePlugin, I18nPlugin } from '@11ty/eleventy';
-import { siteBase } from '../../scripts/site-base.mjs';
+import { I18nPlugin } from '@11ty/eleventy';
 import { defaultLocaleUrl, localeOf, stripLocale } from './lib/i18n.js';
 import accueil from './src/_data/accueil.js';
 import site from './src/_data/site.js';
@@ -15,8 +14,11 @@ const BRAND_DIR = dirname(require.resolve('@sols/brand/brand.json'));
 const CACHE_DIR = join(import.meta.dirname, 'node_modules', '.cache', 'sols-accueil');
 
 /** DSFR utility icons used by the site; only their rules and SVGs are published (/dsfr/icons.css). */
-/** DSFR utility icons of the home page (frieze, data cards, agenda). */
+/** DSFR utility icons of the home page (hero buttons, frieze, data cards, agenda). */
 const HOME_ICONS = [
+  accueil.heroMap.lockIcon,
+  accueil.calloutIcon,
+  ...accueil.actions.map((action) => action.icon).filter(Boolean),
   accueil.frieze.without.icon,
   accueil.frieze.with.icon,
   accueil.frieze.arrow,
@@ -110,20 +112,16 @@ const DATE_FORMATS = Object.fromEntries(
 );
 /** Build day (UTC, YYYY-MM-DD): agenda events before it are not published. */
 const BUILD_DAY = new Date().toISOString().slice(0, 10);
-/** Site prefix (SITE_BASE, "/" by default; "/sols.cartes.gouv.fr/" for the GitHub Pages preview). */
-const SITE_BASE = siteBase();
 const REFRESH = /<meta http-equiv="refresh" content="0; url=([^"]+)">/;
 
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
   eleventyConfig.addPassthroughCopy({ 'src/js': 'js' });
+  eleventyConfig.addPassthroughCopy({ 'src/img': site.assets.img.slice(1) });
   eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
   // Brand images are published unchanged from packages/brand/assets/.
   eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });
-
-  // Root-absolute href/src of the output HTML are prefixed with SITE_BASE (no-op for "/").
-  eleventyConfig.addPlugin(HtmlBasePlugin);
 
   // Pages live in src/<locale>/; locale_url and locale_links come from the plugin. errorMode "never":
   // a link without a translation falls back to the given URL (the link checker still runs on dist).
@@ -193,10 +191,7 @@ export default function (eleventyConfig) {
       missing.push('meta description');
     // A rerouting page is canonicalised to its target (absolute for a page moved to another site),
     // every other page to itself.
-    const refresh = content.match(REFRESH)?.[1];
-    const target = refresh?.startsWith(SITE_BASE)
-      ? `/${refresh.slice(SITE_BASE.length)}`
-      : (refresh ?? this.page.url);
+    const target = content.match(REFRESH)?.[1] ?? this.page.url;
     const canonical = /^https?:\/\//.test(target) ? target : `${site.url}${target}`;
     if (!content.includes(`<link rel="canonical" href="${canonical}">`)) {
       missing.push('canonical');
@@ -208,7 +203,6 @@ export default function (eleventyConfig) {
 
   return {
     dir: { input: 'src', output: 'dist', includes: '_includes', data: '_data' },
-    pathPrefix: SITE_BASE,
     templateFormats: ['njk', 'md'],
     htmlTemplateEngine: 'njk',
     markdownTemplateEngine: 'njk',
