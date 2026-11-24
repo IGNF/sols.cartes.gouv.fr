@@ -192,7 +192,8 @@ export default {
   accueil: {
     hero: {
       overline: 'Le portail d’accès aux données des sols pour les territoires',
-      title: 'Toute la connaissance des sols de France réunie en un seul endroit',
+      title: 'Toute la connaissance des sols de France',
+      titleAccent: 'réunie en un seul endroit',
       intro:
         'Soixante ans de données pédologiques collectées sur le territoire français. L’Observatoire des Sols de France vous permet de les localiser et les mobiliser dans vos études et décisions territoriales.',
       actions: {
@@ -205,9 +206,40 @@ export default {
         referentiels: { value: '12+', label: 'Référentiels nationaux' },
         publiques: { value: '100 %', label: 'Données publiques' },
       },
+      map: {
+        url: 'base de données sols · Observatoire des Sols de France',
+        brand: 'Observatoire des Sols de France',
+        layersTitle: 'Couches actives',
+        layers: { donneesSols: 'Données sols', communes: 'Communes', rpg: 'RPG', hydro: 'Hydro.' },
+        sourceTitle: 'Source',
+        sources: ['RRP 1/250 000', 'RMQS · BDAT', 'Format SIG'],
+        tooltip: {
+          title: 'Données sols disponibles · Bassin Parisien',
+          text: 'Texture : limono-argileuse · pH 6.8',
+          status: 'Données INRAE référencées',
+        },
+        legend: {
+          brunsLimoneux: 'Sols bruns limoneux',
+          bocage: 'Bocage herbager',
+          terresArables: 'Terres arables',
+          calcaires: 'Sols calcaires',
+          alpins: 'Sols alpins',
+          mediterraneens: 'Sols méditerranéens',
+        },
+      },
+    },
+    gissol: {
+      overline: 'Le portail du groupement d’intérêt scientifique sur les sols',
+      title: 'GIS Sol',
+      intro:
+        'Gissol est un réseau de partenaires qui vise à connaître, préserver et valoriser les sols en France. Il a pour missions de constituer et de gérer le système d’information sur les sols de France afin de répondre aux demandes des pouvoirs publics et de la société.',
+      apercuAlt:
+        'Aperçu du site du GIS Sol : rubriques « Les données du Gis Sol », « Webservices », « Cartes » et « Tableaux de données ».',
     },
     service: {
-      overline: 'Le service',
+      overline: "L'explorateur sols.cartes.gouv.fr",
+      apercuAlt:
+        'Aperçu de l’explorateur de cartes : carte des sols du Sud-Ouest de la France avec la barre de recherche et les outils de la carte.',
       title: 'Localisez, comprenez et mobilisez les données sur les sols',
       intro:
         'Les données sur les sols sont dispersées entre de nombreux acteurs et difficiles à exploiter. L’Observatoire vous permet de les trouver, les comprendre et les mobiliser.',
@@ -335,8 +367,13 @@ export default {
       title: 'Un service piloté par l’INRAE avec l’écosystème public',
       intro:
         'L’Observatoire des Sols de France s’appuie sur un réseau d’acteurs publics et scientifiques pour faciliter l’accès, la compréhension et l’usage des données pédologiques françaises.',
-      networkOverline: 'Partenaires scientifiques, techniques et environnementaux',
-      networkTitle: 'Acteurs du réseau',
+      groups: {
+        network: {
+          overline: 'Partenaires scientifiques, techniques et environnementaux',
+          title: 'Acteurs du réseau',
+        },
+        sponsors: { overline: 'Portage et accompagnement', title: 'Sponsors' },
+      },
       gissolLink: 'Site du GIS Sol',
       callout: {
         title: 'Vous produisez des données sur les sols et souhaitez les référencer ?',

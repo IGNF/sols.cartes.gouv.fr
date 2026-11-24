@@ -1,0 +1,4 @@
+{#- Website screenshot (WebP at several widths). Expects `apercu` ({ srcset, width, height }) and `apercuAlt`. #}
+<div class="sols-apercu">
+  <img class="fr-responsive-img" src="{{ (apercu.srcset | last).src }}" srcset="{% for image in apercu.srcset %}{{ image.src }} {{ image.width }}w{% if not loop.last %}, {% endif %}{% endfor %}" sizes="(min-width: 68rem) 65rem, calc(100vw - 2rem)" alt="{{ apercuAlt }}" width="{{ apercu.width }}" height="{{ apercu.height }}" loading="lazy">
+</div>
