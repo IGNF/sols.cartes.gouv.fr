@@ -32,3 +32,4 @@ playwright-report/
 
 # Rapport LaTeX (local uniquement)
 /retex
+.claude
