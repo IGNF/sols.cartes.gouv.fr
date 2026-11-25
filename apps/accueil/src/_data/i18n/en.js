@@ -184,7 +184,8 @@ export default {
   accueil: {
     hero: {
       overline: 'The access portal to soil data for territories',
-      title: 'All the knowledge on French soils gathered in one place',
+      title: 'All the knowledge on French soils',
+      titleAccent: 'gathered in one place',
       intro:
         'Sixty years of soil data collected across France. The Soil observatory of France lets you find them and use them in your studies and territorial decisions (placeholder text).',
       actions: {
@@ -197,9 +198,45 @@ export default {
         referentiels: { value: '12+', label: 'National reference datasets' },
         publiques: { value: '100%', label: 'Public data' },
       },
+      map: {
+        url: 'soil database · Soil observatory of France',
+        brand: 'Soil observatory of France',
+        layersTitle: 'Active layers',
+        layers: {
+          donneesSols: 'Soil data',
+          communes: 'Municipalities',
+          rpg: 'RPG',
+          hydro: 'Hydro.',
+        },
+        sourceTitle: 'Source',
+        sources: ['RRP 1/250,000', 'RMQS · BDAT', 'GIS format'],
+        tooltip: {
+          title: 'Soil data available · Paris Basin',
+          text: 'Texture: silty clay · pH 6.8',
+          status: 'INRAE data referenced',
+        },
+        legend: {
+          brunsLimoneux: 'Silty brown soils',
+          bocage: 'Grassland bocage',
+          terresArables: 'Arable land',
+          calcaires: 'Calcareous soils',
+          alpins: 'Alpine soils',
+          mediterraneens: 'Mediterranean soils',
+        },
+      },
+    },
+    gissol: {
+      overline: 'The portal of the scientific interest group on soils',
+      title: 'GIS Sol',
+      intro:
+        'Gissol is a network of partners that aims to know, preserve and promote soils in France. Its mission is to build and manage the French soil information system to meet the needs of public authorities and society.',
+      apercuAlt:
+        'Preview of the GIS Sol website: “Les données du Gis Sol”, “Webservices”, “Cartes” and “Tableaux de données” sections.',
     },
     service: {
-      overline: 'The service',
+      apercuAlt:
+        'Preview of the map explorer: soil map of south-western France with the search bar and map tools.',
+      overline: 'The observatory sols.cartes.gouv.fr',
       title: 'Find, understand and use soil data',
       intro:
         'Soil data is scattered among many organisations and hard to use. The Observatory helps you find, understand and use it (placeholder text).',
@@ -325,8 +362,13 @@ export default {
       title: 'A service led by INRAE with the public ecosystem',
       intro:
         'The Soil observatory of France relies on a network of public and scientific organisations to make French soil data easier to access, understand and use (placeholder text).',
-      networkOverline: 'Scientific, technical and environmental partners',
-      networkTitle: 'Network members',
+      groups: {
+        network: {
+          overline: 'Scientific, technical and environmental partners',
+          title: 'Network members',
+        },
+        sponsors: { overline: 'Backing and support', title: 'Sponsors' },
+      },
       gissolLink: 'GIS Sol website',
       callout: {
         title: 'Do you produce soil data and want it referenced?',

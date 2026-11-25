@@ -140,7 +140,9 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
   });
 
   test('héros : textes de la maquette, deux boutons réels, trois chiffres clés', () => {
-    expect(home()).toContain(`<h1>${html(t.accueil.hero.title)}</h1>`);
+    expect(home()).toContain(
+      `<h1 class="fr-display--xs">${html(t.accueil.hero.title)} <span class="sols-hero__accent">${html(t.accueil.hero.titleAccent)}</span></h1>`,
+    );
     for (const action of accueil.actions) {
       expect(home()).toContain(`href="${action.href}"`);
       expect(home()).toContain(`>${html(t.accueil.hero.actions[action.key])}</a>`);
@@ -155,6 +157,7 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
     expect(h2).toEqual([
       'titre-service',
       'titre-usages',
+      'titre-gissol',
       'titre-donnees',
       'titre-agenda',
       'titre-articles',
@@ -220,8 +223,15 @@ describe.each(LOCALES)('accueil /%s/', (locale) => {
   });
 
   test('« Partenaires » : logos, lien GIS Sol et encadré vers le contact', () => {
-    for (const partner of accueil.partners)
-      expect(home()).toContain(`src="${partner.logo}" alt="${partner.name}"`);
+    for (const group of accueil.partners) {
+      expect(home()).toContain(`>${html(t.accueil.partners.groups[group.key].title)}</h3>`);
+      for (const partner of group.items)
+        expect(home()).toContain(
+          partner.bloc
+            ? `${partner.bloc.map(html).join('<br>')}</span>`
+            : `src="${partner.logo}" alt="${html(partner.name)}"`,
+        );
+    }
     expect(home()).toContain(`href="${site.external.gissol}"`);
     expect(home()).toContain('class="fr-callout fr-callout--green-emeraude');
     expect(home()).toContain(`href="/${locale}${site.sections.articles}"`);

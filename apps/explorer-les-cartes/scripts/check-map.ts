@@ -33,10 +33,12 @@
  * M19: search engine of cartes.gouv.fr (SearchEngineAdvanced): « Me géolocaliser » first in the « Avancée » panel,
  * right under the bar, reached with the keyboard, on top and covering no map button, geolocation marker
  * (320 to 1280 px, axe with the panel open); scale line with the opaque background and colours of cartes.gouv.fr.
- * M21: the collapsed footer is one 60 px line from 1024 to 1440 px (all links and the toggle on it, named),
+ * M21: the collapsed footer is one 60 px line (40 px since M23) from 1024 to 1440 px (all links and the toggle on it, named),
  * unchanged at 320/375/768 px and expanded.
  * M22: below 36em the search bar takes the map width with « Avancée » labelled, the top button columns start
  * under it (as guichet-collaboratif and cartes.gouv.fr); suggestions, catalogue, full-screen tool panels, axe.
+ * M23: the collapsed footer is a 40 px bar from 992 to 1920 px (guichet-collaboratif), links from the left edge, the
+ * toggle an icon at the right edge; « Fermer » at the very same place once expanded (320 to 1920 px); no logo border.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -547,7 +549,7 @@ for (const width of [1024, 1100, 1199, 1280, 1440]) {
   );
   check(layout.scroll <= 1, `${width}px : la page ne défile pas (carte jusqu’au pied de page)`);
   check(
-    layout.footer <= 64 && Math.abs(layout.footerTop - layout.mapBottom) <= 1,
+    layout.footer <= 40.5 && Math.abs(layout.footerTop - layout.mapBottom) <= 1,
     `${width}px : pied de page compact (${Math.round(layout.footer)} px) collé à la carte`,
   );
   await page.close();
@@ -2328,75 +2330,95 @@ for (const target of [
   await context.close();
 }
 
-// M21: the collapsed footer stays one line from 1024 px, as on cartes.gouv.fr (one bar, toggle icon only in
-// 62–75em): footer at most 60 px, the six bottom items and the toggle on that line, inside the viewport, toggle
-// named « Haut de page » (title too). Below 62em and from 75em the toggle shows its label; expanded, it shows
-// « Fermer » and the links get the DSFR spacing back (0.75rem). Every bottom item stays in the accessibility tree.
+// M21, M23: the collapsed footer is one 40 px bar from 992 px, as guichet-collaboratif (`app-footer.css`:
+// `.app-footer-main { height: 2.5rem }`, container without max-width): the six bottom items on that line from the
+// left edge of the container, inside the viewport; the toggle at the right edge, icon only (no text, name and title
+// « Haut de page »). Expanded, « Fermer » (text, icon) sits at the same place (same right edge, same offset from the
+// top of the bar) at every width, the links keep the DSFR spacing (0.75rem) and the partner logos have no border.
+// Below 992 px the links wrap, the toggle stays on the right of the first line. Every bottom item stays named.
 /** Toggle labels (`FOOTER_LABELS` in src/config/site.ts, which imports images the script cannot load). */
 const FOOTER_LABELS = { expand: 'Haut de page', collapse: 'Fermer' } as const;
-for (const width of [320, 375, 768, 1024, 1100, 1199, 1280, 1440]) {
+for (const width of [320, 375, 768, 992, 1024, 1100, 1199, 1280, 1440, 1920]) {
   const context = await browser.newContext({ viewport: { width, height: 800 } });
   const page = await context.newPage();
   await page.goto(url, { waitUntil: 'load' });
   const footer = page.getByRole('contentinfo');
   const toggle = footer.getByRole('button', { name: FOOTER_LABELS.expand, exact: true });
   await toggle.waitFor();
-  const bar = await page.evaluate(() => {
-    const element = document.querySelector('footer.compact-footer');
-    const box = element?.getBoundingClientRect();
-    const items = Array.from(document.querySelectorAll('footer .fr-footer__bottom-item'));
-    const button = document.querySelector<HTMLElement>('footer .compact-footer__toggle');
-    if (!box || !button) return null;
-    const rows = new Set(items.map((item) => Math.round(item.getBoundingClientRect().top / 4)));
-    const toggleBox = button.getBoundingClientRect();
-    return {
-      height: Math.round(box.height),
-      items: items.length,
-      rows: rows.size,
-      inside: items.every((item) => {
-        const b = item.getBoundingClientRect();
-        return b.left >= 0 && b.right <= window.innerWidth && b.bottom <= box.bottom + 1;
-      }),
-      toggleInBar: toggleBox.top >= box.top && toggleBox.bottom <= box.bottom,
-      toggleRight: Math.round(toggleBox.right),
-      labelShown: parseFloat(getComputedStyle(button).fontSize) > 0,
-      title: button.title,
-      scroll: document.documentElement.scrollWidth > window.innerWidth,
-    };
-  });
+  const measure = () =>
+    page.evaluate(() => {
+      const element = document.querySelector('footer.compact-footer');
+      const box = element?.getBoundingClientRect();
+      const bottom = document.querySelector('footer .fr-footer__bottom')?.getBoundingClientRect();
+      const items = Array.from(document.querySelectorAll('footer .fr-footer__bottom-item'));
+      const button = document.querySelector<HTMLElement>('footer .compact-footer__toggle');
+      if (!box || !bottom || !button) return null;
+      const rows = new Set(items.map((item) => Math.round(item.getBoundingClientRect().top / 4)));
+      const toggleBox = button.getBoundingClientRect();
+      const container = document.querySelector('footer > .fr-container')?.getBoundingClientRect();
+      return {
+        height: Math.round(box.height),
+        items: items.length,
+        rows: rows.size,
+        inside: items.every((item) => {
+          const b = item.getBoundingClientRect();
+          return b.left >= 0 && b.right <= window.innerWidth && b.bottom <= box.bottom + 1;
+        }),
+        left: Math.round(items[0]?.getBoundingClientRect().left ?? -1),
+        containerWidth: Math.round(container?.width ?? 0),
+        toggleRight: Math.round(toggleBox.right),
+        toggleRightGap: Math.round(window.innerWidth - toggleBox.right),
+        toggleTop: Math.round(toggleBox.top - bottom.top),
+        toggleWidth: Math.round(toggleBox.width),
+        toggleHeight: Math.round(toggleBox.height),
+        text: button.textContent?.trim() ?? '',
+        title: button.title,
+        icon: button.classList.contains('fr-icon-arrow-up-s-line'),
+        scroll: document.documentElement.scrollWidth > window.innerWidth,
+        logoBorders: Array.from(
+          document.querySelectorAll('footer .fr-footer__partners img'),
+        ).filter((image) => getComputedStyle(image).boxShadow !== 'none').length,
+      };
+    });
+  const bar = await measure();
   const named =
     (await footer.getByRole('link').count()) === brand.footer.bottomLinks.length &&
     (await footer.getByRole('button', { name: /paramètres d.affichage/i }).count()) === 1;
-  const iconOnly = width >= 992 && width < 1200;
   check(
     bar !== null &&
       named &&
       bar.items === brand.footer.bottomLinks.length + 1 &&
       bar.title === FOOTER_LABELS.expand &&
-      bar.labelShown === !iconOnly &&
+      bar.text === '' &&
+      bar.icon &&
+      bar.toggleWidth >= 24 &&
+      bar.toggleHeight >= 24 &&
+      bar.containerWidth === width &&
+      bar.toggleRightGap === bar.left &&
+      bar.toggleTop === 4 &&
       !bar.scroll &&
-      (width < 1024 || (bar.height <= 60 && bar.rows === 1 && bar.inside && bar.toggleInBar)),
-    `M21 ${width}px : pied de page replié ${width >= 1024 ? 'sur une ligne (≤ 60 px)' : 'inchangé'}, ${bar?.items ?? 0} entrées nommées, « ${FOOTER_LABELS.expand} » ${iconOnly ? 'en icône (nom et title gardés)' : 'avec son libellé'} (${JSON.stringify(bar)})`,
+      (width < 992 || (bar.height === 40 && bar.rows === 1 && bar.inside)),
+    `M23 ${width}px : pied de page replié ${width >= 992 ? 'sur une barre de 40 px' : 'sur plusieurs lignes'}, ${bar?.items ?? 0} entrées nommées depuis la gauche, « ${FOOTER_LABELS.expand} » en icône seule à droite (nom et title) (${JSON.stringify(bar)})`,
   );
-  if (width === 768 || width === 1024 || width === 1280) {
-    await toggle.click();
-    const closer = footer.getByRole('button', { name: FOOTER_LABELS.collapse, exact: true });
-    await closer.waitFor();
-    const open = await page.evaluate(() => {
-      const button = document.querySelector<HTMLElement>('footer .compact-footer__toggle');
-      const second = document.querySelectorAll('footer .fr-footer__bottom-item')[1];
-      return {
-        labelShown: button ? parseFloat(getComputedStyle(button).fontSize) > 0 : false,
-        spacing: second ? getComputedStyle(second).marginLeft : '',
-        body: document.querySelector('footer .fr-footer__body')?.checkVisibility() ?? false,
-      };
-    });
-    await closer.click();
-    check(
-      open.labelShown && open.spacing === '12px' && open.body,
-      `M21 ${width}px : pied de page déplié inchangé (« ${FOOTER_LABELS.collapse} » avec son libellé, espacement DSFR 0,75rem) (${JSON.stringify(open)})`,
-    );
-  }
+  await toggle.click();
+  const closer = footer.getByRole('button', { name: FOOTER_LABELS.collapse, exact: true });
+  await closer.waitFor();
+  const open = await measure();
+  const spacing = await page.evaluate(() => {
+    const second = document.querySelectorAll('footer .fr-footer__bottom-item')[1];
+    return second ? getComputedStyle(second).marginLeft : '';
+  });
+  await closer.click();
+  check(
+    open !== null &&
+      bar !== null &&
+      open.text === FOOTER_LABELS.collapse &&
+      open.toggleRight === bar.toggleRight &&
+      open.toggleTop === bar.toggleTop &&
+      open.logoBorders === 0 &&
+      (width < 768 || spacing === '12px'),
+    `M23 ${width}px : déplié, « ${FOOTER_LABELS.collapse} » à la place de la flèche (bord droit ${open?.toggleRight} / ${bar?.toggleRight}, haut ${open?.toggleTop} / ${bar?.toggleTop}), logos sans bordure, espacement ${spacing}`,
+  );
   await context.close();
 }
 

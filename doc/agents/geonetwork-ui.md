@@ -550,14 +550,39 @@ Captures : `doc/screenshots/C8/`.
 Décision sur C-4 : les puces de C9 deviennent des boutons à bascule (patch 0007, `home-header`). État `aria-pressed`
 calculé depuis le paramètre d'URL `keyword` ; clic ou Entrée/Espace : ajoute le mot-clé au filtre « Mot-clé » s'il n'y
 est pas, le retire sinon, sans toucher à la recherche ni aux autres filtres ; plusieurs puces se cumulent (OU). Rangée
-`role="group"` nommée « Mots-clés suggérés ». Aspect sélectionné : fond `--background-active-blue-france`, texte
-`--text-inverted-blue-france`, coche (`sols-overrides.css`).
+`role="group"` nommée « Mots-clés suggérés ».
+
+Depuis la suite de C11 (branche `fix/C11-keyword-dsfr-tags`), les puces sont des **tags DSFR sélectionnables**, balisage
+du composant Tag (identique en DSFR 1.14.2, version de `config.dsfrVersion`, et 1.15.3, embarquée par le fork) et de
+l'histoire react-dsfr « Tag › Pressable » : `ul.fr-tags-group > li > button.fr-tag[aria-pressed]`, taille par défaut. La
+rangée garde son `div role="group"` nommé (le bouton « Mes favoris » amont, affiché seulement pour un utilisateur
+connecté, reste dans ce groupe hors de la liste ; il ne s'affiche jamais chez nous, aucune connexion). La CSS
+`component/tag/tag.min.css` est chargée par le patch 0003 après `display.min.css` ; les règles `button.fr-tag` et
+`.fr-tag[aria-pressed]` sont plus spécifiques que le `[type='button']` du preflight Tailwind (`tailwind.base.css`, chargé
+après), vérifié dans le navigateur (fond, coche `checkbox-circle-line`, anneau de focus DSFR). L'imitation de tag de
+`sols-overrides.css` (`.badge-btn`, coche « ✓ » faite main) est supprimée ; seule reste la hauteur de la rangée
+(`.h-0.py-5`, sinon hauteur nulle).
+
+Script DSFR : `dsfr.module.min.js` enregistre `.fr-tag[aria-pressed]` comme `Toggle` et inverse `aria-pressed` à chaque
+clic. Ici l'état vient de l'URL (liaison Angular) : sans précaution, Angular écrit le nouvel état puis DSFR l'inverse à
+nouveau (constaté : RRP actif dans l'URL, `aria-pressed="false"`). Le gestionnaire Angular, posé avant celui de DSFR
+(DSFR instancie le bouton plus tard, par `MutationObserver`), appelle donc `$event.stopImmediatePropagation()`. Effet de
+bord : le clic sur un tag ne remonte pas jusqu'au `document` (fermeture d'une liste ouverte au clic extérieur) ; la liste
+d'autocomplétion recouvre de toute façon la rangée quand elle est ouverte.
 
 Vérification (Playwright, bureau) : RRP → 4 résultats, `aria-pressed="true"`, `?keyword=RRP` ; second clic → 7
 résultats, `false`. Clavier : RMQS (Entrée) → 2 ; pédologie (Espace) → `keyword=RMQS,pédologie`, 6 résultats, les deux
 `true` ; RMQS (Espace) → 4, pédologie seule ; pédologie (Entrée) → 7. Aucune erreur console.
 
 Captures : `doc/screenshots/C11/`.
+
+Vérification des tags DSFR (Playwright, Chromium sans interface, build de production servi sous
+`/rechercher-une-donnee/`, bureau 1280×900 et mobile 375×812) : 5 tags `button.fr-tag`, au repos fond `#e3e3fd`, texte
+`#000091`, rayon 16 px, 32 px de haut ; RRP (Entrée) → `aria-pressed="true"`, `?keyword=RRP`, fond
+`--background-active-blue-france` découpé et coche DSFR ; pédologie (Espace) → `keyword=RRP,pédologie`, les deux
+`true` ; RRP (Entrée) → `false`, pédologie seule ; retour arrière du navigateur → les deux `true` ; clic souris sur
+pédologie → `false`, `keyword=RRP`. Aucune erreur console ; axe : seule `heading-order` (modérée, titres de résultats
+amont), comme avant. Captures avant/après : `doc/screenshots/C11-tags-dsfr/`.
 
 ## 17. Échap dans le menu mobile (C12)
 

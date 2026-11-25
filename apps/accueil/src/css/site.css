@@ -4,6 +4,245 @@
   background-color: var(--background-alt-blue-france);
 }
 
+.sols-hero__accent {
+  color: var(--text-default-success);
+}
+
+.sols-hero__intro {
+  color: var(--text-mention-grey);
+}
+
+/* Decorative map card (Figma 1:9625): desktop only, sizes follow the mockup. */
+.sols-hero__visual {
+  display: none;
+}
+
+@media (min-width: 62em) {
+  .sols-hero__visual {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.sols-map-mock {
+  width: 100%;
+  max-width: 32.5rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.5rem;
+  background-color: var(--background-default-grey);
+  border: 1px solid var(--border-default-grey);
+  border-radius: 1rem;
+  filter: drop-shadow(var(--lifted-shadow));
+}
+
+.sols-map-mock p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.sols-map-mock__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--background-alt-grey);
+  border-bottom: 1px solid var(--border-default-grey);
+}
+
+.sols-map-mock__dots {
+  display: flex;
+  gap: 0.3125rem;
+}
+
+/* Window buttons: mockup colours, no close DSFR token (decorative, hidden from assistive tech). */
+.sols-map-mock__dots span {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background-color: #ff6058;
+}
+
+.sols-map-mock__dots span:nth-child(2) {
+  background-color: #ffbd2e;
+}
+
+.sols-map-mock__dots span:nth-child(3) {
+  background-color: #27c93f;
+}
+
+.sols-map-mock__url {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  padding: 0.25rem 0.75rem;
+  color: var(--text-mention-grey);
+  background-color: var(--background-default-grey);
+  border: 1px solid var(--border-default-grey);
+  border-radius: 1.25rem;
+}
+
+.sols-map-mock__brand {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--text-title-blue-france);
+}
+
+.sols-map-mock__body {
+  display: flex;
+}
+
+.sols-map-mock__layers {
+  flex: 0 0 8.75rem;
+  padding: 0.875rem;
+  border-right: 1px solid var(--border-default-grey);
+}
+
+.sols-map-mock__heading {
+  padding-bottom: 0.25rem;
+  font-size: 0.625rem !important;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-mention-grey);
+}
+
+.sols-map-mock__heading--separated {
+  margin-top: 0.5rem !important;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-default-grey);
+}
+
+.sols-map-mock__layer {
+  margin-bottom: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  font-weight: 700;
+  color: var(--text-disabled-grey);
+  border-radius: 0.3125rem;
+}
+
+.sols-map-mock__layer--active {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-default-success);
+  background-color: var(--background-alt-green-emeraude);
+}
+
+.sols-map-mock__layer--active::before {
+  content: '';
+  flex: 0 0 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.sols-map-mock__sources {
+  font-size: 0.625rem;
+  line-height: 1rem;
+  color: var(--text-mention-grey);
+}
+
+.sols-map-mock__map {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 20rem;
+  overflow: hidden;
+  background-image: linear-gradient(
+    135deg,
+    var(--background-alt-green-emeraude),
+    var(--background-alt-blue-cumulus)
+  );
+}
+
+.sols-map-mock__map img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sols-map-mock__map img:first-child {
+  opacity: 0.15;
+}
+
+.sols-map-mock__tooltip {
+  position: absolute;
+  right: 1rem;
+  bottom: 3.5rem;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
+  color: var(--text-mention-grey);
+  background-color: var(--background-default-grey);
+  border: 1px solid var(--border-default-grey);
+  border-radius: 0.625rem;
+  filter: drop-shadow(var(--lifted-shadow));
+}
+
+.sols-map-mock__tooltip-title {
+  font-weight: 700;
+  color: var(--text-title-grey);
+}
+
+.sols-map-mock__tooltip-status {
+  font-weight: 700;
+  color: var(--text-default-success);
+}
+
+.sols-map-mock__tooltip-status::before {
+  content: '● ';
+}
+
+.sols-map-mock__legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 0.3rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.625rem;
+  color: var(--text-mention-grey);
+  border-top: 1px solid var(--border-default-grey);
+}
+
+.sols-map-mock__legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.sols-map-mock__swatch {
+  flex: 0 0 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+/* Legend colours copied from the mockup: they must match the polygons of hero-carte-sols.svg. */
+.sols-map-mock__swatch--brunsLimoneux {
+  background-color: #8b6340;
+}
+
+.sols-map-mock__swatch--bocage {
+  background-color: #7ab87a;
+}
+
+.sols-map-mock__swatch--terresArables {
+  background-color: #d4b876;
+}
+
+.sols-map-mock__swatch--calcaires {
+  background-color: #c4813a;
+}
+
+.sols-map-mock__swatch--alpins {
+  background-color: #c8c0a8;
+}
+
+.sols-map-mock__swatch--mediterraneens {
+  background-color: #d4906a;
+}
+
 .sols-overline {
   display: flex;
   align-items: center;
@@ -168,6 +407,23 @@
 .sols-figures__label {
   display: block;
   font-size: 0.875rem;
+}
+
+/* Map explorer screenshot of the service section (Figma 1:9801). */
+.sols-apercu {
+  max-width: 65rem;
+  margin-inline: auto;
+  border: 1px solid var(--border-default-grey);
+  filter: drop-shadow(var(--lifted-shadow));
+}
+
+.sols-apercu img {
+  display: block;
+}
+
+.sols-gissol__intro {
+  max-width: 51.25rem;
+  color: var(--text-mention-grey);
 }
 
 /* « Sans / Avec » frieze. */
@@ -348,24 +604,48 @@
 }
 
 /* Partner logos of the home page. */
+/* Logo grid (Figma « logo-grid »), without cell borders. */
 .sols-partners {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .sols-partners__link {
   display: flex;
   align-items: center;
-  height: 6rem;
-  padding: 1rem 1.5rem;
-  background-color: #fff;
+  justify-content: center;
+  height: 100%;
+  min-height: 7rem;
+  padding: 1.5rem 1.25rem;
   background-image: none;
 }
 
 .sols-partners__logo {
-  max-height: 4rem;
+  max-width: 100%;
+  max-height: 3.25rem;
   width: auto;
+  object-fit: contain;
+}
+
+/* No DSFR « new window » icon after the logos: the link title already says it. */
+.sols-partners__link[target='_blank']::after {
+  content: none;
+}
+
+/* Ministry « bloc marque » (DSFR .fr-logo, sized in rem): zoomed to fit the 7rem row. */
+.sols-partners__bloc {
+  zoom: 0.72;
+}
+
+/* Less padding around the blocs so the row keeps its 7rem height. */
+.sols-partners__link:has(.sols-partners__bloc) {
+  padding: 1rem 0.75rem;
+}
+
+/* Dark theme: white plate behind each logo (owners' artwork drawn for a white background). */
+[data-fr-theme='dark'] .sols-partners__logo {
+  padding: 0.25rem;
+  background-color: #fff;
 }
 
 .sols-partners__overline {
@@ -393,4 +673,13 @@
   .sols-event__time {
     margin-top: 0;
   }
+}
+
+/* Green primary button (Figma 1:10421): DSFR has no colour variant for .fr-btn, so the green-emeraude
+   action tokens replace the blue-france ones, hover and active states included. */
+.fr-btn.sols-btn--green {
+  --hover: var(--background-action-high-green-emeraude-hover);
+  --active: var(--background-action-high-green-emeraude-active);
+  background-color: var(--background-action-high-green-emeraude);
+  color: var(--text-inverted-green-emeraude);
 }

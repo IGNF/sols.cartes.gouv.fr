@@ -425,7 +425,7 @@ Pied de page et modale « Paramètres d'affichage » (juste après le pied de pa
         </a>
       </div>
       <div class="fr-footer__content">
-        <p class="fr-footer__content-desc">Observatoire des sols de France : le portail d&#39;accès aux données des sols pour les territoires, piloté par INRAE avec le GIS Sol et servi par la Géoplateforme (texte provisoire).</p>
+        <p class="fr-footer__content-desc">Sols.cartes.gouv.fr est l’observatoire national des cartes et données des sols français. Porté par l’IGN et ses partenaires, il offre à tous un accès à la référence de la cartographie publique en matière de sols et permet à chacun de créer, d’héberger et de publier ses propres données et représentations. (Texte provisoire)</p>
         <ul class="fr-footer__content-list">
           <li class="fr-footer__content-item">
             <a class="fr-footer__content-link" href="https://legifrance.gouv.fr" target="_blank" rel="noopener external" title="legifrance.gouv.fr - nouvelle fenêtre">legifrance.gouv.fr</a>

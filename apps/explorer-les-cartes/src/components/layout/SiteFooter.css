@@ -1,45 +1,73 @@
 /*
  * Expandable footer (M13, CgfrFooter pattern of cartes.gouv.fr). Expanded: the regular DSFR footer.
- * Collapsed (`compact-footer--collapsed`): the DSFR bottom bar only, on one line, as on cartes.gouv.fr map
- * pages; body, partners and licence carry the `hidden` attribute, which DSFR's `display: flex` would override.
+ * Collapsed (`compact-footer--collapsed`): the DSFR bottom bar only; body, partners and licence carry the
+ * `hidden` attribute, which DSFR's `display: flex` would override.
  */
 .compact-footer [hidden] {
   display: none;
+}
+
+/*
+ * M23: as guichet-collaboratif (`src/css/app-footer.css`: `.app-footer-root .fr-container { max-width: unset;
+ * margin: unset }`), the footer spans the viewport: links from the left edge (container padding), the toggle at the
+ * right edge. Both states, so that « Fermer » takes the place of the arrow at every width.
+ */
+.compact-footer > .fr-container {
+  max-width: none;
 }
 
 .fr-footer.compact-footer--collapsed {
   padding-top: 0;
 }
 
-.compact-footer--collapsed .fr-footer__bottom {
-  flex-wrap: nowrap;
-  align-items: center;
+/* Above the DSFR `.fr-footer__partners + .fr-footer__bottom` margin (the partners are hidden, not removed). */
+.fr-footer.compact-footer--collapsed .fr-footer__bottom {
   margin-top: 0;
   box-shadow: none;
 }
 
-.compact-footer .fr-footer__bottom-list {
-  flex: 1 1 auto;
-  width: auto;
-}
-
-.compact-footer .fr-footer__bottom .compact-footer__toggle {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  margin-left: 1rem;
-  padding: 0.25rem 0.75rem;
+/*
+ * Bottom bar, both states: the links on the left (wrapping inside their list when short of room), the toggle at the
+ * right end of the first 2.5rem line, the licence (expanded) on its own line below.
+ */
+.compact-footer .fr-footer__bottom {
+  flex-wrap: wrap;
+  align-items: flex-start;
 }
 
 /*
- * M21: from the DSFR lg breakpoint up to 75em the six bottom links (« Conditions générales d'utilisation » and the
- * external-link icons since #94) and the « Haut de page » label do not fit on one line: « Paramètres d'affichage »
- * wrapped (bar 85 px instead of 60 between 1024 and 1199 px). As on cartes.gouv.fr (CgfrFooter: icon-only toggle
- * while collapsed, with a title), the collapsed toggle shows its icon only (its text stays its accessible name,
- * `title` repeats it), and the links take the DSFR spacing of small screens (0.25rem instead of 0.75rem around
- * the separators). Expanded footer, other widths: unchanged.
+ * Links: rows of 2rem (the height of the toggle) between 0.25rem list paddings, a 2.5rem (40 px) bar on one row, as
+ * guichet-collaboratif's `.app-footer-main { height: 2.5rem }`. Each item centres its separator (1rem, without the
+ * DSFR 0.625rem bottom margin) and its link or button: the inline layout made rows 2.25rem.
  */
-@media (min-width: 62em) and (max-width: 74.99em) {
+.compact-footer .fr-footer__bottom-list {
+  display: flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  padding: 0.25rem 0;
+}
+
+.compact-footer .fr-footer__bottom-item,
+.compact-footer .fr-footer__bottom-item:first-child {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  margin-top: 0;
+}
+
+.compact-footer .fr-footer__bottom-item::before {
+  margin-bottom: 0;
+}
+
+/*
+ * M21, narrowed in M23: with the DSFR spacing (0.75rem around the separators) the six bottom items need about
+ * 1065 px with the icon toggle. From the DSFR lg breakpoint to 70em the collapsed bar takes the spacing of small
+ * screens (0.25rem) and stays on one 40 px line from 992 px. Expanded, the links keep the DSFR spacing and may wrap
+ * below 70em; « Fermer » stays at the right end of the first line.
+ */
+@media (min-width: 62em) and (max-width: 69.99em) {
   .compact-footer--collapsed .fr-footer__bottom-item:not(:first-child) {
     margin-left: 0.25rem;
   }
@@ -47,15 +75,31 @@
   .compact-footer--collapsed .fr-footer__bottom-item::before {
     margin-right: 0.25rem;
   }
+}
 
-  .compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle {
-    margin-left: 0.5rem;
-    font-size: 0;
-  }
+.compact-footer .fr-footer__bottom .compact-footer__toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  min-height: 2rem;
+  margin: 0.25rem 0 0 0.5rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-action-high-blue-france);
+}
 
-  .compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle::before {
-    margin: 0;
-  }
+/* Collapsed: icon only, a 2rem square (DSFR small icon-only button), the icon without the footer's text margin. */
+.compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle {
+  justify-content: center;
+  width: 2rem;
+  padding: 0;
+}
+
+.compact-footer--collapsed .fr-footer__bottom .compact-footer__toggle::before {
+  margin: 0;
+}
+
+.compact-footer .fr-footer__bottom-copy {
+  flex: 1 0 100%;
 }
 
 /* Partner logos: same height, as on the edito footer (DSFR sets height: auto on .fr-footer__logo). */
@@ -64,15 +108,6 @@
   max-width: 12rem;
   padding: 0.5rem;
   object-fit: contain;
-}
-
-/* Small screens: the links wrap, the toggle goes below them. */
-@media (max-width: 47.99em) {
-  .compact-footer--collapsed .fr-footer__bottom {
-    flex-wrap: wrap;
-  }
-
-  .compact-footer .fr-footer__bottom .compact-footer__toggle {
-    margin-left: 0;
-  }
+  /* M23: no cell border (DSFR `box-shadow: inset 0 0 0 1px`), as the edito home logo grid. */
+  box-shadow: none;
 }
