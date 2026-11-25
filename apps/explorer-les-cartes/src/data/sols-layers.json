@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "source": "https://data.geopf.fr/csw/gissol-osf_c?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0",
+  "source": "https://data.geopf.fr/csw/gissol-osf_c?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&MAXRECORDS=1000&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0",
   "datasets": [
     {
       "id": "osff858525a-9fea-5ae3-93ab-43afab78483f",
