@@ -5,6 +5,7 @@ import View from 'ol/View';
 import { fromLonLat } from 'ol/proj';
 import { useEffect, type RefObject } from 'react';
 import { CONTROL_LABELS, DEFAULT_CONTROLS_OPTIONS, INITIAL_VIEW } from '../config/map';
+import { createMapInteractions } from '../map/interactions';
 import { labelControlButtons } from '../map/labelControls';
 import { readPermalinkView } from '../map/permalink';
 import { useMapStore } from '../store/useMapStore';
@@ -20,6 +21,9 @@ export function initialView(search: string): { centerLonLat: [number, number]; z
 /**
  * Creates the single OpenLayers map on the given element and publishes it in the store.
  * The map is disposed on unmount (also covers the StrictMode double mount).
+ * M25: it reacts without a first click, as on cartes.gouv.fr: mouse-wheel zoom without the focus, and the
+ * keyboard (arrows, + and -) heard on the whole document, where createMapInteractions keeps the keys typed
+ * with no focus or on the map element.
  */
 export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap | null {
   const map = useMapStore((state) => state.map);
@@ -36,6 +40,8 @@ export default function useMap(targetRef: RefObject<HTMLElement | null>): OlMap 
     const instance = new OlMap({
       target,
       controls,
+      interactions: createMapInteractions(target),
+      keyboardEventTarget: document,
       view: new View({
         center: fromLonLat(centerLonLat),
         zoom,
