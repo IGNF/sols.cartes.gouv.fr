@@ -117,7 +117,7 @@ export function isTrustedImageUrl(url: string): boolean {
  * CSW GetRecords request returning the 7 "sols" records (ISO 19115-3), see doc/agents/gpf-sols-data.md §1.
  * Read by scripts/build-sols-layers.ts only.
  */
-export const SOLS_CSW_GETRECORDS_URL = `${GPF_ENDPOINTS.csw}?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0`;
+export const SOLS_CSW_GETRECORDS_URL = `${GPF_ENDPOINTS.csw}?REQUEST=GetRecords&SERVICE=CSW&VERSION=2.0.2&RESULTTYPE=results&MAXRECORDS=1000&elementSetName=full&TYPENAMES=gmd:MD_Metadata&OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0`;
 
 /** Builds an OGC GetCapabilities URL for a GPF endpoint. */
 export function buildCapabilitiesUrl(endpoint: string, service: string, version: string): string {

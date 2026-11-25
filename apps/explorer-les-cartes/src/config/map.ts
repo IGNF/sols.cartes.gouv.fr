@@ -445,11 +445,7 @@ export const PERMALINK_PARAMS = {
   center: 'c',
   zoom: 'z',
   layers: 'l',
-  permalink: 'permalink',
 } as const;
-
-/** Value of `permalink` in the links this map emits (`no` in the catalogue's links, both ignored on reading). */
-export const PERMALINK_FLAG = 'yes';
 
 /** Notices of the map page about its layers and the catalogue. */
 export const MAP_NOTICES = {
@@ -466,6 +462,12 @@ export const MAP_NOTICES = {
   baseLayersReload: 'Recharger la page',
   baseLayersEmpty: 'Aucun fond de carte prévu n’est publié par la Géoplateforme.',
 } as const;
+
+/**
+ * Wait for every tile of the view before the print export gives up: the GPF can accept a tile request
+ * and never answer (D-carto-1), and OpenLayers then never reports the map as rendered.
+ */
+export const PRINT_RENDER_TIMEOUT_MS = 20_000;
 
 /** Strings of the "Imprimer la carte" dialog and print sheet. */
 export const PRINT_LABELS = {

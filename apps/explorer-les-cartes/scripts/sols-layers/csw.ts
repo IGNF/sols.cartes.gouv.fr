@@ -19,6 +19,7 @@ export interface CswRecord {
 }
 
 const NS = {
+  csw: 'http://www.opengis.net/cat/csw/2.0.2',
   mdb: 'http://standards.iso.org/iso/19115/-3/mdb/2.0',
   mri: 'http://standards.iso.org/iso/19115/-3/mri/1.0',
   cit: 'http://standards.iso.org/iso/19115/-3/cit/2.0',
@@ -76,6 +77,16 @@ export function parseCswRecords(xml: string): CswRecord[] {
   if (root && ['ExceptionReport', 'ServiceExceptionReport'].includes(root.localName ?? '')) {
     const text = (root.textContent ?? '').replace(/\s+/g, ' ').trim();
     throw new Error(`Le CSW a répondu par une exception OGC : ${text || root.localName}`);
+  }
+  // A page shorter than the match count would drop records silently (CSW 2.0.2 pages by 10 by default).
+  const results = doc.getElementsByTagNameNS(NS.csw, 'SearchResults')[0] as
+    { getAttribute(name: string): string | null } | undefined;
+  const matched = Number(results?.getAttribute('numberOfRecordsMatched'));
+  const returned = Number(results?.getAttribute('numberOfRecordsReturned'));
+  if (matched > returned) {
+    throw new Error(
+      `Le CSW ne renvoie que ${returned} fiches sur ${matched} : augmenter maxRecords (SOLS_CSW_GETRECORDS_URL).`,
+    );
   }
   return Array.from(doc.getElementsByTagNameNS(NS.mdb, 'MD_Metadata')).map((record) => {
     const identification = child(

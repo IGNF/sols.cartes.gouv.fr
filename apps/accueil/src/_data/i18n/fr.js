@@ -127,6 +127,12 @@ export default {
       helpButton: 'Centre d’aide de cartes.gouv.fr',
     },
     accueil: { title: 'Observatoire des sols', description },
+    notFound: {
+      title: 'Page introuvable',
+      description: 'La page demandée n’existe pas ou a été déplacée.',
+      body: 'La page demandée n’existe pas ou a été déplacée. Vérifiez l’adresse ou repartez de l’accueil.',
+      home: 'Retour à l’accueil',
+    },
     accessibilite: {
       title: 'Accessibilité',
       description: 'Déclaration d’accessibilité de sols.cartes.gouv.fr (texte provisoire).',

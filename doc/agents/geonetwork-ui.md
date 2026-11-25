@@ -196,7 +196,7 @@ npm run dev               # prépare .upstream puis http://localhost:4200/recher
 npm run build             # prépare puis build de production dans dist/ (base href /rechercher-une-donnee/)
 npm run lint              # hors ligne, < 1 s
 npm test                  # node --test, hors ligne
-npm run prepare-upstream  # clone + install + patchs + config seulement ; --no-install pour sauter npm ci
+npm run prepare-upstream  # clone + install + patchs + config seulement ; --no-install pour sauter npm ci (si .upstream/node_modules existe déjà)
 ```
 
 Depuis la racine : `bun run dev:catalogue`, `bun run lint`, `bun run test`, `bun run build:all` (registre `scripts/apps.ts`).

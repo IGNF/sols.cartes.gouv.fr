@@ -49,6 +49,13 @@ test('checkConfig reports a missing scope and a wrong datahub_url', () => {
   assert.match(problems.join('\n'), /config_filters/)
 })
 
+test('checkConfig reports a sols scope filed under another table', () => {
+  const toml = readFileSync(CONFIG_FILE, 'utf8')
+  const scope = /^config_filters\.groupPublished = .*\n/m
+  const moved = `${toml.replace(scope, '')}\n${toml.match(scope)[0]}`
+  assert.match(checkConfig(moved, valid).join('\n'), /config_filters/)
+})
+
 test('patches are ordered, documented and only touch the expected upstream files', () => {
   const names = listPatches()
   assert.deepEqual(names, [...names].sort())
