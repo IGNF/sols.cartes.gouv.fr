@@ -1,0 +1,116 @@
+name: Docker build & publish
+
+# Même schéma que IGNF/cartes.gouv.fr-guichet-collaboratif : l'image est construite et
+# analysée (Trivy) à chaque exécution, et n'est poussée sur GHCR que pour un tag v*.
+# L'environnement de déploiement tire ensuite l'image publiée.
+on:
+  push:
+    branches: [main]
+    # Publish semver tags as releases.
+    tags: ['v*']
+  pull_request:
+    types: [ready_for_review]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+  IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  docker-build-publish-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+      # On écrase image name par sa version minuscule pour trivy
+      - name: Lowercase image name
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
+
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: env.IS_TAG == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile
+          pull: true
+          push: ${{ env.IS_TAG == 'true' }}
+          load: ${{ env.IS_TAG != 'true' }}
+          sbom: ${{ env.IS_TAG == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: ${{ env.IS_TAG == 'true' && 'mode=max' || 'false' }}
+          annotations: ${{ env.IS_TAG == 'true' && steps.meta.outputs.annotations || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.IS_TAG == 'true' && format('{0}/{1}@{2}', env.REGISTRY, env.IMAGE_NAME, steps.build.outputs.digest) || steps.build.outputs.imageid }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4.39.3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: image-scan-trivy
+
+      - name: Write run summary
+        if: always()
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          {
+            echo "### Image Docker"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image ID | \`${IMAGE_ID:-—}\` |"
+            echo "| Digest | \`${IMAGE_DIGEST:-—}\` |"
+            echo "| Poussée sur ${REGISTRY} | $([ "$IS_TAG" = "true" ] && echo "oui" || echo "non (branche/PR)") |"
+            if [ -f trivy-results.sarif ]; then
+              count=$(jq '[.runs[].results[]] | length' trivy-results.sarif)
+              echo "| Vulnérabilités (Trivy) | ${count} |"
+            else
+              echo "| Vulnérabilités (Trivy) | scan non exécuté |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
