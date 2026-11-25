@@ -59,6 +59,17 @@ export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
           description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans le catalogue de la carte.`}
         />
       );
+    case 'unreachable':
+      return (
+        <Alert
+          className={fr.cx('fr-mb-2w')}
+          severity="warning"
+          as="h2"
+          small
+          title="Couche non vérifiée"
+          description={`La Géoplateforme n’a pas répondu : la couche « ${status.name} » n’a pas pu être recherchée. Rechargez la page plus tard. Les données sols restent disponibles dans le catalogue de la carte.`}
+        />
+      );
     case 'invalid':
       return (
         <Alert

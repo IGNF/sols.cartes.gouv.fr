@@ -156,6 +156,9 @@ test('patches 0004 and 0005 stay small and on the expected files', () => {
   const scope = readFileSync(join(PATCHES_DIR, '0005-elasticsearch-scope.patch'), 'utf8')
   assert.deepEqual(patchedFiles(scope), ['libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts'])
   assert.ok(scope.split('\n').filter((l) => /^[+-][^+-]/.test(l)).length < 30)
+  // The scope must reach the record page (getRecord) and every search builder, not only one of them.
+  assert.ok(scope.includes('+          filter: [{ ids: { values: uuids } }, ...this.scopeFilters()],'))
+  assert.ok((scope.match(/^\+.*\.\.\.this\.scopeFilters\(\)|^\+.*filter: this\.scopeFilters\(\)/gm) ?? []).length >= 4)
 })
 
 test('the thumbnail placeholder ships in overlay/ and is configured', () => {

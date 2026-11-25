@@ -5,9 +5,13 @@
 {% include "partials/head-common.njk" %}
     <title>{{ pageTitle }}</title>
     <meta name="description" content="{{ metaDescription }}">
+    {%- if noindex %}
+    <meta name="robots" content="noindex">
+    {%- else %}
     <link rel="canonical" href="{{ site.url }}{{ page.url }}">
     {%- set alternatesUrl = page.url %}
 {% include "partials/alternates.njk" %}
+    {%- endif %}
   </head>
   <body>
     {% include "partials/skiplinks.njk" %}

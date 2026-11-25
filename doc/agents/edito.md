@@ -245,7 +245,8 @@ renvoi (le meta refresh perd l'ancre) : le balisage partagé met alors la langue
   DSFR ou `/dsfr/icons.css` réduite de l'edito.
 - **Pied de page** : liens de contenu = ceux de `brand.json` (legifrance, info.gouv, service-public, data.gouv ; plus
   cartes.gouv.fr ni gissol.fr) ; nouveau bloc `fr-footer__partners` (IGN, INRAE, GIS Sol → `brand.external.gissol`,
-  nouvelle fenêtre, hauteur `.sols-partner-logo`) ; bouton « Paramètres d'affichage » en fin de liens bas et modale
+  nouvelle fenêtre, hauteur `.sols-partner-logo`, sans la bordure DSFR `box-shadow` depuis E12, plaque blanche en
+  sombre) ; bouton « Paramètres d'affichage » en fin de liens bas et modale
   `fr-display` (`dialog#fr-theme-modal`, pictogrammes DSFR `environment/sun`, `environment/moon`, `system/system`)
   : bascule clair / sombre / système (le JS DSFR mémorise le choix ; `data-fr-scheme="system"` sur `<html>`).
   Variante compacte carto : seulement `fr-footer__bottom` (liens bas + paramètres d'affichage) et la modale.

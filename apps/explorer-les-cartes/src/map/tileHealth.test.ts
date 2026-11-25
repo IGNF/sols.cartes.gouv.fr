@@ -7,9 +7,10 @@ import watchTileHealth from './tileHealth';
 function setup() {
   const source = new Observable();
   const onUnavailable = vi.fn();
-  const stop = watchTileHealth(source as unknown as TileSource, 3, onUnavailable);
+  const onAvailable = vi.fn();
+  const stop = watchTileHealth(source as unknown as TileSource, 3, onUnavailable, onAvailable);
   const emit = (type: string) => source.dispatchEvent(new BaseEvent(type));
-  return { onUnavailable, stop, emit };
+  return { onUnavailable, onAvailable, stop, emit };
 }
 
 describe('watchTileHealth', () => {
@@ -28,6 +29,15 @@ describe('watchTileHealth', () => {
     emit('tileloadend');
     for (let i = 0; i < 5; i++) emit('tileloaderror');
     expect(onUnavailable).not.toHaveBeenCalled();
+  });
+
+  it('retire le signalement quand une tuile finit par se charger (erreurs GPF passagères)', () => {
+    const { onUnavailable, onAvailable, emit } = setup();
+    for (let i = 0; i < 3; i++) emit('tileloaderror');
+    expect(onUnavailable).toHaveBeenCalledTimes(1);
+    emit('tileloadend');
+    emit('tileloadend');
+    expect(onAvailable).toHaveBeenCalledTimes(1);
   });
 
   it('cesse d’écouter au nettoyage', () => {

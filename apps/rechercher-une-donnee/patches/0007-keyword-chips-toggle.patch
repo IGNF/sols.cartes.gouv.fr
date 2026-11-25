@@ -74,12 +74,12 @@ index f8661d6..fafe09c 100644
 +  )
 +
 +  isKeywordPresetActive(preset: SearchPreset, selected: string[] | null) {
-+    const keywords = [].concat(preset.filters['keyword'] ?? []) as string[]
++    const keywords = [].concat(preset.filters?.['keyword'] ?? []) as string[]
 +    return keywords.length > 0 && keywords.every((k) => selected?.includes(k))
 +  }
 +
 +  async toggleKeywordPreset(preset: SearchPreset) {
-+    const keywords = [].concat(preset.filters['keyword'] ?? []) as string[]
++    const keywords = [].concat(preset.filters?.['keyword'] ?? []) as string[]
 +    const selected = await firstValueFrom(this.selectedKeywords$)
 +    const next = this.isKeywordPresetActive(preset, selected)
 +      ? selected.filter((k) => !keywords.includes(k))

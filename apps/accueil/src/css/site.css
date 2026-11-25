@@ -367,6 +367,9 @@
   max-width: 12rem;
   padding: 0.5rem;
   object-fit: contain;
+  /* E12: no logo border (DSFR `box-shadow: inset 0 0 0 1px`), as the home logo grid and the carto footer.
+     Shared with the catalogue footer (`.sols-partner-logo` prefix, apps/rechercher-une-donnee/scripts/layout.mjs). */
+  box-shadow: none;
 }
 
 /* Dark theme: keep a white plate behind each partner logo. #fff on purpose, not a DSFR token: the

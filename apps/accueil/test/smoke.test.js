@@ -454,3 +454,16 @@ describe('page de référence partagée et doc/agents/edito.md', () => {
     for (const [, block] of blocks) expect(html.includes(block)).toBe(true);
   });
 });
+
+describe('page 404', () => {
+  const notFound = () => readFileSync(join(DIST, '404.html'), 'utf8');
+
+  test('page DSFR non indexée, sans canonique, avec retours aux accueils fr et en', () => {
+    expectPageBasics(notFound(), site.defaultLanguage);
+    expect(notFound()).toContain('<meta name="robots" content="noindex">');
+    expect(notFound()).not.toContain('rel="canonical"');
+    expect(notFound()).toContain(`<h1>${html(i18n.fr.pages.notFound.title)}</h1>`);
+    expect(notFound()).toContain(`href="/${site.defaultLanguage}/"`);
+    expect(notFound()).toContain('href="/en/"');
+  });
+});

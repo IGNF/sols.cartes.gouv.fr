@@ -30,7 +30,7 @@ export const BADGE_TITLE_LABEL = 'Titre du service avec badge, catalogue'
 
 /** Extracts the html code block that follows a "<label> ... :" line. */
 export function extractBlock(markdown, label) {
-  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const escaped = RegExp.escape(label)
   const pattern = new RegExp(
     `^${escaped}[^\\n]*:\\n\\n(?:<!-- prettier-ignore -->\\n)?\`\`\`html\\n([\\s\\S]*?)\\n\`\`\``,
     'm'
@@ -133,7 +133,7 @@ export function checkHeaderAgainstBrand(header, brand) {
   for (const [menu, tool] of Object.entries(brand.header?.tools ?? {})) {
     for (const item of tool?.items ?? []) {
       if (!item.external) continue
-      const link = new RegExp(`<a class="[^"]*${item.icon ?? ''}[^"]*" href="${item.href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" target="_blank" rel="noopener external"`)
+      const link = new RegExp(`<a class="[^"]*${item.icon ?? ''}[^"]*" href="${RegExp.escape(item.href)}" target="_blank" rel="noopener external"`)
       if (!link.test(header)) problems.push(`${menu} link: ${item.label} (${item.href}) not found as an external link`)
     }
   }
