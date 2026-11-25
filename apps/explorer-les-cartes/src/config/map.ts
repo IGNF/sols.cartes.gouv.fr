@@ -155,6 +155,13 @@ export const LAYER_SWITCHER_OPTIONS: LayerSwitcherOptions = {
 export const MAP_LABEL = 'Carte interactive des données sols';
 
 /**
+ * Description of the map container (M24: it has the focus on landing): the keys of the OpenLayers
+ * KeyboardPan and KeyboardZoom interactions, which act while it is focused.
+ */
+export const MAP_KEYBOARD_HINT =
+  'Utilisez les flèches pour déplacer la carte, les touches + et - pour zoomer.';
+
+/**
  * OpenLayers default controls: zoom and attribution are replaced by their geopf-extensions versions
  * (src/hooks/useMapControls.ts); rotation keeps the OL control with a French label.
  */

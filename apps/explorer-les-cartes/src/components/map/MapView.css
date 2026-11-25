@@ -31,6 +31,14 @@
   --ol-brand-color: var(--text-action-high-blue-france);
 }
 
+/*
+ * M24: the map has the focus on landing. DSFR draws the focus ring of `[tabindex]:focus-visible` (2px, blue
+ * focus colour) 2px outside the element, where the map's edges (viewport, header, footer) cut it: drawn inside.
+ */
+.map-view:focus-visible {
+  outline-offset: -2px;
+}
+
 /* From the DSFR md breakpoint the map fills its docked area (see MapExplorer.css). */
 @media (min-width: 48em) {
   .map-view {

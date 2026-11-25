@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { MAP_LABEL } from '../../config/map';
+import { MAP_KEYBOARD_HINT, MAP_LABEL } from '../../config/map';
 import MapView from './MapView';
 
 const state = vi.hoisted(() => ({
@@ -39,6 +39,7 @@ describe('MapView', () => {
     render(<MapView />);
     const region = screen.getByRole('region', { name: MAP_LABEL });
     expect(region).toHaveAttribute('tabindex', '0');
+    expect(region).toHaveAccessibleDescription(MAP_KEYBOARD_HINT);
     expect(state.useMapControls).toHaveBeenCalled();
     expect(state.useLayerSwitcher).toHaveBeenCalled();
     expect(state.useOverlays).toHaveBeenCalled();
