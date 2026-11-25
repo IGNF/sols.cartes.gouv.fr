@@ -1,0 +1,43 @@
+.map-explorer__map {
+  position: relative;
+}
+
+/*
+ * Print sheet (PrintModal): mounted at the end of the body only while printing; it is the only thing the
+ * browser prints (title, map image, sources, date).
+ */
+.map-print-sheet {
+  display: none;
+}
+
+@media print {
+  body > :not(.map-print-sheet) {
+    display: none !important;
+  }
+
+  .map-print-sheet {
+    display: block;
+    padding: 0;
+  }
+
+  .map-print-sheet img {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+  }
+}
+
+/* From the DSFR md breakpoint the map fills the main area (App.css: the main takes the viewport rest). */
+@media (min-width: 48em) {
+  .map-explorer {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .map-explorer__map {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}

@@ -1,0 +1,280 @@
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { test } from 'node:test'
+import { APP_DIR, CONFIG_FILE, PATCHES_DIR, patchedFiles, readUpstream } from '../scripts/lib.mjs'
+import {
+  addBadge,
+  assertStaticTemplate,
+  buildLayout,
+  checkFooterAgainstBrand,
+  checkHeaderAgainstBrand,
+  duplicateToolLinks,
+  extractBlock,
+  extractHeaderScript,
+  extractSharedCss,
+  innerOfDiv,
+  readHeaderScript,
+  readLayout,
+  readSharedCss,
+  referencedDsfrIcons,
+  rewriteAssetPaths,
+} from '../scripts/layout.mjs'
+
+const badgeTitle =
+  '<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge fr-badge--sm fr-badge--green-menthe fr-badge--icon-left fr-icon-search-line">Rechercher</span></p>'
+
+const header = [
+  '<header><div class="fr-header__service"><p class="fr-header__service-title">sols.cartes.gouv.fr</p></div>',
+  '<div class="fr-header__tools-links"><div class="fr-nav"><div class="fr-nav__item">',
+  '<button aria-controls="menu-help">Aide</button><div class="fr-collapse" id="menu-help"></div>',
+  '</div></div></div>',
+  '<div class="fr-header__menu-links"></div>',
+  '<img src="/assets/brand/logo.png"></header>',
+].join('')
+
+const doc = [
+  "Liens d'évitement (premier enfant de `body`) :",
+  '',
+  '<!-- prettier-ignore -->',
+  '```html',
+  '<div class="fr-skiplinks"></div>',
+  '```',
+  '',
+  'En-tête :',
+  '',
+  '```html',
+  header,
+  '```',
+  '',
+  "Pied de page et modale « Paramètres d'affichage » :",
+  '',
+  '```html',
+  '<footer id="pied-de-page"></footer><dialog id="fr-theme-modal"><use href="/dsfr/artwork/x.svg#a"></use></dialog>',
+  '```',
+  '',
+  'Titre du service avec badge, catalogue :',
+  '',
+  '<!-- prettier-ignore -->',
+  '```html',
+  badgeTitle,
+  '```',
+].join('\n')
+
+test('extractBlock reads the html block after its label', () => {
+  assert.match(extractBlock(doc, 'Pied de page'), /^<footer id="pied-de-page">/)
+  assert.throws(() => extractBlock(doc, 'Absent'), /no html block/)
+})
+
+test('addBadge substitutes the reference title-with-badge block', () => {
+  assert.ok(addBadge(header, badgeTitle).includes(badgeTitle))
+  assert.throws(() => addBadge('<header></header>', badgeTitle), /service title/)
+  assert.throws(() => addBadge(header, '<p>autre</p>'), /unexpected markup/)
+})
+
+test('duplicateToolLinks copies the tool menus into the mobile menu with -mobile ids', () => {
+  const out = duplicateToolLinks(header)
+  const mobile = innerOfDiv(out, '<div class="fr-header__menu-links">')
+  assert.match(mobile, /id="menu-help-mobile"/)
+  assert.match(mobile, /aria-controls="menu-help-mobile"/)
+  assert.match(out, /<div class="fr-header__tools-links">.*id="menu-help"/)
+  assert.equal((out.match(/fr-nav__item--align-right/g) ?? []).length, 2)
+})
+
+test('rewriteAssetPaths serves brand images and DSFR artwork under the base href', () => {
+  const out = rewriteAssetPaths('<img src="/assets/brand/a.png"><use href="/dsfr/artwork/b.svg#c">', '/r/')
+  assert.equal(out, '<img src="/r/assets/brand/a.png"><use href="/r/assets/dsfr/artwork/b.svg#c">')
+})
+
+test('assertStaticTemplate rejects Angular syntax', () => {
+  assert.throws(() => assertStaticTemplate('x', '<p>{{ a }}</p>'), /Angular/)
+  assert.throws(() => assertStaticTemplate('x', '@if (a) {}'), /Angular/)
+})
+
+test('buildLayout returns the three blocks', () => {
+  const layout = buildLayout(doc, { baseHref: '/r/' })
+  assert.deepEqual(Object.keys(layout), ['skiplinks', 'header', 'footer'])
+  assert.match(layout.footer, /href="\/r\/assets\/dsfr\/artwork\/x.svg#a"/)
+})
+
+test('extractSharedCss keeps only the shared header/footer rules', () => {
+  const css = '.hero { color: red; }\n.sols-operator { gap: 1rem; }\n@media (min-width: 62em) { .hero { x: y; } .sols-tool-menu { position: relative; } }\n.sols-tool-menu__btn::after { mask-image: url(../dsfr/icons/a.svg); }'
+  const out = extractSharedCss(css, '/r/')
+  assert.doesNotMatch(out, /hero/)
+  assert.match(out, /@media \(min-width: 62em\) \{\n {2}\.sols-tool-menu \{/)
+  assert.match(out, /url\(\/r\/assets\/dsfr\/icons\/a.svg\)/)
+})
+
+test('the real edito reference produces the v1 catalogue header and footer', () => {
+  const layout = readLayout(readUpstream().baseHref)
+  assert.match(layout.header, /<p class="fr-header__service-title">sols.cartes.gouv.fr <span class="fr-badge[^"]*fr-icon-search-line">Rechercher<\/span><\/p>/)
+  assert.match(layout.header, /href="https:\/\/cartes.gouv.fr\/aide\/fr\/" target="_blank" rel="noopener external"/)
+  assert.match(layout.header, /Observatoire des sols de France/)
+  assert.match(layout.header, /id="menu-services-mobile"/)
+  assert.match(layout.header, /src="\/rechercher-une-donnee\/assets\/brand\/logo-gissol.png"/)
+  assert.match(layout.footer, /id="pied-de-page"/)
+  assert.match(layout.footer, /<dialog id="fr-theme-modal"/)
+  assert.match(layout.skiplinks, /href="#contenu"/)
+  assert.match(readSharedCss('/rechercher-une-donnee/'), /\.sols-partner-logo/)
+})
+
+test('patch 0003 only touches the expected upstream files', () => {
+  const files = patchedFiles(readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8'))
+  assert.deepEqual(files.sort(), [
+    'apps/datahub/project.json',
+    'apps/datahub/src/app/app.component.html',
+    'apps/datahub/src/app/app.component.ts',
+    'apps/datahub/src/app/home/home-header/home-header.component.html',
+    'apps/datahub/src/app/home/home-page/home-page.component.html',
+    'apps/datahub/src/app/router/datahub-page-title-strategy.service.ts',
+    'apps/datahub/src/app/router/datahub-router.service.ts',
+    'apps/datahub/src/index.html',
+    'apps/datahub/src/styles.css',
+  ])
+})
+
+test('patches 0004 and 0005 stay small and on the expected files', () => {
+  const a11y = readFileSync(join(PATCHES_DIR, '0004-upstream-a11y.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(a11y).sort(), [
+    'apps/datahub/src/app/home/search/search-filters/search-filters.component.html',
+    'apps/datahub/src/app/record/record-data-preview/record-data-preview.component.html',
+    'apps/datahub/src/app/record/record-header/navigation-bar/navigation-bar.component.html',
+    'libs/feature/notify-reuse/src/lib/notify-reuse-form/notify-reuse-form.component.html',
+    'libs/feature/record/src/lib/map-view/map-view.component.html',
+    'libs/ui/elements/src/lib/api-card/api-card.component.html',
+    'libs/ui/elements/src/lib/image-overlay-preview/image-overlay-preview.component.html',
+    'libs/ui/elements/src/lib/record-api-form/record-api-form.component.html',
+    'libs/ui/inputs/src/lib/autocomplete/autocomplete.component.html',
+    'libs/ui/inputs/src/lib/button/button.component.html',
+    'libs/ui/inputs/src/lib/button/button.component.ts',
+    'libs/ui/inputs/src/lib/copy-text-button/copy-text-button.component.html',
+    'libs/ui/inputs/src/lib/dropdown-multiselect/dropdown-multiselect.component.html',
+    'libs/ui/inputs/src/lib/dropdown-selector/dropdown-selector.component.html',
+    'libs/ui/layout/src/lib/pagination-dots/pagination-dots.component.html',
+    'libs/ui/layout/src/lib/previous-next-buttons/previous-next-buttons.component.html',
+  ])
+  const scope = readFileSync(join(PATCHES_DIR, '0005-elasticsearch-scope.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(scope), ['libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts'])
+  assert.ok(scope.split('\n').filter((l) => /^[+-][^+-]/.test(l)).length < 30)
+})
+
+test('the thumbnail placeholder ships in overlay/ and is configured', () => {
+  const svg = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/assets/img/sols-placeholder.svg'), 'utf8')
+  assert.ok(svg.length < 50_000)
+  assert.match(readFileSync(CONFIG_FILE, 'utf8'), /^thumbnail_placeholder = 'assets\/img\/sols-placeholder.svg'$/m)
+})
+
+test('the CSS overrides ship in overlay/ and are loaded by the build (patch 0003)', () => {
+  const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
+  assert.match(css, /gn-ui-sticky-header/)
+  const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-overrides.css",?$/m)
+  assert.match(patch, /^\+\s*"apps\/datahub\/src\/sols-shared.css",?$/m)
+})
+
+test('patch 0006 adds record-level map links on the expected files (C10)', () => {
+  const patch = readFileSync(join(PATCHES_DIR, '0006-record-map-links.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(patch).sort(), [
+    'apps/datahub/src/app/record/record-apis/record-apis.component.html',
+    'apps/datahub/src/app/record/record-apis/record-apis.component.ts',
+    'libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html',
+    'libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts',
+  ])
+  assert.match(patch, /\['wms', 'wmts'\]/)
+})
+
+test('patch 0007 turns keyword presets into toggle chips (C11)', () => {
+  const patch = readFileSync(join(PATCHES_DIR, '0007-keyword-chips-toggle.patch'), 'utf8')
+  assert.deepEqual(patchedFiles(patch).sort(), [
+    'apps/datahub/src/app/home/home-header/home-header.component.html',
+    'apps/datahub/src/app/home/home-header/home-header.component.ts',
+  ])
+  assert.match(patch, /aria-pressed/)
+  assert.match(patch, /aria-label="Mots-clés suggérés"/)
+  // DSFR pressable tags (C11 follow-up): fr-tags-group > li > button.fr-tag, default size
+  assert.match(patch, /^\+\s*<ul class="fr-tags-group">$/m)
+  assert.match(patch, /^\+\s*class="fr-tag"$/m)
+  assert.doesNotMatch(patch, /^\+.*(badge-btn|fr-tag--sm|fr-tags-group--sm)/m)
+  // the DSFR tag script would flip aria-pressed a second time on click
+  assert.match(patch, /\$event\.stopImmediatePropagation\(\); toggleKeywordPreset\(preset\)/)
+  const layout = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(layout, /^\+\s*"\.\/node_modules\/@gouvfr\/dsfr\/dist\/component\/tag\/tag\.min\.css",$/m)
+  const css = readFileSync(join(APP_DIR, 'overlay/apps/datahub/src/sols-overrides.css'), 'utf8')
+  assert.doesNotMatch(css, /badge-btn/)
+})
+
+test('extractHeaderScript reads the E9 js block and fails loudly without it (C12)', () => {
+  const md = "**Échap dans le menu mobile (E9)** : texte\n\n```js\ndocument.addEventListener('keydown', () => {});\n```\n"
+  assert.equal(extractHeaderScript(md), "document.addEventListener('keydown', () => {});")
+  assert.throws(() => extractHeaderScript('nothing'), /no js block/)
+  assert.throws(() => extractHeaderScript('**Échap dans le menu mobile**\n```js\nfoo()\n```'), /looks wrong/)
+})
+
+test('the generated header script matches apps/accueil/src/js/header.js (C12)', () => {
+  const generated = readHeaderScript()
+  const edito = readFileSync(join(APP_DIR, '..', 'accueil', 'src', 'js', 'header.js'), 'utf8')
+  const code = edito.slice(edito.indexOf('document.addEventListener')).trim()
+  assert.ok(generated.includes(code))
+  const patch = readFileSync(join(PATCHES_DIR, '0003-sols-layout.patch'), 'utf8')
+  assert.match(patch, /\+\s*<script type="module" src="assets\/sols\/header.js"><\/script>/)
+})
+
+test('referencedDsfrIcons lists the DSFR icons the shared CSS needs (C13)', () => {
+  const css = readSharedCss('/rechercher-une-donnee/')
+  assert.deepEqual(referencedDsfrIcons(css, '/rechercher-une-donnee/').sort(), [
+    'arrows/arrow-down-s-line.svg',
+    'system/external-link-line.svg',
+  ])
+  assert.match(css, /\.fr-header__tools-links \{/)
+})
+
+test('checkHeaderAgainstBrand compares badge and help links with brand.json (C13)', () => {
+  const brand = {
+    badges: { catalogue: 'Rechercher' },
+    badgeStyles: { catalogue: { color: 'green-menthe', icon: 'fr-icon-search-line' } },
+    header: { tools: { help: { items: [{ label: 'Aide', href: 'https://x.fr/aide/', icon: 'fr-icon-q', external: true }] } } },
+  }
+  const ok =
+    badgeTitle +
+    '<a class="fr-nav__link fr-link--icon-left fr-icon-q sols-tool-menu__external" href="https://x.fr/aide/" target="_blank" rel="noopener external">'
+  assert.equal(checkHeaderAgainstBrand(ok, brand), ok)
+  assert.throws(() => checkHeaderAgainstBrand(badgeTitle, brand), /help link/)
+  // External entry of another menu, without icon (« Publier une donnée », #85); `login: false` is skipped.
+  const withService = {
+    ...brand,
+    header: {
+      tools: {
+        ...brand.header.tools,
+        services: { items: [{ label: 'Interne', href: '/x/' }, { label: 'Publier', href: 'https://x.fr/publier', external: true }] },
+        login: false,
+      },
+    },
+  }
+  assert.throws(() => checkHeaderAgainstBrand(ok, withService), /services link: Publier/)
+  const okService =
+    ok + '<a class="fr-nav__link sols-tool-menu__external" href="https://x.fr/publier" target="_blank" rel="noopener external">'
+  assert.equal(checkHeaderAgainstBrand(okService, withService), okService)
+  assert.throws(
+    () => checkHeaderAgainstBrand(ok, { ...brand, badgeStyles: { catalogue: { color: 'blue', icon: 'x' } } }),
+    /badge/
+  )
+})
+
+test('checkFooterAgainstBrand compares the bottom links with brand.json (#89, #90)', () => {
+  const brand = {
+    footer: {
+      bottomLinks: [
+        { label: 'Mentions légales', href: '/mentions-legales/' },
+        { label: 'CGU', href: 'https://x.fr/cgu/', external: true },
+      ],
+    },
+  }
+  const local = '<a class="fr-footer__bottom-link" href="/mentions-legales/">Mentions légales</a>'
+  const ok = local + '<a class="fr-footer__bottom-link" href="https://x.fr/cgu/" target="_blank" rel="noopener external" title="CGU">CGU</a>'
+  assert.equal(checkFooterAgainstBrand(ok, brand), ok)
+  assert.throws(() => checkFooterAgainstBrand(local, brand), /bottom link: CGU/)
+  assert.throws(
+    () => checkFooterAgainstBrand(local + '<a class="fr-footer__bottom-link" href="https://x.fr/cgu/">CGU</a>', brand),
+    /bottom link: CGU/
+  )
+})

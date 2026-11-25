@@ -1,0 +1,100 @@
+import { fr } from '@codegouvfr/react-dsfr';
+import { Alert } from '@codegouvfr/react-dsfr/Alert';
+import { useState } from 'react';
+import { solsStyleUrl } from '../../config/urls';
+import { useDeepLinkLayer } from '../../hooks/useDeepLink';
+import { readDeepLinks, type DeepLinkRequest } from '../../map/deepLink';
+
+interface DeepLinkNoticeProps {
+  /** Query string; defaults to the current location. */
+  search?: string;
+}
+
+/**
+ * Outcome of the "Voir sur la carte" link coming from the catalogue, or of each data layer of a permalink
+ * (src/map/permalink.ts): one notice per layer, read once at mount.
+ */
+export default function DeepLinkNotice({ search = window.location.search }: DeepLinkNoticeProps) {
+  const [requests] = useState(() => readDeepLinks(search));
+  return (
+    <>
+      {requests.map((request, index) => (
+        <DeepLinkLayerNotice key={`${index}-${request.kind}-${request.name}`} request={request} />
+      ))}
+    </>
+  );
+}
+
+interface DeepLinkLayerNoticeProps {
+  request: DeepLinkRequest;
+}
+
+/**
+ * Follows one layer and reports its outcome. A layer added but returning no image is reported by
+ * `MapNotices` (same notice whatever added the layer).
+ */
+export function DeepLinkLayerNotice({ request }: DeepLinkLayerNoticeProps) {
+  const status = useDeepLinkLayer(request);
+  switch (status.state) {
+    case 'checking':
+      return (
+        <p role="status" className={fr.cx('fr-mb-2w')}>
+          Recherche de la couche « {status.name} »…
+        </p>
+      );
+    case 'added':
+      return (
+        <p role="status" className={fr.cx('fr-sr-only')}>
+          Couche « {status.title} » ajoutée à la carte.
+        </p>
+      );
+    case 'not-found':
+      return (
+        <Alert
+          className={fr.cx('fr-mb-2w')}
+          severity="error"
+          as="h2"
+          small
+          title="Couche introuvable"
+          description={`La couche « ${status.name} » n’est pas publiée par la Géoplateforme. Les autres données sols restent disponibles dans le catalogue de la carte.`}
+        />
+      );
+    case 'invalid':
+      return (
+        <Alert
+          className={fr.cx('fr-mb-2w')}
+          severity="error"
+          small
+          as="h2"
+          title="Lien invalide"
+          description={`Le lien « Voir sur la carte » reçu pour « ${status.name} » est mal formé ou désigne un service hors de la Géoplateforme : il n’a pas été suivi. Les données sols restent disponibles dans le catalogue de la carte.`}
+        />
+      );
+    case 'unsupported':
+      return (
+        <Alert
+          className={fr.cx('fr-mb-2w')}
+          severity="info"
+          as="h2"
+          small
+          title="Format non pris en charge"
+          description={
+            status.type === 'TMS' && status.style ? (
+              <>
+                Le lien désigne le style de tuiles vectorielles (TMS) «&nbsp;{status.style}&nbsp;»,
+                qui ne peut pas encore être affiché sur cette carte (
+                <a href={solsStyleUrl(status.style)}>fichier de style</a>). Les données sols
+                disponibles sont listées dans le catalogue de la carte.
+              </>
+            ) : status.type === 'TMS' ? (
+              `La couche « ${status.name} » est publiée en tuiles vectorielles (TMS), qui ne peuvent pas encore être affichées. Les données sols disponibles sont listées dans le catalogue de la carte.`
+            ) : (
+              `Le service ${status.type} de la couche « ${status.name} » ne peut pas encore être affiché. Les données sols disponibles sont listées dans le catalogue de la carte.`
+            )
+          }
+        />
+      );
+    default:
+      return null;
+  }
+}

@@ -1,0 +1,127 @@
+diff --git a/apps/datahub/src/app/record/record-apis/record-apis.component.html b/apps/datahub/src/app/record/record-apis/record-apis.component.html
+index 390e286..2209620 100644
+--- a/apps/datahub/src/app/record/record-apis/record-apis.component.html
++++ b/apps/datahub/src/app/record/record-apis/record-apis.component.html
+@@ -51,6 +51,24 @@
+     }
+   </gn-ui-block-list>
+ }
++@if ((mapLinks$ | async)?.length) {
++  <ul class="fr-links-group flex flex-wrap gap-x-6" data-test="sols-map-links">
++    @for (link of mapLinks$ | async; track link) {
++      <li>
++        <gn-ui-external-viewer-button
++          [link]="link"
++          [label]="
++            'Voir sur la carte : ' +
++            link.name +
++            ' (' +
++            (link.accessServiceProtocol | uppercase) +
++            ')'
++          "
++        ></gn-ui-external-viewer-button>
++      </li>
++    }
++  </ul>
++}
+ <div
+   class="content transition-all duration-300 w-screen mx-auto -ml-[calc(50vw-50%)] overflow-hidden"
+   [ngClass]="selectedApiLink ? 'ease-in' : 'ease-out'"
+diff --git a/apps/datahub/src/app/record/record-apis/record-apis.component.ts b/apps/datahub/src/app/record/record-apis/record-apis.component.ts
+index f1dbe15..4f75f26 100644
+--- a/apps/datahub/src/app/record/record-apis/record-apis.component.ts
++++ b/apps/datahub/src/app/record/record-apis/record-apis.component.ts
+@@ -7,7 +7,11 @@ import {
+   inject,
+ } from '@angular/core'
+ import { DatasetServiceDistribution } from '@geonetwork-ui/common/domain/model/record'
+-import { GpfApiDlComponent, MdViewFacade } from '@geonetwork-ui/feature/record'
++import {
++  ExternalViewerButtonComponent,
++  GpfApiDlComponent,
++  MdViewFacade,
++} from '@geonetwork-ui/feature/record'
+ import {
+   BlockListComponent,
+   CarouselComponent,
+@@ -37,6 +41,7 @@ marker('record.metadata.api.form.title')
+   changeDetection: ChangeDetectionStrategy.OnPush,
+   standalone: true,
+   imports: [
++    ExternalViewerButtonComponent,
+     BlockListComponent,
+     CommonModule,
+     CarouselComponent,
+@@ -97,6 +102,17 @@ export class RecordApisComponent implements OnInit {
+     shareReplay(1)
+   )
+ 
++  // Sols: WMS/WMTS links offered as « Voir sur la carte » text links under the cards
++  mapLinks$ = this.apiLinks$.pipe(
++    map((links) =>
++      links.filter(
++        (link) =>
++          link.type === 'service' &&
++          ['wms', 'wmts'].includes(link.accessServiceProtocol)
++      )
++    )
++  )
++
+   get apiLinksCount$() {
+     return this.apiLinks$?.pipe(map((links) => links.length))
+   }
+diff --git a/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html b/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html
+index 6c6ba59..3d795bd 100644
+--- a/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html
++++ b/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.html
+@@ -1,4 +1,11 @@
+-@if (externalViewer) {
++@if (externalViewer && label) {
++  <a
++    class="fr-link fr-icon-map-pin-2-line fr-link--icon-left"
++    [href]="ignExternalViewerUrl"
++    [attr.target]="linkTarget"
++    >{{ label }}</a
++  >
++} @else if (externalViewer) {
+   <gn-ui-button
+     (buttonClick)="openInIgnExternalViewer()"
+     type="primary"
+diff --git a/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts b/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts
+index 8e81480..090d37d 100644
+--- a/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts
++++ b/libs/feature/record/src/lib/external-viewer-button/external-viewer-button.component.ts
+@@ -46,6 +46,8 @@ export class ExternalViewerButtonComponent {
+   @Input() link: DatasetOnlineResource
+   @Input() mimeType = ''
+   @Input() extraClass = ''
++  // Sols: when set, render a text link (href computed like openInIgnExternalViewer) instead of the icon button
++  @Input() label: string | null = null
+ 
+   get externalViewer() {
+     return !!this.urlTemplate && !!this.supportedLinkLayerType
+@@ -91,7 +93,7 @@ export class ExternalViewerButtonComponent {
+     window.open(url, this.openinNewTab ? '_blank' : '_self').focus()
+   }
+ 
+-  openInIgnExternalViewer() {
++  get ignExternalViewerUrl(): string {
+     var url: string
+     const templateUrl = this.urlTemplate
+     const layerName = this.link.name
+@@ -128,7 +130,14 @@ export class ExternalViewerButtonComponent {
+         .replace('${geop_type}', `OGC`)
+         .replace('${tms_style}', '')
+     }
++    return url
++  }
+ 
+-    window.open(url, this.openinNewTab ? '_blank' : '_self').focus()
++  get linkTarget(): string {
++    return this.openinNewTab ? '_blank' : '_self'
++  }
++
++  openInIgnExternalViewer() {
++    window.open(this.ignExternalViewerUrl, this.linkTarget).focus()
+   }
+ }

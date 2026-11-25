@@ -1,0 +1,44 @@
+/*
+ * Habillage « Observatoire des sols » : surcharges CSS du datahub (thème, pas de code).
+ * Ajouté à la cible build après styles.css (patch 0003). Couleurs : jetons DSFR.
+ */
+
+/* Recherche : l'en-tête animé (gn-ui-sticky-header) a une hauteur fixe en style en ligne,
+   plus grande que son contenu ; la hauteur suit le contenu (l'en-tête reste collant). */
+#home-page gn-ui-sticky-header > div,
+#home-page gn-ui-sticky-header > div > div {
+  height: auto !important;
+}
+/* Rangée des mots-clés suggérés (tags DSFR sélectionnables, patch 0007) : la classe amont `h-0`
+   la ramène à une hauteur nulle ; hauteur selon le contenu. */
+datahub-home-header .h-0.py-5 {
+  height: auto;
+  padding: 0.75rem 0 0;
+}
+datahub-home-header > header > div > .py-8 {
+  padding-bottom: 0;
+}
+
+/* Contrastes (axe color-contrast, fiche) */
+.gn-ui-card-detail {
+  color: var(--text-mention-grey, #666666);
+}
+.bg-primary\/50.text-primary-lightest {
+  background-color: var(--background-action-high-blue-france, #000091);
+}
+gn-ui-copy-text-button .opacity-50 {
+  opacity: 1;
+}
+/* Badges de format : couleurs amont par format (certaines trop claires sous texte blanc) ;
+   fond DSFR bleu France uniforme, opaque. */
+[data-cy='download-format'] {
+  background-color: var(--background-action-high-blue-france, #000091) !important;
+  opacity: 1 !important;
+}
+
+/* Pied de page v1 : « Paramètres d'affichage » masqué dans le catalogue (C8). Le mode sombre DSFR
+   (feuille scheme) assombrirait l'en-tête et le fond, mais les gabarits amont gardent leurs couleurs
+   Tailwind claires : textes illisibles. Voir doc/agents/geonetwork-ui.md §15 et QUESTIONS C-6. */
+#pied-de-page .fr-footer__bottom-item:has(> [aria-controls='fr-theme-modal']) {
+  display: none;
+}

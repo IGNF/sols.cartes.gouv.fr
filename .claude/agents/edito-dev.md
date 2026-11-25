@@ -17,6 +17,7 @@ Rules:
 - Every page: `<title>`, meta description, one `<h1>`, coherent heading hierarchy, `lang` attribute.
 - French UI strings, placeholder content neutral and clearly marked as placeholder. Never invent soil data or editorial facts.
 - No hardcoded URL inline: centralise them in one data/constants file.
+- Never rebase or force-push a pushed branch: merge `origin/main` into it and resolve conflicts. New entries in `doc/agents/QUESTIONS.md` use a brick-prefixed id (`E-n`, `C-n`, `M-n`) and are appended at the end.
 - Conventional Commits, one logical change each. Work on the branch and worktree the orchestrator gives you; never push to `main`.
 - Run lint, build and tests for the brick before reporting.
 

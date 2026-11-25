@@ -4,7 +4,9 @@ enable:
   
 tooling:
   - .github/**/*
+  - .claude/**/*
   - .gitignore
+  - .prettierignore
   - .vscode/**/*
 
 

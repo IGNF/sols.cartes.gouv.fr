@@ -3,6 +3,22 @@
 You are the **orchestrator**. `CLAUDE.md` is binding; read it, then the skills in `.claude/skills/`. This file says what to build for v0 and how to run the work.
 Do not stop to ask questions. If a decision is blocked, log it in `doc/agents/QUESTIONS.md` (question, options, your default) and continue on whatever is unblocked. Stop and report only for irreversible decisions.
 
+## 0. Preflight (run before anything else)
+
+Check each item by actually trying it; do not trust configuration. Write the result as a table (item, status OK/WARN/FAIL, evidence)
+ to `doc/PREFLIGHT.md` and show it in the chat.
+
+**Hard requirements: if any FAIL, stop and tell the human exactly what to fix. This is the only case where you stop before work.**
+- Model: state which model you are running as (the human expects Fable).
+- Git: `git worktree add` then remove a throwaway worktree works; `git push --dry-run` succeeds.
+- GitHub: `gh auth status` OK and `gh repo view --json viewerPermission` shows write access.
+- Tooling: `bun --version` and `node --version` work; ports 8080 and the dev ports are free.
+- Network: `curl`; `https://data.geopf.fr/wfs` answers.
+- Playwright: headless Chromium launches and loads `http://localhost` (start a trivial static server).
+- Figma: call one read-only Figma tool on the file URL in CLAUDE.md. If it returns metadata, OK;
+- Chrome extension: if its tools are present, list the open tabs only (no navigation, no sign-in).
+- Custom agents: check that `.claude/agents/*` can be created and invoked; if not
+
 ## 1. Goal of v0
 
 A locally running skeleton of `sols.cartes.gouv.fr`: three apps served under one origin.

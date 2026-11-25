@@ -1,0 +1,374 @@
+/** English strings. Every prose string is placeholder text, marked "(placeholder text)". */
+import site from '../site.js';
+
+const description =
+  'Soil observatory: portal for the GIS Sol (INRAE) soil data served by the Géoplateforme (placeholder text).';
+const footerDescription =
+  'Soil observatory of France: the access portal to soil data for territories, led by INRAE with the GIS Sol and served by the Géoplateforme (placeholder text).';
+
+export default {
+  name: 'Soil observatory',
+  tagline: 'Soil observatory of France',
+  description,
+  newWindow: 'new window',
+  skiplinks: { label: 'Quick access', contenu: 'Content', piedDePage: 'Footer' },
+  mainSections: {
+    accueil: 'Home',
+    rechercherUneDonnee: 'Find data (in French)',
+    explorerLesCartes: 'Explore maps (in French)',
+    aide: 'Help',
+  },
+  header: {
+    homeLinkTitle: 'Back to the home page of the Soil observatory of France - République Française',
+    operatorLogoAlt: 'GIS Sol, scientific interest group on soils',
+    menu: 'Menu',
+    close: 'Close',
+    translateTitle: 'Select a language',
+    tools: {
+      help: {
+        label: 'Help',
+        items: {
+          'https://cartes.gouv.fr/aide/{lang}/': { label: 'Help centre' },
+          'https://cartes.gouv.fr/aide/fr/nous-ecrire/': { label: 'Contact us (in French)' },
+        },
+      },
+      services: {
+        label: 'Services',
+        items: {
+          '/rechercher-une-donnee/': {
+            label: 'Find data (in French)',
+            desc: 'The soil data catalogue',
+          },
+          '/explorer-les-cartes/': {
+            label: 'Explore maps (in French)',
+            desc: 'The map viewer',
+          },
+          'https://cartes.gouv.fr/publier-une-donnee': { label: 'Publish data (in French)' },
+          '/fr/': { label: 'Discover', desc: 'The Soil observatory of France' },
+        },
+      },
+    },
+  },
+  footer: {
+    description: footerDescription,
+    homeLinkTitle: 'Back to the home page of the Soil observatory of France - République Française',
+    partnersTitle: 'Our partners',
+    bottomLinks: {
+      accessibilite: 'Accessibility: not compliant',
+      mentionsLegales: 'Legal notice',
+      [site.external.cgu]: 'Terms of use (in French)',
+      [site.external.donneesPersonnelles]: 'Personal data (in French)',
+      planDuSite: 'Site map',
+    },
+    licence: {
+      text: 'Unless otherwise stated, all content on this site is available under',
+      label: 'licence etalab-2.0',
+    },
+  },
+  display: {
+    button: 'Display settings',
+    title: 'Display settings',
+    legend: 'Choose a theme to customise the look of the site.',
+    light: 'Light theme',
+    dark: 'Dark theme',
+    system: 'System',
+    systemHint: 'Uses the system settings',
+  },
+  breadcrumb: {
+    label: 'you are here:',
+    button: 'See breadcrumb',
+    accueil: 'Home',
+    articles: 'Articles',
+  },
+  articles: { published: 'Published on' },
+  reroute: {
+    link: 'English version',
+  },
+  moved: {
+    title: 'sols.cartes.gouv.fr: page moved',
+    description: 'This page is now available on cartes.gouv.fr (in French).',
+    heading: 'Page moved',
+    intro: 'This page is shared with cartes.gouv.fr: you are being redirected there.',
+    link: 'Read the page on cartes.gouv.fr (in French)',
+  },
+  pages: {
+    aide: {
+      title: 'Help',
+      description: 'Help centre of the Soil observatory of France (placeholder text).',
+      intro:
+        'Find here the answers to the most frequent questions about the Soil observatory of France (placeholder text).',
+      faqTitle: 'Frequently asked questions',
+      faq: [
+        {
+          question: 'What is the Soil observatory of France?',
+          answer: 'Answer to come (placeholder text).',
+        },
+        { question: 'How do I find soil data?', answer: 'Answer to come (placeholder text).' },
+        {
+          question: 'How do I display data on the map?',
+          answer: 'Answer to come (placeholder text).',
+        },
+      ],
+      contactTitle: 'Contact us',
+      contactText:
+        'Help and the contact form are shared with cartes.gouv.fr: write to us with the « Nous écrire » form (in French) and mention that your question is about the Soil observatory of France.',
+      contactButton: 'Write to us on cartes.gouv.fr (in French)',
+      helpButton: 'cartes.gouv.fr help centre',
+    },
+    accueil: { title: 'Soil observatory', description },
+    accessibilite: {
+      title: 'Accessibility',
+      description: 'Accessibility statement of sols.cartes.gouv.fr (placeholder text).',
+      body: 'The site has not been audited against the RGAA yet: it is not compliant. The accessibility statement will be published here (placeholder text).',
+    },
+    /** Translation of the French legal notice (i18n/fr.js, #88): same sections, same ids. */
+    mentionsLegales: {
+      title: 'Legal notice',
+      description: `Legal notice of ${site.header.serviceTitle}: publisher, publication director, personal data, intellectual property and hyperlinks.`,
+      sections: [
+        {
+          id: 'editeur',
+          title: 'Publisher',
+          paragraphs: [
+            `The ${site.header.serviceTitle} website is published by the Institut national de l’information géographique et forestière (IGN), 73 avenue de Paris, 94165 SAINT-MANDE CEDEX, France.`,
+            'Tel.: +33 1 43 98 80 00',
+            'Publication director: Sébastien Soriano, Director General of IGN.',
+          ],
+        },
+        {
+          id: 'traitement-des-donnees-a-caractere-personnel',
+          title: 'Processing of personal data',
+          paragraphs: [
+            'The recipient of the data is IGN.',
+            'In accordance with the French Data Protection Act (« Informatique et libertés ») of 6 January 1978, you have a right of access to and rectification of the information concerning you, which you can exercise by writing to IGN through the “Contact us” link of the “Help” menu.',
+          ],
+          link: {
+            label: 'Learn more about personal data (in French)',
+            href: site.external.donneesPersonnelles,
+          },
+        },
+        {
+          id: 'droit-de-propriete-intellectuelle',
+          title: 'Intellectual property rights',
+          paragraphs: [
+            `The illustrations, the editorial content, the elements of the graphic charter and the map data from online consultation shown on the ${site.header.serviceTitle} website are owned by IGN or IGN holds the right to exploit them.`,
+            'Any use of the documents or elements of the site is subject to the prior agreement of our institution.',
+          ],
+        },
+        {
+          id: 'liens-hypertextes',
+          title: `Hyperlinks offered on ${site.header.serviceTitle}`,
+          paragraphs: [
+            `The links to third-party sites inserted in the pages of the ${site.header.serviceTitle} website are offered for information; the publisher is not responsible for the content of the sites these links lead to.`,
+          ],
+        },
+      ],
+    },
+    planDuSite: {
+      title: 'Site map',
+      description: 'Site map of sols.cartes.gouv.fr, list of sections and pages.',
+      body: 'Sections and pages of the site (placeholder text).',
+    },
+    articles: {
+      title: 'Articles',
+      description: 'Articles of the soil observatory (placeholder text).',
+      body: 'Articles published by the soil observatory (placeholder text).',
+    },
+  },
+  accueil: {
+    hero: {
+      overline: 'The access portal to soil data for territories',
+      title: 'All the knowledge on French soils',
+      titleAccent: 'gathered in one place',
+      intro:
+        'Sixty years of soil data collected across France. The Soil observatory of France lets you find them and use them in your studies and territorial decisions (placeholder text).',
+      actions: {
+        rechercherUneDonnee: 'Find data (in French)',
+        explorerLesCartes: 'Explore maps (in French)',
+      },
+      figuresLabel: 'Key figures',
+      figures: {
+        annees: { value: '60 years', label: 'of collected data' },
+        referentiels: { value: '12+', label: 'National reference datasets' },
+        publiques: { value: '100%', label: 'Public data' },
+      },
+      map: {
+        url: 'soil database · Soil observatory of France',
+        brand: 'Soil observatory of France',
+        layersTitle: 'Active layers',
+        layers: {
+          donneesSols: 'Soil data',
+          communes: 'Municipalities',
+          rpg: 'RPG',
+          hydro: 'Hydro.',
+        },
+        sourceTitle: 'Source',
+        sources: ['RRP 1/250,000', 'RMQS · BDAT', 'GIS format'],
+        tooltip: {
+          title: 'Soil data available · Paris Basin',
+          text: 'Texture: silty clay · pH 6.8',
+          status: 'INRAE data referenced',
+        },
+        legend: {
+          brunsLimoneux: 'Silty brown soils',
+          bocage: 'Grassland bocage',
+          terresArables: 'Arable land',
+          calcaires: 'Calcareous soils',
+          alpins: 'Alpine soils',
+          mediterraneens: 'Mediterranean soils',
+        },
+      },
+    },
+    gissol: {
+      overline: 'The portal of the scientific interest group on soils',
+      title: 'GIS Sol',
+      intro:
+        'Gissol is a network of partners that aims to know, preserve and promote soils in France. Its mission is to build and manage the French soil information system to meet the needs of public authorities and society.',
+      apercuAlt:
+        'Preview of the GIS Sol website: “Les données du Gis Sol”, “Webservices”, “Cartes” and “Tableaux de données” sections.',
+    },
+    service: {
+      apercuAlt:
+        'Preview of the map explorer: soil map of south-western France with the search bar and map tools.',
+      overline: 'The observatory sols.cartes.gouv.fr',
+      title: 'Find, understand and use soil data',
+      intro:
+        'Soil data is scattered among many organisations and hard to use. The Observatory helps you find, understand and use it (placeholder text).',
+      frieze: {
+        without: {
+          title: 'Without the Soil observatory of France',
+          items: [
+            'Data scattered between BRGM, INRAE, IGN, ADEME…',
+            'Heterogeneous formats, incomplete metadata',
+            'No way to know which data to use',
+            'Long collection time before each study',
+          ],
+        },
+        with: {
+          title: 'With the Soil observatory of France',
+          items: [
+            'A single access point, all sources in one place',
+            'Quality, source and scale documented for each dataset',
+            'Data exportable to your GIS tools',
+            'Immediate time savings on data collection',
+          ],
+        },
+      },
+      items: {
+        trouver: {
+          title: 'Find relevant data',
+          desc: 'Immediately locate the relevant data available for your study area without multiplying sources, contacts or platforms (placeholder text).',
+        },
+        comprendre: {
+          title: 'Understand data reliability',
+          desc: 'See the source, scale and quality of each reference dataset and assess its reliability before using it (placeholder text).',
+        },
+        utiliser: {
+          title: 'Use data in your tools',
+          desc: 'Export data to your GIS and business software, in formats compatible with your work environment (placeholder text).',
+        },
+      },
+    },
+    usages: {
+      overline: 'Use cases',
+      title: 'A portal designed for your professional uses',
+      intro:
+        'These use cases show how the Soil observatory of France can fit into your practice. If you work with soil data, the portal is for you (placeholder text).',
+      profile: 'Profile',
+      items: {
+        chambres: {
+          title: 'Chambers of agriculture',
+          lead: 'Use soil data to strengthen agricultural advice and objectify field diagnoses (placeholder text).',
+          points: [
+            'An advisor analyses a field, identifies soil characteristics and makes a documented recommendation.',
+            'A technician prepares a diagnosis with all the data from a single point, saving collection time.',
+            'Field support relies on sourced data to make exchanges with farmers more credible.',
+          ],
+        },
+        bureaux: {
+          title: 'Consultancies',
+          lead: 'Quickly access soil data to make environmental, planning, regulatory and wetland studies more reliable (placeholder text).',
+          points: [
+            'A consultancy carries out an impact study, identifies soil constraints and secures its analysis.',
+            'A project officer prepares a file with the right data from a single point, saving collection time.',
+            'A development project relies on reliable data to improve the preliminary diagnosis.',
+          ],
+        },
+        collectivites: {
+          title: 'Local authorities',
+          lead: 'Include soil issues in planning policies and strategic territorial decisions (placeholder text).',
+          points: [
+            'Identify areas with environmental, agronomic and biodiversity stakes to guide decisions',
+            'Support public policies with reliable, sourced soil data',
+            'Include soil constraints in planning documents (PLU, SCOT, SRADDET)',
+          ],
+        },
+      },
+      note: 'These examples are deliberately targeted. If you use soil data for other purposes, the portal can be useful to you too (placeholder text).',
+    },
+    donnees: {
+      overline: 'Available data',
+      title: 'Access structured and documented reference datasets',
+      intro:
+        'Access a set of national reference datasets organised by use. Some can be viewed on the map portal, all are referenced and documented (placeholder text).',
+      tagsLabel: 'Reference datasets',
+      usageLabel: 'Use:',
+      items: {
+        referentiels: {
+          title: 'Territorial reference data',
+          usage: 'territorial diagnosis, impact study, analysis of soil constraints.',
+        },
+        agricoles: {
+          title: 'Agricultural data',
+          usage: 'agronomic recommendations, fertility management, adapted farming practices.',
+        },
+        environnement: {
+          title: 'Environment & research',
+          usage: 'carbon assessment, pollution, environmental studies, scientific research.',
+        },
+      },
+      banner: {
+        title: 'All these datasets are referenced on the Soil observatory of France portal',
+        text: 'Some can be viewed directly on the map interface, others are referenced with a link to their original source (placeholder text).',
+        button: 'Go to the portal (in French)',
+      },
+    },
+    agenda: {
+      overline: 'Agenda',
+      title: 'Upcoming Observatory events',
+      intro:
+        'Webinars, workshops, events… Let’s talk about soil data and its uses (placeholder text).',
+      listLabel: 'Upcoming events',
+      previous: 'Previous events',
+      next: 'Next events',
+      empty: 'No event is scheduled at the moment. Come back soon.',
+      types: { webinaire: 'Webinar', evenement: 'Event', salon: 'Trade fair' },
+      actions: { inscrire: 'Register', participer: 'Take part' },
+      placeLabel: 'Place:',
+    },
+    articles: {
+      overline: 'Articles',
+      title: 'Latest articles',
+      allLabel: 'See all articles',
+    },
+    partners: {
+      overline: 'Partners & sponsors',
+      title: 'A service led by INRAE with the public ecosystem',
+      intro:
+        'The Soil observatory of France relies on a network of public and scientific organisations to make French soil data easier to access, understand and use (placeholder text).',
+      groups: {
+        network: {
+          overline: 'Scientific, technical and environmental partners',
+          title: 'Network members',
+        },
+        sponsors: { overline: 'Backing and support', title: 'Sponsors' },
+      },
+      gissolLink: 'GIS Sol website',
+      callout: {
+        title: 'Do you produce soil data and want it referenced?',
+        text: 'The Soil observatory of France aims to bring together soil data from public and scientific organisations. Contact us to submit your data to the catalogue (placeholder text).',
+        button: 'Submit data',
+      },
+    },
+  },
+};

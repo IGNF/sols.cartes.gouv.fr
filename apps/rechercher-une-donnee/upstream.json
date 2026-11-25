@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/IGNF/geonetwork-ui.git",
+  "ref": "v1.6.2",
+  "commit": "72b9eb4e81b813330a3323503afebc0d1c622a4d",
+  "app": "datahub",
+  "baseHref": "/rechercher-une-donnee/",
+  "devPort": 4200
+}

@@ -1,0 +1,23 @@
+{%- set pageTitle = (heading + " - " + t.name) if heading and heading != t.name else t.name -%}
+<!DOCTYPE html>
+<html lang="{{ locale }}" data-fr-scheme="system">
+  <head>
+{% include "partials/head-common.njk" %}
+    <title>{{ pageTitle }}</title>
+    <meta name="description" content="{{ metaDescription }}">
+    <link rel="canonical" href="{{ site.url }}{{ page.url }}">
+    {%- set alternatesUrl = page.url %}
+{% include "partials/alternates.njk" %}
+  </head>
+  <body>
+    {% include "partials/skiplinks.njk" %}
+    {% include "partials/header.njk" %}
+    <main id="contenu" tabindex="-1">
+      {{ content | safe }}
+    </main>
+    {% include "partials/footer.njk" %}
+    <script type="module" src="{{ site.assets.dsfr }}/dsfr.module.min.js"></script>
+    <script type="module" src="{{ site.assets.js }}/header.js"></script>
+    <script nomodule src="{{ site.assets.dsfr }}/dsfr.nomodule.min.js"></script>
+  </body>
+</html>

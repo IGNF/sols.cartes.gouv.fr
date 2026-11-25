@@ -6,7 +6,8 @@
   "description": "Observatoire des sols : portail des données sols (GIS Sol / INRAE) servies par la Géoplateforme.",
   "workspaces": [
     "apps/accueil",
-    "apps/explorer-les-cartes"
+    "apps/explorer-les-cartes",
+    "packages/*"
   ],
   "config": {
     "dsfrVersion": "1.14.2",
@@ -26,7 +27,9 @@
     "build:all": "bun scripts/build-all.ts",
     "preview:all": "bun scripts/preview-all.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "format:docs": "prettier --write --ignore-path /dev/null 'doc/**/*.md' '*.md'",
+    "format:docs:check": "prettier --check --ignore-path /dev/null 'doc/**/*.md' '*.md'"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

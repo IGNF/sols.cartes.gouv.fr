@@ -1,0 +1,166 @@
+{
+  "service": {
+    "title": "sols.cartes.gouv.fr",
+    "tagline": "Observatoire des sols de France",
+    "homeLinkTitle": "Retour à l'accueil de l'Observatoire des sols de France - République Française"
+  },
+  "sections": {
+    "home": "/",
+    "catalogue": "/rechercher-une-donnee/",
+    "carto": "/explorer-les-cartes/",
+    "help": "/aide/",
+    "articles": "/fr/articles/",
+    "helpContact": "/fr/aide/#contact"
+  },
+  "badges": {
+    "edito": null,
+    "catalogue": "Rechercher",
+    "carto": "Explorer"
+  },
+  "badgeStyles": {
+    "catalogue": {
+      "color": "green-menthe",
+      "icon": "fr-icon-search-line"
+    },
+    "carto": {
+      "color": "purple-glycine",
+      "icon": "fr-icon-map-pin-2-fill"
+    }
+  },
+  "header": {
+    "brandLink": "/",
+    "operator": {
+      "logo": "assets/logo-gissol.png",
+      "logoAlt": "GIS Sol, groupement d'intérêt scientifique Sol",
+      "mark": "assets/osf-carotte.png",
+      "markAlt": ""
+    },
+    "tools": {
+      "help": {
+        "label": "Aide",
+        "icon": "fr-icon-question-fill",
+        "items": [
+          {
+            "label": "Centre d'aide",
+            "href": "https://cartes.gouv.fr/aide/fr/",
+            "hrefTemplate": "https://cartes.gouv.fr/aide/{lang}/",
+            "icon": "fr-icon-question-mark",
+            "external": true
+          },
+          {
+            "label": "Nous contacter",
+            "href": "https://cartes.gouv.fr/aide/fr/nous-ecrire/",
+            "icon": "fr-icon-mail-line",
+            "external": true
+          }
+        ]
+      },
+      "services": {
+        "label": "Services",
+        "icon": "fr-icon-grid-fill",
+        "items": [
+          {
+            "label": "Rechercher une donnée",
+            "href": "/rechercher-une-donnee/",
+            "description": "Le catalogue des données sols"
+          },
+          {
+            "label": "Explorer les cartes",
+            "href": "/explorer-les-cartes/",
+            "description": "Le visualiseur cartographique"
+          },
+          {
+            "label": "Publier une donnée",
+            "href": "https://cartes.gouv.fr/publier-une-donnee",
+            "external": true
+          },
+          {
+            "label": "Découvrir",
+            "href": "/fr/",
+            "description": "L'Observatoire des sols de France"
+          }
+        ]
+      },
+      "login": false
+    }
+  },
+  "footer": {
+    "description": "Sols.cartes.gouv.fr est l’observatoire national des cartes et données des sols français. Porté par l’IGN et ses partenaires, il offre à tous un accès à la référence de la cartographie publique en matière de sols et permet à chacun de créer, d’héberger et de publier ses propres données et représentations. (Texte provisoire)",
+    "partners": [
+      {
+        "name": "IGN",
+        "logo": "assets/logo-ign.png",
+        "href": "https://www.ign.fr/"
+      },
+      {
+        "name": "INRAE",
+        "logo": "assets/logo-inrae.svg",
+        "href": "https://www.inrae.fr/"
+      },
+      {
+        "name": "GIS Sol",
+        "logo": "assets/logo-gissol.png",
+        "href": "https://www.gissol.fr/observatoire-des-sols-de-france/"
+      }
+    ],
+    "contentLinks": [
+      {
+        "label": "legifrance.gouv.fr",
+        "href": "https://legifrance.gouv.fr"
+      },
+      {
+        "label": "info.gouv.fr",
+        "href": "https://info.gouv.fr"
+      },
+      {
+        "label": "service-public.gouv.fr",
+        "href": "https://service-public.gouv.fr"
+      },
+      {
+        "label": "data.gouv.fr",
+        "href": "https://data.gouv.fr"
+      }
+    ],
+    "bottomLinks": [
+      {
+        "label": "Accessibilité : non conforme",
+        "href": "/accessibilite/"
+      },
+      {
+        "label": "Mentions légales",
+        "href": "/mentions-legales/"
+      },
+      {
+        "label": "Conditions générales d'utilisation",
+        "href": "https://cartes.gouv.fr/cgu/",
+        "external": true
+      },
+      {
+        "label": "Données personnelles",
+        "href": "https://cartes.gouv.fr/donnees-personnelles/",
+        "external": true
+      },
+      {
+        "label": "Plan du site",
+        "href": "/plan-du-site/"
+      }
+    ],
+    "displaySettings": {
+      "label": "Paramètres d'affichage"
+    },
+    "licence": {
+      "text": "Sauf mention contraire, tous les contenus de ce site sont sous",
+      "label": "licence etalab-2.0",
+      "href": "https://github.com/etalab/licence-ouverte/blob/master/LO.md"
+    },
+    "compactOnCarto": true
+  },
+  "external": {
+    "gissol": "https://www.gissol.fr/observatoire-des-sols-de-france/",
+    "gissolLabel": "Site du GIS Sol",
+    "cartesGouv": "https://cartes.gouv.fr",
+    "cgu": "https://cartes.gouv.fr/cgu/",
+    "donneesPersonnelles": "https://cartes.gouv.fr/donnees-personnelles/",
+    "geopf": "https://data.geopf.fr"
+  }
+}

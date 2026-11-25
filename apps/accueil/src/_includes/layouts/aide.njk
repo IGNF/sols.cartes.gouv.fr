@@ -1,0 +1,27 @@
+---
+layout: layouts/page.njk
+---
+{%- set aide = t.pages.aide -%}
+<p class="fr-text--lead">{{ aide.intro }}</p>
+<h2>{{ aide.faqTitle }}</h2>
+<div class="fr-accordions-group">
+  {%- for item in aide.faq %}
+  <section class="fr-accordion">
+    <h3 class="fr-accordion__title">
+      <button type="button" class="fr-accordion__btn" aria-expanded="false" aria-controls="faq-{{ loop.index }}">{{ item.question }}</button>
+    </h3>
+    <div class="fr-collapse" id="faq-{{ loop.index }}">
+      <p>{{ item.answer }}</p>
+    </div>
+  </section>
+  {%- endfor %}
+</div>
+<h2 id="contact" class="fr-mt-6w">{{ aide.contactTitle }}</h2>
+{%- set helpTool = site.header.tools | first %}
+{%- set helpLink = helpTool.items | first %}
+{%- set contactLink = helpTool.items | last %}
+<p>{{ aide.contactText }}</p>
+<ul class="fr-btns-group fr-btns-group--inline-md">
+  <li><a class="fr-btn fr-btn--icon-left {{ contactLink.icon }}" href="{{ contactLink.href | localize(locale) }}"{% if contactLink.frenchOnly and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ aide.contactButton }} - {{ t.newWindow }}">{{ aide.contactButton }}</a></li>
+  <li><a class="fr-btn fr-btn--secondary fr-btn--icon-left {{ helpLink.icon }}" href="{{ helpLink.href | localize(locale) }}" target="_blank" rel="noopener external" title="{{ aide.helpButton }} - {{ t.newWindow }}">{{ aide.helpButton }}</a></li>
+</ul>

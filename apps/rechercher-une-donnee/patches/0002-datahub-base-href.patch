@@ -1,0 +1,12 @@
+diff --git a/apps/datahub/project.json b/apps/datahub/project.json
+index e7ffec6..c4dd0ba 100644
+--- a/apps/datahub/project.json
++++ b/apps/datahub/project.json
+@@ -11,6 +11,7 @@
+       "outputs": ["{options.outputPath}"],
+       "options": {
+         "outputPath": "dist/apps/datahub",
++        "baseHref": "/rechercher-une-donnee/",
+         "index": "apps/datahub/src/index.html",
+         "main": "apps/datahub/src/main.ts",
+         "polyfills": "apps/datahub/src/polyfills.ts",

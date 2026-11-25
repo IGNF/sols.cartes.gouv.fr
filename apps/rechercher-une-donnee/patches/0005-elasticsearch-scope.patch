@@ -1,0 +1,65 @@
+diff --git a/libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts b/libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts
+index 78352d9..d518494 100644
+--- a/libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts
++++ b/libs/api/repository/src/lib/gn4/elasticsearch/elasticsearch.service.ts
+@@ -28,6 +28,7 @@ import {
+   TermsAggregationResult,
+ } from '@geonetwork-ui/api/metadata-converter'
+ import { toLang3 } from '@geonetwork-ui/util/i18n'
++import { getOptionalSearchConfig } from '@geonetwork-ui/util/app-config'
+ import { formatDate, isDateRange } from './date-range.utils'
+ import {
+   CatalogRecord,
+@@ -161,11 +162,19 @@ export class ElasticsearchService {
+     this.fieldAliases[fieldIdentifier] = esFieldName
+   }
+ 
++  // Permanent scope from [search] config_filters, added to every query below
++  private scopeFilters(): Record<string, unknown>[] {
++    const configFilters = getOptionalSearchConfig()?.CONFIG_FILTERS ?? {}
++    return Object.entries(configFilters).map(([field, values]) => ({
++      terms: { [field]: [].concat(values) },
++    }))
++  }
++
+   getMetadataByIdsPayload(uuids: string[]): EsSearchParams {
+     return {
+       query: {
+-        ids: {
+-          values: uuids,
++        bool: {
++          filter: [{ ids: { values: uuids } }, ...this.scopeFilters()],
+         },
+       },
+       size: uuids.length,
+@@ -219,6 +228,7 @@ export class ElasticsearchService {
+             },
+           ],
+           must_not: [{ wildcard: { uuid: record.uniqueIdentifier } }],
++          filter: this.scopeFilters(),
+         },
+       },
+       size,
+@@ -439,10 +449,10 @@ export class ElasticsearchService {
+     const must = [] as Record<string, unknown>[]
+     const must_not = this.mustNotFilters()
+     const should = [] as Record<string, unknown>[]
+-    const filter = [this.queryFilterOnValues('isTemplate', 'n')] as Record<
+-      string,
+-      unknown
+-    >[]
++    const filter = [
++      this.queryFilterOnValues('isTemplate', 'n'),
++      ...this.scopeFilters(),
++    ] as Record<string, unknown>[]
+ 
+     if (any) {
+       must.push({
+@@ -593,6 +603,7 @@ export class ElasticsearchService {
+           ],
+ 
+           must_not: this.mustNotFilters(),
++          filter: this.scopeFilters(),
+         },
+       },
+       _source: [

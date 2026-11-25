@@ -3,5 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Brique edito : pages statiques (Eleventy + DSFR), servie sous /."
+  "description": "Brique edito : pages statiques (Eleventy + DSFR), servie sous /.",
+  "scripts": {
+    "dev": "eleventy --serve --port=8081",
+    "build": "eleventy",
+    "lint": "eleventy --quiet && html-validate \"dist/**/*.html\"",
+    "test": "bun test",
+    "check-links": "bun scripts/check-links.js"
+  },
+  "dependencies": {
+    "@gouvfr/dsfr": "1.14.2",
+    "@sols/brand": "workspace:*"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.8",
+    "@happy-dom/global-registrator": "^21.0.4",
+    "html-validate": "^11.18.0"
+  }
 }

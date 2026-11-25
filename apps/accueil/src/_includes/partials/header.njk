@@ -1,0 +1,84 @@
+{#- `shared` (partage.njk): language-independent links and no language switcher, for the other bricks. -#}
+{%- set linkLocale = "" if shared else locale -%}
+{%- set badge = site.header.badge -%}
+{%- set homeHref = site.header.brandLink | localize(linkLocale) -%}
+<header role="banner" class="fr-header">
+  <div class="fr-header__body">
+    <div class="fr-container">
+      <div class="fr-header__body-row">
+        <div class="fr-header__brand fr-enlarge-link">
+          <div class="fr-header__brand-top">
+            <div class="fr-header__logo">
+              <p class="fr-logo">{{ site.header.brand | join("<br>") | safe }}</p>
+            </div>
+            <div class="fr-header__operator">
+              <a class="sols-operator" href="{{ homeHref }}" title="{{ t.header.homeLinkTitle }}">
+                <img class="sols-operator__logo" src="{{ site.header.operator.logo }}" alt="{{ t.header.operatorLogoAlt }}" width="500" height="156">
+                <img class="sols-operator__mark" src="{{ site.header.operator.mark }}" alt="{{ site.header.operator.markAlt }}" width="240" height="240">
+              </a>
+            </div>
+            <div class="fr-header__navbar">
+              <button type="button" class="fr-btn--menu fr-btn" data-fr-opened="false" aria-controls="menu-principal" id="bouton-menu-principal" title="{{ t.header.menu }}">{{ t.header.menu }}</button>
+            </div>
+          </div>
+          <div class="fr-header__service">
+            <p class="fr-header__service-title">{{ site.header.serviceTitle }}{% if badge %} {% include "partials/badge.njk" %}{% endif %}</p>
+            <p class="fr-header__service-tagline">{{ t.tagline }}</p>
+          </div>
+        </div>
+        <div class="fr-header__tools">
+          <div class="fr-header__tools-links">
+            {%- for tool in site.header.tools %}
+            {%- set strings = t.header.tools[tool.key] %}
+            <div class="fr-nav sols-tool-menu">
+              <div class="fr-nav__item">
+                <button type="button" class="fr-btn {{ tool.icon }} fr-btn--icon-left sols-tool-menu__btn" aria-expanded="false" aria-controls="{{ tool.id }}">{{ strings.label }}</button>
+                <div class="fr-collapse fr-menu sols-tool-menu__menu" id="{{ tool.id }}">
+                  <ul class="fr-menu__list">
+                    {%- for entry in tool.items %}
+                    {%- set item = strings.items[entry.key] %}
+                    <li>
+                      {%- if entry.external %}
+                      <a class="fr-nav__link{% if entry.icon %} fr-link--icon-left {{ entry.icon }}{% endif %} sols-tool-menu__external" href="{{ entry.href | localize(linkLocale) }}"{% if entry.frenchOnly and not shared and locale != site.defaultLanguage %} hreflang="{{ site.defaultLanguage }}"{% endif %} target="_blank" rel="noopener external" title="{{ item.label }} - {{ t.newWindow }}">{{ item.label }}</a>
+                      {%- else %}
+                      <a class="fr-nav__link sols-tool-menu__described" href="{{ entry.href | localize(linkLocale) }}"{% if not shared and locale != site.defaultLanguage and entry.href in site.crossBrick %} hreflang="{{ site.defaultLanguage }}"{% endif %}>{{ item.label }}{% if item.desc %}<span class="fr-hint-text">{{ item.desc }}</span>{% endif %}</a>
+                      {%- endif %}
+                    </li>
+                    {%- endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {%- endfor %}
+            {%- if not shared %}
+            {%- set currentLanguage = locale | language %}
+            <div class="fr-translate fr-nav" id="selecteur-langue">
+              <div class="fr-nav__item">
+                <button aria-controls="menu-langues" aria-expanded="false" title="{{ t.header.translateTitle }}" type="button" class="fr-translate__btn fr-btn">{{ locale | upper }}<span class="fr-hidden-lg">&nbsp;- {{ currentLanguage.label }}</span>
+                </button>
+                <div class="fr-collapse fr-translate__menu fr-menu" id="menu-langues">
+                  <ul class="fr-menu__list">
+                    {%- for language in site.languages %}
+                    {%- set languageHref = page.url | locale_url(language.code) %}
+                    {%- if language.code != locale and languageHref == page.url %}{% set languageHref = "/" + language.code + "/" %}{% endif %}
+                    <li>
+                      <a class="fr-translate__language fr-nav__link" hreflang="{{ language.code }}" lang="{{ language.code }}" href="{{ languageHref }}"{% if language.code == locale %} aria-current="true"{% endif %}>{{ language.code | upper }} - {{ language.label }}</a>
+                    </li>
+                    {%- endfor %}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            {%- endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fr-header__menu fr-modal" id="menu-principal" aria-labelledby="bouton-menu-principal">
+    <div class="fr-container">
+      <button type="button" class="fr-btn--close fr-btn" aria-controls="menu-principal" title="{{ t.header.close }}">{{ t.header.close }}</button>
+      <div class="fr-header__menu-links"></div>
+    </div>
+  </div>
+</header>

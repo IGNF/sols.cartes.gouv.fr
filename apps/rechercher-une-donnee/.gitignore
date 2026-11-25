@@ -1,0 +1,3 @@
+# Shallow clone of IGNF/geonetwork-ui (see upstream.json), recreated by scripts/prepare.mjs
+.upstream/
+dist/

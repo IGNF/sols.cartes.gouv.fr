@@ -43,7 +43,7 @@ Run lint + type-check + tests on the touched brick before every PR.
 - **DSFR first**: use DSFR components and tokens before writing custom CSS. Plain `.css` only for new code.
 - **Accessibility (RGAA)**: semantic HTML, labels, keyboard navigation, contrast. Map features need a non-map alternative when possible.
 - **URLs**: centralised in one constants file. No URL, layer name or endpoint hardcoded inline.
-- **Language**: UI strings in French. TODO: decide whether EN is required, and which i18n tool to use.
+- **Language**: UI strings in French. EN with i18n.
 - **TypeScript**: strict mode, no `any` without a comment, named default-exported function components, props typed with `interface`/`type`.
 - **State** (carto): proposal, same as guichet-collaboratif: Zustand for client state, TanStack Query for server/GPF state, never duplicate server state in a store.
 - **Reuse**: look for an existing component, hook or util before creating one.

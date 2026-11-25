@@ -1,0 +1,228 @@
+import { describe, expect, it } from 'vitest';
+import { SOLS_DATASETS } from '../data/solsLayers';
+import type { SolsDataset } from '../data/solsLayersSchema';
+import type { AvailableBaseLayer } from './baseLayerCatalogue';
+import {
+  buildCatalogData,
+  catalogLayerKey,
+  catalogServiceType,
+  datasetLayerKeys,
+  findCatalogBaseLayer,
+  findCatalogDataset,
+  findCatalogOverlay,
+  syncCatalogTicks,
+} from './catalogConfig';
+
+const PLAN_IGN_THUMBNAIL =
+  'https://data.geopf.fr/annexes/ressources/metadata/thumbnail/vignette-plan-ign.jpg';
+const BASE_LAYERS: AvailableBaseLayer[] = [
+  {
+    id: 'plan-ign',
+    layerName: 'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2',
+    title: 'Plan IGN',
+    thumbnail: PLAN_IGN_THUMBNAIL,
+  },
+  { id: 'orthophotos', layerName: 'ORTHOIMAGERY.ORTHOPHOTOS', title: 'Photos & cartes' },
+];
+
+const dataset = (
+  id: string,
+  layers: SolsDataset['layers'],
+  extra: Partial<SolsDataset> = {},
+): SolsDataset => ({
+  id,
+  title: `Titre ${id}`,
+  abstract: `Résumé ${id}`,
+  organisation: 'INRAE - Info&Sols',
+  layers,
+  rejected: [],
+  ...extra,
+});
+const layer = (service: SolsDataset['layers'][number]['service'], name: string) => ({
+  service,
+  name,
+  title: name,
+  endpoint: `https://data.geopf.fr/${service}`,
+});
+
+describe('buildCatalogData', () => {
+  it('décrit une entrée par fiche : couche préférée, titre, résumé, producteur, vignette, lien de la fiche', () => {
+    const data = buildCatalogData([
+      dataset('a', [layer('wms-vector', 'a_wmsv'), layer('wmts', 'A_WMTS')], {
+        thumbnail: 'https://data.geopf.fr/annexes/gissol-osf/thumbnail/a.png',
+      }),
+      dataset('b', [layer('tms', 'b_tms')]),
+      dataset('c', [layer('wms-raster', 'c_wmsr')]),
+    ]);
+    expect(Object.keys(data.layers)).toEqual([
+      'A_WMTS$GEOPORTAIL:OGC:WMTS',
+      'c_wmsr$GEOPORTAIL:OGC:WMS',
+    ]);
+    expect(data.layers['A_WMTS$GEOPORTAIL:OGC:WMTS']).toEqual({
+      kind: 'sols',
+      name: 'A_WMTS',
+      title: 'Titre a',
+      description: 'Résumé a',
+      producer: ['INRAE - Info&amp;Sols'],
+      search: ['Titre a', 'Résumé a', 'INRAE - Info&Sols'],
+      thumbnail: 'https://data.geopf.fr/annexes/gissol-osf/thumbnail/a.png',
+      serviceParams: { id: 'OGC:WMTS' },
+      metadata_urls: ['/rechercher-une-donnee/dataset/a'],
+    });
+    expect(data.layers['c_wmsr$GEOPORTAIL:OGC:WMS']).not.toHaveProperty('thumbnail');
+  });
+
+  it('échappe le balisage des textes, que le contrôle insère en innerHTML', () => {
+    const data = buildCatalogData([
+      dataset('x', [layer('wmts', 'X')], {
+        title: 'Teneurs < 2 % <script>alert(1)</script>',
+        abstract: 'Argile & "limon"',
+        organisation: "l'INRAE",
+      }),
+    ]);
+    const entry = data.layers['X$GEOPORTAIL:OGC:WMTS'];
+    expect(entry?.title).toBe('Teneurs &lt; 2 % &lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(entry?.description).toBe('Argile &amp; &quot;limon&quot;');
+    expect(entry?.producer).toEqual(['l&#39;INRAE']);
+    expect(entry?.name).toBe('X');
+    // The search criteria read the raw texts (CATALOG_OPTIONS.search.criteria).
+    expect(entry?.search).toEqual([
+      'Teneurs < 2 % <script>alert(1)</script>',
+      'Argile & "limon"',
+      "l'INRAE",
+    ]);
+  });
+
+  it('couvre les sept fiches réelles, toutes affichables, avec leur vignette', () => {
+    const data = buildCatalogData(SOLS_DATASETS);
+    expect(Object.keys(data.layers)).toHaveLength(SOLS_DATASETS.length);
+    expect(
+      Object.values(data.layers).every((entry) => entry.thumbnail?.startsWith('https://')),
+    ).toBe(true);
+    expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.title).toMatch(
+      /stocks de carbone/,
+    );
+    expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.producer).toEqual([
+      'INRAE - Info&amp;Sols',
+    ]);
+    expect(data.layers['stock_carbone_fao_fr_wmsv$GEOPORTAIL:OGC:WMS']?.search[2]).toBe(
+      'INRAE - Info&Sols',
+    );
+  });
+});
+
+describe('buildCatalogData : fonds de cartes', () => {
+  it('donne aux fonds leur vignette GPF, aucune vignette sans image ou hors des hôtes de confiance (M16)', () => {
+    const data = buildCatalogData(
+      [],
+      [
+        ...BASE_LAYERS,
+        {
+          id: 'relief',
+          layerName: 'ELEVATION.SLOPES',
+          title: 'Relief',
+          thumbnail: 'http://exemple.org/vignette.jpg',
+        },
+      ],
+    );
+    expect(data.layers['GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS']?.thumbnail).toBe(
+      PLAN_IGN_THUMBNAIL,
+    );
+    expect(data.layers['ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS']).not.toHaveProperty(
+      'thumbnail',
+    );
+    expect(data.layers['ELEVATION.SLOPES$GEOPORTAIL:OGC:WMTS']).not.toHaveProperty('thumbnail');
+  });
+
+  it('ajoute une entrée WMTS par fond disponible dans la catégorie « fonds », titre échappé, sans producteur', () => {
+    const data = buildCatalogData([], BASE_LAYERS);
+    expect(Object.keys(data.layers)).toEqual([
+      'GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2$GEOPORTAIL:OGC:WMTS',
+      'ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS',
+    ]);
+    expect(data.layers['ORTHOIMAGERY.ORTHOPHOTOS$GEOPORTAIL:OGC:WMTS']).toEqual({
+      kind: 'fond',
+      name: 'ORTHOIMAGERY.ORTHOPHOTOS',
+      title: 'Photos &amp; cartes',
+      description: '',
+      producer: [],
+      search: ['Photos & cartes'],
+      serviceParams: { id: 'OGC:WMTS' },
+      metadata_urls: [],
+    });
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'ORTHOIMAGERY.ORTHOPHOTOS', 'WMTS')?.id).toBe(
+      'orthophotos',
+    );
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'ORTHOIMAGERY.ORTHOPHOTOS', 'WMS')).toBeNull();
+    expect(findCatalogBaseLayer(BASE_LAYERS, 'inconnu', 'WMTS')).toBeNull();
+  });
+
+  it('coche le fond actif seulement, à côté des fiches sols', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<input type="checkbox" data-layer="GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2:WMTS" checked />
+      <input type="checkbox" data-layer="ORTHOIMAGERY.ORTHOPHOTOS:WMTS" />`;
+    const boxes = () =>
+      Array.from(root.querySelectorAll<HTMLInputElement>('input')).map((i) => i.checked);
+    expect(syncCatalogTicks(root, [], [], BASE_LAYERS, 'orthophotos')).toBe(2);
+    expect(boxes()).toEqual([false, true]);
+    expect(syncCatalogTicks(root, [], [], BASE_LAYERS, 'orthophotos')).toBe(0);
+  });
+});
+
+describe('catalogServiceType et catalogLayerKey', () => {
+  it('ne reconnaît que les services dessinés', () => {
+    expect(catalogServiceType('wmts')).toBe('WMTS');
+    expect(catalogServiceType('wms-raster')).toBe('WMS');
+    expect(catalogServiceType('wms-vector')).toBe('WMS');
+    expect(catalogServiceType('tms')).toBeNull();
+    expect(catalogServiceType('wfs')).toBeNull();
+    expect(catalogLayerKey('x', 'WMS')).toBe('x$GEOPORTAIL:OGC:WMS');
+  });
+});
+
+describe('findCatalogDataset, datasetLayerKeys et syncCatalogTicks', () => {
+  const loiret = dataset('loiret', [
+    layer('wms-vector', 'rrp_dept_wmsv'),
+    layer('wms-vector', 'rrp_wmsv'),
+    layer('wfs', 'rrp_wfs:geometrie'),
+  ]);
+  const carbone = dataset('carbone', [layer('wms-vector', 'carbone_wmsv')]);
+
+  it('retrouve la fiche d’une entrée par sa couche préférée et liste les clés de toutes ses couches', () => {
+    expect(findCatalogDataset([loiret, carbone], 'rrp_dept_wmsv', 'WMS')?.id).toBe('loiret');
+    expect(findCatalogDataset([loiret, carbone], 'rrp_wmsv', 'WMS')).toBeNull();
+    expect(datasetLayerKeys(loiret)).toEqual([
+      'wms-vector:rrp_dept_wmsv',
+      'wms-vector:rrp_wmsv',
+      'wfs:rrp_wfs:geometrie',
+    ]);
+  });
+
+  it('coche une entrée dès qu’une couche de sa fiche est sur la carte, décoche les autres', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `<input type="checkbox" data-layer="rrp_dept_wmsv:WMS" />
+      <input type="checkbox" data-layer="carbone_wmsv:WMS" checked />
+      <input type="checkbox" data-layer="inconnue:WMS" checked />`;
+    const boxes = () =>
+      Array.from(root.querySelectorAll<HTMLInputElement>('input')).map((i) => i.checked);
+    expect(syncCatalogTicks(root, [{ key: 'wms-vector:rrp_wmsv' }], [loiret, carbone])).toBe(2);
+    expect(boxes()).toEqual([true, false, true]);
+    expect(syncCatalogTicks(root, [{ key: 'wms-vector:rrp_wmsv' }], [loiret, carbone])).toBe(0);
+    expect(syncCatalogTicks(root, [], [loiret, carbone])).toBe(1);
+    expect(boxes()).toEqual([false, false, true]);
+  });
+});
+
+describe('findCatalogOverlay', () => {
+  it('retrouve la couche d’un évènement du catalogue (nom + service) et ignore les inconnues', () => {
+    const overlay = findCatalogOverlay(SOLS_DATASETS, 'stock_carbone_fao_fr_wmsv', 'WMS');
+    expect(overlay).toMatchObject({
+      key: 'wms-vector:stock_carbone_fao_fr_wmsv',
+      service: 'wms-vector',
+      endpoint: 'https://data.geopf.fr/wms-v/ows',
+    });
+    expect(overlay?.legendUrl).toBeDefined();
+    expect(findCatalogOverlay(SOLS_DATASETS, 'stock_carbone_fao_fr_wmsv', 'WMTS')).toBeNull();
+    expect(findCatalogOverlay(SOLS_DATASETS, 'inconnue', 'WMS')).toBeNull();
+  });
+});
