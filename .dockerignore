@@ -2,10 +2,24 @@ node_modules
 **/node_modules
 dist
 **/dist
+**/.upstream
+**/.angular
+**/.nx
+**/coverage
 .worktrees
 .git
-doc
+.github
+.vscode
+.claude
+# Seul doc/agents/edito.md sert au build (en-tête/pied de page du catalogue)
+doc/*
+!doc/agents
+doc/agents/*
+!doc/agents/edito.md
 retex
 e2e
+tests
 test-results
 playwright-report
+.env
+.env.*
