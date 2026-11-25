@@ -2644,12 +2644,15 @@ for (const scheme of ['light', 'dark'] as const) {
   await tilesIdle();
   const focused = await page.evaluate(() => {
     const active = document.activeElement as HTMLElement | null;
-    const style = active ? getComputedStyle(active) : null;
+    // The visible ring: repeated on ::after over the OpenLayers viewport (MapView.css).
+    const style = active ? getComputedStyle(active, '::after') : null;
     return {
       isMap: Boolean(active?.classList.contains('map-view')),
       name: active?.getAttribute('aria-label') ?? null,
       focusVisible: Boolean(active?.matches(':focus-visible')),
-      outline: style ? `${style.outlineStyle} ${style.outlineWidth} ${style.outlineOffset}` : null,
+      outline: style
+        ? `${style.content} ${style.outlineStyle} ${style.outlineWidth} ${style.outlineOffset}`
+        : null,
       scrollY: window.scrollY,
     };
   });
@@ -2657,7 +2660,7 @@ for (const scheme of ['light', 'dark'] as const) {
     focused.isMap &&
       focused.name === MAP_LABEL &&
       focused.focusVisible &&
-      focused.outline === 'solid 2px -2px' &&
+      focused.outline === '"" solid 2px -2px' &&
       focused.scrollY === 0,
     `M24 1280 ${scheme} : focus sur la carte nommée au chargement, anneau DSFR visible à l’intérieur, page non défilée (${JSON.stringify(focused)})`,
   );
