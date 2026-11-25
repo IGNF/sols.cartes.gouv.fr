@@ -1293,3 +1293,34 @@ Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur 
   - Carte = fenêtre moins 56 px sous 36em, en portrait.
   - Panneau Itinéraire aussi haut que la carte.
 
+
+## 18. Pied de page replié en barre de 40 px (M23)
+
+- **Demande** (propriétaire) : barre repliée trop haute (60 px), suivre guichet-collaboratif ; liens à gauche, bouton de
+  dépliage à droite en icône seule `fr-icon-arrow-up-s-line`, « Fermer » à la même place, logos partenaires sans bordure.
+- **Référence** : IGNF/cartes.gouv.fr-guichet-collaboratif, `src/components/Layout/AppFooter.tsx` et `src/css/app-footer.css`.
+  - `.app-footer-main { height: 2.5rem; border-top: 0.13rem solid var(--artwork-major-blue-france) }` : barre de 40 px
+    (hauteur du « 1825×40 » retenu par le propriétaire ; la largeur dépend de la fenêtre).
+  - `.app-footer-root .fr-container { margin: unset; max-width: unset }` : liens contre le bord gauche, pleine largeur.
+  - Flèche : react-dsfr `Button`, `iconId="fr-icon-arrow-up-s-line"`, `priority="tertiary no outline"`, `title`, sans texte,
+    placée dans `license` (en bout de barre), icône en `--text-action-high-blue-france`.
+  - « Fermer » : même `Button`, `iconPosition="right"`, flotté en haut à droite du pied déplié (il change donc de place, ce que
+    le propriétaire ne veut pas ici). Ce pied compact n'est visible qu'une fois connecté à une communauté : pas de mesure en
+    ligne, valeurs lues dans le code.
+- **Correctif** (`SiteFooter.tsx`, `SiteFooter.css`) :
+  - `Button` react-dsfr dans les deux états, rendu au même endroit de l'arbre : React garde le nœud, le focus reste dessus.
+    Replié : icône seule, `title` « Haut de page » (nom accessible), 2rem × 2rem (taille `small`, au-dessus des 24 px du
+    critère WCAG 2.5.8). Déplié : « Fermer », `fr-icon-close-line` à droite (comme guichet et la modale DSFR) : l'icône est là
+    où était la flèche.
+  - Conteneur sans `max-width` dans les deux états (guichet), pour que le bord droit du bouton soit le même à toute largeur.
+  - Liste en flex, lignes de 2rem entre des marges de 0.25rem : 40 px sur une ligne ; le séparateur DSFR perd sa marge basse
+    (0.625rem), qui faisait des lignes de 36 px. Le bouton est en bout de première ligne (`margin-top: 0.25rem`).
+  - Règle M21 : seul l'espacement 0.25rem reste, de 62em à 70em (sans libellé, les six entrées tiennent avec l'espacement
+    DSFR à partir d'environ 1065 px). Règle mobile retirée : la flèche reste à droite de la première ligne.
+  - Logos : `box-shadow: none` (DSFR `.fr-footer__partners .fr-footer__logo`) ; pas de plaque blanche en sombre avant non
+    plus (fond `--background-default-grey`), rien à garder.
+- **Mesures** (Chromium) : replié 40 px à 992, 1024, 1280, 1440, 1920 px (avant : 60) ; 375 px : 136 px sur quatre lignes
+  (avant : 152). Flèche et « Fermer » : même bord droit, 4 px sous le haut de la barre, à toute largeur. Déplié à 1024 px, les
+  liens (espacement 0.75rem) passent sur deux lignes à côté de « Fermer », qui ne bouge pas.
+- **Carte mobile** : `calc(100dvh - 3.5rem)` ne dépend que de l'en-tête (M22), inchangée.
+- **`check:map`** : bloc M7 à ≤ 40.5 px ; bloc M23 (remplace M21) de 320 à 1920 px, replié et déplié.

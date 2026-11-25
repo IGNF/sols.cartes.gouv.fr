@@ -55,19 +55,39 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
     for (const selector of ['.fr-footer__body', '.fr-footer__partners', '.fr-footer__bottom-copy'])
       expect(block(selector)).not.toBeVisible();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    // Icon only between 62em and 75em (M21): its label as a tooltip too, same text as its name.
-    expect(toggle).toHaveAttribute('title', FOOTER_LABELS.expand);
     expect(toggle).toHaveAttribute('aria-controls', FOOTER_ID);
-    expect(toggle).toHaveClass('fr-btn--tertiary', 'fr-btn--sm', 'fr-icon-arrow-up-line');
+  });
+
+  it('replié : bouton « Haut de page » en icône seule (flèche), nommé par son title (M23)', () => {
+    const { toggle } = setup();
+    expect(toggle).toHaveTextContent(/^$/);
+    expect(toggle).toHaveAttribute('title', FOOTER_LABELS.expand);
+    expect(toggle).toHaveAccessibleName(FOOTER_LABELS.expand);
+    expect(toggle).toHaveClass(
+      'fr-btn--tertiary-no-outline',
+      'fr-btn--sm',
+      'fr-icon-arrow-up-s-line',
+      'compact-footer__toggle',
+    );
+    expect(toggle).not.toHaveClass('fr-icon-arrow-up-line');
+    expect(toggle.className).not.toMatch(/fr-btn--icon-/);
   });
 
   it('« Haut de page » déplie le pied de page complet et fait défiler vers le bas', async () => {
     const { user, root, toggle, block } = setup();
     await user.click(toggle);
+    // Same element (focus kept), now « Fermer » with its text and the close icon on the right (M23).
+    expect(within(root).getByRole('button', { name: FOOTER_LABELS.collapse })).toBe(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAttribute('aria-controls', FOOTER_ID);
     expect(toggle).toHaveAccessibleName(FOOTER_LABELS.collapse);
+    expect(toggle).toHaveTextContent(FOOTER_LABELS.collapse);
     expect(toggle).toHaveAttribute('title', FOOTER_LABELS.collapse);
-    expect(toggle).toHaveClass('fr-icon-close-line');
+    expect(toggle).toHaveClass(
+      'fr-icon-close-line',
+      'fr-btn--icon-right',
+      'compact-footer__toggle',
+    );
     expect(toggle).toHaveFocus();
     expect(root).not.toHaveClass('compact-footer--collapsed');
     for (const selector of ['.fr-footer__body', '.fr-footer__partners', '.fr-footer__bottom-copy'])
@@ -97,6 +117,8 @@ describe('SiteFooter (pied de page extensible, M13)', () => {
     await waitFor(() => expect(scrollTo).toHaveBeenCalledTimes(2));
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveAccessibleName(FOOTER_LABELS.expand);
+    expect(toggle).toHaveTextContent(/^$/);
+    expect(toggle).toHaveClass('fr-icon-arrow-up-s-line');
     expect(toggle).toHaveFocus();
     expect(root).toHaveClass('compact-footer--collapsed');
     expect(block('.fr-footer__partners')).not.toBeVisible();

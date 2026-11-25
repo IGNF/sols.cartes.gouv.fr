@@ -1,4 +1,5 @@
 import { fr } from '@codegouvfr/react-dsfr';
+import { Button } from '@codegouvfr/react-dsfr/Button';
 import { headerFooterDisplayItem } from '@codegouvfr/react-dsfr/Display';
 import { FooterBottomItem } from '@codegouvfr/react-dsfr/Footer';
 import { useEffect, useRef, useState } from 'react';
@@ -22,11 +23,11 @@ const newWindow = (label: string) =>
  * Expandable footer (M13), pattern of `CgfrFooter.vue` (IGNF/cartes.gouv.fr-vue-components, used by
  * cartes.gouv.fr-entree-carto). The full DSFR footer of the other bricks (`apps/accueil/.../footer.njk`:
  * brand and description, content links, partners, bottom links with « Paramètres d'affichage », licence) is
- * rendered, collapsed by default to its bottom bar (`footer.compactOnCarto`, maquette 1:10562). The
- * « Haut de page » button expands it and scrolls the page down to it; « Fermer » collapses it and scrolls
- * back up. Plain DSFR markup rather than react-dsfr's `Footer`: the latter forces its own bottom links
- * (accessibility label and order), takes content links as bare domains, and cannot host the toggle outside
- * the bottom list.
+ * rendered, collapsed by default to its bottom bar (`footer.compactOnCarto`, maquette 1:10562), a 40 px bar
+ * as on guichet-collaboratif (M23). The « Haut de page » button (an up arrow) expands it and scrolls the page
+ * down to it; « Fermer » collapses it and scrolls back up. Plain DSFR markup rather than react-dsfr's `Footer`:
+ * the latter forces its own bottom links (accessibility label and order), takes content links as bare domains,
+ * and cannot host the toggle outside the bottom list.
  */
 export default function SiteFooter() {
   const [expanded, setExpanded] = useState(false);
@@ -121,33 +122,43 @@ export default function SiteFooter() {
               <FooterBottomItem bottomItem={headerFooterDisplayItem} />
             </li>
           </ul>
-          <button
-            type="button"
-            className={`${
-              expanded
-                ? fr.cx(
-                    'fr-btn',
-                    'fr-btn--tertiary',
-                    'fr-btn--sm',
-                    'fr-icon-close-line',
-                    'fr-btn--icon-left',
-                  )
-                : fr.cx(
-                    'fr-btn',
-                    'fr-btn--tertiary',
-                    'fr-btn--sm',
-                    'fr-icon-arrow-up-line',
-                    'fr-btn--icon-left',
-                  )
-            } compact-footer__toggle`}
-            // Icon only while collapsed between 62em and 75em (SiteFooter.css, M21): the label as a tooltip.
-            title={expanded ? FOOTER_LABELS.collapse : FOOTER_LABELS.expand}
-            aria-expanded={expanded}
-            aria-controls={FOOTER_ID}
-            onClick={toggle}
-          >
-            {expanded ? FOOTER_LABELS.collapse : FOOTER_LABELS.expand}
-          </button>
+          {/*
+            M23: same element in both states (React keeps the node, so the focus stays on it), at the right end of
+            the bar. Collapsed: icon only, its name in `title` (guichet-collaboratif `AppFooter.tsx`); expanded:
+            « Fermer » with its icon on the right, so that the icon stays where the arrow was.
+          */}
+          {expanded ? (
+            <Button
+              className="compact-footer__toggle"
+              priority="tertiary no outline"
+              size="small"
+              iconId="fr-icon-close-line"
+              iconPosition="right"
+              title={FOOTER_LABELS.collapse}
+              nativeButtonProps={{
+                type: 'button',
+                'aria-expanded': true,
+                'aria-controls': FOOTER_ID,
+              }}
+              onClick={toggle}
+            >
+              {FOOTER_LABELS.collapse}
+            </Button>
+          ) : (
+            <Button
+              className="compact-footer__toggle"
+              priority="tertiary no outline"
+              size="small"
+              iconId="fr-icon-arrow-up-s-line"
+              title={FOOTER_LABELS.expand}
+              nativeButtonProps={{
+                type: 'button',
+                'aria-expanded': false,
+                'aria-controls': FOOTER_ID,
+              }}
+              onClick={toggle}
+            />
+          )}
           <div className={fr.cx('fr-footer__bottom-copy')} hidden={!expanded}>
             <p>
               {footer.licence.text}{' '}
