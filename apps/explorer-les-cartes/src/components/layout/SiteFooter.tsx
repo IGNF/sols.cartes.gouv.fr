@@ -25,9 +25,9 @@ const newWindow = (label: string) =>
  * brand and description, content links, partners, bottom links with « Paramètres d'affichage », licence) is
  * rendered, collapsed by default to its bottom bar (`footer.compactOnCarto`, maquette 1:10562), a 40 px bar
  * as on guichet-collaboratif (M23). The « Haut de page » button (an up arrow) expands it and scrolls the page
- * down to it; « Fermer » collapses it and scrolls back up. Plain DSFR markup rather than react-dsfr's `Footer`: the latter forces its own bottom links
- * (accessibility label and order), takes content links as bare domains, and cannot host the toggle outside
- * the bottom list.
+ * down to it; « Fermer » collapses it and scrolls back up. Plain DSFR markup rather than react-dsfr's `Footer`:
+ * the latter forces its own bottom links (accessibility label and order), takes content links as bare domains,
+ * and cannot host the toggle outside the bottom list.
  */
 export default function SiteFooter() {
   const [expanded, setExpanded] = useState(false);
@@ -135,7 +135,11 @@ export default function SiteFooter() {
               iconId="fr-icon-close-line"
               iconPosition="right"
               title={FOOTER_LABELS.collapse}
-              nativeButtonProps={{ 'aria-expanded': true, 'aria-controls': FOOTER_ID }}
+              nativeButtonProps={{
+                type: 'button',
+                'aria-expanded': true,
+                'aria-controls': FOOTER_ID,
+              }}
               onClick={toggle}
             >
               {FOOTER_LABELS.collapse}
@@ -147,7 +151,11 @@ export default function SiteFooter() {
               size="small"
               iconId="fr-icon-arrow-up-s-line"
               title={FOOTER_LABELS.expand}
-              nativeButtonProps={{ 'aria-expanded': false, 'aria-controls': FOOTER_ID }}
+              nativeButtonProps={{
+                type: 'button',
+                'aria-expanded': false,
+                'aria-controls': FOOTER_ID,
+              }}
               onClick={toggle}
             />
           )}
