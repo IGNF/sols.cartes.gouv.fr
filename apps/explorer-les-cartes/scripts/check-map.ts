@@ -39,8 +39,9 @@
  * under it (as guichet-collaboratif and cartes.gouv.fr); suggestions, catalogue, full-screen tool panels, axe.
  * M23: the collapsed footer is a 40 px bar from 992 to 1920 px (guichet-collaboratif), links from the left edge, the
  * toggle an icon at the right edge; « Fermer » at the very same place once expanded (320 to 1920 px); no logo border.
- * M24: the map has the focus on landing (named, DSFR focus ring, no scroll), the arrows pan it, Shift+Tab reaches the
- * header and the skip links (« Contenu » still leads to the content); a skip link reached first keeps the focus.
+ * M25 (replaces M24): no focus ring and no forced focus on landing; wheel zoom, + and the arrows act without a first
+ * click; keys typed in the search field, its suggestions and the « Services » menu leave the map still; a click focuses
+ * the map without a ring, Tab shows the DSFR ring; the map keeps its height while the skip links are shown.
  * Exits 1 on failure.
  */
 import AxeBuilder from '@axe-core/playwright';
@@ -2612,9 +2613,10 @@ for (const [width, height, scheme, full] of [
   await context.close();
 }
 
-// M24 (owner's request): on landing the focus is on the map (named, DSFR focus ring drawn inside it, page not
-// scrolled) and the arrows pan it at once; Shift+Tab goes back to the header and the skip links, which still lead to
-// the content. A skip link the user reached before the map was ready keeps the focus.
+// M25 (owner's feedback on M24): no focus ring on landing; the map reacts without a first click, as on cartes.gouv.fr
+// (wheel zoom without the focus, arrows and + / - with nothing focused), while keys typed in the search field, its
+// suggestions and the header menus stay theirs. The keyboard ring when the map is reached with Tab, and the M24 skip
+// links fix (the map keeps its height while they are shown), still hold.
 for (const scheme of ['light', 'dark'] as const) {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
@@ -2641,96 +2643,154 @@ for (const scheme of ['light', 'dark'] as const) {
   await page.waitForResponse((r) => /REQUEST=GetTile/i.test(r.url()) && r.status() === 200, {
     timeout: 30_000,
   });
+  await page.locator('[id^="GPcontrolList-"]').waitFor({ timeout: 30_000 });
   await tilesIdle();
-  const focused = await page.evaluate(() => {
-    const active = document.activeElement as HTMLElement | null;
-    // The visible ring: repeated on ::after over the OpenLayers viewport (MapView.css).
-    const style = active ? getComputedStyle(active, '::after') : null;
+  const landing = await page.evaluate(() => {
+    const map = document.querySelector('.map-view') as HTMLElement;
+    const ring = getComputedStyle(map, '::after');
     return {
-      isMap: Boolean(active?.classList.contains('map-view')),
-      name: active?.getAttribute('aria-label') ?? null,
-      focusVisible: Boolean(active?.matches(':focus-visible')),
-      outline: style
-        ? `${style.content} ${style.outlineStyle} ${style.outlineWidth} ${style.outlineOffset}`
-        : null,
+      active: document.activeElement === document.body ? 'body' : document.activeElement?.className,
+      mapFocusVisible: map.matches(':focus-visible'),
+      ring: `${ring.content} ${ring.outlineStyle}`,
       scrollY: window.scrollY,
     };
   });
   check(
-    focused.isMap &&
-      focused.name === MAP_LABEL &&
-      focused.focusVisible &&
-      focused.outline === '"" solid 2px -2px' &&
-      focused.scrollY === 0,
-    `M24 1280 ${scheme} : focus sur la carte nommée au chargement, anneau DSFR visible à l’intérieur, page non défilée (${JSON.stringify(focused)})`,
+    landing.active === 'body' &&
+      !landing.mapFocusVisible &&
+      landing.ring === 'none none' &&
+      landing.scrollY === 0,
+    `M25 1280 ${scheme} : au chargement, focus non forcé et aucun anneau autour de la carte (${JSON.stringify(landing)})`,
   );
-  const mapView = page.locator('.map-view');
-  const before = await mapView.screenshot();
-  await page.keyboard.press('ArrowRight');
-  await page.waitForTimeout(300);
-  await tilesIdle();
-  const after = await mapView.screenshot();
-  check(
-    !before.equals(after) &&
-      (await page.evaluate(() => Boolean(document.activeElement?.classList.contains('map-view')))),
-    `M24 1280 ${scheme} : la flèche droite déplace la vue de la carte, le focus reste sur la carte`,
-  );
-  const backwards: string[] = [];
-  for (let i = 0; i < 5; i += 1) {
-    await page.keyboard.press('Shift+Tab');
-    backwards.push(
-      await page.evaluate(() => {
-        const a = document.activeElement as HTMLElement | null;
-        return (a?.getAttribute('aria-label') ?? a?.textContent ?? '').trim();
-      }),
+  // Zoom level read on the scale line (its distance halves at each zoom level); pan seen on a map area
+  // away from the controls, the search bar and its suggestions.
+  const scale = () =>
+    page.evaluate(
+      () => document.querySelector('[class*="scale-line-inner"]')?.textContent?.trim() ?? '',
     );
-  }
+  const box = await page.locator('.map-view').boundingBox();
+  if (!box) throw new Error('M25 : carte absente');
+  const clip = {
+    x: box.x + box.width / 2 - 150,
+    y: box.y + box.height - 320,
+    width: 300,
+    height: 200,
+  };
+  const mapArea = async () => {
+    await page.waitForTimeout(400);
+    await tilesIdle();
+    return page.screenshot({ clip });
+  };
+  const atLoad = await scale();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.wheel(0, -600);
+  await page.waitForTimeout(800);
+  const afterWheel = await scale();
   check(
-    backwards.includes('Contenu') && backwards.includes('Pied de page'),
-    `M24 1280 ${scheme} : Maj+Tab depuis la carte atteint l’en-tête puis les liens d’évitement (${backwards.join(' | ')})`,
+    afterWheel !== '' && afterWheel !== atLoad,
+    `M25 1280 ${scheme} : la molette au-dessus de la carte zoome sans clic préalable (échelle ${atLoad} → ${afterWheel})`,
   );
-  // Shown skip links (`position: relative` in DSFR) used to take the header's grid row and collapse the map.
+  await page.keyboard.press('+');
+  await page.waitForTimeout(800);
+  const afterPlus = await scale();
+  check(
+    afterPlus !== afterWheel &&
+      (await page.evaluate(() => document.activeElement === document.body)),
+    `M25 1280 ${scheme} : « + » zoome sans clic préalable, focus non forcé (échelle ${afterWheel} → ${afterPlus})`,
+  );
+  const beforeArrow = await mapArea();
+  await page.keyboard.press('ArrowRight');
+  check(
+    !beforeArrow.equals(await mapArea()),
+    `M25 1280 ${scheme} : la flèche droite déplace la carte sans clic préalable`,
+  );
+  // Typing in the search field: '+', '-' and arrows edit the text and walk the suggestions, the map stays.
+  const input = page.getByRole('combobox', { name: CONTROL_LABELS.searchInput });
+  await input.click();
+  const beforeTyping = { scale: await scale(), area: await mapArea() };
+  await page.keyboard.type('Saint-Malo+-');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowRight');
+  const typed = await input.inputValue();
+  await page.waitForTimeout(1_500);
+  // In the suggestions, the arrows move the highlighted entry (and geopf writes it in the field).
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowUp');
+  const afterTyping = { scale: await scale(), area: await mapArea() };
+  check(
+    typed === 'Saint-Malo+-' &&
+      afterTyping.scale === beforeTyping.scale &&
+      beforeTyping.area.equals(afterTyping.area),
+    `M25 1280 ${scheme} : « + », « - » et flèches tapés dans la recherche et ses suggestions ne bougent pas la carte (champ « ${typed} », échelle ${beforeTyping.scale} → ${afterTyping.scale})`,
+  );
+  await page.keyboard.press('Escape');
+  await input.fill('');
+  // Header menu « Services »: its keys stay in the header.
+  const services = page
+    .locator('.fr-header__tools')
+    .getByRole('button', { name: brand.header.tools.services.label });
+  await services.focus();
+  await page.keyboard.press('Enter');
+  const beforeMenu = { scale: await scale(), area: await mapArea() };
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('+');
+  const afterMenu = { scale: await scale(), area: await mapArea() };
+  check(
+    afterMenu.scale === beforeMenu.scale && beforeMenu.area.equals(afterMenu.area),
+    `M25 1280 ${scheme} : flèches et « + » dans le menu « Services » de l’en-tête ne bougent pas la carte`,
+  );
+  await page.keyboard.press('Escape');
+  // A mouse click focuses the map without a ring; reached with the keyboard it shows the DSFR ring.
+  await page.mouse.click(clip.x + clip.width / 2, clip.y + clip.height / 2);
+  const clicked = await page.evaluate(() => {
+    const map = document.querySelector('.map-view') as HTMLElement;
+    return { focused: document.activeElement === map, focusVisible: map.matches(':focus-visible') };
+  });
+  check(
+    clicked.focused && !clicked.focusVisible,
+    `M25 1280 ${scheme} : un clic sur la carte lui donne le focus sans anneau (${JSON.stringify(clicked)})`,
+  );
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  const tabbed = await page.evaluate(() => {
+    const map = document.querySelector('.map-view') as HTMLElement;
+    const ring = getComputedStyle(map, '::after');
+    return {
+      focused: document.activeElement === map,
+      ring: `${ring.content} ${ring.outlineStyle} ${ring.outlineWidth} ${ring.outlineOffset}`,
+    };
+  });
+  check(
+    tabbed.focused && tabbed.ring === '"" solid 2px -2px',
+    `M25 1280 ${scheme} : atteinte au clavier, la carte montre l’anneau DSFR à l’intérieur (${JSON.stringify(tabbed)})`,
+  );
+  // M24 fix kept: shown skip links (`position: relative` in DSFR) no longer collapse the map.
+  await page.reload({ waitUntil: 'load' });
+  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 30_000 });
+  await page.keyboard.press('Tab');
+  const skipLink = await page.evaluate(() => document.activeElement?.textContent?.trim() ?? '');
   const heightWithSkipLinks = await page.evaluate(
     () => document.querySelector('.map-view')?.getBoundingClientRect().height ?? 0,
   );
   check(
-    heightWithSkipLinks >= 600,
-    `M24 1280 ${scheme} : la carte garde sa hauteur pendant que les liens d’évitement sont affichés (${Math.round(heightWithSkipLinks)} px)`,
+    skipLink === 'Contenu' && heightWithSkipLinks >= 600,
+    `M25 1280 ${scheme} : premier Tab sur « ${skipLink} », la carte garde sa hauteur (${Math.round(heightWithSkipLinks)} px)`,
   );
-  await page.getByRole('link', { name: 'Contenu' }).focus();
   await page.keyboard.press('Enter');
   await page.waitForTimeout(200);
   const contentFocused = await page.evaluate(() => document.activeElement?.id ?? null);
   check(
     contentFocused === MAIN_CONTENT_ID,
-    `M24 1280 ${scheme} : le lien d’évitement « Contenu » mène toujours au contenu (focus : ${contentFocused})`,
+    `M25 1280 ${scheme} : le lien d’évitement « Contenu » mène au contenu (focus : ${contentFocused})`,
   );
   const report = consoleReport();
   check(
     report.messages.length === 0,
-    `M24 1280 ${scheme} : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
+    `M25 1280 ${scheme} : console vide${report.notes}${report.messages.length ? ` : ${report.messages.join(' | ')}` : ''}`,
   );
   await context.close();
-}
-
-{
-  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  // The map chunk held back 2 s: the user reaches the first skip link before the map exists.
-  await page.route('**/assets/MapExplorer-*.js', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
-    await route.continue();
-  });
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('link', { name: 'Contenu' }).waitFor({ state: 'attached' });
-  await page.keyboard.press('Tab');
-  await page.locator('.map-view canvas').first().waitFor({ state: 'attached', timeout: 30_000 });
-  await page.waitForTimeout(1_000);
-  const active = await page.evaluate(() => document.activeElement?.textContent?.trim() ?? null);
-  check(
-    active === 'Contenu',
-    `M24 1280 : le lien d’évitement atteint avant la carte garde le focus une fois la carte prête (focus : ${active})`,
-  );
-  await page.close();
 }
 
 await browser.close();

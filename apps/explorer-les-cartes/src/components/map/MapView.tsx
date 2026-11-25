@@ -6,7 +6,6 @@ import { MAP_KEYBOARD_HINT, MAP_LABEL } from '../../config/map';
 import useBaseLayer from '../../hooks/useBaseLayer';
 import useBaseLayerCatalogue from '../../hooks/useBaseLayerCatalogue';
 import useCatalog from '../../hooks/useCatalog';
-import useInitialMapFocus from '../../hooks/useInitialMapFocus';
 import useLayerSwitcher from '../../hooks/useLayerSwitcher';
 import useMap from '../../hooks/useMap';
 import useMapControls from '../../hooks/useMapControls';
@@ -21,7 +20,6 @@ export default function MapView() {
   const targetRef = useRef<HTMLDivElement>(null);
   const map = useMap(targetRef);
   const hintId = useId();
-  useInitialMapFocus(targetRef, map);
   const capabilities = useWmtsCapabilities();
   const { layers, activeLayer, status } = useBaseLayerCatalogue();
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
