@@ -4,7 +4,8 @@ import { GPF_ENDPOINTS } from '../config/urls';
 import { initialMapState, useMapStore } from '../store/useMapStore';
 import capabilitiesXml from '../test/fixtures/wmts-capabilities.xml?raw';
 import { createQueryWrapper } from '../test/queryWrapper';
-import useDeepLink from './useDeepLink';
+import { readDeepLinks } from '../map/deepLink';
+import { useDeepLinkLayer } from './useDeepLink';
 
 const WMS_CAPABILITIES = `<WMS_Capabilities xmlns="http://www.opengis.net/wms"><Capability><Layer>
   <Layer><Name>couche_publiee</Name><Title>Couche publiée</Title></Layer></Layer></Capability></WMS_Capabilities>`;
@@ -29,8 +30,11 @@ function mockFetch() {
   return fetchMock;
 }
 
-const render = (search: string) =>
-  renderHook(() => useDeepLink(search), { wrapper: createQueryWrapper() });
+/** Follows the first layer of a link, read once as DeepLinkNotice does. */
+const render = (search: string) => {
+  const request = readDeepLinks(search)[0] ?? null;
+  return renderHook(() => useDeepLinkLayer(request), { wrapper: createQueryWrapper() });
+};
 
 describe('useDeepLink', () => {
   beforeEach(() => {
@@ -87,6 +91,20 @@ describe('useDeepLink', () => {
     );
     await waitFor(() =>
       expect(result.current).toEqual({ state: 'not-found', name: 'INRAE_CARTE-SOLS_WMTS' }),
+    );
+    expect(useMapStore.getState().overlays).toEqual([]);
+  });
+
+  it('ne conclut pas à une couche introuvable quand le service ne répond pas', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response('', { status: 502 }))),
+    );
+    const { result } = render(
+      '?layer=couche_publiee&type=WMS&url=https%3A%2F%2Fdata.geopf.fr%2Fwms-r%2Fwms',
+    );
+    await waitFor(() =>
+      expect(result.current).toEqual({ state: 'unreachable', name: 'couche_publiee' }),
     );
     expect(useMapStore.getState().overlays).toEqual([]);
   });

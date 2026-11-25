@@ -14,9 +14,13 @@ export function checkConfig(toml, upstream) {
   expectLine(/^geonetwork4_api_url = "https:\/\/[^"]+"$/m, 'geonetwork4_api_url must be an https URL')
   const datahubUrl = upstream.baseHref.replace(/\/$/, '')
   expectLine(new RegExp(`^datahub_url = "${datahubUrl}"$`, 'm'), `datahub_url must be "${datahubUrl}"`)
-  expectLine(/^config_filters\.\w+ = \[.+\]$/m, '[search] config_filters (sols scope) is missing')
+  // TOML files a key under the last table header above it: the sols scope only counts inside [search].
+  const search = toml.match(/^\[search\]$([\s\S]*?)(?=^\[|(?![\s\S]))/m)?.[1] ?? ''
+  if (!/^config_filters\.\w+ = \[.+\]$/m.test(search)) {
+    problems.push('config/default.toml: [search] config_filters (sols scope) is missing')
+  }
   expectLine(
-    new RegExp(`^external_viewer_url_template = '${EXTERNAL_VIEWER_TEMPLATE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'$`, 'm'),
+    new RegExp(`^external_viewer_url_template = '${RegExp.escape(EXTERNAL_VIEWER_TEMPLATE)}'$`, 'm'),
     `external_viewer_url_template must be '${EXTERNAL_VIEWER_TEMPLATE}' (question C-3)`
   )
   expectLine(/^external_viewer_open_new_tab = false$/m, 'external_viewer_open_new_tab must be false (same tab)')

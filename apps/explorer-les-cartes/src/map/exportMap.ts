@@ -1,18 +1,26 @@
 import type OlMap from 'ol/Map';
+import { unByKey } from 'ol/Observable';
+import { PRINT_RENDER_TIMEOUT_MS } from '../config/map';
 
 /**
  * Renders the map into one PNG (data URL), composing the canvas of every layer with its opacity and
  * transform, as the OpenLayers "export map" example does. Rejects when a canvas is tainted (a tile served
- * without CORS, e.g. some imported services) or the map has no size.
+ * without CORS, e.g. some imported services), the map has no size, or a tile is still loading after
+ * `timeoutMs`.
  */
-export function exportMapImage(map: OlMap): Promise<string> {
+export function exportMapImage(map: OlMap, timeoutMs = PRINT_RENDER_TIMEOUT_MS): Promise<string> {
   const viewport = map.getViewport();
   return new Promise((resolve, reject) => {
     if (!viewport) {
       reject(new Error('La carte n’est pas affichée.'));
       return;
     }
-    map.once('rendercomplete', () => {
+    const timer = setTimeout(() => {
+      unByKey(listener);
+      reject(new Error('La carte ne s’est pas affichée à temps.'));
+    }, timeoutMs);
+    const listener = map.once('rendercomplete', () => {
+      clearTimeout(timer);
       try {
         const [width, height] = map.getSize() ?? [];
         if (!width || !height) throw new Error('La carte n’a pas de taille.');

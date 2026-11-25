@@ -53,4 +53,9 @@ describe('parseCswRecords', () => {
       </ows:ExceptionReport>`;
     expect(() => parseCswRecords(exception)).toThrow(/exception OGC : Service indisponible/);
   });
+
+  it('refuse une réponse tronquée (fiches au-delà de la page CSW)', () => {
+    const truncated = cswXml.replace('numberOfRecordsMatched="2"', 'numberOfRecordsMatched="11"');
+    expect(() => parseCswRecords(truncated)).toThrow('2 fiches sur 11');
+  });
 });

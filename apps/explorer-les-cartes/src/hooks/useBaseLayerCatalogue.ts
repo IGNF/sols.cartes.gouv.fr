@@ -13,8 +13,6 @@ export interface BaseLayerCatalogue {
   layers: AvailableBaseLayer[];
   /** Effective base layer: the selected one, or the first available. Derived, not stored. */
   activeLayer: AvailableBaseLayer | undefined;
-  isPending: boolean;
-  isError: boolean;
   /** Loading, failed, empty or ready: drives the notice of the « Fonds de cartes » tab. */
   status: BaseLayersStatus;
 }
@@ -30,8 +28,6 @@ export default function useBaseLayerCatalogue(): BaseLayerCatalogue {
   return {
     layers,
     activeLayer: resolveActiveBaseLayer(layers, selectedId),
-    isPending: capabilities.isPending,
-    isError: capabilities.isError,
     status: baseLayersStatus(capabilities, layers),
   };
 }

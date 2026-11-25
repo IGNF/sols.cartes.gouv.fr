@@ -1324,3 +1324,41 @@ Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur 
   liens (espacement 0.75rem) passent sur deux lignes à côté de « Fermer », qui ne bouge pas.
 - **Carte mobile** : `calc(100dvh - 3.5rem)` ne dépend que de l'en-tête (M22), inchangée.
 - **`check:map`** : bloc M7 à ≤ 40.5 px ; bloc M23 (remplace M21) de 320 à 1920 px, replié et déplié.
+
+## 19. Carte utilisable sans premier clic (M24, revu en M25)
+
+- **M24** (première lecture de la demande) : focus donné à la carte au chargement (`useInitialMapFocus`). Retour du
+  propriétaire : l'anneau bleu se voyait (Chromium rend `:focus-visible` un focus donné par script sans interaction
+  pointeur) ; ce qu'il voulait, c'est zoomer sans premier clic, comme ailleurs sur cartes.gouv.fr. Hook retiré en M25.
+- **Cause** (OpenLayers 10.11, `ol/Map.js`) : sans option `interactions`, la carte crée `defaults({ onFocusOnly: true })`.
+  Pour MouseWheelZoom et DragPan la condition devient `focusWithTabindex` : si la cible a un `tabindex` (ici `.map-view`,
+  `tabIndex={0}`), elle doit avoir le focus. D'où la molette inerte avant un clic. Sans `keyboardEventTarget`, KeyboardPan
+  et KeyboardZoom n'écoutent que la cible : flèches et +/- attendaient aussi le focus.
+- **Références** :
+  - Entrée carto, `src/components/carte/Map.vue` (`main` @ `8810a29`) : `interactions: defaultInteractions().extend([...])`,
+    `tabindex="0"`, focus de la carte au `mouseover` sauf si un `INPUT`/`SELECT` a le focus ou si la recherche avancée
+    est ouverte ; anneau `#mainMap:focus-visible` à l'intérieur (`outline-offset: -3px`).
+  - guichet-collaboratif, `src/features/navigation/MainMap.tsx` (`develop`) : `interactions: defaultInteractions()`,
+    `tabIndex={0}`, clavier par défaut (focus requis).
+- **Ici** (`src/map/interactions.ts`, `src/hooks/useMap.ts`) :
+  - `interactions: createMapInteractions(target)` : `defaults({ keyboard: false })` (donc `onFocusOnly: false`, molette et
+    glisser sans focus) + KeyboardPan / KeyboardZoom reconstruits avec les conditions par défaut d'OL (`noModifierKeys` ;
+    pas de `platformModifierKey` ; `targetNotEditable` : `INPUT`, `SELECT`, `TEXTAREA`, `contentEditable`) et
+    `isMapKeyTarget` : la touche vient de `body`/`html` (aucun focus, cas de l'arrivée) ou de l'élément carte.
+  - `keyboardEventTarget: document` : flèches et +/- agissent dès l'arrivée, sans focus.
+  - Pas de focus au survol (entrée carto) : il volerait le focus d'un utilisateur clavier quand la souris passe sur la carte.
+  - Touches des contrôles geopf : tous sont dans `.ol-overlaycontainer-stopevent` (vérifié en ligne : 259 éléments
+    focalisables, aucun hors du conteneur), dont `Map.handleMapBrowserEvent` ignore les `keydown`. Recherche, suggestions,
+    panneaux d'outils gardent donc leurs touches ; l'en-tête, le pied de page, les modales aussi (hors de la carte).
+  - Limite connue : sans focus, les flèches déplacent la carte au lieu de faire défiler la page (sous 48em, ou pied de page
+    déplié). Espace, Pg. suiv./préc., Début/Fin font toujours défiler.
+- **Anneau** (gardé de M24) : DSFR `[tabindex]:focus-visible` à `outline-offset: -2px`, repris sur
+  `.map-view:focus-visible::after` au-dessus de `.ol-viewport`. Visible quand on atteint la carte au clavier (Tab) ; un clic
+  la focalise sans anneau. Description `MAP_KEYBOARD_HINT` (`aria-describedby`) gardée.
+- **Liens d'évitement** (correctif M24, gardé) : le DSFR les passe en `position: relative` quand ils ont le focus ; dans la
+  grille de `.app-layout--map` ils prenaient la ligne de l'en-tête et la carte tombait à 0 px. Chaque enfant a sa ligne
+  (`App.css`), la première vide quand ils sont masqués.
+- **`check:map`** : bloc M25 (remplace M24) à 1280 px, clair et sombre : focus non forcé et pas d'anneau au chargement ;
+  molette, « + » et flèche droite sans clic ; « Saint-Malo+- », flèches et suggestions dans la recherche, flèches et « + »
+  dans « Services » sans bouger la carte ; clic sans anneau, Tab avec anneau ; hauteur de la carte avec les liens
+  d'évitement, « Contenu » ; console vide.

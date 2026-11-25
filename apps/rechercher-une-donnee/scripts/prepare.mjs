@@ -106,6 +106,9 @@ function applyOverlay(upstream) {
   writeFileSync(join(appSrc, 'sols-shared.css'), sharedCss)
   // DSFR icons used by the shared CSS (chevron, external link...), from the installed DSFR
   const dsfrIcons = join(UPSTREAM_DIR, 'node_modules', '@gouvfr', 'dsfr', 'dist', 'icons')
+  if (!existsSync(dsfrIcons)) {
+    throw new Error(`${dsfrIcons} is missing: run prepare-upstream once without --no-install`)
+  }
   for (const icon of referencedDsfrIcons(sharedCss, upstream.baseHref)) {
     const target = join(appSrc, 'assets', 'dsfr', 'icons', icon)
     mkdirSync(dirname(target), { recursive: true })

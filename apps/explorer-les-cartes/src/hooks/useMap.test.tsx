@@ -44,6 +44,15 @@ describe('useMap', () => {
     expect(getByTestId('target')).toHaveAttribute('data-ready', 'oui');
   });
 
+  it('réagit sans premier clic : interactions sans « focus seulement », clavier écouté sur le document', () => {
+    const { getByTestId } = render(<Harness />);
+    const options = created[0]?.options ?? {};
+    expect(options['keyboardEventTarget']).toBe(document);
+    const interactions = options['interactions'] as { getArray: () => unknown[] };
+    expect(interactions.getArray().length).toBeGreaterThan(0);
+    expect(getByTestId('target')).not.toHaveFocus();
+  });
+
   it('centre la vue initiale avec le zoom configuré', () => {
     render(<Harness />);
     const view = created[0]?.options['view'] as { getZoom: () => number };

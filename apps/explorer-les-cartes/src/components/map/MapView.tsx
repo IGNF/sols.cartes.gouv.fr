@@ -1,8 +1,8 @@
 import { fr } from '@codegouvfr/react-dsfr';
 import { Alert } from '@codegouvfr/react-dsfr/Alert';
 import 'ol/ol.css';
-import { useRef } from 'react';
-import { MAP_LABEL } from '../../config/map';
+import { useId, useRef } from 'react';
+import { MAP_KEYBOARD_HINT, MAP_LABEL } from '../../config/map';
 import useBaseLayer from '../../hooks/useBaseLayer';
 import useBaseLayerCatalogue from '../../hooks/useBaseLayerCatalogue';
 import useCatalog from '../../hooks/useCatalog';
@@ -19,6 +19,7 @@ import './MapView.css';
 export default function MapView() {
   const targetRef = useRef<HTMLDivElement>(null);
   const map = useMap(targetRef);
+  const hintId = useId();
   const capabilities = useWmtsCapabilities();
   const { layers, activeLayer, status } = useBaseLayerCatalogue();
   useBaseLayer(map, capabilities.data, activeLayer?.layerName);
@@ -52,11 +53,15 @@ export default function MapView() {
       <p className={fr.cx('fr-sr-only')} role="status">
         {capabilities.isPending ? 'Chargement du fond de carte…' : ''}
       </p>
+      <p id={hintId} hidden>
+        {MAP_KEYBOARD_HINT}
+      </p>
       <div
         ref={targetRef}
         className="map-view"
         role="region"
         aria-label={MAP_LABEL}
+        aria-describedby={hintId}
         aria-busy={capabilities.isPending}
         tabIndex={0}
       />

@@ -7,6 +7,10 @@ on:
       - 'packages/**'
       - 'apps/rechercher-une-donnee/**'
       - 'doc/agents/edito.md'
+      # read by lint (patch list), the build (shared CSS) and the tests (header script)
+      - 'doc/catalogue-patches.md'
+      - 'apps/accueil/src/css/site.css'
+      - 'apps/accueil/src/js/header.js'
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
   pull_request:
@@ -14,6 +18,10 @@ on:
       - 'packages/**'
       - 'apps/rechercher-une-donnee/**'
       - 'doc/agents/edito.md'
+      # read by lint (patch list), the build (shared CSS) and the tests (header script)
+      - 'doc/catalogue-patches.md'
+      - 'apps/accueil/src/css/site.css'
+      - 'apps/accueil/src/js/header.js'
       - '.nvmrc'
       - '.github/workflows/ci-catalogue.yml'
 
@@ -40,7 +48,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: apps/rechercher-une-donnee/package-lock.json
+          # upstream.json pins the geonetwork-ui commit whose lockfile is actually installed
+          cache-dependency-path: |
+            apps/rechercher-une-donnee/package-lock.json
+            apps/rechercher-une-donnee/upstream.json
       - run: npm ci
         if: hashFiles('apps/rechercher-une-donnee/package-lock.json') != ''
       - run: npm run lint --if-present

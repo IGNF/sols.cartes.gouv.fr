@@ -41,4 +41,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx prettier --check .
       - run: bunx tsc --noEmit --strict --module preserve --moduleResolution bundler --target esnext --types bun scripts/*.ts
-      - run: bun scripts/build-all.ts --skip-build
+      # e2e/ has its own lockfile, outside the workspaces
+      - run: bun install --frozen-lockfile
+        working-directory: e2e
+      - run: bun run typecheck
+        working-directory: e2e
