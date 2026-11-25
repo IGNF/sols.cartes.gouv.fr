@@ -54,6 +54,9 @@ RUN bun run --filter @sols/accueil build \
 # Serveur statique nginx non privilégié
 #----------------------------------------------------------------------
 FROM nginx/nginx-unprivileged:alpine3.24-perl@sha256:d3411ed56e3a0ecfdc485e584e6c8365d60ce95950e4e8cfc9c26b90e02f116f
+# Correctifs de sécurité Alpine parus depuis l'image épinglée (alertes Trivy)
+USER root
+RUN apk upgrade --no-cache
 COPY --from=build /app/dist /usr/share/nginx/html/
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
