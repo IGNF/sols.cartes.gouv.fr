@@ -1324,3 +1324,25 @@ Réponse du propriétaire à M-7 : le libellé « Avancée » reste visible sur 
   liens (espacement 0.75rem) passent sur deux lignes à côté de « Fermer », qui ne bouge pas.
 - **Carte mobile** : `calc(100dvh - 3.5rem)` ne dépend que de l'en-tête (M22), inchangée.
 - **`check:map`** : bloc M7 à ≤ 40.5 px ; bloc M23 (remplace M21) de 320 à 1920 px, replié et déplié.
+
+## 19. Focus sur la carte à l'arrivée (M24)
+
+- **Demande** (propriétaire) : à l'arrivée sur la page carte, le focus clavier est sur la carte.
+- **Cible** : OpenLayers 10 (`Map.js`, option `keyboardEventTarget`) écoute `keydown` sur la cible de la carte quand l'option
+  est absente ; KeyboardPan et KeyboardZoom n'agissent donc que si `.map-view` a le focus (d'où son `tabIndex={0}`). Pas
+  d'option geopf-extensions en jeu.
+- **`useInitialMapFocus`** (`src/hooks/`) : focus une seule fois, quand la carte existe, avec `preventScroll` ; jamais si
+  un autre élément a déjà le focus (lien d'évitement, en-tête atteint pendant le chargement du chunk carte) ni si le fragment
+  d'URL vise un élément hors de la carte. Description `MAP_KEYBOARD_HINT` (`aria-describedby`).
+- **Anneau** : DSFR `[tabindex]:focus-visible` (2px, couleur de focus), `outline-offset: -2px` sur `.map-view` : à +2px, les
+  bords de l'écran, l'en-tête et le pied le coupaient. Dessiné à l'intérieur, il passait sous `.ol-viewport` (positionné) et
+  ne se voyait qu'avant l'arrivée des tuiles : repris sur `.map-view:focus-visible::after` (`outline: inherit`, donc les
+  valeurs du DSFR, `pointer-events: none`). Chromium considère la carte `:focus-visible` au chargement (pas d'interaction
+  pointeur).
+- **Liens d'évitement** : le DSFR les passe en `position: relative` quand ils ont le focus ; dans la grille de `.app-layout--map`
+  ils prenaient alors la ligne de l'en-tête et la carte tombait à 0 px (« No map visible because the map container's width or
+  height are 0 »). Chaque enfant a désormais sa ligne (`App.css`), la première vide quand ils sont masqués ; la carte perd
+  48 px pendant qu'ils sont affichés.
+- **RGAA** : les liens d'évitement restent le premier arrêt (Maj+Tab depuis la carte), « Contenu » mène à `main`, qui contient
+  la carte déjà focalisée ; pas de piège clavier.
+- **`check:map`** : bloc M24 à 1280 px, clair et sombre.
