@@ -8,19 +8,38 @@
  *   mobile map height, only matters on very short viewports).
  * - Footer expanded: the document grows and scrolls; the main row keeps at least 80dvh, so the map stays
  *   about as tall as when collapsed (≥ 70 % of the viewport, upstream CgfrFooter uses 75vh).
- * Below the breakpoint, the page scrolls (map first). The skip links are absolutely positioned (DSFR): no
- * grid row.
+ * Below the breakpoint, the page scrolls (map first).
+ * Skip links: DSFR positions them absolutely, out of the grid, but `position: relative` while one has the
+ * focus (`.fr-skiplinks:focus-within`): auto-placed, they then took the header row, pushed the main area into
+ * the last `auto` row and the map collapsed to 0 px (M24: reached by Shift+Tab from the focused map). Each
+ * child has its row; the first one is empty (0 px) while the skip links are hidden.
  */
 @media (min-width: 48em) {
   .app-layout--map {
     display: grid;
-    grid-template-rows: auto minmax(20rem, 1fr) auto;
+    grid-template-rows: auto auto minmax(20rem, 1fr) auto;
     grid-template-columns: minmax(0, 1fr);
     min-height: 100dvh;
   }
 
   .app-layout--map:has(> .compact-footer:not(.compact-footer--collapsed)) {
-    grid-template-rows: auto minmax(80dvh, 1fr) auto;
+    grid-template-rows: auto auto minmax(80dvh, 1fr) auto;
+  }
+
+  .app-layout--map > .fr-skiplinks {
+    grid-row: 1;
+  }
+
+  .app-layout--map > .site-header {
+    grid-row: 2;
+  }
+
+  .app-layout--map > .app-main {
+    grid-row: 3;
+  }
+
+  .app-layout--map > .compact-footer {
+    grid-row: 4;
   }
 
   .app-layout--map > .app-main {
