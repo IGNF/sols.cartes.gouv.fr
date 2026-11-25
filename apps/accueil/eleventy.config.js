@@ -14,8 +14,11 @@ const BRAND_DIR = dirname(require.resolve('@sols/brand/brand.json'));
 const CACHE_DIR = join(import.meta.dirname, 'node_modules', '.cache', 'sols-accueil');
 
 /** DSFR utility icons used by the site; only their rules and SVGs are published (/dsfr/icons.css). */
-/** DSFR utility icons of the home page (frieze, data cards, agenda). */
+/** DSFR utility icons of the home page (hero buttons, frieze, data cards, agenda). */
 const HOME_ICONS = [
+  accueil.heroMap.lockIcon,
+  accueil.calloutIcon,
+  ...accueil.actions.map((action) => action.icon).filter(Boolean),
   accueil.frieze.without.icon,
   accueil.frieze.with.icon,
   accueil.frieze.arrow,
@@ -115,6 +118,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy(dsfrPassthrough());
   eleventyConfig.addPassthroughCopy({ 'src/css': 'css' });
   eleventyConfig.addPassthroughCopy({ 'src/js': 'js' });
+  eleventyConfig.addPassthroughCopy({ 'src/img': site.assets.img.slice(1) });
   eleventyConfig.addPassthroughCopy({ [join(CACHE_DIR, 'icons.css')]: `${DSFR_OUTPUT}/icons.css` });
   // Brand images are published unchanged from packages/brand/assets/.
   eleventyConfig.addPassthroughCopy({ [join(BRAND_DIR, 'assets')]: site.assets.brand.slice(1) });

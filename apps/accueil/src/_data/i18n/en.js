@@ -196,7 +196,12 @@ export default {
         url: 'soil database · Soil observatory of France',
         brand: 'Soil observatory of France',
         layersTitle: 'Active layers',
-        layers: { donneesSols: 'Soil data', communes: 'Municipalities', rpg: 'RPG', hydro: 'Hydro.' },
+        layers: {
+          donneesSols: 'Soil data',
+          communes: 'Municipalities',
+          rpg: 'RPG',
+          hydro: 'Hydro.',
+        },
         sourceTitle: 'Source',
         sources: ['RRP 1/250,000', 'RMQS · BDAT', 'GIS format'],
         tooltip: {
@@ -225,7 +230,7 @@ export default {
     service: {
       apercuAlt:
         'Preview of the map explorer: soil map of south-western France with the search bar and map tools.',
-      overline: "The observatory sols.cartes.gouv.fr",
+      overline: 'The observatory sols.cartes.gouv.fr',
       title: 'Find, understand and use soil data',
       intro:
         'Soil data is scattered among many organisations and hard to use. The Observatory helps you find, understand and use it (placeholder text).',
