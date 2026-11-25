@@ -1,3 +1,14 @@
+# Rapport e2e (T7, passe finale, INTERROMPUE)
+
+Passe interrompue à la demande du propriétaire ; à reprendre. Base : `origin/main` 21a8733 (#101 à #105), trois briques reconstruites, suite lancée sur le port 8355 puis arrêtée à 123/158 tests : **aucun échec relevé avant l'arrêt** (pas de comptes finaux). Aucun test modifié : l'assertion « pas de défilement de page » de `03-carto.spec.ts` est déjà limitée au desktop (`!isMobile`), elle n'a donc pas échoué sur mobile.
+
+Reste à faire :
+- relancer la suite complète (compte final, flaky, échecs) ;
+- sur mobile carto (#103), ajouter : carte remplissant le viewport sous l'en-tête de 56 px (`calc(100dvh - 3.5rem)`), pied de page atteignable en défilant et par le lien d'évitement ;
+- couverture de la barre de recherche pleine largeur sous 36em en portrait (libellé « Avancée » visible, colonnes de boutons sous la barre, « Annoter la carte » et « Afficher tous les outils » cliquables à 375×667 et 320×568) ;
+- vérifier le pied de page carto sur une ligne entre 1000 et 1440 px et « Haut de page » en icône seule entre 62em et 75em (nom accessible inchangé) ;
+- mettre à jour ce rapport avec les comptes finaux.
+
 # Rapport e2e (T5, passe 5)
 
 ## Passe 5, mise à jour après M19 (#99)
