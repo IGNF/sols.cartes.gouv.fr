@@ -11,7 +11,7 @@
  * Below the breakpoint, the page scrolls (map first).
  * Skip links: DSFR positions them absolutely, out of the grid, but `position: relative` while one has the
  * focus (`.fr-skiplinks:focus-within`): auto-placed, they then took the header row, pushed the main area into
- * the last `auto` row and the map collapsed to 0 px (M24: reached by Shift+Tab from the focused map). Each
+ * the last `auto` row and the map collapsed to 0 px (M24: reached by Shift+Tab from the map). Each
  * child has its row; the first one is empty (0 px) while the skip links are hidden.
  */
 @media (min-width: 48em) {

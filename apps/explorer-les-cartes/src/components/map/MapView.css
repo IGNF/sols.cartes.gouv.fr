@@ -32,9 +32,11 @@
 }
 
 /*
- * M24: the map has the focus on landing. DSFR draws the focus ring of `[tabindex]:focus-visible` (2px, blue
- * focus colour) 2px outside the element, where the map's edges (viewport, header, footer) cut it: drawn inside,
- * and repeated on a pseudo-element over the OpenLayers viewport (positioned, it covers the element's own outline).
+ * Focus ring of the map reached with the keyboard (Tab; M24, kept in M25: the map no longer takes the focus on
+ * load, and a mouse click does not match :focus-visible). DSFR draws the ring of `[tabindex]:focus-visible`
+ * (2px, blue focus colour) 2px outside the element, where the map's edges (viewport, header, footer) cut it:
+ * drawn inside, and repeated on a pseudo-element over the OpenLayers viewport (positioned, it covers the
+ * element's own outline).
  */
 .map-view:focus-visible {
   outline-offset: -2px;
